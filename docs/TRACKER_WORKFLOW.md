@@ -56,6 +56,10 @@ Create a `parent issue` when:
 - `main` is the production branch.
 - Epic branches and standalone task branches are created from `main`.
 - Child task branches inside an epic are created from the epic branch.
+- A child task branch must be created from the current epic branch head, never from another child task branch.
+- If the epic branch has absorbed reviewed work during the allowed merge phase, later child branches are still created from that updated epic branch, not from the merged child branch tip.
+- Do not merge child work into the epic branch or merge the epic branch into `main` early just to unblock later development.
+- If a child task depends on unfinished or still-unmerged child work, treat that task as blocked, preserve any exploratory work outside the canonical `task/*` branch names, and continue only with independent child tasks.
 - Each epic branch should have its own PR to `main`, linked to the epic issue.
 - Child task branches are implemented separately and should not be merged into the epic branch before review is complete and the task is `Done`.
 - Each task branch should have one main implementation commit unless review fixes are needed.
