@@ -59,6 +59,10 @@ Create a `parent issue` when:
 - Each epic branch should have its own PR to `main`, linked to the epic issue.
 - Child task branches are implemented separately and should not be merged into the epic branch before review is complete and the task is `Done`.
 - Each task branch should have one main implementation commit unless review fixes are needed.
+- The main implementation commit should be named as `number_ShortCommitDescription`, where `number` is the task number.
+- Treat child task branches as isolated WIP while other child tasks can still be developed independently from the epic branch baseline.
+- If implementing a later child task would require merging an earlier child branch into the epic branch before the epic is otherwise ready, skip that task for now and continue with other unblocked child tasks.
+- Merge reviewed child branches into the epic branch only when the remaining unfinished tasks are specifically blocked by those completed child branches and no independent child work remains.
 - After push, each task branch should have its own PR against the epic branch.
 - If the platform requires manual issue linking for non-default-target PRs, link the PR manually and verify that the board shows it in `Linked pull requests`.
 

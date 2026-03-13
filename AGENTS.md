@@ -6,7 +6,7 @@ This file contains repository-wide operating rules. For every new chat, start wi
 
 1. Read `LOCAL_AGENT_START.md`.
 2. Follow the session routing in that file and open only the documents needed for the current task.
-3. Return to this file for repository rules, git workflow guardrails, and push/review requirements.
+3. Return to this file for repository rules, local credential handling, and agent-specific execution constraints.
 
 ## Local Files And Credentials
 
@@ -16,22 +16,14 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - Do not rely on password auth unless explicitly required.
 - Check `.env` only when the task needs local credentials or tokens.
 
-## Branches, PRs, And Review Flow
+## Workflow Pointers
 
-- Treat `main` as the production branch.
-- Create epic branches and standalone task branches from `main`.
-- Create all child task branches for an epic directly from the epic branch.
+- Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
 - Do not push to `origin` until the user explicitly asks for it.
-- Keep one logical task implementation in one task branch and one main implementation commit unless review fixes are needed.
+- Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
 - Keep review fixes in the same task branch. Do not create a separate review-fix branch.
 - When needed, add one follow-up commit with a `review fix` postfix.
-- When pushing an epic branch to `origin`, create or update the epic PR to `main` and link it to the epic issue.
-- When pushing a task branch to `origin`, create or update exactly one PR for that branch against the epic branch.
-- After creating or updating a task PR, manually link that PR to the corresponding task issue through the platform development linkage if auto-linking does not work for non-default targets.
 - The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
-- After creating or updating a task PR, verify that the task row shows that PR in the configured PR visibility field.
-- Do not merge child task branches into the epic branch until those tasks pass review and move to `Done`.
-- Merge the epic branch into `main` only after all included child tasks are `Done`.
 
 ## Validation Before Push
 
@@ -46,6 +38,5 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - For larger changes, prefer clear package boundaries and simple extensible structure.
 - Keep business logic for Git training scenarios, validation, hints, and progress tracking inside capability packages named after the actual domain area instead of generic shared buckets.
 - Use `docs/ARCHITECTURE.md` for backend/frontend boundaries.
-- Move tasks to `Review` once the branch is in a reviewable state.
 - Use the roadmap documents as a source for new issues.
 - If the requested change is not described there yet, update roadmap or board notes before starting large implementation work.
