@@ -21,6 +21,7 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
 - Do not push to `origin` until the user explicitly asks for it.
 - Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
+- After creating an epic branch, create the child task branches for its current sub-issues immediately from that epic branch.
 - When working inside an epic, always branch each child task from the epic branch itself, never from another child task branch.
 - Do not move `main` or the epic branch forward locally just to continue development on later child tasks.
 - Keep review fixes in the same task branch. Do not create a separate review-fix branch.

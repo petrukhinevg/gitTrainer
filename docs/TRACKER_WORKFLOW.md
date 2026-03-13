@@ -55,6 +55,7 @@ Create a `parent issue` when:
 
 - `main` is the production branch.
 - Epic branches and standalone task branches are created from `main`.
+- After creating an epic branch, create child task branches for all currently defined sub-issues right away.
 - Child task branches inside an epic are created from the epic branch.
 - A child task branch must be created from the current epic branch head, never from another child task branch.
 - If the epic branch has absorbed reviewed work during the allowed merge phase, later child branches are still created from that updated epic branch, not from the merged child branch tip.
