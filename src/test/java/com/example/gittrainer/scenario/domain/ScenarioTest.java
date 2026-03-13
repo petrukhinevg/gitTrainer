@@ -86,7 +86,7 @@ class ScenarioTest {
                 "The learner runs the correct command.",
                 List.of()
         )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("acceptedAnswers must not be empty");
+                .hasMessage("command outcomes must define accepted answers");
     }
 
     @Test
@@ -128,5 +128,67 @@ class ScenarioTest {
                 " "
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("explanation must not be blank");
+    }
+
+    @Test
+    void createsRepositoryStateOutcomeWithStructuredSnapshot() {
+        RepositoryStateSnapshot snapshot = new RepositoryStateSnapshot(
+                List.of(
+                        new BranchSnapshot("main", "a1b2c3d", false),
+                        new BranchSnapshot("feature/login", "d4e5f6g", true)
+                ),
+                List.of(
+                        new CommitSnapshot("a1b2c3d", "Initial commit", List.of()),
+                        new CommitSnapshot("d4e5f6g", "Add login form", List.of("a1b2c3d"))
+                ),
+                List.of(
+                        new FileSnapshot("src/LoginForm.java", FileState.STAGED)
+                )
+        );
+
+        ExpectedOutcome outcome = new ExpectedOutcome(
+                OutcomeType.REPOSITORY_STATE,
+                "The learner leaves the repository in the expected branch and file state.",
+                snapshot
+        );
+
+        assertThat(outcome.targetRepositoryState()).isEqualTo(snapshot);
+        assertThat(outcome.acceptedAnswers()).isEmpty();
+        assertThat(outcome.targetRepositoryState().branches())
+                .extracting(BranchSnapshot::name)
+                .containsExactly("main", "feature/login");
+    }
+
+    @Test
+    void rejectsRepositorySnapshotWithMultipleCurrentBranches() {
+        assertThatThrownBy(() -> new RepositoryStateSnapshot(
+                List.of(
+                        new BranchSnapshot("main", "a1b2c3d", true),
+                        new BranchSnapshot("feature/login", "d4e5f6g", true)
+                ),
+                List.of(),
+                List.of()
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("repository snapshot must not contain more than one current branch");
+    }
+
+    @Test
+    void rejectsRepositoryStateOutcomeWithoutSnapshot() {
+        assertThatThrownBy(() -> new ExpectedOutcome(
+                OutcomeType.REPOSITORY_STATE,
+                "The learner reaches the expected repository state.",
+                List.of("git status")
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("repository state outcomes must define a target repository state");
+    }
+
+    @Test
+    void rejectsEmptyRepositorySnapshot() {
+        assertThatThrownBy(() -> new RepositoryStateSnapshot(
+                List.of(),
+                List.of(),
+                List.of()
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("repository snapshot must describe at least one repository signal");
     }
 }
