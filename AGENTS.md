@@ -24,6 +24,7 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - After creating an epic branch, create the child task branches for its current sub-issues immediately from that epic branch.
 - When working inside an epic, always branch each child task from the epic branch itself, never from another child task branch.
 - Do not move `main` or the epic branch forward locally just to continue development on later child tasks.
+- Merging a child task branch into its epic branch is allowed when further development is genuinely blocked without that integration.
 - Keep review fixes in the same task branch. Do not create a separate review-fix branch.
 - When needed, add one follow-up commit with a `review fix` postfix.
 - The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
