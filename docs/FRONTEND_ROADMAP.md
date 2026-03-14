@@ -11,6 +11,7 @@ For the MVP, the frontend should enable a learner to browse exercises, enter a t
 - Items below should be suitable for creating issues.
 - One task should produce a complete and testable frontend result.
 - If a frontend item grows too large, convert it into a `parent issue` with `sub-issues`.
+- Prefer issue sizes that can usually be implemented and reviewed in one focused PR.
 
 ## Base UI constraints
 
@@ -28,6 +29,34 @@ Frontend MVP is complete when:
 3. the learner can submit an answer and receive clear validation feedback without leaving the page
 4. the learner can see which exercises were completed and what to practice next
 
+## Product epic alignment
+
+### Product Parent Issue 1. Training scenario foundation
+
+Goal: give the frontend stable scenario-facing contracts and presentation primitives so later SPA screens can consume the seeded training content without reworking how scenario data is interpreted or displayed.
+
+These tasks belong to the product-level training scenario foundation epic, not to the later SPA shell or validation-flow epics.
+
+#### Sub-issue 1.13. Define client-side scenario summary and detail view models
+
+Result: the frontend has stable UI-facing types for scenario metadata, exercise steps, repository context, and validation-target summaries.
+
+#### Sub-issue 1.14. Add frontend scenario fixture and loading seam
+
+Result: frontend development can consume scenario summaries and detail payloads through one boundary, whether the source is local fixtures or the future backend contract.
+
+#### Sub-issue 1.15. Add scenario metadata presentation primitives
+
+Result: the UI has reusable rendering primitives for title, topic, difficulty, and summary metadata used by seeded scenarios.
+
+#### Sub-issue 1.16. Add exercise content presentation primitives
+
+Result: the UI can render ordered instructions, step text, and explanation copy from seeded scenario content consistently.
+
+#### Sub-issue 1.17. Add repository context presentation primitives
+
+Result: the UI can render scenario repository cues such as branches, status hints, and file-state summaries without hard-coding one exercise shape.
+
 ## Parent issues
 
 ### Parent Issue 1. SPA shell and navigation
@@ -38,17 +67,33 @@ Goal: create the client structure that supports a catalog view, exercise view, a
 
 Result: the app can switch between the main training screens without reloads.
 
-#### Sub-issue 1.2. Add shared app states for loading, empty, and request failures
+#### Sub-issue 1.2. Add shared loading state components
 
-Result: the shell can render understandable fallback states before all feature screens are fully wired.
+Result: core screens can show consistent loading feedback while data is pending.
 
-#### Sub-issue 1.3. Implement catalog listing and entry actions
+#### Sub-issue 1.3. Add shared empty state components
+
+Result: the shell can render understandable empty results without each screen inventing its own fallback pattern.
+
+#### Sub-issue 1.4. Add shared request failure state components
+
+Result: core screens can show recoverable error messages with a consistent retry affordance.
+
+#### Sub-issue 1.5. Implement catalog list rendering
 
 Result: the learner can discover available Git scenarios and start one quickly.
 
-#### Sub-issue 1.4. Add catalog filtering by topic and difficulty
+#### Sub-issue 1.6. Add catalog entry actions
 
-Result: the learner can narrow the scenario list to a manageable set before starting practice.
+Result: the learner can enter a scenario from the catalog through a clear start action.
+
+#### Sub-issue 1.7. Add catalog filtering by topic
+
+Result: the learner can narrow the scenario list by Git topic.
+
+#### Sub-issue 1.8. Add catalog filtering by difficulty
+
+Result: the learner can narrow the scenario list by exercise complexity.
 
 ### Parent Issue 2. Exercise workspace
 
@@ -58,38 +103,62 @@ Goal: design the main screen where the learner solves a Git task.
 
 Result: the learner can read the task goal, step context, and scenario metadata in a stable workspace layout.
 
-#### Sub-issue 2.2. Render repository context and hints panel
+#### Sub-issue 2.2. Render repository context panel
 
-Result: the learner can inspect branches, status cues, and other repository hints without leaving the exercise screen.
+Result: the learner can inspect branches, status cues, and other repository state details without leaving the exercise screen.
 
-#### Sub-issue 2.3. Add answer input controls and submission states
+#### Sub-issue 2.3. Render hints panel
 
-Result: the learner can enter a Git answer, submit it once, and see pending state without ambiguous UI transitions.
+Result: the learner can view available hints in a dedicated area without mixing them into the main task text.
 
-#### Sub-issue 2.4. Add validation feedback rendering
+#### Sub-issue 2.4. Add answer input controls
 
-Result: the learner can understand whether the answer passed, partially matched, or failed and why.
+Result: the learner can enter a Git answer and submit it from the workspace.
 
-#### Sub-issue 2.5. Add retry flow and hint reveal interactions
+#### Sub-issue 2.5. Add answer submission pending and disabled states
 
-Result: the learner can retry the task and progressively request more help without losing the current scenario context.
+Result: the workspace prevents ambiguous resubmission while a validation request is in flight.
+
+#### Sub-issue 2.6. Add validation feedback summary rendering
+
+Result: the learner can understand whether the answer passed, partially matched, or failed.
+
+#### Sub-issue 2.7. Add validation explanation rendering
+
+Result: the learner can read why the answer failed or partially matched.
+
+#### Sub-issue 2.8. Add retry flow interactions
+
+Result: the learner can retry the task without losing the current scenario context.
+
+#### Sub-issue 2.9. Add progressive hint reveal interactions
+
+Result: the learner can request stronger hints over time from the exercise workspace.
 
 ### Parent Issue 3. Progress and motivation surfaces
 
 Goal: make repeated practice visible and encourage the next exercise.
 
-#### Sub-issue 3.1. Show completion state in the catalog and exercise header
+#### Sub-issue 3.1. Show completion state in the catalog
 
-Result: the learner can immediately see solved and in-progress exercises in the main training flow.
+Result: the learner can immediately distinguish solved and in-progress exercises while browsing the catalog.
 
-#### Sub-issue 3.2. Build recent attempts and unfinished work view
+#### Sub-issue 3.2. Show completion state in the exercise header
 
-Result: the learner can return to partially completed or recently failed scenarios without searching manually.
+Result: the learner can confirm current progress without leaving the active scenario.
 
-#### Sub-issue 3.3. Add topic-based progress summary
+#### Sub-issue 3.3. Build recent attempts view
+
+Result: the learner can review the most recent practice attempts in one place.
+
+#### Sub-issue 3.4. Build unfinished work view
+
+Result: the learner can return to in-progress scenarios without searching manually.
+
+#### Sub-issue 3.5. Add topic-based progress summary
 
 Result: the app can highlight strengths, weak spots, and the next recommended Git topic.
 
-#### Sub-issue 3.4. Render next-exercise recommendation card
+#### Sub-issue 3.6. Render next-exercise recommendation card
 
 Result: the UI can surface the most relevant next scenario after a learner finishes or leaves an exercise.

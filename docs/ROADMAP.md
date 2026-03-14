@@ -8,10 +8,10 @@ The main user problem is the gap between reading Git theory and confidently usin
 
 ## Roadmap usage rules
 
-- This roadmap should describe large `parent issues` and compact `sub-issues`.
-- One task should produce a complete, testable result.
-- If a task grows too large, create a `parent issue` and split it into `sub-issues`.
-- If the product has multiple technical sides, define the contract and ownership boundaries before implementation drifts.
+- This roadmap should describe product-level `parent issues` only.
+- Do not use this file as the direct source for implementation-sized tasks.
+- One parent issue may include backend work, frontend work, or both.
+- Detailed implementation tasks belong in the side-specific roadmaps.
 
 ## Roadmap structure
 
@@ -31,8 +31,9 @@ The MVP is complete when:
 
 ## How to use in the tracker
 
-- If a task belongs only to one technical area, take it from that area's roadmap.
-- If a feature requires changes across multiple areas, create one `parent issue` and separate side-specific `sub-issues`.
+- Create parent issues from this file when the work describes one meaningful product block.
+- If a parent issue spans multiple technical sides, decompose it into side-specific tasks in the relevant roadmaps.
+- If a parent issue affects only one side, keep the detailed task breakdown only in that side's roadmap.
 - Keep the current queue and status mapping aligned with `docs/BOARD.md`.
 
 ## Parent issues
@@ -41,78 +42,42 @@ The MVP is complete when:
 
 Goal: define the core exercise model and deliver a first playable set of Git practice scenarios.
 
-#### Sub-issue 1.1. Model scenario metadata and exercise steps
+Includes work such as:
 
-Result: the system can describe exercises with topic, difficulty, starting state, expected outcome, and explanation text.
-
-#### Sub-issue 1.2. Define repository state and expected outcome representations
-
-Result: exercises can describe both the learner-visible repository situation and the machine-checkable success target.
-
-#### Sub-issue 1.3. Seed the MVP catalog with status and branch basics
-
-Result: the app has a first small catalog covering status inspection, branch creation, and branch switching.
-
-#### Sub-issue 1.4. Seed the MVP catalog with history and conflict basics
-
-Result: the app extends the catalog with commit history inspection, simple rebases, and conflict-resolution starter exercises.
+- modeling Git training scenarios and their exercise content
+- defining repository state and expected outcome concepts
+- loading or serving the initial scenario catalog
+- seeding the first MVP scenario sets
 
 ### Parent Issue 2. Validation and feedback loop
 
 Goal: let learners submit answers and receive meaningful correctness feedback.
 
-#### Sub-issue 2.1. Accept exercise answers through a stable submission contract
+Includes work such as:
 
-Result: frontend and backend share a clear request and response shape for learner submissions.
-
-#### Sub-issue 2.2. Implement answer validation for structured Git actions
-
-Result: backend logic can determine whether a learner solved an exercise and which condition failed.
-
-#### Sub-issue 2.3. Return explanation payloads for failed attempts
-
-Result: the UI can explain mistakes instead of showing only pass/fail.
-
-#### Sub-issue 2.4. Add targeted hint progression for repeated failures
-
-Result: a learner can receive increasingly useful hints after multiple unsuccessful attempts.
+- defining submission and validation contracts
+- validating learner answers against expected outcomes
+- returning explanations and machine-readable failure details
+- revealing stronger hints after repeated failures
 
 ### Parent Issue 3. SPA training workspace
 
 Goal: build the user-facing interface for selecting, solving, and reviewing Git exercises.
 
-#### Sub-issue 3.1. Create scenario catalog and entry flow
+Includes work such as:
 
-Result: a learner can browse the available Git exercises and start one.
-
-#### Sub-issue 3.2. Render exercise context and answer input in one workspace
-
-Result: a learner can inspect the prompt, repository context, and answer controls in one SPA flow.
-
-#### Sub-issue 3.3. Render validation feedback and retry flow
-
-Result: a learner can review errors, retry the task, and continue without losing workspace context.
-
-#### Sub-issue 3.4. Add loading, empty, and error states for core SPA screens
-
-Result: the main catalog, exercise, and progress flows remain understandable under incomplete or failed API responses.
+- building the SPA shell and route structure
+- presenting the scenario catalog and entry flow
+- rendering the exercise workspace and answer controls
+- showing feedback, retry flow, and fallback states
 
 ### Parent Issue 4. Progress and retention
 
 Goal: make repeat practice visible so learners can track growth over time.
 
-#### Sub-issue 4.1. Persist session outcomes and completion state
+Includes work such as:
 
-Result: completed exercises and recent attempts survive page reloads and backend restarts once persistence is added.
-
-#### Sub-issue 4.2. Show solved and in-progress exercises in the UI
-
-Result: the learner can quickly distinguish completed exercises from unfinished ones.
-
-#### Sub-issue 4.3. Add learner progress summary
-
-Result: the app can show completed exercises, weak areas, and next suggested topics.
-
-#### Sub-issue 4.4. Add lightweight recommendation rules for the next exercise
-
-Result: the product can suggest a sensible follow-up scenario based on recent learner results.
+- storing attempt outcomes and completion state
+- presenting solved and in-progress exercises
+- summarizing learner progress over time
+- recommending sensible next exercises
