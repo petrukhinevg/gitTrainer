@@ -3,11 +3,13 @@
 ## Basic process
 
 1. A user creates a task in the tracker.
-2. An assignee takes the task into work in a dedicated branch.
-3. After implementation, the task moves to `Review`.
-4. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
-5. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
-6. Each task should describe a complete and reviewable result.
+2. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
+3. An assignee takes a task into work in its dedicated branch.
+4. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
+5. After implementation, the assignee pushes the branch, creates or updates the PR, verifies the PR appears in `Linked pull requests`, and then moves the task to `Review`.
+6. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
+7. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
+8. Each task should describe a complete and reviewable result.
 
 ## Board columns
 
@@ -55,8 +57,9 @@ Create a `parent issue` when:
 
 - `main` is the production branch.
 - Epic branches and standalone task branches are created from `main`.
-- After creating an epic branch, create child task branches for all currently defined sub-issues right away.
-- Child task branches inside an epic are created from the epic branch.
+- After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
+- After the initial epic commit exists, create child task branches for all currently defined sub-issues right away.
+- Child task branches inside an epic are created from the current epic branch head, not from `main`.
 - A child task branch must be created from the current epic branch head, never from another child task branch.
 - If the epic branch has absorbed reviewed work during the allowed merge phase, later child branches are still created from that updated epic branch, not from the merged child branch tip.
 - Do not merge child work into the epic branch or merge the epic branch into `main` early just to unblock later development.
@@ -69,8 +72,42 @@ Create a `parent issue` when:
 - Treat child task branches as isolated WIP while other child tasks can still be developed independently from the epic branch baseline.
 - If implementing a later child task would require merging an earlier child branch into the epic branch before the epic is otherwise ready, skip that task for now and continue with other unblocked child tasks.
 - Merge reviewed child branches into the epic branch only when the remaining unfinished tasks are specifically blocked by those completed child branches and no independent child work remains.
+- When a child or standalone task is moved to `Review`, push the branch before changing the board status.
 - After push, each task branch should have its own PR against the epic branch.
-- If the platform requires manual issue linking for non-default-target PRs, link the PR manually and verify that the board shows it in `Linked pull requests`.
+- Before moving a task to `Review`, verify that the task's PR is linked and visible in the `Linked pull requests` field.
+- If the platform requires manual issue linking for non-default-target PRs, link the PR manually before moving the task to `Review`.
+
+## Fast board setup
+
+Use this sequence to avoid manual cleanup later:
+
+1. Create the parent issue and all child issues.
+2. Link every child issue to its parent issue immediately.
+3. Create the epic branch from `main`.
+4. Make the initial epic commit on the epic branch.
+5. Push the epic branch to `origin`.
+6. Create the epic PR to `main`.
+7. Create each child task branch from the current epic branch head.
+8. Register each child branch as the linked branch for its issue before implementation starts.
+9. Add all issues to the board and set their initial `Status`.
+
+## Linked branch and PR setup
+
+Use this sequence for each child task so `Linked pull requests` is populated predictably:
+
+1. Ensure the epic branch already exists on `origin`.
+2. Create the local task branch from the current epic branch head.
+3. Push the task branch to `origin`.
+4. Register the task branch as the issue's linked branch.
+5. Implement the task and create the task PR with the epic branch as `base`.
+6. Verify the issue shows the PR in `Linked pull requests` before moving the task to `Review`.
+
+If the branch was created locally before GitHub issue linkage was configured, do not assume the field will backfill automatically. In that case:
+
+- verify the task branch exists on `origin`
+- verify the PR base is the epic branch
+- manually confirm the PR is associated with the issue
+- if GitHub still does not populate `Linked pull requests`, correct the linkage before relying on the board state
 
 ## Task template
 

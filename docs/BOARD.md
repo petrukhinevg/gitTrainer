@@ -13,8 +13,6 @@ Online board: https://github.com/users/petrukhinevg/projects/4
 - `Review`: implemented and waiting for review
 - `Done`: accepted and completed
 
-## Current content
-
 ### Ready
 
 - Define the backend domain model for Git scenarios, steps, and expected outcomes

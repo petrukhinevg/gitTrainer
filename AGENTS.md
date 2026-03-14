@@ -19,15 +19,18 @@ This file contains repository-wide operating rules. For every new chat, start wi
 ## Workflow Pointers
 
 - Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
-- Do not push to `origin` until the user explicitly asks for it.
+- Do not push to `origin` during active implementation unless the user explicitly asks for it.
+- When a task is moved to `Review`, push the task branch, create or update its PR, and verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
 - Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
-- After creating an epic branch, create the child task branches for its current sub-issues immediately from that epic branch.
+- After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
+- After the initial epic commit exists, create the child task branches for the epic's current sub-issues immediately from that updated epic branch head.
 - When working inside an epic, always branch each child task from the epic branch itself, never from another child task branch.
 - Do not move `main` or the epic branch forward locally just to continue development on later child tasks.
 - Merging a child task branch into its epic branch is allowed when further development is genuinely blocked without that integration.
 - Keep review fixes in the same task branch. Do not create a separate review-fix branch.
 - When needed, add one follow-up commit with a `review fix` postfix.
 - The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
+- When creating child task branches, also create or register the matching linked branch for the issue so GitHub can populate `Linked pull requests` automatically.
 
 ## Validation Before Push
 
