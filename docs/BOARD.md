@@ -6,6 +6,12 @@ Repository: https://github.com/petrukhinevg/gitTrainer
 
 Online board: https://github.com/users/petrukhinevg/projects/4
 
+## Transitional note
+
+- `#40` Rework roadmap for independent vertical epics is the current planning task in progress.
+- The issue set below still reflects the older epic decomposition and must be refreshed after the roadmap rework is accepted.
+- Until that refresh happens, treat the roadmap documents as the source of truth for future issue creation.
+
 ## Columns
 - `Backlog`: everything captured but not ready for implementation
 - `Ready`: tasks with a clear result and acceptance criteria

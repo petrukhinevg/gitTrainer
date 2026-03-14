@@ -12,6 +12,8 @@ The main user problem is the gap between reading Git theory and confidently usin
 - Do not use this file as the direct source for implementation-sized tasks.
 - One parent issue may include backend work, frontend work, or both.
 - Detailed implementation tasks belong in the side-specific roadmaps.
+- Prefer parent issues that describe one learner-visible vertical slice or one planning block with clear boundaries.
+- If child tasks inside an epic would require code from unfinished sibling tasks, split the epic differently or merge that work into one task.
 
 ## Roadmap structure
 
@@ -34,46 +36,58 @@ The MVP is complete when:
 - Create parent issues from this file when the work describes one meaningful product block.
 - If a parent issue spans multiple technical sides, decompose it into side-specific tasks in the relevant roadmaps.
 - If a parent issue affects only one side, keep the detailed task breakdown only in that side's roadmap.
+- When backend and frontend work describe the same learner-facing slice, keep them under the same parent issue and link them as paired child tasks.
 - Keep the current queue and status mapping aligned with `docs/BOARD.md`.
 
 ## Parent issues
 
-### Parent Issue 1. Training scenario foundation
+### Parent Issue 1. Scenario catalog browsing MVP
 
-Goal: define the core exercise model and deliver a first playable set of Git practice scenarios.
-
-Includes work such as:
-
-- modeling Git training scenarios and their exercise content
-- defining repository state and expected outcome concepts
-- loading or serving the initial scenario catalog
-- seeding the first MVP scenario sets
-
-### Parent Issue 2. Validation and feedback loop
-
-Goal: let learners submit answers and receive meaningful correctness feedback.
+Goal: let the learner browse a small catalog of Git exercises and choose one to open.
 
 Includes work such as:
 
-- defining submission and validation contracts
-- validating learner answers against expected outcomes
-- returning explanations and machine-readable failure details
+- delivering scenario summary data for the first MVP exercises
+- exposing an initial catalog from backend or local fixtures
+- rendering the catalog list, filters, and entry actions
+- handling loading, empty, and error states for catalog browsing
+
+### Parent Issue 2. Exercise context and workspace MVP
+
+Goal: let the learner open one exercise and understand the task, repository situation, and expected target before answering.
+
+Includes work such as:
+
+- delivering scenario detail payloads and repository context
+- rendering task instructions, step content, and repository cues
+- wiring the exercise route and workspace shell
+- keeping the exercise screen understandable before validation is added
+
+### Parent Issue 3. Submission and correctness MVP
+
+Goal: let the learner submit an answer and receive an immediate correctness result.
+
+Includes work such as:
+
+- starting an exercise session and accepting learner submissions
+- validating the first supported answer types
+- rendering answer input, pending states, and correctness feedback
+- returning machine-readable validation outcomes that the UI can present clearly
+
+### Parent Issue 4. Guided retry and hints MVP
+
+Goal: help the learner recover from mistakes without losing context.
+
+Includes work such as:
+
+- returning explanations for incorrect or partial answers
+- preserving exercise context across retries
 - revealing stronger hints after repeated failures
+- making the retry loop instructional instead of binary
 
-### Parent Issue 3. SPA training workspace
+### Parent Issue 5. Progress and next-step guidance MVP
 
-Goal: build the user-facing interface for selecting, solving, and reviewing Git exercises.
-
-Includes work such as:
-
-- building the SPA shell and route structure
-- presenting the scenario catalog and entry flow
-- rendering the exercise workspace and answer controls
-- showing feedback, retry flow, and fallback states
-
-### Parent Issue 4. Progress and retention
-
-Goal: make repeat practice visible so learners can track growth over time.
+Goal: make repeat practice visible so the learner can track progress and choose what to do next.
 
 Includes work such as:
 
