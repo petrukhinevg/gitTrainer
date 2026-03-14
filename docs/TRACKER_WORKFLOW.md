@@ -70,6 +70,7 @@ When decomposing a parent issue:
 ## Git workflow
 
 - `main` is the production branch.
+- Use a single local repository directory by default. Do not create a separate local folder or `git worktree` for each task unless the user explicitly requests it.
 - Epic branches and standalone task branches are created from `main`.
 - After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
 - After the initial epic commit exists, create child task branches for all currently defined sub-issues right away.
@@ -130,14 +131,15 @@ Use these notes when the tracker workflow is executed through `gh` or GraphQL in
 
 When a task reveals a stable command sequence, API query, mutation, or workaround that is likely to be reused, add that note here while the details are fresh instead of leaving it only in chat history.
 
-### Credentials from alternate worktrees
+### Single local checkout
 
-If a command is executed from another worktree such as `gitTrainer_task138`, do not assume `.env` exists there. Source it from the repository root with an absolute path, for example:
+Default workflow uses one local checkout of the repository.
 
-```sh
-set -a && source /Users/petrukhinevg/IdeaProjects/gitTrainer/.env
-export GH_TOKEN="$GITHUB_ADMIN_TOKEN"
-```
+Operational rule:
+
+- switch branches inside the same local directory instead of creating separate task folders
+- before switching tasks or branches, keep the worktree clean by committing the current logical unit or explicitly coordinating any remaining local changes
+- use alternate local folders or `git worktree` only when the user explicitly requests that setup
 
 ### Linked branches
 
