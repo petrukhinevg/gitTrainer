@@ -199,7 +199,9 @@ a {
 }
 
 .catalog-controls select,
-.catalog-controls button {
+.catalog-controls button,
+.answer-form textarea,
+.answer-form button {
     width: 100%;
     min-height: 44px;
     padding: 10px 12px;
@@ -215,6 +217,7 @@ a {
 }
 
 .catalog-controls button[type="submit"],
+.answer-form button[type="submit"],
 .scenario-action {
     background: var(--accent);
     color: #fffaf1;
@@ -285,9 +288,53 @@ a {
 
 .scenario-rail__list,
 .scenario-list,
-.workspace-stack {
+.workspace-stack,
+.answer-form,
+.answer-form__field {
     display: grid;
     gap: 12px;
+}
+
+.answer-form textarea {
+    min-height: 184px;
+    resize: vertical;
+    line-height: 1.5;
+    font-family: "Courier New", Courier, monospace;
+}
+
+.answer-form textarea:focus {
+    outline: 2px solid rgba(190, 91, 43, 0.34);
+    outline-offset: 2px;
+}
+
+.answer-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.answer-form__actions > * {
+    flex: 1 1 140px;
+}
+
+.answer-form__secondary {
+    background: rgba(255, 250, 241, 0.96);
+    color: var(--ink-strong);
+}
+
+.answer-form__feedback {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--ink-soft);
+}
+
+.answer-form__feedback--error {
+    color: #8d2d2d;
+}
+
+.answer-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .scenario-link {
@@ -321,11 +368,19 @@ a {
 .workspace-stack__panel,
 .catalog-state,
 .scenario-card,
-.lesson-block {
+.lesson-block,
+.draft-preview {
     padding: 18px;
     border: 1px solid var(--border);
     border-radius: 22px;
     background: var(--paper-muted);
+}
+
+.draft-preview {
+    margin: 0;
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre-wrap;
 }
 
 .lesson-block {
@@ -449,6 +504,7 @@ a {
     }
 
     .control-actions,
+    .answer-form__actions,
     .workspace-card__actions,
     .scenario-card-footer {
         flex-direction: column;

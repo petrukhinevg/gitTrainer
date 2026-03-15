@@ -23,6 +23,13 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             status: "idle",
             data: null,
             error: null
+        },
+        answerDraft: {
+            value: "",
+            touched: false,
+            status: "idle",
+            error: null,
+            lastSubmittedPreview: null
         }
     };
 
@@ -42,9 +49,11 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
     async function handleRouteChange() {
         const route = parseRoute(window.location.hash);
+        const previousRoute = state.route;
+        const previousScenarioSlug = state.selectedScenarioSlug;
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
-        resetRouteScopedState();
+        resetRouteScopedState(previousRoute, previousScenarioSlug);
         render();
 
         if (state.route === "not-found") {
@@ -185,11 +194,73 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     function bindCatalogControls() {
         const form = document.querySelector("[data-catalog-controls]");
         if (!form) {
+            bindAnswerComposer();
             return;
         }
 
         form.addEventListener("submit", handleCatalogControlsSubmit);
         form.querySelector("[data-reset-query]")?.addEventListener("click", resetQueryControls);
+        bindAnswerComposer();
+    }
+
+    function bindAnswerComposer() {
+        const form = document.querySelector("[data-answer-form]");
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener("submit", handleAnswerDraftSubmit);
+        form.addEventListener("reset", handleAnswerDraftReset);
+        form.querySelector("[data-answer-input]")?.addEventListener("input", handleAnswerDraftInput);
+        form.querySelector("[data-answer-input]")?.addEventListener("blur", handleAnswerDraftBlur);
+    }
+
+    function handleAnswerDraftInput(event) {
+        state.answerDraft.value = event.currentTarget.value;
+        state.answerDraft.status = normalizeDraftValue(state.answerDraft.value) ? "editing" : "idle";
+        state.answerDraft.lastSubmittedPreview = null;
+
+        if (state.answerDraft.touched) {
+            state.answerDraft.error = validateAnswerDraft(state.answerDraft.value);
+            if (state.answerDraft.error && state.answerDraft.status !== "ready") {
+                state.answerDraft.status = "invalid";
+            }
+        }
+
+        render();
+    }
+
+    function handleAnswerDraftBlur(event) {
+        state.answerDraft.touched = true;
+        state.answerDraft.error = validateAnswerDraft(event.currentTarget.value);
+        if (state.answerDraft.error) {
+            state.answerDraft.status = "invalid";
+        }
+
+        render();
+    }
+
+    function handleAnswerDraftSubmit(event) {
+        event.preventDefault();
+
+        state.answerDraft.touched = true;
+        state.answerDraft.error = validateAnswerDraft(state.answerDraft.value);
+        if (state.answerDraft.error) {
+            state.answerDraft.status = "invalid";
+            render();
+            return;
+        }
+
+        const normalizedDraft = normalizeDraftValue(state.answerDraft.value);
+        state.answerDraft.status = "ready";
+        state.answerDraft.lastSubmittedPreview = buildDraftPreview(normalizedDraft);
+        render();
+    }
+
+    function handleAnswerDraftReset(event) {
+        event.preventDefault();
+        resetAnswerDraftState();
+        render();
     }
 
     async function reloadActiveRouteData() {
@@ -199,12 +270,26 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         ]);
     }
 
-    function resetRouteScopedState() {
+    function resetRouteScopedState(previousRoute, previousScenarioSlug) {
         if (state.route !== "exercise") {
             state.detail.status = "idle";
             state.detail.data = null;
             state.detail.error = null;
+            resetAnswerDraftState();
+            return;
         }
+
+        if (previousRoute !== "exercise" || previousScenarioSlug !== state.selectedScenarioSlug) {
+            resetAnswerDraftState();
+        }
+    }
+
+    function resetAnswerDraftState() {
+        state.answerDraft.value = "";
+        state.answerDraft.touched = false;
+        state.answerDraft.status = "idle";
+        state.answerDraft.error = null;
+        state.answerDraft.lastSubmittedPreview = null;
     }
 
     return {
@@ -257,5 +342,28 @@ function cloneQuery(query) {
         difficulty: query.difficulty,
         tags: [...query.tags],
         sort: query.sort
+    };
+}
+
+function normalizeDraftValue(value) {
+    const normalized = String(value ?? "").trim();
+    return normalized.length ? normalized : null;
+}
+
+function validateAnswerDraft(value) {
+    if (!normalizeDraftValue(value)) {
+        return "Enter at least one Git command or answer before submitting.";
+    }
+
+    return null;
+}
+
+function buildDraftPreview(value) {
+    const nonEmptyLines = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+    return {
+        value,
+        characterCount: value.length,
+        lineCount: nonEmptyLines.length || 1
     };
 }

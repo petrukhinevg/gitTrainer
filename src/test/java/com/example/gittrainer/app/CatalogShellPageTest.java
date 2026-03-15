@@ -45,6 +45,11 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Exercise route is loading provider-backed detail")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Selected scenario detail is loading")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Answer input shell is local-first and submission-ready")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Submit local draft")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Reset draft")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Draft is ready for session transport")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Enter at least one Git command or answer before submitting.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
@@ -55,6 +60,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".workspace-grid")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".panel--workspace")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".answer-form")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".draft-preview")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
     }
 }

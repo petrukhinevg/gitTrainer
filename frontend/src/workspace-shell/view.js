@@ -21,6 +21,7 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
                 <div class="workspace-chip">Provider: ${escapeHtml(state.providerName)}</div>
                 <div class="workspace-chip">Catalog: ${escapeHtml(state.catalog.status)}</div>
                 <div class="workspace-chip">Detail: ${escapeHtml(resolveDetailStatusLabel(state))}</div>
+                <div class="workspace-chip">Draft: ${escapeHtml(resolveDraftStatusLabel(state))}</div>
             </div>
         </section>
 
@@ -271,17 +272,41 @@ function renderWorkspacePanel(state) {
     return `
         <section class="panel panel--workspace">
             <p class="panel-label">${escapeHtml(detail.workspace.shell.rightPanelTitle)}</p>
-            <h3>Exercise route now renders a provider-backed shell</h3>
+            <h3>Answer input shell is local-first and submission-ready</h3>
             <p class="panel-copy">
-                This right lane is still only a workspace placeholder, but it is now driven by exercise detail payload state instead of catalog summary assumptions.
+                The workspace now keeps answer controls and draft-state semantics in the right lane, but submission transport still stays local until the next session integration slice.
             </p>
+            <form class="answer-form workspace-card" data-answer-form>
+                <div class="workspace-card__header">
+                    <span class="control-label">Answer input shell</span>
+                    <span class="workspace-card__badge">${escapeHtml(resolveDraftStatusLabel(state))}</span>
+                </div>
+                <label class="answer-form__field">
+                    <span class="control-label">Draft answer</span>
+                    <textarea
+                        name="answer"
+                        rows="8"
+                        data-answer-input
+                        placeholder="git status&#10;git branch -vv"
+                    >${escapeHtml(state.answerDraft.value)}</textarea>
+                </label>
+                <p class="panel-copy">
+                    Type a command sequence or free-form answer, validate it locally, and keep it staged inside the workspace before live transport is wired.
+                </p>
+                ${renderDraftFeedback(state)}
+                <div class="answer-form__actions">
+                    <button type="submit" ${canSubmitDraft(state) ? "" : "disabled"}>Submit local draft</button>
+                    <button type="reset" class="answer-form__secondary" ${canResetDraft(state) ? "" : "disabled"}>Reset draft</button>
+                    <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
+                </div>
+            </form>
             <div class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">Repository context seam</span>
                     <span class="workspace-card__badge">${escapeHtml(detail.workspace.repositoryContext.status)}</span>
                 </div>
                 <p class="panel-copy">
-                    The detail payload exposes stable placeholders for branches, commits, files, and annotations so later tasks can render them without redesigning the shell.
+                    The exercise shell still exposes static repository placeholders. Answer drafting now lives beside them without depending on final correctness or transport feedback.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -301,11 +326,59 @@ function renderWorkspacePanel(state) {
                         <dd>${detail.workspace.repositoryContext.annotations.length}</dd>
                     </div>
                 </dl>
-                <div class="workspace-card__actions">
-                    <a class="scenario-action" href="#/catalog">Back to catalog</a>
-                </div>
             </div>
+            ${renderDraftPreview(state)}
         </section>
+    `;
+}
+
+function renderDraftFeedback(state) {
+    if (state.answerDraft.error) {
+        return `<p class="answer-form__feedback answer-form__feedback--error">${escapeHtml(state.answerDraft.error)}</p>`;
+    }
+
+    if (state.answerDraft.status === "ready") {
+        return `
+            <p class="answer-form__feedback">
+                Draft is ready for session transport. The submit action currently stages local state only, so the learner can review the answer before backend transport is wired.
+            </p>
+        `;
+    }
+
+    return `
+        <p class="answer-form__feedback">
+            Submit-ready behavior stays local in this slice: empty drafts are blocked, valid drafts can be staged, and reset clears the workspace answer state.
+        </p>
+    `;
+}
+
+function renderDraftPreview(state) {
+    const preview = state.answerDraft.lastSubmittedPreview;
+    if (!preview) {
+        return "";
+    }
+
+    return `
+        <div class="workspace-card workspace-card--draft">
+            <div class="workspace-card__header">
+                <span class="control-label">Local submission preview</span>
+                <span class="workspace-card__badge">staged</span>
+            </div>
+            <p class="panel-copy">
+                Draft is ready for session transport once the live session bootstrap and submission request flow are integrated.
+            </p>
+            <pre class="draft-preview"><code>${escapeHtml(preview.value)}</code></pre>
+            <dl class="result-summary">
+                <div>
+                    <dt>Characters</dt>
+                    <dd>${preview.characterCount}</dd>
+                </div>
+                <div>
+                    <dt>Lines</dt>
+                    <dd>${preview.lineCount}</dd>
+                </div>
+            </dl>
+        </div>
     `;
 }
 
@@ -438,6 +511,14 @@ function resolveDetailStatusLabel(state) {
     return state.route === "exercise" ? state.detail.status : "inactive";
 }
 
+function resolveDraftStatusLabel(state) {
+    if (state.route !== "exercise") {
+        return "inactive";
+    }
+
+    return state.answerDraft.status;
+}
+
 function resolveLeftPanelTitle(state) {
     if (state.route === "exercise" && state.detail.status === "ready") {
         return state.detail.data.workspace.shell.leftPanelTitle;
@@ -482,6 +563,14 @@ function renderDifficultyOption(state, value, label) {
 function renderSortOption(state, value, label) {
     const selectedSort = state.query.sort ?? "title";
     return `<option value="${value}" ${selectedSort === value ? "selected" : ""}>${label}</option>`;
+}
+
+function canSubmitDraft(state) {
+    return state.route === "exercise" && state.detail.status === "ready" && Boolean(state.answerDraft.value.trim());
+}
+
+function canResetDraft(state) {
+    return Boolean(state.answerDraft.value) || Boolean(state.answerDraft.lastSubmittedPreview);
 }
 
 function formatDifficulty(value) {
