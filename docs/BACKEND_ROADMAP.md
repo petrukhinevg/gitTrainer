@@ -11,6 +11,9 @@ For the MVP, the backend should make it possible to serve a small scenario catal
 - Items below should be suitable for creating issues.
 - One task should produce a complete and testable backend result.
 - If a backend item grows too large, convert it into a `parent issue` with `sub-issues`.
+- Prefer issue sizes that can usually be implemented and reviewed in one focused PR.
+- Prefer self-contained backend tasks that can branch from the parent baseline without requiring unmerged sibling backend code.
+- If two backend steps only become meaningful together as one stable contract, merge them into one broader backend task instead of chaining sibling tasks.
 
 ## MVP for backend
 
@@ -23,74 +26,42 @@ Backend MVP is complete when:
 
 ## Parent issues
 
-### Parent Issue 1. Scenario catalog domain
+### Parent Issue 1. Scenario catalog browsing backend
 
-Goal: define the core backend model for Git exercises and make the initial catalog available to the application.
+Goal: provide the backend slice needed for browsing the first MVP catalog.
 
-#### Sub-issue 1.1. Create scenario, step, and expected-outcome domain objects
+#### Sub-issue 1.1. Deliver complete catalog summary boundary for MVP browsing
 
-Result: the backend has stable domain types for training content and validation targets.
+Result: the backend exposes one stable catalog summary boundary for the full MVP scenario set, including the fields needed for filtering and sorting.
 
-#### Sub-issue 1.2. Model repository state snapshots for exercises
+### Parent Issue 2. Exercise context and workspace backend
 
-Result: backend scenarios can express starting branches, commits, file states, and other repository cues needed by the UI and validator.
+Goal: provide the backend slice needed to open one exercise and show its context.
 
-#### Sub-issue 1.3. Add catalog loading strategy for MVP scenarios
+#### Sub-issue 2.1. Deliver complete exercise detail and repository context boundary
 
-Result: the application can serve a predefined set of exercises from local resources or in-memory fixtures.
+Result: the backend exposes one stable exercise detail boundary for the MVP scenario set, including learner-facing task text, ordered steps, repository context, and any required data-source seam.
 
-#### Sub-issue 1.4. Seed status and branch scenarios in the catalog
+### Parent Issue 3. Submission and correctness backend
 
-Result: the application exposes a first small set of beginner exercises focused on repository inspection and branch flow.
+Goal: provide the backend slice needed for answer submission and first-pass validation.
 
-#### Sub-issue 1.5. Seed history and conflict starter scenarios in the catalog
+#### Sub-issue 3.1. Deliver complete submission and correctness boundary for MVP answer types
 
-Result: the catalog covers the second MVP slice with commit history and basic conflict handling exercises.
+Result: clients can start a session, submit the first MVP answer types, and receive stable machine-readable correctness results through one backend boundary.
 
-### Parent Issue 2. Session lifecycle and validation
+### Parent Issue 4. Guided retry and hints backend
 
-Goal: support an end-to-end attempt from exercise start to validated result.
+Goal: provide the backend slice needed for instructional retries.
 
-#### Sub-issue 2.1. Create session start and submission APIs
+#### Sub-issue 4.1. Deliver explanation and hint progression boundary
 
-Result: clients can start an exercise session and submit learner answers.
+Result: the backend exposes one stable instructional feedback boundary that covers incorrect answers, partial matches, and progressive hints.
 
-#### Sub-issue 2.2. Create session domain state and lifecycle rules
+### Parent Issue 5. Progress and next-step guidance backend
 
-Result: the backend can track started, answered, solved, and failed session states consistently.
+Goal: provide the backend slice needed for durable progress tracking and follow-up guidance.
 
-#### Sub-issue 2.3. Implement Git answer normalization for submitted commands
+#### Sub-issue 5.1. Deliver progress and recommendation boundary
 
-Result: the validator can compare learner input in a stable way without being overly sensitive to harmless formatting differences.
-
-#### Sub-issue 2.4. Implement Git answer validation engine
-
-Result: the backend can compare learner input against expected repository outcomes and return pass/fail reasons.
-
-#### Sub-issue 2.5. Add structured validation failure codes
-
-Result: clients receive machine-readable failure reasons that support consistent UI messaging and analytics.
-
-### Parent Issue 3. Feedback and progress tracking
-
-Goal: make backend responses useful for learning instead of simple status codes.
-
-#### Sub-issue 3.1. Return explanation payloads for validation outcomes
-
-Result: clients receive instructional feedback for incorrect or partial answers.
-
-#### Sub-issue 3.2. Add progressive hint selection rules
-
-Result: the backend can reveal stronger hints after repeated failures on the same scenario.
-
-#### Sub-issue 3.3. Persist attempt history and completion state
-
-Result: the backend stores attempt outcomes and solved status per scenario.
-
-#### Sub-issue 3.4. Expose progress summary API
-
-Result: clients can fetch completed exercises, recent attempts, and basic topic-level progress indicators.
-
-#### Sub-issue 3.5. Add next-scenario recommendation rules
-
-Result: the backend can suggest a reasonable follow-up exercise based on recent learner performance.
+Result: the backend exposes one stable progress boundary for completion state, recent activity, progress summaries, and next-step recommendations.

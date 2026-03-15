@@ -11,6 +11,9 @@ For the MVP, the frontend should enable a learner to browse exercises, enter a t
 - Items below should be suitable for creating issues.
 - One task should produce a complete and testable frontend result.
 - If a frontend item grows too large, convert it into a `parent issue` with `sub-issues`.
+- Prefer issue sizes that can usually be implemented and reviewed in one focused PR.
+- Prefer self-contained frontend tasks that can move forward from fixtures or stable contracts without waiting on unmerged sibling frontend work.
+- If several frontend steps are only meaningful together as one screen or one interaction loop, keep them in one broader frontend task instead of chaining sibling tasks.
 
 ## Base UI constraints
 
@@ -30,66 +33,42 @@ Frontend MVP is complete when:
 
 ## Parent issues
 
-### Parent Issue 1. SPA shell and navigation
+### Parent Issue 1. Scenario catalog browsing frontend
 
-Goal: create the client structure that supports a catalog view, exercise view, and progress view.
+Goal: provide the frontend slice needed for browsing and choosing exercises.
 
-#### Sub-issue 1.1. Build the base application shell and route structure
+#### Sub-issue 1.1. Deliver catalog browsing UI against a swappable summary provider
 
-Result: the app can switch between the main training screens without reloads.
+Result: the frontend delivers the complete catalog browsing experience, including entry actions, filtering, and fallback states, against a provider boundary that can start local and later swap to a backend contract without redesigning the screen.
 
-#### Sub-issue 1.2. Add shared app states for loading, empty, and request failures
+### Parent Issue 2. Exercise context and workspace frontend
 
-Result: the shell can render understandable fallback states before all feature screens are fully wired.
+Goal: provide the frontend slice needed to open an exercise and understand its context.
 
-#### Sub-issue 1.3. Implement catalog listing and entry actions
+#### Sub-issue 2.1. Deliver exercise workspace UI against a swappable detail provider
 
-Result: the learner can discover available Git scenarios and start one quickly.
+Result: the frontend delivers the complete exercise context screen, including routing, repository cues, and fallback states, against a provider boundary that can start local and later swap to a backend contract without redesigning the workspace.
 
-#### Sub-issue 1.4. Add catalog filtering by topic and difficulty
+### Parent Issue 3. Submission and correctness frontend
 
-Result: the learner can narrow the scenario list to a manageable set before starting practice.
+Goal: provide the frontend slice needed for answer submission and first-pass correctness feedback.
 
-### Parent Issue 2. Exercise workspace
+#### Sub-issue 3.1. Deliver submission UI and correctness states against a swappable submission provider
 
-Goal: design the main screen where the learner solves a Git task.
+Result: the frontend delivers the complete submission interaction loop, including input, pending states, request failures, and correctness summaries, against a provider boundary that can start local and later swap to a backend contract without redesigning the flow.
 
-#### Sub-issue 2.1. Create the scenario detail layout
+### Parent Issue 4. Guided retry and hints frontend
 
-Result: the learner can read the task goal, step context, and scenario metadata in a stable workspace layout.
+Goal: provide the frontend slice needed for instructional retries.
 
-#### Sub-issue 2.2. Render repository context and hints panel
+#### Sub-issue 4.1. Deliver retry and hint UX against a swappable feedback provider
 
-Result: the learner can inspect branches, status cues, and other repository hints without leaving the exercise screen.
+Result: the frontend delivers the complete retry loop, including explanation rendering, preserved exercise context, and progressive hint reveal, against a provider boundary that can start local and later swap to a backend contract without redesigning the flow.
 
-#### Sub-issue 2.3. Add answer input controls and submission states
+### Parent Issue 5. Progress and next-step guidance frontend
 
-Result: the learner can enter a Git answer, submit it once, and see pending state without ambiguous UI transitions.
+Goal: provide the frontend slice needed for visible progress and sensible follow-up guidance.
 
-#### Sub-issue 2.4. Add validation feedback rendering
+#### Sub-issue 5.1. Deliver progress surfaces against a swappable progress provider
 
-Result: the learner can understand whether the answer passed, partially matched, or failed and why.
-
-#### Sub-issue 2.5. Add retry flow and hint reveal interactions
-
-Result: the learner can retry the task and progressively request more help without losing the current scenario context.
-
-### Parent Issue 3. Progress and motivation surfaces
-
-Goal: make repeated practice visible and encourage the next exercise.
-
-#### Sub-issue 3.1. Show completion state in the catalog and exercise header
-
-Result: the learner can immediately see solved and in-progress exercises in the main training flow.
-
-#### Sub-issue 3.2. Build recent attempts and unfinished work view
-
-Result: the learner can return to partially completed or recently failed scenarios without searching manually.
-
-#### Sub-issue 3.3. Add topic-based progress summary
-
-Result: the app can highlight strengths, weak spots, and the next recommended Git topic.
-
-#### Sub-issue 3.4. Render next-exercise recommendation card
-
-Result: the UI can surface the most relevant next scenario after a learner finishes or leaves an exercise.
+Result: the frontend delivers the complete progress surface, including markers, recent work, unfinished work, summaries, and next-step recommendations, against a provider boundary that can start local and later swap to a backend contract without redesigning the UI.
