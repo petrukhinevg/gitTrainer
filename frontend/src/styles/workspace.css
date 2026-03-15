@@ -1,0 +1,78 @@
+.workspace-stack,
+.context-list {
+    display: grid;
+    gap: 12px;
+}
+
+.workspace-card,
+.workspace-stack__panel,
+.context-row {
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--paper-muted);
+}
+
+.workspace-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.workspace-card__badge {
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(57, 89, 121, 0.12);
+    color: var(--accent-cool);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+}
+
+.workspace-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.context-row {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+}
+
+.context-row__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+.context-pill,
+.context-mono {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.92);
+    font-size: 0.8rem;
+}
+
+.context-pill--active {
+    background: rgba(190, 91, 43, 0.14);
+}
+
+.context-mono {
+    font-family: "Courier New", Courier, monospace;
+}
+
+@media (max-width: 720px) {
+    .workspace-card__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

@@ -1,4 +1,9 @@
-import "./styles.css";
+// Keep foundation and layout first, then layer feature-specific slices on top.
+import "./styles/base.css";
+import "./styles/layout.css";
+import "./styles/catalog.css";
+import "./styles/lesson.css";
+import "./styles/workspace.css";
 import {
     createBackendApiCatalogProvider,
     createLocalFixtureCatalogProvider,
