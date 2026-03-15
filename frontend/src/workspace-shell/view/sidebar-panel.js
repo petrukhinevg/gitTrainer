@@ -1,4 +1,5 @@
 import { renderScenarioRail } from "./catalog-surfaces.js";
+import { renderLessonLane } from "./lesson-layout.js";
 import { renderLessonNavigationRail } from "./lesson-navigation.js";
 import {
     escapeHtml,
@@ -6,16 +7,41 @@ import {
 
 export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
     if (state.route === "exercise") {
-        return renderExerciseSidebarPanel(state);
+        return renderExerciseNavigationLane(state);
     }
 
-    return `
-        <aside class="panel panel--sidebar">
-            <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
-            <h3>Browse controls and route entry</h3>
-            <p class="panel-copy">
-                The catalog and exercise detail providers are now separate seams. Query controls still shape browsing, while the exercise route loads scenario detail by slug through its own boundary.
-            </p>
+    return renderLessonLane({
+        lane: "navigation",
+        label: resolveLeftPanelTitle(state),
+        title: "Shape the route before the learner enters the lesson",
+        description: "Provider and query controls still drive the catalog, but the shell is now locked into the same three-lane lesson structure used by exercise routes.",
+        meta: [
+            `Route: ${state.route}`,
+            `Provider: ${state.providerName}`,
+            `Catalog: ${state.catalog.status}`
+        ],
+        body: `
+            <section class="lane-summary">
+                <div class="lane-summary__header">
+                    <span class="control-label">Workspace entry</span>
+                    <span class="lane-summary__badge">catalog route</span>
+                </div>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Selected scenario</dt>
+                        <dd>${escapeHtml(state.selectedScenarioSlug ?? "Not selected")}</dd>
+                    </div>
+                    <div>
+                        <dt>Quick links</dt>
+                        <dd>${state.catalog.items.length}</dd>
+                    </div>
+                    <div>
+                        <dt>Detail flow</dt>
+                        <dd>inactive</dd>
+                    </div>
+                </dl>
+            </section>
+
             <form class="catalog-controls" data-catalog-controls>
                 <label>
                     <span class="control-label">Provider</span>
@@ -69,56 +95,67 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
                 </div>
                 ${renderScenarioRail(state, selectedCatalogScenario)}
             </div>
-        </aside>
-    `;
+        `
+    });
 }
 
-function renderExerciseSidebarPanel(state) {
+function renderExerciseNavigationLane(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return `
-            <aside class="panel panel--sidebar">
-                <p class="panel-label">Lesson navigation</p>
-                <h3>Lesson rail is reserving the left lane</h3>
-                <p class="panel-copy">
-                    The learner already entered the exercise route. The left lane now holds space for lesson navigation even while detail is still loading.
-                </p>
-                <div class="lesson-rail__summary">
+        return renderLessonLane({
+            lane: "navigation",
+            label: "Lesson navigation",
+            title: "Lesson rail is reserving the left lane",
+            description: "The learner already entered the exercise route. The left lane now holds space for lesson navigation even while detail is still loading.",
+            meta: [
+                `Route: ${state.route}`,
+                `Detail: ${state.detail.status}`
+            ],
+            body: `
+                <section class="lesson-rail__summary">
                     <span class="control-label">Route state</span>
                     <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
                     <p class="panel-copy">Once the detail provider responds, this lane turns into a structured lesson map with current, upcoming, and locked stops.</p>
-                </div>
-            </aside>
-        `;
+                </section>
+            `
+        });
     }
 
     if (state.detail.status === "error") {
-        return `
-            <aside class="panel panel--sidebar">
-                <p class="panel-label">Lesson navigation</p>
-                <h3>Lesson rail is unavailable for this route</h3>
-                <p class="panel-copy">
-                    The left lane keeps a coherent unavailable state when the selected scenario detail provider fails before lesson data can be mapped into navigation stops.
-                </p>
-                <div class="lesson-rail__summary">
+        return renderLessonLane({
+            lane: "navigation",
+            label: "Lesson navigation",
+            title: "Lesson rail is unavailable for this route",
+            description: "The left lane keeps a coherent unavailable state when the selected scenario detail provider fails before lesson data can be mapped into navigation stops.",
+            meta: [
+                `Provider: ${state.providerName}`,
+                "Detail: error"
+            ],
+            body: `
+                <section class="lesson-rail__summary">
                     <span class="control-label">Requested route</span>
                     <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
                     <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                </section>
+                <div class="lesson-rail__footer">
+                    <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
                 </div>
-                <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
-            </aside>
-        `;
+            `
+        });
     }
 
-    return `
-        <aside class="panel panel--sidebar">
-            <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
-            <h3>Lesson navigation rail</h3>
-            <p class="panel-copy">
-                The left lane now behaves like a lesson navigator instead of a control drawer, helping the learner scan what is active now and what stays for later.
-            </p>
-            ${renderLessonNavigationRail(state.detail.data)}
-        </aside>
-    `;
+    const detail = state.detail.data;
+    return renderLessonLane({
+        lane: "navigation",
+        label: detail.workspace.shell.leftPanelTitle,
+        title: "Lesson navigation rail",
+        description: "The left lane now behaves like a lesson navigator instead of a control drawer, helping the learner scan what is active now and what stays for later.",
+        meta: [
+            `Difficulty: ${detail.difficulty}`,
+            `Source: ${detail.meta.source}`,
+            `Task: ${detail.workspace.task.status}`
+        ],
+        body: renderLessonNavigationRail(detail)
+    });
 }
 
 function resolveLeftPanelTitle(state) {
@@ -126,7 +163,7 @@ function resolveLeftPanelTitle(state) {
         return state.detail.data.workspace.shell.leftPanelTitle;
     }
 
-    return "Scenario map";
+    return "Navigation lane";
 }
 
 function renderProviderOption(state, value, label) {

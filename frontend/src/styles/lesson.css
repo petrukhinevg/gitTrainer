@@ -7,6 +7,12 @@
     background: var(--paper-muted);
 }
 
+.lesson-block--highlight {
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.09), rgba(246, 239, 226, 0.9)),
+        var(--paper-muted);
+}
+
 .lesson-spotlight {
     display: grid;
     gap: 12px;
