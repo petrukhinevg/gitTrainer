@@ -3,7 +3,7 @@ import {
     createLocalFixtureCatalogProvider,
     createUnavailableFixtureCatalogProvider
 } from "./catalog/catalog-provider.js";
-import { CATALOG_TAG_OPTIONS } from "./catalog/catalog-fixtures.js";
+import { CATALOG_TAG_OPTIONS, FIXTURE_SCENARIO_CATALOG } from "./catalog/catalog-fixtures.js";
 
 const providerFactories = Object.freeze({
     "local-fixture": () => createLocalFixtureCatalogProvider(),
@@ -20,6 +20,7 @@ const DEFAULT_QUERY = Object.freeze({
 
 const state = {
     route: "catalog",
+    selectedScenarioSlug: null,
     status: "idle",
     query: cloneQuery(DEFAULT_QUERY),
     catalog: null,
@@ -42,7 +43,9 @@ async function bootstrapCatalogApp() {
 }
 
 async function handleRouteChange() {
-    state.route = parseRoute(window.location.hash);
+    const route = parseRoute(window.location.hash);
+    state.route = route.name;
+    state.selectedScenarioSlug = route.scenarioSlug;
     render();
 
     if (state.route !== "catalog") {
@@ -53,7 +56,25 @@ async function handleRouteChange() {
 }
 
 function parseRoute(hash) {
-    return hash === "#/catalog" ? "catalog" : "not-found";
+    if (hash === "#/catalog") {
+        return {
+            name: "catalog",
+            scenarioSlug: null
+        };
+    }
+
+    const exerciseMatch = hash.match(/^#\/exercise\/([^/?#]+)$/);
+    if (exerciseMatch) {
+        return {
+            name: "exercise",
+            scenarioSlug: decodeURIComponent(exerciseMatch[1])
+        };
+    }
+
+    return {
+        name: "not-found",
+        scenarioSlug: null
+    };
 }
 
 async function loadCatalog() {
@@ -102,9 +123,14 @@ function render() {
             <section class="hero-panel">
                 <p class="panel-label">Route shell</p>
                 <h2>Unknown route</h2>
-                <p>The SPA shell is active, but only <code>#/catalog</code> is wired in issue 1.1.</p>
+                <p>The SPA shell is active, but only <code>#/catalog</code> and <code>#/exercise/&lt;slug&gt;</code> are wired in this epic.</p>
             </section>
         `;
+        return;
+    }
+
+    if (state.route === "exercise") {
+        renderExerciseHandoff();
         return;
     }
 
@@ -217,8 +243,8 @@ function render() {
                 <p class="panel-label">Result summary</p>
                 <h3>Current boundary snapshot</h3>
                 <p>
-                    The query-state contract stays unchanged, but the result surface now shows the same summary metadata a
-                    learner would use to choose the next exercise.
+                    The query-state contract stays unchanged, and the entry action now hands the chosen scenario slug into
+                    a stable exercise route placeholder without pulling in full detail rendering yet.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -239,7 +265,7 @@ function render() {
                     </div>
                 </dl>
                 <p class="entry-note">
-                    Entry actions are intentionally presentational for now. The dedicated workspace route lands in issue 2.1.
+                    Entry actions now open a route-level handoff screen. The full workspace still lands in issue 2.1.
                 </p>
             </article>
         </section>
@@ -377,11 +403,75 @@ function renderScenarioCard(item) {
                 ${item.tags.map((tag) => `<span class="scenario-tag">${escapeHtml(tag)}</span>`).join("")}
             </div>
             <div class="scenario-card-footer">
-                <button type="button" class="scenario-action" disabled>Open scenario</button>
-                <span class="entry-note">Workspace route ships in issue 2.1.</span>
+                <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Open scenario</a>
+                <span class="entry-note">Route handoff is live; workspace content ships in issue 2.1.</span>
             </div>
         </article>
     `;
+}
+
+function renderExerciseHandoff() {
+    const scenario = findScenarioSummaryBySlug(state.selectedScenarioSlug);
+    const heading = scenario?.title ?? formatScenarioTitleFromSlug(state.selectedScenarioSlug);
+
+    appRoot.innerHTML = `
+        <section class="hero-panel">
+            <p class="panel-label">Exercise Route</p>
+            <h2>${escapeHtml(heading)}</h2>
+            <p>
+                The catalog can now hand a learner into a stable exercise route with the selected scenario slug, while the
+                full workspace shell and detail loading remain in parent issue 2.
+            </p>
+            <div class="provider-badge">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</div>
+        </section>
+
+        <section class="catalog-results-grid">
+            <article class="panel scenario-list-panel">
+                <p class="panel-label">Handoff state</p>
+                <h3>Scenario selection is now routable</h3>
+                <p>
+                    This placeholder confirms that choosing a scenario from the catalog produces a navigable route target
+                    instead of a disabled control.
+                </p>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Route</dt>
+                        <dd>${escapeHtml(`#/exercise/${state.selectedScenarioSlug ?? ""}`)}</dd>
+                    </div>
+                    <div>
+                        <dt>Slug</dt>
+                        <dd>${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</dd>
+                    </div>
+                    <div>
+                        <dt>Title</dt>
+                        <dd>${escapeHtml(scenario?.title ?? "Authored detail arrives in issue 2.1")}</dd>
+                    </div>
+                </dl>
+            </article>
+
+            <article class="panel result-summary-panel">
+                <p class="panel-label">Next seam</p>
+                <h3>Workspace route is reserved</h3>
+                <p>
+                    Parent issue 2 still owns exercise detail loading, task instructions, and repository context. This
+                    screen only proves the catalog can open a selected scenario into a stable route.
+                </p>
+                <div class="route-actions">
+                    <a class="scenario-action" href="#/catalog">Back to catalog</a>
+                </div>
+            </article>
+        </section>
+    `;
+}
+
+function findScenarioSummaryBySlug(slug) {
+    if (!slug) {
+        return null;
+    }
+
+    return state.catalog?.items.find((item) => item.slug === slug)
+        ?? FIXTURE_SCENARIO_CATALOG.items.find((item) => item.slug === slug)
+        ?? null;
 }
 
 function renderActiveFilterTags(tags) {
@@ -400,6 +490,18 @@ function formatDifficulty(value) {
     return String(value).charAt(0).toUpperCase() + String(value).slice(1);
 }
 
+function formatScenarioTitleFromSlug(slug) {
+    if (!slug) {
+        return "Unknown scenario";
+    }
+
+    return slug
+        .split("-")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+}
+
 function normalizeOptionalValue(value) {
     const normalized = String(value ?? "").trim();
     return normalized.length ? normalized : null;
@@ -416,6 +518,10 @@ function cloneQuery(query) {
         tags: [...query.tags],
         sort: query.sort
     };
+}
+
+function encodeHashSegment(value) {
+    return encodeURIComponent(String(value));
 }
 
 function escapeHtml(value) {

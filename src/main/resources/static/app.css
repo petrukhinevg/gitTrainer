@@ -353,6 +353,9 @@ a {
 }
 
 .scenario-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 44px;
     padding: 10px 16px;
     border: none;
@@ -361,7 +364,18 @@ a {
     color: var(--paper-strong);
     font: inherit;
     font-weight: 600;
-    opacity: 0.75;
+    text-decoration: none;
+    opacity: 0.9;
+}
+
+.scenario-action:hover,
+.scenario-action:focus-visible {
+    opacity: 1;
+}
+
+.route-actions {
+    display: flex;
+    gap: 12px;
 }
 
 .catalog-state {
