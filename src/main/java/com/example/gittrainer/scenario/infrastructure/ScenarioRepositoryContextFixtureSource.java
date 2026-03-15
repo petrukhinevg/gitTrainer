@@ -1,5 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.stereotype.Component;
 
@@ -92,15 +93,11 @@ public class ScenarioRepositoryContextFixtureSource {
     );
 
     public ScenarioWorkspaceDetail.ScenarioRepositoryContext fixtureFor(String scenarioSlug) {
-        return FIXTURES.getOrDefault(
-                scenarioSlug,
-                new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
-                        "authored-fixture",
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of()
-                )
-        );
+        ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture = FIXTURES.get(scenarioSlug);
+        if (fixture == null) {
+            throw new ScenarioRepositoryContextNotAuthoredException(scenarioSlug);
+        }
+
+        return fixture;
     }
 }
