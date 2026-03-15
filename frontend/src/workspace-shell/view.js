@@ -225,7 +225,7 @@ function renderExerciseMainPanel(state) {
             <div class="lesson-block">
                 <h4 class="lesson-block__title">Provider seam</h4>
                 <p class="panel-copy">
-                    Task presentation now uses the workspace payload directly, while repository-context visuals still stay deferred to the next slice.
+                    Task presentation and repository-context surfaces now use the workspace payload directly without reshaping the exercise shell.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -311,39 +311,104 @@ function renderWorkspacePanel(state) {
     }
 
     const detail = state.detail.data;
+    const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
     return `
         <section class="panel panel--workspace">
             <p class="panel-label">${escapeHtml(detail.workspace.shell.rightPanelTitle)}</p>
-            <h3>Exercise route now renders a provider-backed shell</h3>
+            <h3>Repository context now has visible workspace surfaces</h3>
             <p class="panel-copy">
-                This right lane is still only a workspace placeholder, but it is now driven by exercise detail payload state instead of catalog summary assumptions.
+                The workspace now shows authored repository cues directly from the detail payload, while keeping the overall shell and route structure unchanged.
             </p>
             <div class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">Repository context seam</span>
-                    <span class="workspace-card__badge">${escapeHtml(detail.workspace.repositoryContext.status)}</span>
+                    <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
                 </div>
                 <p class="panel-copy">
-                    The detail payload exposes stable placeholders for branches, commits, files, and annotations so later tasks can render them without redesigning the shell.
+                    Branch, commit, file, and annotation cues now render as first-class surfaces in the right lane instead of staying hidden behind aggregate counts.
                 </p>
                 <dl class="result-summary">
                     <div>
                         <dt>Branches</dt>
-                        <dd>${detail.workspace.repositoryContext.branches.length}</dd>
+                        <dd>${repositoryContext.branches.length}</dd>
                     </div>
                     <div>
                         <dt>Commits</dt>
-                        <dd>${detail.workspace.repositoryContext.commits.length}</dd>
+                        <dd>${repositoryContext.commits.length}</dd>
                     </div>
                     <div>
                         <dt>Files</dt>
-                        <dd>${detail.workspace.repositoryContext.files.length}</dd>
+                        <dd>${repositoryContext.files.length}</dd>
                     </div>
                     <div>
                         <dt>Annotations</dt>
-                        <dd>${detail.workspace.repositoryContext.annotations.length}</dd>
+                        <dd>${repositoryContext.annotations.length}</dd>
                     </div>
                 </dl>
+            </div>
+            <div class="workspace-card">
+                <div class="workspace-card__header">
+                    <span class="control-label">Branches</span>
+                    <span class="workspace-card__badge">${repositoryContext.branches.length}</span>
+                </div>
+                <div class="context-list">
+                    ${repositoryContext.branches.length > 0 ? repositoryContext.branches.map((branch) => `
+                        <article class="context-row">
+                            <div class="context-row__header">
+                                <strong>${escapeHtml(branch.name)}</strong>
+                                <span class="context-pill ${branch.current ? "context-pill--active" : ""}">
+                                    ${branch.current ? "current" : "available"}
+                                </span>
+                            </div>
+                        </article>
+                    `).join("") : renderEmptyContextState("No branch cues are available from the active detail payload.")}
+                </div>
+            </div>
+            <div class="workspace-card">
+                <div class="workspace-card__header">
+                    <span class="control-label">Recent commits</span>
+                    <span class="workspace-card__badge">${repositoryContext.commits.length}</span>
+                </div>
+                <div class="context-list">
+                    ${repositoryContext.commits.length > 0 ? repositoryContext.commits.map((commit) => `
+                        <article class="context-row">
+                            <div class="context-row__header">
+                                <strong>${escapeHtml(commit.summary)}</strong>
+                                <span class="context-mono">${escapeHtml(commit.id)}</span>
+                            </div>
+                        </article>
+                    `).join("") : renderEmptyContextState("No recent commit cues are available from the active detail payload.")}
+                </div>
+            </div>
+            <div class="workspace-card">
+                <div class="workspace-card__header">
+                    <span class="control-label">File cues</span>
+                    <span class="workspace-card__badge">${repositoryContext.files.length}</span>
+                </div>
+                <div class="context-list">
+                    ${repositoryContext.files.length > 0 ? repositoryContext.files.map((file) => `
+                        <article class="context-row">
+                            <div class="context-row__header">
+                                <strong>${escapeHtml(file.path)}</strong>
+                                <span class="context-pill">${escapeHtml(file.status)}</span>
+                            </div>
+                        </article>
+                    `).join("") : renderEmptyContextState("No file cues are available from the active detail payload.")}
+                </div>
+            </div>
+            <div class="workspace-card">
+                <div class="workspace-card__header">
+                    <span class="control-label">Workspace annotations</span>
+                    <span class="workspace-card__badge">${repositoryContext.annotations.length}</span>
+                </div>
+                <div class="context-list">
+                    ${repositoryContext.annotations.length > 0 ? repositoryContext.annotations.map((annotation) => `
+                        <article class="context-row context-row--annotation">
+                            <span class="control-label">${escapeHtml(annotation.label)}</span>
+                            <p class="panel-copy">${escapeHtml(annotation.message)}</p>
+                        </article>
+                    `).join("") : renderEmptyContextState("No workspace annotations are available from the active detail payload.")}
+                </div>
                 <div class="workspace-card__actions">
                     <a class="scenario-action" href="#/catalog">Back to catalog</a>
                 </div>
@@ -441,6 +506,28 @@ function renderScenarioCard(item) {
                 <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Open scenario</a>
                 <span class="entry-note">Route handoff now resolves detail through a dedicated provider seam.</span>
             </div>
+        </article>
+    `;
+}
+
+function normalizeRepositoryContext(repositoryContext) {
+    const safeContext = repositoryContext ?? {};
+    return {
+        status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
+            ? safeContext.status
+            : "unavailable",
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
+        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : [],
+        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
+    };
+}
+
+function renderEmptyContextState(message) {
+    return `
+        <article class="context-row context-row--annotation">
+            <span class="control-label">Empty state</span>
+            <p class="panel-copy">${escapeHtml(message)}</p>
         </article>
     `;
 }

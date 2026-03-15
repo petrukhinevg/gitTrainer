@@ -46,11 +46,18 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Instruction flow")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Ordered steps")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Static workspace annotations")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task presentation now uses the workspace payload directly")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task presentation and repository-context surfaces now use the workspace payload directly")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("resolveTaskInstructions")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("resolveTaskSteps")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Selected scenario detail is loading")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Repository context now has visible workspace surfaces")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Recent commits")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("File cues")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace annotations")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No branch cues are available from the active detail payload.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No workspace annotations are available from the active detail payload.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("context-row__header")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
@@ -63,6 +70,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".panel--workspace")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-sequence")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-annotation")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-list")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-pill--active")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
     }
 }
