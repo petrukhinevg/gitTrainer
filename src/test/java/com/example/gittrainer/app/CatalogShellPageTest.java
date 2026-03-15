@@ -42,6 +42,9 @@ class CatalogShellPageTest {
         mockMvc.perform(get("/app.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Catalog summaries are now browseable.")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario selection is now routable")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Back to catalog")));
     }
 }
