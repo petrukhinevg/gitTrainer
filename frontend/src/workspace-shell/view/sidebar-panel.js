@@ -1,15 +1,20 @@
 import { renderScenarioRail } from "./catalog-surfaces.js";
 import { renderLessonLane } from "./lesson-layout.js";
+import { renderLessonNavigationRail } from "./lesson-navigation.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
 
 export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
+    if (state.route === "exercise") {
+        return renderExerciseNavigationLane(state);
+    }
+
     return renderLessonLane({
         lane: "navigation",
         label: resolveLeftPanelTitle(state),
-        title: resolveNavigationTitle(state),
-        description: resolveNavigationDescription(state),
+        title: "Shape the route before the learner enters the lesson",
+        description: "Provider and query controls still drive the catalog, but the shell is now locked into the same three-lane lesson structure used by exercise routes.",
         meta: [
             `Route: ${state.route}`,
             `Provider: ${state.providerName}`,
@@ -19,7 +24,7 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
             <section class="lane-summary">
                 <div class="lane-summary__header">
                     <span class="control-label">Workspace entry</span>
-                    <span class="lane-summary__badge">${escapeHtml(resolveNavigationBadge(state))}</span>
+                    <span class="lane-summary__badge">catalog route</span>
                 </div>
                 <dl class="result-summary">
                     <div>
@@ -32,7 +37,7 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
                     </div>
                     <div>
                         <dt>Detail flow</dt>
-                        <dd>${escapeHtml(state.route === "exercise" ? state.detail.status : "inactive")}</dd>
+                        <dd>inactive</dd>
                     </div>
                 </dl>
             </section>
@@ -94,36 +99,71 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
     });
 }
 
+function renderExerciseNavigationLane(state) {
+    if (state.detail.status === "loading" || state.detail.status === "idle") {
+        return renderLessonLane({
+            lane: "navigation",
+            label: "Lesson navigation",
+            title: "Lesson rail is reserving the left lane",
+            description: "The learner already entered the exercise route. The left lane now holds space for lesson navigation even while detail is still loading.",
+            meta: [
+                `Route: ${state.route}`,
+                `Detail: ${state.detail.status}`
+            ],
+            body: `
+                <section class="lesson-rail__summary">
+                    <span class="control-label">Route state</span>
+                    <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
+                    <p class="panel-copy">Once the detail provider responds, this lane turns into a structured lesson map with current, upcoming, and locked stops.</p>
+                </section>
+            `
+        });
+    }
+
+    if (state.detail.status === "error") {
+        return renderLessonLane({
+            lane: "navigation",
+            label: "Lesson navigation",
+            title: "Lesson rail is unavailable for this route",
+            description: "The left lane keeps a coherent unavailable state when the selected scenario detail provider fails before lesson data can be mapped into navigation stops.",
+            meta: [
+                `Provider: ${state.providerName}`,
+                "Detail: error"
+            ],
+            body: `
+                <section class="lesson-rail__summary">
+                    <span class="control-label">Requested route</span>
+                    <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
+                    <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                </section>
+                <div class="lesson-rail__footer">
+                    <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
+                </div>
+            `
+        });
+    }
+
+    const detail = state.detail.data;
+    return renderLessonLane({
+        lane: "navigation",
+        label: detail.workspace.shell.leftPanelTitle,
+        title: "Lesson navigation rail",
+        description: "The left lane now behaves like a lesson navigator instead of a control drawer, helping the learner scan what is active now and what stays for later.",
+        meta: [
+            `Difficulty: ${detail.difficulty}`,
+            `Source: ${detail.meta.source}`,
+            `Task: ${detail.workspace.task.status}`
+        ],
+        body: renderLessonNavigationRail(detail)
+    });
+}
+
 function resolveLeftPanelTitle(state) {
     if (state.route === "exercise" && state.detail.status === "ready") {
         return state.detail.data.workspace.shell.leftPanelTitle;
     }
 
     return "Navigation lane";
-}
-
-function resolveNavigationTitle(state) {
-    if (state.route === "exercise") {
-        return "Keep route entry and scenario switching on the left";
-    }
-
-    return "Shape the route before the learner enters the lesson";
-}
-
-function resolveNavigationDescription(state) {
-    if (state.route === "exercise") {
-        return "This lane stays reserved for lesson navigation and route switching while the center and right lanes focus on task reading and practice scaffolding.";
-    }
-
-    return "Provider and query controls still drive the catalog, but the shell is now locked into the same three-lane lesson structure used by exercise routes.";
-}
-
-function resolveNavigationBadge(state) {
-    if (state.route === "exercise") {
-        return "exercise route";
-    }
-
-    return "catalog route";
 }
 
 function renderProviderOption(state, value, label) {
