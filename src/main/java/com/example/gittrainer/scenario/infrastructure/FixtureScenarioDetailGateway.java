@@ -1,6 +1,7 @@
 package com.example.gittrainer.scenario.infrastructure;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailGateway;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentAssembler;
 import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
 import com.example.gittrainer.scenario.domain.ScenarioSummary;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
@@ -13,9 +14,14 @@ import java.util.Optional;
 public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
 
     private final ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;
+    private final ScenarioTaskContentAssembler scenarioTaskContentAssembler;
 
-    public FixtureScenarioDetailGateway(ScenarioCatalogFixtureSource scenarioCatalogFixtureSource) {
+    public FixtureScenarioDetailGateway(
+            ScenarioCatalogFixtureSource scenarioCatalogFixtureSource,
+            ScenarioTaskContentAssembler scenarioTaskContentAssembler
+    ) {
         this.scenarioCatalogFixtureSource = scenarioCatalogFixtureSource;
+        this.scenarioTaskContentAssembler = scenarioTaskContentAssembler;
     }
 
     @Override
@@ -59,12 +65,7 @@ public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
                         "Workspace lesson",
                         "Workspace lane"
                 ),
-                new ScenarioWorkspaceDetail.ScenarioTaskPreview(
-                        "stub",
-                        "Task content arrives in sub-issue 2.2.",
-                        List.of(),
-                        List.of()
-                ),
+                scenarioTaskContentAssembler.assemble(scenarioSummary.slug()),
                 new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
                         "stub",
                         List.of(),

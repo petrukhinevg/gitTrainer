@@ -37,8 +37,28 @@ record ScenarioWorkspaceShellResponse(
 record ScenarioTaskPreviewResponse(
         String status,
         String goal,
-        List<String> instructions,
-        List<String> steps
+        List<ScenarioTaskInstructionResponse> instructions,
+        List<ScenarioTaskStepResponse> steps,
+        List<ScenarioTaskAnnotationResponse> annotations
+) {
+}
+
+record ScenarioTaskInstructionResponse(
+        String id,
+        String text
+) {
+}
+
+record ScenarioTaskStepResponse(
+        int position,
+        String title,
+        String detail
+) {
+}
+
+record ScenarioTaskAnnotationResponse(
+        String label,
+        String message
 ) {
 }
 
