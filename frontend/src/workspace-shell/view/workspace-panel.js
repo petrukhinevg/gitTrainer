@@ -5,12 +5,12 @@ export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
         return renderPracticeShell({
             viewer: renderPlaceholderViewer(
-                "Git branch view",
-                "Open a task on the left to load the branch picture for that scenario."
+                "Git branches",
+                "Open a task on the left to load the branch view."
             ),
             composer: renderPlaceholderComposer(
-                "Command input",
-                "The answer field unlocks after you open a task."
+                "Command",
+                "Input unlocks after you open a task."
             )
         });
     }
@@ -18,12 +18,12 @@ export function renderWorkspacePanel(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return renderPracticeShell({
             viewer: renderPlaceholderViewer(
-                "Loading branch view",
-                `Preparing branch context for ${escapeHtml(state.selectedScenarioSlug ?? "the selected task")}.`
+                "Git branches",
+                `Loading branch view for ${escapeHtml(state.selectedScenarioSlug ?? "the selected task")}.`
             ),
             composer: renderPlaceholderComposer(
-                "Command input",
-                "The answer field stays mounted while the task detail loads."
+                "Command",
+                "Input stays mounted while the task detail loads."
             )
         });
     }
@@ -33,19 +33,20 @@ export function renderWorkspacePanel(state) {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Git branch view</span>
+                        <span class="control-label">Git branches</span>
                         <span class="workspace-card__badge">error</span>
                     </div>
-                    <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                    <div class="practice-inline-note">
+                        <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                    </div>
                 </section>
             `,
             composer: `
                 <section class="workspace-card workspace-card--composer workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Command input</span>
+                        <span class="control-label">Command</span>
                         <span class="workspace-card__badge">locked</span>
                     </div>
-                    <p class="panel-copy">The command field is unavailable until the task payload is restored.</p>
                     <div class="workspace-card__actions">
                         <a class="scenario-action scenario-action--muted" href="#/catalog">Back to welcome</a>
                     </div>
@@ -61,38 +62,35 @@ export function renderWorkspacePanel(state) {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Git branch view</span>
+                    <span class="control-label">Git branches</span>
                     <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
                 </div>
-                <p class="panel-copy">A fixed branch picture stays visible above the input field.</p>
                 ${renderBranchGraph(repositoryContext.branches)}
             </section>
         `,
         composer: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Command input</span>
+                    <span class="control-label">Command</span>
                     <span class="workspace-card__badge">${state.practiceDraft.preparedAnswer ? "prepared" : "draft"}</span>
                 </div>
                 <form class="practice-composer__form" data-practice-draft-form>
-                    <label class="practice-composer__field">
-                        <span class="control-label">Draft answer</span>
+                    <label class="practice-editor">
+                        <span class="practice-editor__prompt">&gt;</span>
                         <textarea name="answer" rows="4" placeholder="Example: git status">${escapeHtml(state.practiceDraft.answer ?? "")}</textarea>
                     </label>
                     <div class="practice-composer__actions">
-                        <button class="scenario-action" type="submit">Prepare payload</button>
-                        <button class="scenario-action scenario-action--muted" type="button" data-reset-practice-draft>Reset</button>
+                        <button class="practice-action practice-action--primary" type="submit">Prepare</button>
+                        <button class="practice-action" type="button" data-reset-practice-draft>Clear</button>
                     </div>
                 </form>
                 ${state.practiceDraft.validationError ? `
-                    <div class="practice-composer__notice">
-                        <span class="control-label">Input check</span>
+                    <div class="practice-inline-note">
                         <p class="panel-copy">${escapeHtml(state.practiceDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                <div class="practice-composer__notice ${state.practiceDraft.preparedAnswer ? "practice-composer__notice--ready" : ""}">
-                    <span class="control-label">Submission shell</span>
-                    <p class="panel-copy">${escapeHtml(state.practiceDraft.preparedAnswer ?? "No prepared payload yet")}</p>
+                <div class="practice-status-line ${state.practiceDraft.preparedAnswer ? "practice-status-line--ready" : ""}">
+                    <span>${escapeHtml(state.practiceDraft.preparedAnswer ?? "No prepared payload yet")}</span>
                 </div>
             </section>
         `
@@ -103,13 +101,13 @@ function renderPracticeShell({ viewer, composer }) {
     return renderLessonLane({
         lane: "practice",
         label: "Workspace lane",
-        title: "Git branch view and command input",
+        title: "Git branches and command input",
         description: "The right column stays split into two fixed surfaces.",
         showHeader: false,
         body: `
             <div class="practice-stack">
-                ${viewer}
-                ${composer}
+                <div class="practice-pane practice-pane--viewer">${viewer}</div>
+                <div class="practice-pane practice-pane--composer">${composer}</div>
             </div>
         `
     });
@@ -122,7 +120,9 @@ function renderPlaceholderViewer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">idle</span>
             </div>
-            <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="practice-inline-note">
+                <p class="panel-copy">${escapeHtml(copy)}</p>
+            </div>
             <div class="branch-graph branch-graph--placeholder" aria-hidden="true">
                 <div class="branch-graph__row">
                     <span class="branch-graph__node"></span>
@@ -144,9 +144,11 @@ function renderPlaceholderComposer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">idle</span>
             </div>
-            <p class="panel-copy">${escapeHtml(copy)}</p>
-            <label class="practice-composer__field">
-                <span class="control-label">Draft answer</span>
+            <div class="practice-inline-note">
+                <p class="panel-copy">${escapeHtml(copy)}</p>
+            </div>
+            <label class="practice-editor">
+                <span class="practice-editor__prompt">&gt;</span>
                 <textarea rows="4" placeholder="Example: git status" disabled></textarea>
             </label>
         </section>

@@ -3,23 +3,25 @@
     min-height: 0;
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
-    gap: 16px;
+    gap: 0;
     overflow: hidden;
 }
 
-.workspace-card {
-    padding: 18px;
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    background: var(--paper-muted);
+.practice-pane {
+    min-height: 0;
+    padding: 14px 0;
+}
+
+.practice-pane--composer {
+    border-top: 1px solid var(--border);
 }
 
 .workspace-card,
 .workspace-card__header,
-.practice-composer,
 .practice-composer__form,
-.practice-composer__field,
-.practice-composer__notice,
+.practice-editor,
+.practice-inline-note,
+.practice-status-line,
 .branch-graph,
 .branch-graph__row,
 .branch-graph__label {
@@ -27,14 +29,19 @@
     gap: 12px;
 }
 
+.workspace-card {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
 .workspace-card--focus {
-    background:
-        linear-gradient(180deg, rgba(57, 89, 121, 0.1), rgba(246, 239, 226, 0.92)),
-        var(--paper-muted);
+    background: transparent;
 }
 
 .workspace-card--viewer {
-    min-height: 0;
     overflow: hidden;
     grid-template-rows: auto auto minmax(0, 1fr);
 }
@@ -44,82 +51,114 @@
 }
 
 .workspace-card--error {
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.1), rgba(246, 239, 226, 0.92)),
-        var(--paper-muted);
+    background: transparent;
 }
 
 .workspace-card__header {
     grid-template-columns: 1fr auto;
     align-items: center;
+    gap: 8px;
 }
 
 .workspace-card__badge {
     display: inline-flex;
     align-items: center;
     justify-self: end;
-    border-radius: 999px;
-    padding: 4px 10px;
-    background: rgba(57, 89, 121, 0.12);
-    color: var(--accent-cool);
-    font-size: 0.74rem;
+    padding: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .workspace-card__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 14px;
 }
 
-.practice-composer__field textarea,
-.practice-composer__actions button {
-    font: inherit;
+.practice-inline-note {
+    gap: 8px;
 }
 
-.practice-composer__field textarea {
+.practice-editor {
+    min-height: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+}
+
+.practice-editor__prompt,
+.practice-action,
+.practice-status-line {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.practice-editor__prompt {
+    padding-top: 2px;
+    color: var(--ink-soft);
+}
+
+.practice-editor textarea {
     width: 100%;
-    min-height: 112px;
-    padding: 12px 14px;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: rgba(255, 250, 241, 0.94);
+    min-height: 116px;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--ink-strong);
+    font: inherit;
+    font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    line-height: 1.55;
     resize: none;
+    outline: none;
 }
 
-.practice-composer__field textarea:disabled {
-    opacity: 0.7;
+.practice-editor textarea:disabled {
+    opacity: 0.72;
     cursor: not-allowed;
 }
 
 .practice-composer__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 14px;
 }
 
-.practice-composer__notice {
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: rgba(255, 250, 241, 0.78);
+.practice-action {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 
-.practice-composer__notice--ready {
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.92)),
-        rgba(255, 250, 241, 0.78);
+.practice-action--primary {
+    color: var(--accent);
+}
+
+.practice-status-line {
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.practice-status-line--ready {
+    color: var(--ink-strong);
 }
 
 .branch-graph {
     min-height: 0;
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background:
-        linear-gradient(180deg, rgba(255, 250, 241, 0.96), rgba(246, 239, 226, 0.9)),
-        rgba(255, 250, 241, 0.92);
+    padding: 6px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     overflow: hidden;
     align-content: start;
 }
@@ -130,9 +169,9 @@
 }
 
 .branch-graph__row {
-    grid-template-columns: 18px 18px minmax(0, 1fr);
+    grid-template-columns: 14px 18px minmax(0, 1fr);
     align-items: center;
-    column-gap: 12px;
+    column-gap: 10px;
 }
 
 .branch-graph__row--current .branch-graph__label strong {
@@ -140,23 +179,23 @@
 }
 
 .branch-graph__node {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
     background: var(--accent-cool);
-    box-shadow: 0 0 0 4px rgba(57, 89, 121, 0.1);
+    box-shadow: 0 0 0 3px rgba(57, 89, 121, 0.08);
 }
 
 .branch-graph__row--current .branch-graph__node {
     background: var(--accent);
-    box-shadow: 0 0 0 5px rgba(190, 91, 43, 0.14);
+    box-shadow: 0 0 0 4px rgba(190, 91, 43, 0.12);
 }
 
 .branch-graph__track {
     width: 2px;
-    height: 54px;
-    margin: -18px auto;
-    background: linear-gradient(180deg, rgba(57, 89, 121, 0.32), rgba(57, 89, 121, 0.08));
+    height: 44px;
+    margin: -14px auto;
+    background: linear-gradient(180deg, rgba(57, 89, 121, 0.28), rgba(57, 89, 121, 0.08));
 }
 
 .branch-graph__track--last {
@@ -170,6 +209,7 @@
 
 .branch-graph__label span {
     color: var(--ink-soft);
+    font-size: 0.82rem;
 }
 
 .branch-graph__empty {
@@ -180,6 +220,7 @@
 .lesson-lane--practice .lesson-lane__body {
     overflow: hidden;
     padding-right: 0;
+    padding-bottom: 0;
 }
 
 @media (max-width: 900px) {
@@ -202,6 +243,6 @@
     }
 
     .branch-graph__row {
-        grid-template-columns: 18px 18px minmax(0, 1fr);
+        grid-template-columns: 14px 18px minmax(0, 1fr);
     }
 }
