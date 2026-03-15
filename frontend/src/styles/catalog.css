@@ -1,23 +1,23 @@
 .lesson-rail__summary {
     display: grid;
-    gap: 8px;
-    padding: 14px 16px;
+    gap: 6px;
+    padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 14px;
     background: rgba(255, 250, 241, 0.7);
 }
 
 .flow-block-list {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .flow-block {
     display: grid;
-    gap: 8px;
-    padding: 12px 14px;
+    gap: 6px;
+    padding: 9px 11px;
     border: 1px solid rgba(31, 23, 32, 0.1);
-    border-radius: 16px;
+    border-radius: 14px;
     background: rgba(255, 250, 241, 0.68);
     text-decoration: none;
     transform-origin: left center;
@@ -31,36 +31,36 @@
 
 .flow-block--active {
     color: var(--accent);
-    border-color: rgba(190, 91, 43, 0.3);
-    background: rgba(190, 91, 43, 0.08);
-    box-shadow: 0 10px 22px rgba(190, 91, 43, 0.08);
+    border-color: rgba(41, 76, 91, 0.08);
+    background: rgba(95, 133, 150, 0.08);
+    box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
 }
 
 .flow-block--subtask {
-    margin-left: 14px;
+    margin-left: 10px;
     background: rgba(255, 250, 241, 0.54);
 }
 
 .flow-block:hover {
-    padding-left: 18px;
-    border-color: rgba(57, 89, 121, 0.18);
+    padding-left: 14px;
+    border-color: rgba(41, 76, 91, 0.08);
     background: rgba(255, 250, 241, 0.78);
 }
 
 .flow-block--active:hover {
-    border-color: rgba(190, 91, 43, 0.36);
-    background: rgba(190, 91, 43, 0.1);
+    border-color: rgba(41, 76, 91, 0.08);
+    background: rgba(95, 133, 150, 0.08);
 }
 
 .flow-subtask-group {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     padding-top: 2px;
 }
 
 .flow-block__eyebrow {
     font-family: "Courier New", Courier, monospace;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
@@ -69,4 +69,5 @@
 .flow-block__title {
     margin: 0;
     line-height: 1.1;
+    font-size: 0.95rem;
 }

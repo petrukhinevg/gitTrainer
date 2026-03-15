@@ -111,15 +111,16 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding-right: 2px;
+    padding-right: 6px;
     padding-bottom: 16px;
     align-content: start;
     scrollbar-width: thin;
     scrollbar-color: rgba(31, 23, 32, 0.18) transparent;
+    scrollbar-gutter: stable;
 }
 
 .lesson-lane__body::-webkit-scrollbar {
-    width: 7px;
+    width: 12px;
 }
 
 .lesson-lane__body::-webkit-scrollbar-track {
@@ -127,7 +128,9 @@ body {
 }
 
 .lesson-lane__body::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
     border-radius: 999px;
+    background-clip: padding-box;
     background: rgba(31, 23, 32, 0.16);
 }
 
