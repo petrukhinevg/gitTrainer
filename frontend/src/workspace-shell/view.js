@@ -544,21 +544,23 @@ function resolveTaskInstructions(detail) {
 }
 
 function resolveTaskSteps(detail) {
-    return (detail.workspace.task.steps ?? []).map((step, index) => {
-        if (typeof step === "string") {
-            return {
-                position: index + 1,
-                title: `Step ${index + 1}`,
-                detail: step
-            };
-        }
+    return (detail.workspace.task.steps ?? [])
+        .map((step, index) => {
+            if (typeof step === "string") {
+                return {
+                    position: index + 1,
+                    title: `Step ${index + 1}`,
+                    detail: step
+                };
+            }
 
-        return {
-            position: step.position ?? index + 1,
-            title: step.title ?? `Step ${index + 1}`,
-            detail: step.detail ?? ""
-        };
-    });
+            return {
+                position: step.position ?? index + 1,
+                title: step.title ?? `Step ${index + 1}`,
+                detail: step.detail ?? ""
+            };
+        })
+        .sort((left, right) => left.position - right.position);
 }
 
 function resolveTaskAnnotations(detail) {
