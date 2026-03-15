@@ -10,7 +10,7 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
     }
 
     return `
-        ${renderWorkspaceIntro(state)}
+        ${state.route === "exercise" ? "" : renderWorkspaceIntro(state)}
         ${renderLessonLayout({
             state,
             navigationLane: renderSidebarPanel(state, selectedCatalogScenario, tagOptions),

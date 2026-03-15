@@ -4,6 +4,15 @@
     gap: 12px;
 }
 
+.practice-composer,
+.practice-composer__form,
+.practice-composer__field,
+.practice-composer__notice,
+.practice-context__panel {
+    display: grid;
+    gap: 12px;
+}
+
 .workspace-card,
 .workspace-stack__panel,
 .context-row {
@@ -42,6 +51,65 @@
     gap: 10px;
 }
 
+.workspace-card--viewer {
+    min-height: 0;
+}
+
+.practice-composer__field textarea,
+.practice-composer__actions button,
+.practice-context__tab {
+    font: inherit;
+}
+
+.practice-composer__field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.94);
+    color: var(--ink-strong);
+    resize: vertical;
+}
+
+.practice-composer__actions,
+.practice-context__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.practice-composer__notice {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.practice-composer__notice--ready {
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.92)),
+        rgba(255, 250, 241, 0.78);
+}
+
+.practice-context__tab {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.9);
+    color: var(--ink-soft);
+    cursor: pointer;
+}
+
+.practice-context__tab--active {
+    background: rgba(57, 89, 121, 0.14);
+    color: var(--accent-cool);
+}
+
+.practice-context__panel {
+    min-height: 0;
+}
+
 .context-row {
     display: grid;
     gap: 8px;
@@ -78,6 +146,12 @@
 
 @media (max-width: 720px) {
     .workspace-card__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .practice-composer__actions,
+    .practice-context__tabs {
         flex-direction: column;
         align-items: stretch;
     }

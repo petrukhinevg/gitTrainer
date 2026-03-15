@@ -86,11 +86,11 @@ function renderExerciseMainPanel(state) {
         lane: "lesson",
         label: detail.workspace.shell.centerPanelTitle,
         title: detail.title,
-        description: detail.summary,
+        description: detail.workspace.task.goal,
         meta: [
             `Task: ${detail.workspace.task.status}`,
             `Difficulty: ${detail.difficulty}`,
-            `Source: ${detail.meta.source}`
+            `Steps: ${normalizeTaskSteps(detail).length}`
         ],
         body: `
             <section class="lesson-spotlight">
@@ -150,29 +150,6 @@ function renderExerciseMainPanel(state) {
                         </article>
                     `).join("")}
                 </div>
-            </section>
-            <section class="lesson-block lesson-block--supporting">
-                <div class="lesson-section__header">
-                    <span class="control-label">Supporting seam</span>
-                    <h4 class="lesson-block__title">Provider seam</h4>
-                </div>
-                <p class="panel-copy">
-                    The focused lesson surface still reads directly from the existing workspace payload without requiring new backend progression contracts.
-                </p>
-                <dl class="result-summary">
-                    <div>
-                        <dt>Detail source</dt>
-                        <dd>${escapeHtml(detail.meta.source)}</dd>
-                    </div>
-                    <div>
-                        <dt>Stub payload</dt>
-                        <dd>${escapeHtml(String(detail.meta.stub))}</dd>
-                    </div>
-                    <div>
-                        <dt>Difficulty</dt>
-                        <dd>${escapeHtml(detail.difficulty)}</dd>
-                    </div>
-                </dl>
             </section>
         `
     });

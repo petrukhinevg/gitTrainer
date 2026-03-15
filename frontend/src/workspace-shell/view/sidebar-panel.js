@@ -148,13 +148,22 @@ function renderExerciseNavigationLane(state) {
         lane: "navigation",
         label: detail.workspace.shell.leftPanelTitle,
         title: "Lesson navigation rail",
-        description: "The left lane now behaves like a lesson navigator instead of a control drawer, helping the learner scan what is active now and what stays for later.",
+        description: "The left lane now keeps both the task list and the exercise overview available without displacing the lesson or practice columns.",
         meta: [
             `Difficulty: ${detail.difficulty}`,
             `Source: ${detail.meta.source}`,
-            `Task: ${detail.workspace.task.status}`
+            `Task: ${detail.workspace.task.status}`,
+            `View: ${state.exerciseSidebarTab}`
         ],
-        body: renderLessonNavigationRail(detail)
+        body: `
+            <div class="lane-switcher" role="tablist" aria-label="Exercise sidebar">
+                ${renderSidebarTabButton(state, "tasks", "Task list")}
+                ${renderSidebarTabButton(state, "overview", "Overview")}
+            </div>
+            ${state.exerciseSidebarTab === "overview"
+                ? renderExerciseOverview(detail)
+                : renderLessonNavigationRail(detail)}
+        `
     });
 }
 
@@ -177,4 +186,53 @@ function renderDifficultyOption(state, value, label) {
 function renderSortOption(state, value, label) {
     const selectedSort = state.query.sort ?? "title";
     return `<option value="${value}" ${selectedSort === value ? "selected" : ""}>${label}</option>`;
+}
+
+function renderSidebarTabButton(state, value, label) {
+    const isActive = state.exerciseSidebarTab === value;
+    return `
+        <button
+            type="button"
+            class="lane-switcher__button ${isActive ? "lane-switcher__button--active" : ""}"
+            data-exercise-sidebar-tab="${value}"
+            aria-pressed="${isActive}"
+        >
+            ${label}
+        </button>
+    `;
+}
+
+function renderExerciseOverview(detail) {
+    const task = detail.workspace.task;
+    const repositoryContext = detail.workspace.repositoryContext;
+    return `
+        <section class="lesson-rail__summary">
+            <span class="control-label">Welcome task</span>
+            <strong>${escapeHtml(detail.title)}</strong>
+            <p class="panel-copy">${escapeHtml(detail.summary)}</p>
+            <div class="lesson-rail__meta">
+                <span class="lesson-rail__meta-pill">Instructions: ${task.instructions.length}</span>
+                <span class="lesson-rail__meta-pill">Steps: ${task.steps.length}</span>
+                <span class="lesson-rail__meta-pill">Branches: ${repositoryContext.branches.length}</span>
+            </div>
+        </section>
+        <section class="lesson-rail__summary">
+            <span class="control-label">What stays visible</span>
+            <p class="panel-copy">Task selection stays on the left, the active lesson stays in the center, and the practice surface remains visible on the right even while one column scrolls deeper than the others.</p>
+            <dl class="result-summary">
+                <div>
+                    <dt>Task goal</dt>
+                    <dd>${escapeHtml(task.goal)}</dd>
+                </div>
+                <div>
+                    <dt>Source</dt>
+                    <dd>${escapeHtml(detail.meta.source)}</dd>
+                </div>
+                <div>
+                    <dt>Stub payload</dt>
+                    <dd>${escapeHtml(String(detail.meta.stub))}</dd>
+                </div>
+            </dl>
+        </section>
+    `;
 }

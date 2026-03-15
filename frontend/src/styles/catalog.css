@@ -120,6 +120,28 @@
     gap: 12px;
 }
 
+.lane-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lane-switcher__button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.86);
+    color: var(--ink-strong);
+    font: inherit;
+    cursor: pointer;
+}
+
+.lane-switcher__button--active {
+    background: rgba(190, 91, 43, 0.14);
+    border-color: rgba(190, 91, 43, 0.4);
+}
+
 .lesson-nav {
     display: grid;
     gap: 10px;

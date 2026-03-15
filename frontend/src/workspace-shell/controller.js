@@ -12,6 +12,9 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         route: "catalog",
         selectedScenarioSlug: null,
         providerName: DEFAULT_PROVIDER_NAME,
+        exerciseSidebarTab: "tasks",
+        practiceContextTab: "branches",
+        practiceDraft: createInitialPracticeDraft(),
         query: cloneQuery(DEFAULT_QUERY),
         catalog: {
             status: "idle",
@@ -173,6 +176,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
+        appRoot.classList.toggle("app-shell--exercise", state.route === "exercise");
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
             selectedCatalogScenario,
@@ -180,6 +184,8 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         });
 
         bindCatalogControls();
+        bindExerciseSidebarControls();
+        bindPracticeSurfaceControls();
     }
 
     function bindCatalogControls() {
@@ -192,6 +198,78 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         form.querySelector("[data-reset-query]")?.addEventListener("click", resetQueryControls);
     }
 
+    function bindExerciseSidebarControls() {
+        document.querySelectorAll("[data-exercise-sidebar-tab]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const nextTab = button.dataset.exerciseSidebarTab;
+                if (!nextTab || nextTab === state.exerciseSidebarTab) {
+                    return;
+                }
+
+                state.exerciseSidebarTab = nextTab;
+                render();
+            });
+        });
+    }
+
+    function bindPracticeSurfaceControls() {
+        document.querySelectorAll("[data-practice-context-tab]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const nextTab = button.dataset.practiceContextTab;
+                if (!nextTab || nextTab === state.practiceContextTab) {
+                    return;
+                }
+
+                state.practiceContextTab = nextTab;
+                render();
+            });
+        });
+
+        const form = document.querySelector("[data-practice-draft-form]");
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener("input", handlePracticeDraftInput);
+        form.addEventListener("submit", handlePracticeDraftSubmit);
+        form.querySelector("[data-reset-practice-draft]")?.addEventListener("click", resetPracticeDraft);
+    }
+
+    function handlePracticeDraftInput(event) {
+        const formData = new FormData(event.currentTarget);
+        state.practiceDraft.answer = String(formData.get("answer") ?? "");
+        state.practiceDraft.validationError = null;
+
+        if (state.practiceDraft.preparedAnswer && state.practiceDraft.preparedAnswer !== state.practiceDraft.answer.trim()) {
+            state.practiceDraft.preparedAnswer = null;
+            state.practiceDraft.preparedAt = null;
+        }
+    }
+
+    function handlePracticeDraftSubmit(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.currentTarget);
+        const answer = String(formData.get("answer") ?? "").trim();
+
+        if (!answer) {
+            state.practiceDraft.validationError = "Enter a Git command before preparing the practice payload.";
+            render();
+            return;
+        }
+
+        state.practiceDraft.answer = String(formData.get("answer") ?? "");
+        state.practiceDraft.validationError = null;
+        state.practiceDraft.preparedAnswer = answer;
+        state.practiceDraft.preparedAt = new Date().toISOString();
+        render();
+    }
+
+    function resetPracticeDraft() {
+        state.practiceDraft = createInitialPracticeDraft();
+        render();
+    }
+
     async function reloadActiveRouteData() {
         await Promise.all([
             loadCatalog(),
@@ -200,6 +278,10 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     function resetRouteScopedState() {
+        state.exerciseSidebarTab = "tasks";
+        state.practiceContextTab = "branches";
+        state.practiceDraft = createInitialPracticeDraft();
+
         if (state.route !== "exercise") {
             state.detail.status = "idle";
             state.detail.data = null;
@@ -257,5 +339,14 @@ function cloneQuery(query) {
         difficulty: query.difficulty,
         tags: [...query.tags],
         sort: query.sort
+    };
+}
+
+function createInitialPracticeDraft() {
+    return {
+        answer: "",
+        validationError: null,
+        preparedAnswer: null,
+        preparedAt: null
     };
 }

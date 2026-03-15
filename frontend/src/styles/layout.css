@@ -2,6 +2,9 @@
     width: min(1220px, calc(100vw - 32px));
     margin: 0 auto;
     padding: 32px 0 56px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .masthead {
@@ -50,6 +53,12 @@
     gap: 18px;
 }
 
+.app-shell--exercise {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+}
+
 .workspace-intro {
     display: flex;
     justify-content: space-between;
@@ -94,6 +103,26 @@
     align-items: start;
 }
 
+.app-shell--exercise .lesson-layout {
+    gap: 0;
+    height: 100%;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    overflow: hidden;
+    background: rgba(255, 250, 241, 0.82);
+}
+
+.app-shell--exercise .lesson-layout__lane {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+}
+
+.app-shell--exercise .lesson-layout__lane + .lesson-layout__lane {
+    border-left: 1px solid var(--border);
+}
+
 .lesson-layout__lane--navigation {
     grid-area: navigation;
 }
@@ -112,6 +141,17 @@
     display: grid;
     align-content: start;
     gap: 20px;
+}
+
+.app-shell--exercise .lesson-lane {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 22px 22px 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .lesson-lane--navigation {
@@ -140,6 +180,13 @@
 .lesson-lane__body {
     display: grid;
     gap: 12px;
+}
+
+.app-shell--exercise .lesson-lane__body {
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 22px;
+    padding-right: 4px;
 }
 
 .lesson-lane__header {
@@ -195,6 +242,11 @@
             "navigation practice";
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
+
+    .app-shell--exercise .lesson-layout {
+        grid-template-areas: "navigation lesson practice";
+        grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr) minmax(280px, 0.95fr);
+    }
 }
 
 @media (max-width: 900px) {
@@ -208,6 +260,39 @@
 
     .lesson-lane {
         min-height: auto;
+    }
+
+    .app-shell--exercise .lesson-layout {
+        grid-template-areas:
+            "navigation"
+            "lesson"
+            "practice";
+        grid-template-columns: 1fr;
+        gap: 16px;
+        height: auto;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        overflow: visible;
+    }
+
+    .app-shell--exercise .lesson-layout__lane + .lesson-layout__lane {
+        border-left: 0;
+    }
+
+    .app-shell--exercise .lesson-lane {
+        min-height: auto;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .app-shell--exercise .lesson-lane__body {
+        overflow: visible;
+        padding-right: 0;
+        padding-bottom: 0;
     }
 }
 
