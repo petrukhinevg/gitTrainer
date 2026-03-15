@@ -49,6 +49,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Recent commits")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("File cues")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace annotations")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No branch cues are available from the active detail payload.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No workspace annotations are available from the active detail payload.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("context-row__header")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))

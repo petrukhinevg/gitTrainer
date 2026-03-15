@@ -268,7 +268,7 @@ function renderWorkspacePanel(state) {
     }
 
     const detail = state.detail.data;
-    const repositoryContext = detail.workspace.repositoryContext;
+    const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
     return `
         <section class="panel panel--workspace">
             <p class="panel-label">${escapeHtml(detail.workspace.shell.rightPanelTitle)}</p>
@@ -309,7 +309,7 @@ function renderWorkspacePanel(state) {
                     <span class="workspace-card__badge">${repositoryContext.branches.length}</span>
                 </div>
                 <div class="context-list">
-                    ${repositoryContext.branches.map((branch) => `
+                    ${repositoryContext.branches.length > 0 ? repositoryContext.branches.map((branch) => `
                         <article class="context-row">
                             <div class="context-row__header">
                                 <strong>${escapeHtml(branch.name)}</strong>
@@ -318,7 +318,7 @@ function renderWorkspacePanel(state) {
                                 </span>
                             </div>
                         </article>
-                    `).join("")}
+                    `).join("") : renderEmptyContextState("No branch cues are available from the active detail payload.")}
                 </div>
             </div>
             <div class="workspace-card">
@@ -327,14 +327,14 @@ function renderWorkspacePanel(state) {
                     <span class="workspace-card__badge">${repositoryContext.commits.length}</span>
                 </div>
                 <div class="context-list">
-                    ${repositoryContext.commits.map((commit) => `
+                    ${repositoryContext.commits.length > 0 ? repositoryContext.commits.map((commit) => `
                         <article class="context-row">
                             <div class="context-row__header">
                                 <strong>${escapeHtml(commit.summary)}</strong>
                                 <span class="context-mono">${escapeHtml(commit.id)}</span>
                             </div>
                         </article>
-                    `).join("")}
+                    `).join("") : renderEmptyContextState("No recent commit cues are available from the active detail payload.")}
                 </div>
             </div>
             <div class="workspace-card">
@@ -343,14 +343,14 @@ function renderWorkspacePanel(state) {
                     <span class="workspace-card__badge">${repositoryContext.files.length}</span>
                 </div>
                 <div class="context-list">
-                    ${repositoryContext.files.map((file) => `
+                    ${repositoryContext.files.length > 0 ? repositoryContext.files.map((file) => `
                         <article class="context-row">
                             <div class="context-row__header">
                                 <strong>${escapeHtml(file.path)}</strong>
                                 <span class="context-pill">${escapeHtml(file.status)}</span>
                             </div>
                         </article>
-                    `).join("")}
+                    `).join("") : renderEmptyContextState("No file cues are available from the active detail payload.")}
                 </div>
             </div>
             <div class="workspace-card">
@@ -359,12 +359,12 @@ function renderWorkspacePanel(state) {
                     <span class="workspace-card__badge">${repositoryContext.annotations.length}</span>
                 </div>
                 <div class="context-list">
-                    ${repositoryContext.annotations.map((annotation) => `
+                    ${repositoryContext.annotations.length > 0 ? repositoryContext.annotations.map((annotation) => `
                         <article class="context-row context-row--annotation">
                             <span class="control-label">${escapeHtml(annotation.label)}</span>
                             <p class="panel-copy">${escapeHtml(annotation.message)}</p>
                         </article>
-                    `).join("")}
+                    `).join("") : renderEmptyContextState("No workspace annotations are available from the active detail payload.")}
                 </div>
                 <div class="workspace-card__actions">
                     <a class="scenario-action" href="#/catalog">Back to catalog</a>
@@ -463,6 +463,28 @@ function renderScenarioCard(item) {
                 <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Open scenario</a>
                 <span class="entry-note">Route handoff now resolves detail through a dedicated provider seam.</span>
             </div>
+        </article>
+    `;
+}
+
+function normalizeRepositoryContext(repositoryContext) {
+    const safeContext = repositoryContext ?? {};
+    return {
+        status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
+            ? safeContext.status
+            : "unavailable",
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
+        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : [],
+        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
+    };
+}
+
+function renderEmptyContextState(message) {
+    return `
+        <article class="context-row context-row--annotation">
+            <span class="control-label">Empty state</span>
+            <p class="panel-copy">${escapeHtml(message)}</p>
         </article>
     `;
 }
