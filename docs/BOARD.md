@@ -17,7 +17,6 @@ Project custom field: `Pairs with` stores the counterpart backend/frontend issue
 
 ### Ready
 
-- `#138` Sub-issue 1.1. Deliver catalog route shell and swappable provider seam
 - `#149` Sub-issue 1.2. Deliver catalog query policy for filtering and sorting
 - `#150` Sub-issue 1.2. Deliver catalog query controls and browse-state handling
 - `#151` Sub-issue 1.3. Deliver MVP catalog summary content and browse-state fixtures
@@ -26,11 +25,12 @@ Project custom field: `Pairs with` stores the counterpart backend/frontend issue
 ### In Progress
 
 - `#98` Parent Issue 1. Scenario catalog browsing MVP
+- `#137` Sub-issue 1.1. Deliver catalog browse API shell and deterministic stub boundary
+- `#138` Sub-issue 1.1. Deliver catalog route shell and swappable provider seam
 
 ### Review
 
 - `#97` Rework roadmap for independent vertical epics
-- `#137` Sub-issue 1.1. Deliver catalog browse API shell and deterministic stub boundary
 
 ### Backlog
 
