@@ -205,6 +205,7 @@ Operational rule:
 
 - do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
 - if the field is still empty, keep the task in `In Progress` even if code and tests are done
+- if automatic linkage does not populate the field, complete the manual association in the GitHub UI as part of the same task handoff instead of leaving that step to a later pass
 
 Observed limitation:
 
