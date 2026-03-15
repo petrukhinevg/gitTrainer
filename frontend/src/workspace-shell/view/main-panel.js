@@ -1,5 +1,10 @@
 import { renderCatalogOverviewState } from "./catalog-surfaces.js";
 import {
+    normalizeTaskAnnotations,
+    normalizeTaskInstructions,
+    normalizeTaskSteps
+} from "./lesson-task.js";
+import {
     escapeHtml,
 } from "./render-helpers.js";
 
@@ -24,11 +29,16 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return `
             <section class="panel panel--lesson">
-                <p class="panel-label">Workspace lesson</p>
-                <h3>Loading workspace detail</h3>
+                <p class="panel-label">Focused lesson</p>
+                <h3>Loading the center lesson surface</h3>
                 <p class="panel-copy">
-                    The route is already stable. This shell is waiting for the active detail provider to resolve the selected scenario by slug.
+                    The route is already stable. The center lane is holding a reading-first lesson frame while the active detail provider resolves the selected scenario by slug.
                 </p>
+                <div class="lesson-spotlight lesson-spotlight--loading">
+                    <span class="control-label">Lesson state</span>
+                    <h4 class="lesson-block__title">Waiting for task description</h4>
+                    <p class="panel-copy">The lesson rail can load before the final task copy, ordered steps, and annotations are ready to read.</p>
+                </div>
             </section>
         `;
     }
@@ -36,10 +46,10 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "error") {
         return `
             <section class="panel panel--lesson">
-                <p class="panel-label">Workspace lesson</p>
+                <p class="panel-label">Focused lesson</p>
                 <h3>Exercise detail is unavailable</h3>
                 <p class="panel-copy">
-                    The exercise route now has explicit load and error flow handling. The shell stays in place, but the selected scenario detail provider failed before returning a payload.
+                    The exercise route now has explicit load and error flow handling. The shell stays in place, but the center lesson surface cannot render without the selected scenario payload.
                 </p>
                 <div class="lesson-block">
                     <h4 class="lesson-block__title">Requested route</h4>
@@ -64,35 +74,27 @@ function renderExerciseMainPanel(state) {
 
     return `
         <section class="panel panel--lesson">
-            <p class="panel-label">${escapeHtml(detail.workspace.shell.centerPanelTitle)}</p>
+            <p class="panel-label">Focused lesson</p>
             <h3>${escapeHtml(detail.title)}</h3>
             <p class="panel-copy">${escapeHtml(detail.summary)}</p>
-            <div class="lesson-block">
+            <div class="lesson-spotlight">
+                <span class="control-label">${escapeHtml(detail.workspace.shell.centerPanelTitle)}</span>
                 <h4 class="lesson-block__title">Task goal</h4>
                 <p class="panel-copy">${escapeHtml(detail.workspace.task.goal)}</p>
-                <dl class="result-summary">
-                    <div>
-                        <dt>Task status</dt>
-                        <dd>${escapeHtml(detail.workspace.task.status)}</dd>
-                    </div>
-                    <div>
-                        <dt>Instructions</dt>
-                        <dd>${detail.workspace.task.instructions.length}</dd>
-                    </div>
-                    <div>
-                        <dt>Steps</dt>
-                        <dd>${detail.workspace.task.steps.length}</dd>
-                    </div>
-                    <div>
-                        <dt>Annotations</dt>
-                        <dd>${resolveTaskAnnotations(detail).length}</dd>
-                    </div>
-                </dl>
+                <div class="lesson-spotlight__meta">
+                    <span class="lesson-spotlight__pill">Task: ${escapeHtml(detail.workspace.task.status)}</span>
+                    <span class="lesson-spotlight__pill">Instructions: ${normalizeTaskInstructions(detail).length}</span>
+                    <span class="lesson-spotlight__pill">Steps: ${normalizeTaskSteps(detail).length}</span>
+                    <span class="lesson-spotlight__pill">Annotations: ${normalizeTaskAnnotations(detail).length}</span>
+                </div>
             </div>
-            <div class="lesson-block">
-                <h4 class="lesson-block__title">Instruction flow</h4>
+            <div class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Read first</span>
+                    <h4 class="lesson-block__title">Instruction flow</h4>
+                </div>
                 <ol class="task-sequence">
-                    ${resolveTaskInstructions(detail).map((instruction, index) => `
+                    ${normalizeTaskInstructions(detail).map((instruction, index) => `
                         <li class="task-sequence__item">
                             <span class="task-sequence__index">${index + 1}</span>
                             <div class="task-sequence__copy">
@@ -103,10 +105,13 @@ function renderExerciseMainPanel(state) {
                     `).join("")}
                 </ol>
             </div>
-            <div class="lesson-block">
-                <h4 class="lesson-block__title">Ordered steps</h4>
+            <div class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Follow next</span>
+                    <h4 class="lesson-block__title">Ordered steps</h4>
+                </div>
                 <ol class="task-steps">
-                    ${resolveTaskSteps(detail).map((step) => `
+                    ${normalizeTaskSteps(detail).map((step) => `
                         <li class="task-steps__item">
                             <div class="task-steps__header">
                                 <span class="task-step__position">Step ${step.position}</span>
@@ -117,10 +122,13 @@ function renderExerciseMainPanel(state) {
                     `).join("")}
                 </ol>
             </div>
-            <div class="lesson-block">
-                <h4 class="lesson-block__title">Static workspace annotations</h4>
+            <div class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Keep in mind</span>
+                    <h4 class="lesson-block__title">Static workspace annotations</h4>
+                </div>
                 <div class="task-annotations">
-                    ${resolveTaskAnnotations(detail).map((annotation) => `
+                    ${normalizeTaskAnnotations(detail).map((annotation) => `
                         <article class="task-annotation">
                             <span class="control-label">${escapeHtml(annotation.label)}</span>
                             <p>${escapeHtml(annotation.message)}</p>
@@ -128,10 +136,13 @@ function renderExerciseMainPanel(state) {
                     `).join("")}
                 </div>
             </div>
-            <div class="lesson-block">
-                <h4 class="lesson-block__title">Provider seam</h4>
+            <div class="lesson-block lesson-block--supporting">
+                <div class="lesson-section__header">
+                    <span class="control-label">Supporting seam</span>
+                    <h4 class="lesson-block__title">Provider seam</h4>
+                </div>
                 <p class="panel-copy">
-                    Task presentation and repository-context surfaces now use the workspace payload directly without reshaping the exercise shell.
+                    The focused lesson surface still reads directly from the existing workspace payload without requiring new backend progression contracts.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -175,56 +186,4 @@ function describeCatalogStatus(state) {
                 description: "Pick a provider, tune the query, and choose which scenario should open the shared workspace route."
             };
     }
-}
-
-function resolveTaskInstructions(detail) {
-    return (detail.workspace.task.instructions ?? []).map((instruction, index) => {
-        if (typeof instruction === "string") {
-            return {
-                id: `instruction-${index + 1}`,
-                text: instruction
-            };
-        }
-
-        return {
-            id: instruction.id ?? `instruction-${index + 1}`,
-            text: instruction.text ?? ""
-        };
-    });
-}
-
-function resolveTaskSteps(detail) {
-    return (detail.workspace.task.steps ?? [])
-        .map((step, index) => {
-            if (typeof step === "string") {
-                return {
-                    position: index + 1,
-                    title: `Step ${index + 1}`,
-                    detail: step
-                };
-            }
-
-            return {
-                position: step.position ?? index + 1,
-                title: step.title ?? `Step ${index + 1}`,
-                detail: step.detail ?? ""
-            };
-        })
-        .sort((left, right) => left.position - right.position);
-}
-
-function resolveTaskAnnotations(detail) {
-    return (detail.workspace.task.annotations ?? []).map((annotation, index) => {
-        if (typeof annotation === "string") {
-            return {
-                label: `Note ${index + 1}`,
-                message: annotation
-            };
-        }
-
-        return {
-            label: annotation.label ?? `Note ${index + 1}`,
-            message: annotation.message ?? ""
-        };
-    });
 }

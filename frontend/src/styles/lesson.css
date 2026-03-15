@@ -7,6 +7,54 @@
     background: var(--paper-muted);
 }
 
+.lesson-spotlight {
+    display: grid;
+    gap: 12px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.1), rgba(255, 250, 241, 0.92)),
+        var(--paper-muted);
+}
+
+.lesson-spotlight--loading {
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
+        var(--paper-muted);
+}
+
+.lesson-spotlight__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lesson-spotlight__pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.86);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.76rem;
+}
+
+.lesson-block--reading {
+    gap: 14px;
+}
+
+.lesson-block--supporting {
+    background: rgba(255, 250, 241, 0.7);
+}
+
+.lesson-section__header {
+    display: grid;
+    gap: 6px;
+}
+
 .lesson-list {
     margin: 0;
     padding-left: 18px;

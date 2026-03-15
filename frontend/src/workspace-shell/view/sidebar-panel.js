@@ -1,9 +1,14 @@
 import { renderScenarioRail } from "./catalog-surfaces.js";
+import { renderLessonNavigationRail } from "./lesson-navigation.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
 
 export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
+    if (state.route === "exercise") {
+        return renderExerciseSidebarPanel(state);
+    }
+
     return `
         <aside class="panel panel--sidebar">
             <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
@@ -64,6 +69,54 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
                 </div>
                 ${renderScenarioRail(state, selectedCatalogScenario)}
             </div>
+        </aside>
+    `;
+}
+
+function renderExerciseSidebarPanel(state) {
+    if (state.detail.status === "loading" || state.detail.status === "idle") {
+        return `
+            <aside class="panel panel--sidebar">
+                <p class="panel-label">Lesson navigation</p>
+                <h3>Lesson rail is reserving the left lane</h3>
+                <p class="panel-copy">
+                    The learner already entered the exercise route. The left lane now holds space for lesson navigation even while detail is still loading.
+                </p>
+                <div class="lesson-rail__summary">
+                    <span class="control-label">Route state</span>
+                    <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
+                    <p class="panel-copy">Once the detail provider responds, this lane turns into a structured lesson map with current, upcoming, and locked stops.</p>
+                </div>
+            </aside>
+        `;
+    }
+
+    if (state.detail.status === "error") {
+        return `
+            <aside class="panel panel--sidebar">
+                <p class="panel-label">Lesson navigation</p>
+                <h3>Lesson rail is unavailable for this route</h3>
+                <p class="panel-copy">
+                    The left lane keeps a coherent unavailable state when the selected scenario detail provider fails before lesson data can be mapped into navigation stops.
+                </p>
+                <div class="lesson-rail__summary">
+                    <span class="control-label">Requested route</span>
+                    <strong>${escapeHtml(state.selectedScenarioSlug ?? "unknown scenario")}</strong>
+                    <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                </div>
+                <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
+            </aside>
+        `;
+    }
+
+    return `
+        <aside class="panel panel--sidebar">
+            <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
+            <h3>Lesson navigation rail</h3>
+            <p class="panel-copy">
+                The left lane now behaves like a lesson navigator instead of a control drawer, helping the learner scan what is active now and what stays for later.
+            </p>
+            ${renderLessonNavigationRail(state.detail.data)}
         </aside>
     `;
 }

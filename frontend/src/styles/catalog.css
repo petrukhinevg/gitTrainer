@@ -80,6 +80,120 @@
     padding-top: 4px;
 }
 
+.lesson-rail {
+    display: grid;
+    gap: 16px;
+}
+
+.lesson-rail__summary,
+.lesson-rail__map {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--paper-muted);
+}
+
+.lesson-rail__meta,
+.lesson-rail__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lesson-rail__meta-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.9);
+    font-size: 0.8rem;
+}
+
+.lesson-rail__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lesson-nav {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lesson-nav__item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.84);
+}
+
+.lesson-nav__item--current {
+    border-color: rgba(190, 91, 43, 0.45);
+    background: rgba(190, 91, 43, 0.12);
+}
+
+.lesson-nav__item--ready {
+    border-color: rgba(57, 89, 121, 0.24);
+}
+
+.lesson-nav__item--locked {
+    opacity: 0.72;
+}
+
+.lesson-nav__marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    border-radius: 999px;
+    background: rgba(57, 89, 121, 0.12);
+    color: var(--accent-cool);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.78rem;
+}
+
+.lesson-nav__copy,
+.lesson-nav__header {
+    display: grid;
+    gap: 6px;
+}
+
+.lesson-nav__header {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+}
+
+.lesson-nav__copy p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.45;
+}
+
+.lesson-nav__state {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(57, 89, 121, 0.12);
+    color: var(--accent-cool);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
 .scenario-rail__header {
     display: flex;
     align-items: center;
@@ -212,5 +326,13 @@
     .scenario-card-footer {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .lesson-nav__header {
+        grid-template-columns: 1fr;
+    }
+
+    .lesson-nav__item {
+        grid-template-columns: 1fr;
     }
 }
