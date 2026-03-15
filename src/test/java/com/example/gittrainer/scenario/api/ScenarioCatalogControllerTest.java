@@ -155,11 +155,18 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.task.goal").value("Task content arrives in sub-issue 2.2."))
                 .andExpect(jsonPath("$.workspace.task.instructions.length()").value(0))
                 .andExpect(jsonPath("$.workspace.task.steps.length()").value(0))
-                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("stub"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(0))
-                .andExpect(jsonPath("$.workspace.repositoryContext.commits.length()").value(0))
-                .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(0))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(0));
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("authored-fixture"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(2))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
+                .andExpect(jsonPath("$.workspace.repositoryContext.commits.length()").value(2))
+                .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].id").value("a1c9e31"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(3))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[1].path").value("notes/status-checklist.md"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[1].status").value("untracked"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(2))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Working tree cue"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Decision cue"));
     }
 
     @Test

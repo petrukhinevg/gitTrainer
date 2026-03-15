@@ -13,9 +13,14 @@ import java.util.Optional;
 public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
 
     private final ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;
+    private final ScenarioRepositoryContextFixtureSource scenarioRepositoryContextFixtureSource;
 
-    public FixtureScenarioDetailGateway(ScenarioCatalogFixtureSource scenarioCatalogFixtureSource) {
+    public FixtureScenarioDetailGateway(
+            ScenarioCatalogFixtureSource scenarioCatalogFixtureSource,
+            ScenarioRepositoryContextFixtureSource scenarioRepositoryContextFixtureSource
+    ) {
         this.scenarioCatalogFixtureSource = scenarioCatalogFixtureSource;
+        this.scenarioRepositoryContextFixtureSource = scenarioRepositoryContextFixtureSource;
     }
 
     @Override
@@ -65,13 +70,7 @@ public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
                         List.of(),
                         List.of()
                 ),
-                new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
-                        "stub",
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of()
-                )
+                scenarioRepositoryContextFixtureSource.fixtureFor(scenarioSummary.slug())
         );
     }
 }
