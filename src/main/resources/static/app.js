@@ -11,20 +11,24 @@ const providerFactories = Object.freeze({
     "fixture-unavailable": () => createUnavailableFixtureCatalogProvider()
 });
 
+const DEFAULT_PROVIDER_NAME = "local-fixture";
+const DEFAULT_QUERY = Object.freeze({
+    difficulty: null,
+    tags: [],
+    sort: null
+});
+
 const state = {
     route: "catalog",
     status: "idle",
-    query: {
-        difficulty: null,
-        tags: [],
-        sort: null
-    },
+    query: cloneQuery(DEFAULT_QUERY),
     catalog: null,
     error: null,
-    providerName: "local-fixture"
+    providerName: DEFAULT_PROVIDER_NAME
 };
 
 const appRoot = document.querySelector("#app");
+let latestCatalogRequestId = 0;
 
 async function bootstrapCatalogApp() {
     window.addEventListener("hashchange", handleRouteChange);
@@ -53,23 +57,40 @@ function parseRoute(hash) {
 }
 
 async function loadCatalog() {
+    const requestId = ++latestCatalogRequestId;
+    const providerName = state.providerName;
+    const querySnapshot = cloneQuery(state.query);
+
     state.status = "loading";
     state.catalog = null;
     state.error = null;
     render();
 
     try {
-        const providerFactory = providerFactories[state.providerName];
+        const providerFactory = providerFactories[providerName];
         if (!providerFactory) {
-            throw new Error(`Unknown catalog provider: ${state.providerName}`);
+            throw new Error(`Unknown catalog provider: ${providerName}`);
         }
         const provider = providerFactory();
-        state.catalog = await provider.browseCatalog(state.query);
+        const catalog = await provider.browseCatalog(querySnapshot);
+        if (requestId !== latestCatalogRequestId) {
+            return;
+        }
+
+        state.catalog = catalog;
         state.status = state.catalog.items.length === 0 ? "empty" : "ready";
     } catch (error) {
+        if (requestId !== latestCatalogRequestId) {
+            return;
+        }
+
         state.catalog = null;
         state.error = error instanceof Error ? error.message : "Unknown catalog error";
         state.status = "error";
+    }
+
+    if (requestId !== latestCatalogRequestId) {
+        return;
     }
 
     render();
@@ -244,12 +265,8 @@ async function handleCatalogControlsSubmit(event) {
 }
 
 async function resetQueryControls() {
-    state.providerName = "local-fixture";
-    state.query = {
-        difficulty: null,
-        tags: [],
-        sort: "title"
-    };
+    state.providerName = DEFAULT_PROVIDER_NAME;
+    state.query = cloneQuery(DEFAULT_QUERY);
 
     await loadCatalog();
 }
@@ -300,6 +317,14 @@ function describeStatus() {
 function normalizeOptionalValue(value) {
     const normalized = String(value ?? "").trim();
     return normalized.length ? normalized : null;
+}
+
+function cloneQuery(query) {
+    return {
+        difficulty: query.difficulty,
+        tags: [...query.tags],
+        sort: query.sort
+    };
 }
 
 function escapeHtml(value) {
