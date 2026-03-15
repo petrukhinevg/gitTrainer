@@ -1,4 +1,4 @@
-export function renderCatalogWorkspace({ state, catalogItems, selectedScenario, selectedScenarioState, tagOptions }) {
+export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOptions }) {
     if (state.route === "not-found") {
         return `
             <section class="workspace-intro panel">
@@ -13,31 +13,32 @@ export function renderCatalogWorkspace({ state, catalogItems, selectedScenario, 
         <section class="workspace-intro panel">
             <div class="workspace-intro__copy">
                 <p class="panel-label">Standalone frontend</p>
-                <h2>${escapeHtml(resolveIntroTitle(state, selectedScenario, selectedScenarioState))}</h2>
-                <p>${escapeHtml(resolveIntroDescription(state, selectedScenario, selectedScenarioState))}</p>
+                <h2>${escapeHtml(resolveIntroTitle(state))}</h2>
+                <p>${escapeHtml(resolveIntroDescription(state))}</p>
             </div>
             <div class="workspace-intro__meta">
                 <div class="workspace-chip">Route: ${escapeHtml(state.route)}</div>
                 <div class="workspace-chip">Provider: ${escapeHtml(state.providerName)}</div>
-                <div class="workspace-chip">Status: ${escapeHtml(state.status)}</div>
+                <div class="workspace-chip">Catalog: ${escapeHtml(state.catalog.status)}</div>
+                <div class="workspace-chip">Detail: ${escapeHtml(resolveDetailStatusLabel(state))}</div>
             </div>
         </section>
 
         <section class="workspace-grid">
-            ${renderSidebar(state, catalogItems, selectedScenario, tagOptions)}
-            ${renderMainPanel(state, catalogItems, selectedScenario, selectedScenarioState)}
-            ${renderWorkspacePanel(state, selectedScenario, selectedScenarioState)}
+            ${renderSidebar(state, selectedCatalogScenario, tagOptions)}
+            ${renderMainPanel(state)}
+            ${renderWorkspacePanel(state)}
         </section>
     `;
 }
 
-function renderSidebar(state, catalogItems, selectedScenario, tagOptions) {
+function renderSidebar(state, selectedCatalogScenario, tagOptions) {
     return `
         <aside class="panel panel--sidebar">
-            <p class="panel-label">Scenario map</p>
+            <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
             <h3>Browse controls and route entry</h3>
             <p class="panel-copy">
-                Provider switching, filtering, sorting, and the current catalog seam stay intact while the learner flow now lives inside one standalone shell.
+                The catalog and exercise detail providers are now separate seams. Query controls still shape browsing, while the exercise route loads scenario detail by slug through its own boundary.
             </p>
             <form class="catalog-controls" data-catalog-controls>
                 <label>
@@ -80,7 +81,7 @@ function renderSidebar(state, catalogItems, selectedScenario, tagOptions) {
                     </div>
                 </fieldset>
                 <div class="control-actions">
-                    <button type="submit">Reload catalog</button>
+                    <button type="submit">Reload workspace</button>
                     <button type="button" data-reset-query>Reset</button>
                 </div>
             </form>
@@ -88,49 +89,51 @@ function renderSidebar(state, catalogItems, selectedScenario, tagOptions) {
             <div class="scenario-rail">
                 <div class="scenario-rail__header">
                     <span class="control-label">Scenario quick links</span>
-                    <strong>${catalogItems.length}</strong>
+                    <strong>${state.catalog.items.length}</strong>
                 </div>
-                ${renderScenarioRail(state, catalogItems, selectedScenario)}
+                ${renderScenarioRail(state, selectedCatalogScenario)}
             </div>
         </aside>
     `;
 }
 
-function renderMainPanel(state, catalogItems, selectedScenario, selectedScenarioState) {
+function renderMainPanel(state) {
     if (state.route === "exercise") {
-        return renderExerciseMainPanel(state, selectedScenario, selectedScenarioState);
+        return renderExerciseMainPanel(state);
     }
 
     return `
         <section class="panel panel--lesson">
             <p class="panel-label">Catalog overview</p>
             <h3>Choose a scenario before opening the workspace</h3>
-            <p class="panel-copy">${escapeHtml(describeStatus(state).description)}</p>
-            ${renderCatalogOverviewState(state, catalogItems)}
+            <p class="panel-copy">${escapeHtml(describeCatalogStatus(state).description)}</p>
+            ${renderCatalogOverviewState(state)}
         </section>
     `;
 }
 
-function renderExerciseMainPanel(state, selectedScenario, selectedScenarioState) {
-    if (selectedScenarioState === "loading") {
+function renderExerciseMainPanel(state) {
+    const detail = state.detail.data;
+
+    if (state.detail.status === "loading" || state.detail.status === "idle") {
         return `
             <section class="panel panel--lesson">
                 <p class="panel-label">Workspace lesson</p>
-                <h3>Loading selected scenario</h3>
+                <h3>Loading workspace detail</h3>
                 <p class="panel-copy">
-                    The shell already moved into the exercise route. Provider data is still resolving the selected scenario before the workspace handoff can be confirmed.
+                    The route is already stable. This shell is waiting for the active detail provider to resolve the selected scenario by slug.
                 </p>
             </section>
         `;
     }
 
-    if (selectedScenarioState !== "available") {
+    if (state.detail.status === "error") {
         return `
             <section class="panel panel--lesson">
                 <p class="panel-label">Workspace lesson</p>
-                <h3>Selected scenario is unavailable</h3>
+                <h3>Exercise detail is unavailable</h3>
                 <p class="panel-copy">
-                    The current provider result does not contain the requested slug, so the app keeps the handoff honest instead of silently filling the workspace with local fallback content.
+                    The exercise route now has explicit load and error flow handling. The shell stays in place, but the selected scenario detail provider failed before returning a payload.
                 </p>
                 <div class="lesson-block">
                     <h4 class="lesson-block__title">Requested route</h4>
@@ -140,20 +143,14 @@ function renderExerciseMainPanel(state, selectedScenario, selectedScenarioState)
                             <dd>${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</dd>
                         </div>
                         <div>
-                            <dt>Catalog source</dt>
-                            <dd>${escapeHtml(state.catalog?.meta?.source ?? state.providerName)}</dd>
+                            <dt>Provider</dt>
+                            <dd>${escapeHtml(state.providerName)}</dd>
                         </div>
                         <div>
-                            <dt>Reason</dt>
-                            <dd>${escapeHtml(resolveUnavailableReason(state, selectedScenarioState))}</dd>
+                            <dt>Error</dt>
+                            <dd>${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</dd>
                         </div>
                     </dl>
-                </div>
-                <div class="lesson-block">
-                    <h4 class="lesson-block__title">Next step</h4>
-                    <p class="panel-copy">
-                        Go back to the catalog, adjust the current provider or filters, and select a scenario that is actually present in the active result set.
-                    </p>
                 </div>
             </section>
         `;
@@ -161,86 +158,159 @@ function renderExerciseMainPanel(state, selectedScenario, selectedScenarioState)
 
     return `
         <section class="panel panel--lesson">
-            <p class="panel-label">Workspace lesson</p>
-            <h3>${escapeHtml(selectedScenario.title)}</h3>
-            <p class="panel-copy">
-                Workspace route keeps the learner in the same shell as the catalog. Full detail loading, authored instructions, and repository context still belong to the later 2.1 to 2.3 tasks.
-            </p>
+            <p class="panel-label">${escapeHtml(detail.workspace.shell.centerPanelTitle)}</p>
+            <h3>${escapeHtml(detail.title)}</h3>
+            <p class="panel-copy">${escapeHtml(detail.summary)}</p>
             <div class="lesson-block">
-                <h4 class="lesson-block__title">Task prompt placeholder</h4>
-                <p class="panel-copy">
-                    The chosen scenario slug is already routed into the exercise workspace. This center panel is reserved for future goal text, step ordering, and repository cues.
-                </p>
-            </div>
-            <div class="lesson-block">
-                <h4 class="lesson-block__title">Route handoff</h4>
+                <h4 class="lesson-block__title">Task placeholder</h4>
+                <p class="panel-copy">${escapeHtml(detail.workspace.task.goal)}</p>
                 <dl class="result-summary">
                     <div>
-                        <dt>Scenario slug</dt>
-                        <dd>${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</dd>
+                        <dt>Task status</dt>
+                        <dd>${escapeHtml(detail.workspace.task.status)}</dd>
                     </div>
                     <div>
-                        <dt>Catalog source</dt>
-                        <dd>${escapeHtml(state.catalog?.meta?.source ?? state.providerName)}</dd>
+                        <dt>Instructions</dt>
+                        <dd>${detail.workspace.task.instructions.length}</dd>
                     </div>
                     <div>
-                        <dt>Route</dt>
-                        <dd>${escapeHtml(`#/exercise/${state.selectedScenarioSlug ?? ""}`)}</dd>
+                        <dt>Steps</dt>
+                        <dd>${detail.workspace.task.steps.length}</dd>
                     </div>
                 </dl>
             </div>
             <div class="lesson-block">
-                <h4 class="lesson-block__title">Why this task exists</h4>
-                <ul class="lesson-list">
-                    <li>The learner no longer jumps between a legacy backend shell and a future SPA shell.</li>
-                    <li>The catalog still owns discovery and selection.</li>
-                    <li>The same shell can absorb upcoming workspace detail tasks without another route migration.</li>
-                </ul>
+                <h4 class="lesson-block__title">Provider seam</h4>
+                <p class="panel-copy">
+                    This panel now renders from the scenario detail payload instead of the catalog summary route placeholder. Final task instructions and repository visuals still belong to later slices.
+                </p>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Detail source</dt>
+                        <dd>${escapeHtml(detail.meta.source)}</dd>
+                    </div>
+                    <div>
+                        <dt>Stub payload</dt>
+                        <dd>${escapeHtml(String(detail.meta.stub))}</dd>
+                    </div>
+                    <div>
+                        <dt>Difficulty</dt>
+                        <dd>${escapeHtml(detail.difficulty)}</dd>
+                    </div>
+                </dl>
             </div>
         </section>
     `;
 }
 
-function renderWorkspacePanel(state, selectedScenario, selectedScenarioState) {
-    const primaryAction = resolvePrimaryAction(state, selectedScenario, selectedScenarioState);
-    const secondaryAction = state.route === "exercise"
-        ? `<a class="scenario-link" href="#/catalog">Back to catalog</a>`
-        : `<span class="scenario-link">Select a scenario to reserve the route handoff.</span>`;
+function renderWorkspacePanel(state) {
+    if (state.route !== "exercise") {
+        return `
+            <section class="panel panel--workspace">
+                <p class="panel-label">Workspace lane</p>
+                <h3>Exercise shell waits behind the chosen route</h3>
+                <p class="panel-copy">
+                    The route shell is already reserved. Pick a scenario from the catalog to load detail through the dedicated provider seam.
+                </p>
+                <div class="workspace-card">
+                    <div class="workspace-card__header">
+                        <span class="control-label">Detail boundary</span>
+                        <span class="workspace-card__badge">catalog mode</span>
+                    </div>
+                    <p class="panel-copy">No exercise detail request is active while the learner remains on the catalog route.</p>
+                    <div class="workspace-card__actions">
+                        <span class="scenario-link">Select a scenario to reserve the route handoff.</span>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
 
+    if (state.detail.status === "loading" || state.detail.status === "idle") {
+        return `
+            <section class="panel panel--workspace">
+                <p class="panel-label">Workspace lane</p>
+                <h3>Selected scenario detail is loading</h3>
+                <p class="panel-copy">
+                    The right lane stays stable while the provider resolves the workspace payload. This is the top-level load flow for the exercise route.
+                </p>
+                <div class="workspace-card">
+                    <div class="workspace-card__header">
+                        <span class="control-label">Detail provider</span>
+                        <span class="workspace-card__badge">loading</span>
+                    </div>
+                    <p class="panel-copy">Requested slug: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</p>
+                </div>
+            </section>
+        `;
+    }
+
+    if (state.detail.status === "error") {
+        return `
+            <section class="panel panel--workspace">
+                <p class="panel-label">Workspace lane</p>
+                <h3>Scenario detail provider seam failed</h3>
+                <p class="panel-copy">
+                    The shell keeps a coherent error state when the active detail provider cannot load the requested scenario.
+                </p>
+                <div class="workspace-card">
+                    <div class="workspace-card__header">
+                        <span class="control-label">Detail provider</span>
+                        <span class="workspace-card__badge">error</span>
+                    </div>
+                    <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                    <div class="workspace-card__actions">
+                        <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    const detail = state.detail.data;
     return `
         <section class="panel panel--workspace">
-            <p class="panel-label">Workspace lane</p>
-            <h3>Three-panel shell is ready for handoff</h3>
+            <p class="panel-label">${escapeHtml(detail.workspace.shell.rightPanelTitle)}</p>
+            <h3>Exercise route now renders a provider-backed shell</h3>
             <p class="panel-copy">
-                The right lane stays reserved for the future answer or work area, while already proving that catalog selection and exercise routing live in the same standalone app.
+                This right lane is still only a workspace placeholder, but it is now driven by exercise detail payload state instead of catalog summary assumptions.
             </p>
             <div class="workspace-card">
                 <div class="workspace-card__header">
-                    <span class="control-label">Input area</span>
-                    <span class="workspace-card__badge">${escapeHtml(resolveWorkspaceBadge(state, selectedScenarioState))}</span>
+                    <span class="control-label">Repository context seam</span>
+                    <span class="workspace-card__badge">${escapeHtml(detail.workspace.repositoryContext.status)}</span>
                 </div>
-                <p class="panel-copy">${escapeHtml(resolveWorkspaceCopy(state, selectedScenario, selectedScenarioState))}</p>
+                <p class="panel-copy">
+                    The detail payload exposes stable placeholders for branches, commits, files, and annotations so later tasks can render them without redesigning the shell.
+                </p>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Branches</dt>
+                        <dd>${detail.workspace.repositoryContext.branches.length}</dd>
+                    </div>
+                    <div>
+                        <dt>Commits</dt>
+                        <dd>${detail.workspace.repositoryContext.commits.length}</dd>
+                    </div>
+                    <div>
+                        <dt>Files</dt>
+                        <dd>${detail.workspace.repositoryContext.files.length}</dd>
+                    </div>
+                    <div>
+                        <dt>Annotations</dt>
+                        <dd>${detail.workspace.repositoryContext.annotations.length}</dd>
+                    </div>
+                </dl>
                 <div class="workspace-card__actions">
-                    ${primaryAction}
-                    ${secondaryAction}
+                    <a class="scenario-action" href="#/catalog">Back to catalog</a>
                 </div>
-            </div>
-            <div class="workspace-stack">
-                <section class="workspace-stack__panel">
-                    <p class="panel-label">Task context</p>
-                    <p class="panel-copy">Center panel owns the future task goal, ordered steps, and repository annotations.</p>
-                </section>
-                <section class="workspace-stack__panel">
-                    <p class="panel-label">Feedback lane</p>
-                    <p class="panel-copy">This space stays ready for later correctness, hint, and retry panels without another shell redesign.</p>
-                </section>
             </div>
         </section>
     `;
 }
 
-function renderCatalogOverviewState(state, catalogItems) {
-    switch (state.status) {
+function renderCatalogOverviewState(state) {
+    switch (state.catalog.status) {
         case "loading":
             return `
                 <div class="scenario-list skeleton-list" aria-hidden="true">
@@ -261,7 +331,7 @@ function renderCatalogOverviewState(state, catalogItems) {
             return `
                 <section class="catalog-state catalog-state-error">
                     <strong>Provider unavailable</strong>
-                    <p>${escapeHtml(state.error ?? "The selected catalog source failed before returning items.")}</p>
+                    <p>${escapeHtml(state.catalog.error ?? "The selected catalog source failed before returning items.")}</p>
                 </section>
             `;
         case "empty":
@@ -279,31 +349,31 @@ function renderCatalogOverviewState(state, catalogItems) {
                     <p class="panel-copy">Choose a scenario from the map or card list to drive the workspace handoff intentionally.</p>
                 </div>
                 <div class="scenario-list">
-                    ${catalogItems.map(renderScenarioCard).join("")}
+                    ${state.catalog.items.map(renderScenarioCard).join("")}
                 </div>
             `;
     }
 }
 
-function renderScenarioRail(state, catalogItems, selectedScenario) {
-    switch (state.status) {
+function renderScenarioRail(state, selectedCatalogScenario) {
+    switch (state.catalog.status) {
         case "loading":
             return `<p class="panel-copy">Loading scenario links for the shared workspace shell.</p>`;
         case "error":
-            return `<p class="panel-copy">${escapeHtml(state.error ?? "Catalog source is unavailable.")}</p>`;
+            return `<p class="panel-copy">${escapeHtml(state.catalog.error ?? "Catalog source is unavailable.")}</p>`;
         case "empty":
             return `<p class="panel-copy">No scenarios match the current query.</p>`;
         default:
             return `
                 <div class="scenario-rail__list">
-                    ${catalogItems.map((item) => renderScenarioRailLink(item, selectedScenario)).join("")}
+                    ${state.catalog.items.map((item) => renderScenarioRailLink(item, selectedCatalogScenario)).join("")}
                 </div>
             `;
     }
 }
 
-function renderScenarioRailLink(item, selectedScenario) {
-    const isActive = item.slug === selectedScenario?.slug;
+function renderScenarioRailLink(item, selectedCatalogScenario) {
+    const isActive = item.slug === selectedCatalogScenario?.slug;
     return `
         <a class="scenario-link ${isActive ? "scenario-link--active" : ""}" href="#/exercise/${encodeHashSegment(item.slug)}">
             <span>${escapeHtml(item.title)}</span>
@@ -326,82 +396,58 @@ function renderScenarioCard(item) {
             </div>
             <div class="scenario-card-footer">
                 <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Open scenario</a>
-                <span class="entry-note">Route handoff stays inside the shared workspace shell.</span>
+                <span class="entry-note">Route handoff now resolves detail through a dedicated provider seam.</span>
             </div>
         </article>
     `;
 }
 
-function resolveIntroTitle(state, selectedScenario, selectedScenarioState) {
-    if (state.route === "exercise" && selectedScenarioState === "available") {
-        return selectedScenario.title;
-    }
-
-    if (state.route === "exercise") {
-        return "Selected scenario is not available in the active provider";
-    }
-
-    return "Catalog browsing and route handoff now share one shell";
-}
-
-function resolveIntroDescription(state, selectedScenario, selectedScenarioState) {
-    if (state.route === "exercise" && selectedScenarioState === "available") {
-        return `The learner has already left the catalog and landed in the same standalone workspace shell for ${selectedScenario.title}.`;
-    }
-
-    if (state.route === "exercise") {
-        return "The route is preserved, but the shell refuses to invent missing scenario detail when the active provider result does not contain the requested slug.";
-    }
-
-    return "The catalog still owns selection and provider state, but the learner no longer bounces between separate UI shells before entering the exercise flow.";
-}
-
-function resolveWorkspaceBadge(state, selectedScenarioState) {
+function resolveIntroTitle(state) {
     if (state.route !== "exercise") {
-        return "catalog preview";
+        return "Catalog browsing and route handoff now share one shell";
     }
 
-    if (selectedScenarioState === "available") {
-        return "active route";
+    if (state.detail.status === "ready") {
+        return state.detail.data.title;
     }
 
-    return "route unavailable";
+    if (state.detail.status === "error") {
+        return "Exercise route keeps a stable error boundary";
+    }
+
+    return "Exercise route is loading provider-backed detail";
 }
 
-function resolveWorkspaceCopy(state, selectedScenario, selectedScenarioState) {
+function resolveIntroDescription(state) {
     if (state.route !== "exercise") {
-        return "Choose any scenario from the map to drive the next exercise route.";
+        return "The catalog still owns selection and provider state, but the learner no longer bounces between separate UI shells before entering the exercise flow.";
     }
 
-    if (selectedScenarioState === "available") {
-        return `Scenario "${selectedScenario.title}" is the current handoff target.`;
+    if (state.detail.status === "ready") {
+        return "The learner has already left the catalog and landed in the same standalone workspace shell with a route-specific detail payload.";
     }
 
-    return "The requested route is present, but the active provider has not resolved a matching scenario for this shell.";
+    if (state.detail.status === "error") {
+        return "The route is preserved and the workspace shell stays mounted even when scenario detail loading fails.";
+    }
+
+    return "The exercise route now loads through a dedicated provider seam, with explicit loading flow before deeper task and repository content is implemented.";
 }
 
-function resolvePrimaryAction(state, selectedScenario, selectedScenarioState) {
-    if (state.route === "exercise" && selectedScenarioState === "available") {
-        return `<a class="scenario-action" href="#/exercise/${encodeHashSegment(selectedScenario.slug)}">Open scenario</a>`;
-    }
-
-    if (state.route === "catalog") {
-        return `<a class="scenario-action scenario-action--muted" href="#/catalog">Browse catalog</a>`;
-    }
-
-    return `<a class="scenario-action scenario-action--muted" href="#/catalog">Return to catalog</a>`;
+function resolveDetailStatusLabel(state) {
+    return state.route === "exercise" ? state.detail.status : "inactive";
 }
 
-function resolveUnavailableReason(state, selectedScenarioState) {
-    if (selectedScenarioState === "unavailable") {
-        return state.error ?? "Active provider failed before returning any scenario summaries.";
+function resolveLeftPanelTitle(state) {
+    if (state.route === "exercise" && state.detail.status === "ready") {
+        return state.detail.data.workspace.shell.leftPanelTitle;
     }
 
-    return "The active provider result does not include the requested slug under the current filters.";
+    return "Scenario map";
 }
 
-function describeStatus(state) {
-    switch (state.status) {
+function describeCatalogStatus(state) {
+    switch (state.catalog.status) {
         case "loading":
             return {
                 description: "The shared shell is waiting for the active provider to resolve the latest catalog query."
@@ -412,7 +458,7 @@ function describeStatus(state) {
             };
         case "error":
             return {
-                description: state.error ?? "The active provider failed before returning scenario summaries."
+                description: state.catalog.error ?? "The active provider failed before returning scenario summaries."
             };
         case "ready":
             return {

@@ -42,8 +42,10 @@ class CatalogShellPageTest {
         mockMvc.perform(get("/app.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario map")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Three-panel shell is ready for handoff")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace route keeps the learner in the same shell")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Exercise route is loading provider-backed detail")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Selected scenario detail is loading")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Back to catalog")));

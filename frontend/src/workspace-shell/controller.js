@@ -7,18 +7,27 @@ const DEFAULT_QUERY = Object.freeze({
     sort: null
 });
 
-export function createCatalogWorkspaceController({ appRoot, providerFactories, tagOptions }) {
+export function createCatalogWorkspaceController({ appRoot, catalogProviderFactories, detailProviderFactories, tagOptions }) {
     const state = {
         route: "catalog",
         selectedScenarioSlug: null,
-        status: "idle",
+        providerName: DEFAULT_PROVIDER_NAME,
         query: cloneQuery(DEFAULT_QUERY),
-        catalog: null,
-        error: null,
-        providerName: DEFAULT_PROVIDER_NAME
+        catalog: {
+            status: "idle",
+            items: [],
+            meta: null,
+            error: null
+        },
+        detail: {
+            status: "idle",
+            data: null,
+            error: null
+        }
     };
 
     let latestCatalogRequestId = 0;
+    let latestDetailRequestId = 0;
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
@@ -35,13 +44,17 @@ export function createCatalogWorkspaceController({ appRoot, providerFactories, t
         const route = parseRoute(window.location.hash);
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
+        resetRouteScopedState();
         render();
 
         if (state.route === "not-found") {
             return;
         }
 
-        await loadCatalog();
+        await Promise.all([
+            loadCatalog(),
+            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve()
+        ]);
     }
 
     async function loadCatalog() {
@@ -49,35 +62,88 @@ export function createCatalogWorkspaceController({ appRoot, providerFactories, t
         const providerName = state.providerName;
         const querySnapshot = cloneQuery(state.query);
 
-        state.status = "loading";
-        state.catalog = null;
-        state.error = null;
+        state.catalog.status = "loading";
+        state.catalog.items = [];
+        state.catalog.meta = null;
+        state.catalog.error = null;
         render();
 
         try {
-            const providerFactory = providerFactories[providerName];
+            const providerFactory = catalogProviderFactories[providerName];
             if (!providerFactory) {
                 throw new Error(`Unknown catalog provider: ${providerName}`);
             }
+
             const provider = providerFactory();
             const catalog = await provider.browseCatalog(querySnapshot);
             if (requestId !== latestCatalogRequestId) {
                 return;
             }
 
-            state.catalog = catalog;
-            state.status = state.catalog.items.length === 0 ? "empty" : "ready";
+            state.catalog.items = catalog.items;
+            state.catalog.meta = catalog.meta;
+            state.catalog.status = catalog.items.length === 0 ? "empty" : "ready";
         } catch (error) {
             if (requestId !== latestCatalogRequestId) {
                 return;
             }
 
-            state.catalog = null;
-            state.error = error instanceof Error ? error.message : "Unknown catalog error";
-            state.status = "error";
+            state.catalog.items = [];
+            state.catalog.meta = null;
+            state.catalog.error = error instanceof Error ? error.message : "Unknown catalog error";
+            state.catalog.status = "error";
         }
 
         if (requestId !== latestCatalogRequestId) {
+            return;
+        }
+
+        render();
+    }
+
+    async function loadScenarioDetail() {
+        if (!state.selectedScenarioSlug) {
+            state.detail.status = "missing";
+            state.detail.data = null;
+            state.detail.error = "Scenario slug is missing from the exercise route.";
+            render();
+            return;
+        }
+
+        const requestId = ++latestDetailRequestId;
+        const providerName = state.providerName;
+        const slug = state.selectedScenarioSlug;
+
+        state.detail.status = "loading";
+        state.detail.data = null;
+        state.detail.error = null;
+        render();
+
+        try {
+            const providerFactory = detailProviderFactories[providerName];
+            if (!providerFactory) {
+                throw new Error(`Unknown scenario detail provider: ${providerName}`);
+            }
+
+            const provider = providerFactory();
+            const detail = await provider.loadScenarioDetail(slug);
+            if (requestId !== latestDetailRequestId) {
+                return;
+            }
+
+            state.detail.data = detail;
+            state.detail.status = "ready";
+        } catch (error) {
+            if (requestId !== latestDetailRequestId) {
+                return;
+            }
+
+            state.detail.data = null;
+            state.detail.error = error instanceof Error ? error.message : "Unknown scenario detail error";
+            state.detail.status = "error";
+        }
+
+        if (requestId !== latestDetailRequestId) {
             return;
         }
 
@@ -95,26 +161,21 @@ export function createCatalogWorkspaceController({ appRoot, providerFactories, t
             sort: normalizeSortValue(formData.get("sort"))
         };
 
-        await loadCatalog();
+        await reloadActiveRouteData();
     }
 
     async function resetQueryControls() {
         state.providerName = DEFAULT_PROVIDER_NAME;
         state.query = cloneQuery(DEFAULT_QUERY);
 
-        await loadCatalog();
+        await reloadActiveRouteData();
     }
 
     function render() {
-        const catalogItems = state.catalog?.items ?? [];
-        const selectedScenario = resolveSelectedScenario(state, catalogItems);
-        const selectedScenarioState = resolveSelectedScenarioState(state, selectedScenario);
-
+        const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
-            catalogItems,
-            selectedScenario,
-            selectedScenarioState,
+            selectedCatalogScenario,
             tagOptions
         });
 
@@ -129,6 +190,21 @@ export function createCatalogWorkspaceController({ appRoot, providerFactories, t
 
         form.addEventListener("submit", handleCatalogControlsSubmit);
         form.querySelector("[data-reset-query]")?.addEventListener("click", resetQueryControls);
+    }
+
+    async function reloadActiveRouteData() {
+        await Promise.all([
+            loadCatalog(),
+            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve()
+        ]);
+    }
+
+    function resetRouteScopedState() {
+        if (state.route !== "exercise") {
+            state.detail.status = "idle";
+            state.detail.data = null;
+            state.detail.error = null;
+        }
     }
 
     return {
@@ -158,32 +234,12 @@ function parseRoute(hash) {
     };
 }
 
-function resolveSelectedScenario(state, catalogItems) {
-    if (state.route !== "exercise" || !state.selectedScenarioSlug) {
+function resolveSelectedCatalogScenario(state, catalogItems) {
+    if (!state.selectedScenarioSlug) {
         return null;
     }
 
     return catalogItems.find((item) => item.slug === state.selectedScenarioSlug) ?? null;
-}
-
-function resolveSelectedScenarioState(state, selectedScenario) {
-    if (state.route !== "exercise") {
-        return "catalog";
-    }
-
-    if (state.status === "loading" || state.status === "idle") {
-        return "loading";
-    }
-
-    if (state.status === "error") {
-        return "unavailable";
-    }
-
-    if (state.status === "empty" || !selectedScenario) {
-        return "missing";
-    }
-
-    return "available";
 }
 
 function normalizeOptionalValue(value) {
