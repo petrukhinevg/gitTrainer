@@ -103,4 +103,17 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.query.difficulty").value("intermediate"))
                 .andExpect(jsonPath("$.meta.query.tags[0]").value("basics"));
     }
+
+    @Test
+    void ignoresBlankTagFiltersWhenApplyingCatalogPolicy() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("tag", "   ")
+                        .param("tag", "status")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value("status-basics"))
+                .andExpect(jsonPath("$.meta.query.tags[0]").value("   "))
+                .andExpect(jsonPath("$.meta.query.tags[1]").value("status"));
+    }
 }

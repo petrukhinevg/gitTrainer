@@ -31,7 +31,8 @@ public class CatalogQueryPolicy {
     }
 
     private boolean matchesTags(ScenarioSummary item, CatalogBrowseQuery query) {
-        if (query.tags() == null || query.tags().isEmpty()) {
+        List<String> requestedTags = normalizeRequestedTags(query);
+        if (requestedTags.isEmpty()) {
             return true;
         }
 
@@ -39,9 +40,7 @@ public class CatalogQueryPolicy {
                 .map(this::normalize)
                 .toList();
 
-        return query.tags().stream()
-                .map(this::normalize)
-                .allMatch(normalizedItemTags::contains);
+        return requestedTags.stream().allMatch(normalizedItemTags::contains);
     }
 
     private Comparator<ScenarioSummary> resolveComparator(CatalogBrowseQuery query) {
@@ -70,6 +69,17 @@ public class CatalogQueryPolicy {
             case BEGINNER -> "beginner";
             case INTERMEDIATE -> "intermediate";
         };
+    }
+
+    private List<String> normalizeRequestedTags(CatalogBrowseQuery query) {
+        if (query.tags() == null) {
+            return List.of();
+        }
+
+        return query.tags().stream()
+                .map(this::normalize)
+                .filter(tag -> !tag.isEmpty())
+                .toList();
     }
 
     private String normalize(String value) {
