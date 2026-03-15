@@ -18,11 +18,26 @@ public class FixtureScenarioCatalogGateway implements ScenarioCatalogGateway {
 
     @Override
     public List<ScenarioSummary> loadCatalog(CatalogBrowseQuery query) {
-        return scenarioCatalogFixtureSource.defaultCatalog().items();
+        return resolveFixture(query).items();
     }
 
     @Override
-    public String sourceName() {
-        return scenarioCatalogFixtureSource.defaultCatalog().sourceName();
+    public String sourceName(CatalogBrowseQuery query) {
+        return resolveFixture(query).sourceName();
+    }
+
+    private ScenarioCatalogFixture resolveFixture(CatalogBrowseQuery query) {
+        String source = query.source();
+        if (source == null || source.isBlank() || source.equalsIgnoreCase("default")) {
+            return scenarioCatalogFixtureSource.defaultCatalog();
+        }
+        if (source.equalsIgnoreCase("empty")) {
+            return scenarioCatalogFixtureSource.emptyCatalog();
+        }
+        if (source.equalsIgnoreCase("unavailable")) {
+            return scenarioCatalogFixtureSource.unavailableCatalog();
+        }
+
+        return scenarioCatalogFixtureSource.defaultCatalog();
     }
 }

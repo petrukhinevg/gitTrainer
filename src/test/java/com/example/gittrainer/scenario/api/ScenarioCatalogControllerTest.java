@@ -117,4 +117,23 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.query.tags[0]").value("   "))
                 .andExpect(jsonPath("$.meta.query.tags[1]").value("status"));
     }
+
+    @Test
+    void exposesEmptyFixtureThroughCatalogBoundary() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("source", "empty")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.source").value("mvp-fixture-empty"))
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void exposesUnavailableFixtureThroughCatalogBoundary() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("source", "unavailable")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
+    }
 }

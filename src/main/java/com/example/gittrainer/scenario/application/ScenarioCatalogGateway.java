@@ -9,5 +9,5 @@ public interface ScenarioCatalogGateway {
 
     List<ScenarioSummary> loadCatalog(CatalogBrowseQuery query);
 
-    String sourceName();
+    String sourceName(CatalogBrowseQuery query);
 }
