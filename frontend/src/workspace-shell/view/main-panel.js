@@ -13,14 +13,19 @@ export function renderMainPanel(state) {
 
     return renderLessonLane({
         lane: "lesson",
-        label: "Welcome page",
-        title: "Choose a task block from the left lane",
-        description: "The catalog page is gone. The left column now owns the full task flow, and the center lane shows the selected page.",
-        meta: [
-            `Scenarios: ${state.catalog.items.length}`,
-            `Catalog: ${state.catalog.status}`
-        ],
-        body: renderWelcomePage(state)
+        showHeader: false,
+        body: `
+            ${renderMainLead({
+                label: "Welcome page",
+                title: "Choose a task block from the left lane",
+                description: "The catalog page is gone. The left column now owns the full task flow, and the center lane shows the selected page.",
+                meta: [
+                    `Scenarios: ${state.catalog.items.length}`,
+                    `Catalog: ${state.catalog.status}`
+                ]
+            })}
+            ${renderWelcomePage(state)}
+        `
     });
 }
 
@@ -30,14 +35,17 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return renderLessonLane({
             lane: "lesson",
-            label: "Focused lesson",
-            title: "Loading the center lesson surface",
-            description: "The center lane is resolving the page selected from the left navigation flow.",
-            meta: [
-                `Route: ${state.route}`,
-                `Detail: ${state.detail.status}`
-            ],
+            showHeader: false,
             body: `
+                ${renderMainLead({
+                    label: "Focused lesson",
+                    title: "Loading the center lesson surface",
+                    description: "The center lane is resolving the page selected from the left navigation flow.",
+                    meta: [
+                        `Route: ${state.route}`,
+                        `Detail: ${state.detail.status}`
+                    ]
+                })}
                 <section class="lesson-spotlight lesson-spotlight--loading">
                     <span class="control-label">Lesson state</span>
                     <h4 class="lesson-block__title">Waiting for task description</h4>
@@ -50,14 +58,17 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "error") {
         return renderLessonLane({
             lane: "lesson",
-            label: "Focused lesson",
-            title: "Exercise detail is unavailable",
-            description: "The selected task page could not be loaded for this route.",
-            meta: [
-                `Provider: ${state.providerName}`,
-                "Detail: error"
-            ],
+            showHeader: false,
             body: `
+                ${renderMainLead({
+                    label: "Focused lesson",
+                    title: "Exercise detail is unavailable",
+                    description: "The selected task page could not be loaded for this route.",
+                    meta: [
+                        `Provider: ${state.providerName}`,
+                        "Detail: error"
+                    ]
+                })}
                 <section class="lesson-block">
                     <h4 class="lesson-block__title">Requested route</h4>
                     <dl class="result-summary">
@@ -83,15 +94,20 @@ function renderExerciseMainPanel(state) {
 
     return renderLessonLane({
         lane: "lesson",
-        label: detail.workspace.shell.centerPanelTitle,
-        title: focusedContent.title,
-        description: focusedContent.description,
-        meta: [
-            `Task: ${detail.workspace.task.status}`,
-            `Difficulty: ${detail.difficulty}`,
-            `Page: ${focusedContent.metaLabel}`
-        ],
-        body: focusedContent.body
+        showHeader: false,
+        body: `
+            ${renderMainLead({
+                label: detail.workspace.shell.centerPanelTitle,
+                title: focusedContent.title,
+                description: focusedContent.description,
+                meta: [
+                    `Task: ${detail.workspace.task.status}`,
+                    `Difficulty: ${detail.difficulty}`,
+                    `Page: ${focusedContent.metaLabel}`
+                ]
+            })}
+            ${focusedContent.body}
+        `
     });
 }
 
@@ -220,4 +236,19 @@ function resolveFocusedLessonContent(detail, selectedFocus) {
             </section>
         `
     };
+}
+
+function renderMainLead({ label, title, description, meta }) {
+    return `
+        <section class="lesson-lead">
+            <div class="lesson-lead__heading">
+                <p class="panel-label">${escapeHtml(label)}</p>
+                <h3>${escapeHtml(title)}</h3>
+                <p class="panel-copy">${escapeHtml(description)}</p>
+            </div>
+            <div class="lesson-lead__meta">
+                ${meta.map((item) => `<span class="lesson-lead__meta-item">${escapeHtml(item)}</span>`).join("")}
+            </div>
+        </section>
+    `;
 }

@@ -38,7 +38,7 @@ body {
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: rgba(255, 250, 241, 0.74);
+    background: rgba(255, 250, 241, 0.64);
     align-items: stretch;
 }
 
@@ -70,10 +70,10 @@ body {
     width: 100%;
     height: 100%;
     min-height: 0;
-    padding: 22px 22px 0;
+    padding: 18px 18px 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 20px;
+    gap: 16px;
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -82,21 +82,15 @@ body {
 }
 
 .lesson-lane--navigation {
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.94)),
-        var(--paper-strong);
+    background: rgba(255, 250, 241, 0.78);
 }
 
 .lesson-lane--lesson {
-    background:
-        linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(255, 250, 241, 0.98)),
-        var(--paper-strong);
+    background: rgba(255, 250, 241, 0.86);
 }
 
 .lesson-lane--practice {
-    background:
-        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
-        var(--paper-strong);
+    background: rgba(255, 250, 241, 0.78);
 }
 
 .lesson-lane__header,
@@ -107,7 +101,7 @@ body {
 }
 
 .lesson-lane__header {
-    padding-bottom: 18px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -119,8 +113,8 @@ body {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-right: 4px;
-    padding-bottom: 22px;
+    padding-right: 2px;
+    padding-bottom: 16px;
     align-content: start;
 }
 
@@ -134,14 +128,15 @@ body {
 .lane-summary__badge {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.86);
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
     font-family: "Courier New", Courier, monospace;
     font-size: 0.74rem;
     text-transform: uppercase;
+    color: var(--ink-soft);
 }
 
 .lane-summary {

@@ -1,45 +1,43 @@
 .lesson-rail__summary {
     display: grid;
-    gap: 12px;
-    padding: 18px;
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    background: var(--paper-muted);
+    gap: 8px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
 }
 
 .flow-block-list {
     display: grid;
-    gap: 10px;
+    gap: 0;
 }
 
 .flow-block {
     display: grid;
     gap: 8px;
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: rgba(255, 250, 241, 0.84);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
     text-decoration: none;
+    transition: color 140ms ease, background-color 140ms ease;
 }
 
 .flow-block--active {
-    border-color: rgba(190, 91, 43, 0.42);
-    background: rgba(190, 91, 43, 0.12);
+    color: var(--accent);
 }
 
 .flow-block--subtask {
     margin-left: 18px;
-    background: rgba(255, 250, 241, 0.72);
 }
 
 .flow-block__eyebrow {
     font-family: "Courier New", Courier, monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
 }
 
 .flow-block__title {
+    margin: 0;
     line-height: 1.1;
 }
