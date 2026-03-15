@@ -12,6 +12,16 @@
     padding: 14px 0;
 }
 
+.practice-pane--viewer {
+    display: flex;
+    overflow: hidden;
+}
+
+.practice-pane--viewer .workspace-card--viewer {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .practice-pane--composer {
     border-top: 1px solid var(--border);
 }
@@ -159,8 +169,32 @@
     border: 1px solid rgba(31, 23, 32, 0.08);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.5);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(31, 23, 32, 0.16) transparent;
+    scrollbar-gutter: stable;
+}
+
+.branch-graph::-webkit-scrollbar {
+    width: 10px;
+}
+
+.branch-graph::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.branch-graph::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background: rgba(31, 23, 32, 0.16);
+}
+
+.branch-graph::-webkit-scrollbar-thumb:hover {
+    background: rgba(31, 23, 32, 0.24);
 }
 
 .branch-graph--placeholder,

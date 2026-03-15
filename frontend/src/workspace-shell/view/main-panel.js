@@ -155,7 +155,8 @@ function renderWelcomePage(state) {
 }
 
 function resolveFocusedLessonContent(detail, selectedFocus) {
-    const selectedStep = normalizeTaskSteps(detail).find((step) => `step-${step.position}` === selectedFocus);
+    const normalizedFocus = selectedFocus === "overview" ? null : selectedFocus;
+    const selectedStep = normalizeTaskSteps(detail).find((step) => `step-${step.position}` === normalizedFocus);
     if (selectedStep) {
         return {
             title: selectedStep.title,

@@ -4,17 +4,21 @@
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: rgba(255, 250, 241, 0.7);
+    background: rgba(255, 233, 188, 0.7);
 }
 
 .flow-block-list {
     display: grid;
     gap: 6px;
+    width: max-content;
+    min-width: max-content;
 }
 
 .flow-block {
     display: grid;
     gap: 4px;
+    width: 100%;
+    min-width: max-content;
     padding: 6px 8px;
     border: 1px solid rgba(31, 23, 32, 0.1);
     border-radius: 12px;
@@ -25,14 +29,14 @@
         color 160ms ease,
         background-color 160ms ease,
         border-color 160ms ease,
-        padding-left 180ms ease,
+        transform 180ms ease,
         box-shadow 180ms ease;
 }
 
 .flow-block--active {
     color: var(--accent);
-    border-color: rgba(41, 76, 91, 0.08);
-    background: rgba(95, 133, 150, 0.08);
+    border-color: rgba(23, 55, 68, 0.08);
+    background: rgba(255, 217, 150, 0.15);
     box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
 }
 
@@ -41,21 +45,34 @@
     background: rgba(255, 250, 241, 0.54);
 }
 
+.flow-block--subtask.flow-block--active {
+    border-color: rgba(23, 55, 68, 0.08);
+    background: rgba(255, 217, 150, 0.15);
+    box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
+}
+
 .flow-block:hover {
-    padding-left: 10px;
+    transform: translateX(2px);
     border-color: rgba(41, 76, 91, 0.08);
     background: rgba(255, 250, 241, 0.78);
 }
 
 .flow-block--active:hover {
-    border-color: rgba(41, 76, 91, 0.08);
-    background: rgba(95, 133, 150, 0.08);
+    border-color: rgba(23, 55, 68, 0.08);
+    background: rgba(255, 217, 150, 0.15);
+}
+
+.flow-block--subtask.flow-block--active:hover {
+    border-color: rgba(23, 55, 68, 0.08);
+    background: rgba(255, 217, 150, 0.15);
 }
 
 .flow-subtask-group {
     display: grid;
     gap: 4px;
     padding-top: 1px;
+    width: 100%;
+    min-width: 0;
 }
 
 .flow-block__eyebrow {
@@ -70,8 +87,27 @@
     margin: 0;
     line-height: 1.1;
     font-size: 0.82rem;
-    display: -webkit-box;
+    max-width: 100%;
     overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .flow-block-list,
+    .flow-subtask-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .flow-block {
+        min-width: 0;
+    }
+
+    .flow-block__title {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
 }

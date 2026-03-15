@@ -32,7 +32,9 @@ export function renderLessonLane({ lane, label, title, description, meta = [], b
                 </header>
             ` : ""}
             <div class="lesson-lane__body">
-                ${body}
+                <div class="lesson-lane__scroll-content">
+                    ${body}
+                </div>
             </div>
         </section>
     `;

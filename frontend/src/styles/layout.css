@@ -32,7 +32,7 @@ body {
 .lesson-layout {
     display: grid;
     grid-template-areas: "navigation lesson practice";
-    grid-template-columns: minmax(210px, 0.68fr) minmax(420px, 1.46fr) minmax(300px, 0.96fr);
+    grid-template-columns: max-content minmax(420px, 1.46fr) minmax(300px, 0.96fr);
     gap: 0;
     width: 100%;
     height: 100%;
@@ -81,6 +81,39 @@ body {
     overflow: hidden;
 }
 
+.lesson-lane--navigation {
+    width: max-content;
+    max-width: 100%;
+    padding-left: 0;
+}
+
+.lesson-lane--navigation .lesson-lane__body {
+    direction: rtl;
+    padding-left: 0;
+    padding-right: 0;
+    justify-items: start;
+}
+
+.lesson-lane--navigation .lesson-lane__scroll-content {
+    direction: ltr;
+    width: max-content;
+    min-width: max-content;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.lesson-lane--lesson {
+    padding-right: 0;
+}
+
+.lesson-lane--lesson .lesson-lane__body {
+    padding-right: 0;
+}
+
+.lesson-lane--lesson .lesson-lane__scroll-content {
+    padding-right: 18px;
+}
+
 .lesson-lane--navigation,
 .lesson-lane--lesson,
 .lesson-lane--practice {
@@ -111,12 +144,17 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding-right: 6px;
     padding-bottom: 16px;
     align-content: start;
     scrollbar-width: thin;
     scrollbar-color: rgba(31, 23, 32, 0.18) transparent;
     scrollbar-gutter: stable;
+}
+
+.lesson-lane__scroll-content {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
 }
 
 .lesson-lane__body::-webkit-scrollbar {
@@ -178,7 +216,7 @@ body {
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        grid-template-columns: minmax(190px, 0.66fr) minmax(0, 1.24fr) minmax(280px, 0.95fr);
+        grid-template-columns: max-content minmax(0, 1.24fr) minmax(280px, 0.95fr);
     }
 }
 
@@ -217,10 +255,32 @@ body {
         backdrop-filter: blur(10px);
     }
 
+    .lesson-lane--navigation,
+    .lesson-lane--lesson {
+        width: 100%;
+        max-width: none;
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
     .lesson-lane__body {
         overflow: visible;
         padding-right: 0;
         padding-bottom: 0;
+    }
+
+    .lesson-lane--navigation .lesson-lane__body {
+        direction: ltr;
+    }
+
+    .lesson-lane--navigation .lesson-lane__scroll-content {
+        direction: ltr;
+    }
+
+    .lesson-lane--navigation .lesson-lane__scroll-content,
+    .lesson-lane--lesson .lesson-lane__scroll-content {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 

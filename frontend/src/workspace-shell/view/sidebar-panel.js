@@ -1,5 +1,8 @@
 import { renderLessonLane } from "./lesson-layout.js";
-import { escapeHtml } from "./render-helpers.js";
+import {
+    encodeHashSegment,
+    escapeHtml
+} from "./render-helpers.js";
 
 export function renderSidebarPanel(state) {
     return renderLessonLane({
@@ -70,6 +73,7 @@ function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selected
     const subtaskBlocks = isActive && activeDetail
         ? `
             <div class="flow-subtask-group">
+                ${renderOverviewFlowBlock(item.slug, selectedFocus)}
                 ${activeDetail.workspace.task.steps.map((step) => renderSubtaskFlowBlock(item.slug, step, selectedFocus)).join("")}
             </div>
         `
@@ -87,12 +91,25 @@ function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selected
     `;
 }
 
+function renderOverviewFlowBlock(slug, selectedFocus) {
+    const focusId = "overview";
+    return `
+        <a
+            class="flow-block flow-block--subtask ${selectedFocus === null || selectedFocus === focusId ? "flow-block--active" : ""}"
+            href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
+        >
+            <span class="flow-block__eyebrow">Task page</span>
+            <strong class="flow-block__title">Overview</strong>
+        </a>
+    `;
+}
+
 function renderSubtaskFlowBlock(slug, step, selectedFocus) {
     const focusId = `step-${step.position}`;
     return `
         <a
             class="flow-block flow-block--subtask ${selectedFocus === focusId ? "flow-block--active" : ""}"
-            href="#/exercise/${encodeURIComponent(slug)}?focus=${encodeURIComponent(focusId)}"
+            href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
         >
             <span class="flow-block__eyebrow">Sub-task ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
