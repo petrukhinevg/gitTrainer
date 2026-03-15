@@ -184,6 +184,86 @@ a {
     background: var(--accent);
 }
 
+.catalog-controls {
+    display: grid;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.catalog-controls label,
+.catalog-controls fieldset {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.catalog-controls fieldset {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(246, 239, 226, 0.72);
+}
+
+.control-label,
+.catalog-controls legend {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.catalog-controls select,
+.catalog-controls button {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--paper-strong);
+    color: var(--ink-strong);
+    font: inherit;
+}
+
+.catalog-controls button {
+    cursor: pointer;
+}
+
+.catalog-controls button[type="submit"] {
+    background: var(--accent);
+    color: var(--paper-strong);
+    border-color: rgba(31, 23, 32, 0.08);
+}
+
+.tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.86);
+    border: 1px solid var(--border);
+}
+
+.tag-option input {
+    margin: 0;
+}
+
+.control-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.control-actions > * {
+    flex: 1 1 0;
+}
+
 .debug-preview code {
     display: block;
     overflow-x: auto;
@@ -208,5 +288,9 @@ a {
     .debug-preview {
         border-radius: 18px;
         padding: 18px;
+    }
+
+    .control-actions {
+        flex-direction: column;
     }
 }

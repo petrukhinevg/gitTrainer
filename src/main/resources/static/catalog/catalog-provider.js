@@ -4,8 +4,9 @@ export function createLocalFixtureCatalogProvider() {
     return {
         name: "local-fixture",
         async browseCatalog(query) {
+            const items = applyCatalogQueryPolicy(FIXTURE_SCENARIO_CATALOG.items, query);
             return {
-                items: FIXTURE_SCENARIO_CATALOG.items,
+                items,
                 meta: {
                     source: "local-fixture",
                     query: {
@@ -15,6 +16,15 @@ export function createLocalFixtureCatalogProvider() {
                     }
                 }
             };
+        }
+    };
+}
+
+export function createUnavailableFixtureCatalogProvider() {
+    return {
+        name: "fixture-unavailable",
+        async browseCatalog() {
+            throw new Error("Catalog source is unavailable right now. Try another provider.");
         }
     };
 }
@@ -41,4 +51,47 @@ export function createBackendApiCatalogProvider(fetchImpl = window.fetch.bind(wi
             return response.json();
         }
     };
+}
+
+function applyCatalogQueryPolicy(items, query) {
+    return [...items]
+        .filter((item) => matchesDifficulty(item, query))
+        .filter((item) => matchesTags(item, query))
+        .sort(resolveComparator(query));
+}
+
+function matchesDifficulty(item, query) {
+    if (!query.difficulty) {
+        return true;
+    }
+
+    const requestedDifficulty = normalize(query.difficulty);
+    return requestedDifficulty === normalize(item.difficulty);
+}
+
+function matchesTags(item, query) {
+    if (!query.tags.length) {
+        return true;
+    }
+
+    const itemTags = item.tags.map(normalize);
+    return query.tags.map(normalize).every((tag) => itemTags.includes(tag));
+}
+
+function resolveComparator(query) {
+    const sort = normalize(query.sort ?? "title");
+    if (sort === "difficulty") {
+        return (left, right) => difficultyRank(left.difficulty) - difficultyRank(right.difficulty)
+            || left.title.localeCompare(right.title);
+    }
+
+    return (left, right) => left.title.localeCompare(right.title);
+}
+
+function difficultyRank(difficulty) {
+    return normalize(difficulty) === "beginner" ? 0 : 1;
+}
+
+function normalize(value) {
+    return String(value).trim().toLowerCase();
 }
