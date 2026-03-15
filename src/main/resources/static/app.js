@@ -1,8 +1,8 @@
 import { createBackendApiCatalogProvider, createLocalFixtureCatalogProvider } from "./catalog/catalog-provider.js";
 
-const providerRegistry = Object.freeze({
-    "local-fixture": createLocalFixtureCatalogProvider(),
-    "backend-api": createBackendApiCatalogProvider()
+const providerFactories = Object.freeze({
+    "local-fixture": () => createLocalFixtureCatalogProvider(),
+    "backend-api": () => createBackendApiCatalogProvider()
 });
 
 const state = {
@@ -48,11 +48,16 @@ function parseRoute(hash) {
 
 async function loadCatalog() {
     state.status = "loading";
+    state.catalog = null;
     state.error = null;
     render();
 
     try {
-        const provider = providerRegistry[state.providerName];
+        const providerFactory = providerFactories[state.providerName];
+        if (!providerFactory) {
+            throw new Error(`Unknown catalog provider: ${state.providerName}`);
+        }
+        const provider = providerFactory();
         state.catalog = await provider.browseCatalog(state.query);
         state.status = "ready";
     } catch (error) {
