@@ -29,13 +29,13 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
-    void returnsDeterministicStubCatalogBoundary() throws Exception {
+    void returnsAuthoredFixtureCatalogBoundary() throws Exception {
         mockMvc.perform(get("/api/scenarios")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.meta.source").value("stub"))
-                .andExpect(jsonPath("$.items.length()").value(3))
+                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
+                .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
                 .andExpect(jsonPath("$.items[1].slug").value("history-cleanup-preview"))
@@ -86,10 +86,11 @@ class ScenarioCatalogControllerTest {
                         .param("sort", "difficulty")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(3))
+                .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"));
+                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.items[3].id").value("remote-sync-preview"));
     }
 
     @Test
