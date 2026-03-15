@@ -1,3 +1,4 @@
+import { renderLessonLayout } from "./view/lesson-layout.js";
 import { renderMainPanel } from "./view/main-panel.js";
 import { renderSidebarPanel } from "./view/sidebar-panel.js";
 import { renderRouteNotFound, renderWorkspaceIntro } from "./view/workspace-intro.js";
@@ -10,10 +11,11 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
 
     return `
         ${renderWorkspaceIntro(state)}
-        <section class="workspace-grid">
-            ${renderSidebarPanel(state, selectedCatalogScenario, tagOptions)}
-            ${renderMainPanel(state)}
-            ${renderWorkspacePanel(state)}
-        </section>
+        ${renderLessonLayout({
+            state,
+            navigationLane: renderSidebarPanel(state, selectedCatalogScenario, tagOptions),
+            lessonLane: renderMainPanel(state),
+            practiceLane: renderWorkspacePanel(state)
+        })}
     `;
 }

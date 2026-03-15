@@ -1,16 +1,42 @@
 import { renderScenarioRail } from "./catalog-surfaces.js";
+import { renderLessonLane } from "./lesson-layout.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
 
 export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
-    return `
-        <aside class="panel panel--sidebar">
-            <p class="panel-label">${escapeHtml(resolveLeftPanelTitle(state))}</p>
-            <h3>Browse controls and route entry</h3>
-            <p class="panel-copy">
-                The catalog and exercise detail providers are now separate seams. Query controls still shape browsing, while the exercise route loads scenario detail by slug through its own boundary.
-            </p>
+    return renderLessonLane({
+        lane: "navigation",
+        label: resolveLeftPanelTitle(state),
+        title: resolveNavigationTitle(state),
+        description: resolveNavigationDescription(state),
+        meta: [
+            `Route: ${state.route}`,
+            `Provider: ${state.providerName}`,
+            `Catalog: ${state.catalog.status}`
+        ],
+        body: `
+            <section class="lane-summary">
+                <div class="lane-summary__header">
+                    <span class="control-label">Workspace entry</span>
+                    <span class="lane-summary__badge">${escapeHtml(resolveNavigationBadge(state))}</span>
+                </div>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Selected scenario</dt>
+                        <dd>${escapeHtml(state.selectedScenarioSlug ?? "Not selected")}</dd>
+                    </div>
+                    <div>
+                        <dt>Quick links</dt>
+                        <dd>${state.catalog.items.length}</dd>
+                    </div>
+                    <div>
+                        <dt>Detail flow</dt>
+                        <dd>${escapeHtml(state.route === "exercise" ? state.detail.status : "inactive")}</dd>
+                    </div>
+                </dl>
+            </section>
+
             <form class="catalog-controls" data-catalog-controls>
                 <label>
                     <span class="control-label">Provider</span>
@@ -64,8 +90,8 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
                 </div>
                 ${renderScenarioRail(state, selectedCatalogScenario)}
             </div>
-        </aside>
-    `;
+        `
+    });
 }
 
 function resolveLeftPanelTitle(state) {
@@ -73,7 +99,31 @@ function resolveLeftPanelTitle(state) {
         return state.detail.data.workspace.shell.leftPanelTitle;
     }
 
-    return "Scenario map";
+    return "Navigation lane";
+}
+
+function resolveNavigationTitle(state) {
+    if (state.route === "exercise") {
+        return "Keep route entry and scenario switching on the left";
+    }
+
+    return "Shape the route before the learner enters the lesson";
+}
+
+function resolveNavigationDescription(state) {
+    if (state.route === "exercise") {
+        return "This lane stays reserved for lesson navigation and route switching while the center and right lanes focus on task reading and practice scaffolding.";
+    }
+
+    return "Provider and query controls still drive the catalog, but the shell is now locked into the same three-lane lesson structure used by exercise routes.";
+}
+
+function resolveNavigationBadge(state) {
+    if (state.route === "exercise") {
+        return "exercise route";
+    }
+
+    return "catalog route";
 }
 
 function renderProviderOption(state, value, label) {

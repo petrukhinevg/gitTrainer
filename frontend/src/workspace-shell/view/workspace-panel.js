@@ -1,58 +1,68 @@
+import { renderLessonLane } from "./lesson-layout.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
-        return `
-            <section class="panel panel--workspace">
-                <p class="panel-label">Workspace lane</p>
-                <h3>Exercise shell waits behind the chosen route</h3>
-                <p class="panel-copy">
-                    The route shell is already reserved. Pick a scenario from the catalog to load detail through the dedicated provider seam.
-                </p>
-                <div class="workspace-card">
+        return renderLessonLane({
+            lane: "practice",
+            label: "Practice lane",
+            title: "The right column is reserved for practice surfaces",
+            description: "The learner has not entered a scenario yet, but the shell already keeps the practice lane visible instead of hiding it behind a later screen swap.",
+            meta: [
+                "Mode: catalog",
+                "Detail: inactive"
+            ],
+            body: `
+                <section class="workspace-card workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Detail boundary</span>
+                        <span class="control-label">Practice boundary</span>
                         <span class="workspace-card__badge">catalog mode</span>
                     </div>
                     <p class="panel-copy">No exercise detail request is active while the learner remains on the catalog route.</p>
                     <div class="workspace-card__actions">
                         <span class="scenario-link">Select a scenario to reserve the route handoff.</span>
                     </div>
-                </div>
-            </section>
-        `;
+                </section>
+            `
+        });
     }
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return `
-            <section class="panel panel--workspace">
-                <p class="panel-label">Workspace lane</p>
-                <h3>Selected scenario detail is loading</h3>
-                <p class="panel-copy">
-                    The right lane stays stable while the provider resolves the workspace payload. This is the top-level load flow for the exercise route.
-                </p>
-                <div class="workspace-card">
+        return renderLessonLane({
+            lane: "practice",
+            label: "Practice lane",
+            title: "Practice scaffolding stays mounted while detail loads",
+            description: "The right lane keeps its place while the provider resolves the workspace payload for the selected exercise route.",
+            meta: [
+                `Requested: ${state.selectedScenarioSlug ?? "unknown"}`,
+                "Detail: loading"
+            ],
+            body: `
+                <section class="workspace-card workspace-card--focus">
                     <div class="workspace-card__header">
                         <span class="control-label">Detail provider</span>
                         <span class="workspace-card__badge">loading</span>
                     </div>
                     <p class="panel-copy">Requested slug: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</p>
-                </div>
-            </section>
-        `;
+                </section>
+            `
+        });
     }
 
     if (state.detail.status === "error") {
-        return `
-            <section class="panel panel--workspace">
-                <p class="panel-label">Workspace lane</p>
-                <h3>Scenario detail provider seam failed</h3>
-                <p class="panel-copy">
-                    The shell keeps a coherent error state when the active detail provider cannot load the requested scenario.
-                </p>
-                <div class="workspace-card">
+        return renderLessonLane({
+            lane: "practice",
+            label: "Practice lane",
+            title: "Scenario detail provider seam failed",
+            description: "The shell keeps a coherent practice lane even when the active detail provider cannot load the requested scenario.",
+            meta: [
+                `Provider: ${state.providerName}`,
+                "Detail: error"
+            ],
+            body: `
+                <section class="workspace-card workspace-card--focus">
                     <div class="workspace-card__header">
                         <span class="control-label">Detail provider</span>
                         <span class="workspace-card__badge">error</span>
@@ -61,27 +71,31 @@ export function renderWorkspacePanel(state) {
                     <div class="workspace-card__actions">
                         <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
                     </div>
-                </div>
-            </section>
-        `;
+                </section>
+            `
+        });
     }
 
     const detail = state.detail.data;
     const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
-    return `
-        <section class="panel panel--workspace">
-            <p class="panel-label">${escapeHtml(detail.workspace.shell.rightPanelTitle)}</p>
-            <h3>Repository context now has visible workspace surfaces</h3>
-            <p class="panel-copy">
-                The workspace now shows authored repository cues directly from the detail payload, while keeping the overall shell and route structure unchanged.
-            </p>
-            <div class="workspace-card">
+    return renderLessonLane({
+        lane: "practice",
+        label: detail.workspace.shell.rightPanelTitle,
+        title: "Repository context now anchors the practice lane",
+        description: "Branch, commit, file, and annotation cues stay visible on the right so future answer input and execution output can land here without another shell rewrite.",
+        meta: [
+            `Context: ${repositoryContext.status}`,
+            `Branches: ${repositoryContext.branches.length}`,
+            `Files: ${repositoryContext.files.length}`
+        ],
+        body: `
+            <section class="workspace-card workspace-card--focus">
                 <div class="workspace-card__header">
-                    <span class="control-label">Repository context seam</span>
+                    <span class="control-label">Practice scaffold</span>
                     <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
                 </div>
                 <p class="panel-copy">
-                    Branch, commit, file, and annotation cues now render as first-class surfaces in the right lane instead of staying hidden behind aggregate counts.
+                    The right lane is now treated as the durable practice surface, even though the final answer input and execution output work lands in a follow-up task.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -101,8 +115,8 @@ export function renderWorkspacePanel(state) {
                         <dd>${repositoryContext.annotations.length}</dd>
                     </div>
                 </dl>
-            </div>
-            <div class="workspace-card">
+            </section>
+            <section class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">Branches</span>
                     <span class="workspace-card__badge">${repositoryContext.branches.length}</span>
@@ -119,8 +133,8 @@ export function renderWorkspacePanel(state) {
                         </article>
                     `).join("") : renderEmptyContextState("No branch cues are available from the active detail payload.")}
                 </div>
-            </div>
-            <div class="workspace-card">
+            </section>
+            <section class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">Recent commits</span>
                     <span class="workspace-card__badge">${repositoryContext.commits.length}</span>
@@ -135,8 +149,8 @@ export function renderWorkspacePanel(state) {
                         </article>
                     `).join("") : renderEmptyContextState("No recent commit cues are available from the active detail payload.")}
                 </div>
-            </div>
-            <div class="workspace-card">
+            </section>
+            <section class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">File cues</span>
                     <span class="workspace-card__badge">${repositoryContext.files.length}</span>
@@ -151,8 +165,8 @@ export function renderWorkspacePanel(state) {
                         </article>
                     `).join("") : renderEmptyContextState("No file cues are available from the active detail payload.")}
                 </div>
-            </div>
-            <div class="workspace-card">
+            </section>
+            <section class="workspace-card">
                 <div class="workspace-card__header">
                     <span class="control-label">Workspace annotations</span>
                     <span class="workspace-card__badge">${repositoryContext.annotations.length}</span>
@@ -168,9 +182,9 @@ export function renderWorkspacePanel(state) {
                 <div class="workspace-card__actions">
                     <a class="scenario-action" href="#/catalog">Back to catalog</a>
                 </div>
-            </div>
-        </section>
-    `;
+            </section>
+        `
+    });
 }
 
 function normalizeRepositoryContext(repositoryContext) {

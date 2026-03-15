@@ -13,6 +13,12 @@
     background: var(--paper-muted);
 }
 
+.workspace-card--focus {
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.1), rgba(246, 239, 226, 0.92)),
+        var(--paper-muted);
+}
+
 .workspace-card__header {
     display: flex;
     flex-wrap: wrap;
