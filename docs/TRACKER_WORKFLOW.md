@@ -29,8 +29,13 @@ Use the project field `Pairs with` when a backend task and a frontend task repre
 - A task should be small enough to implement, test, and review without excessive context.
 - If a feature requires major changes across multiple areas at once, it is a good candidate for a `parent issue`.
 - If the result cannot be described in one short outcome statement, split the task.
+- Do not over-decompose at the start of an epic when the stable seams are not yet clear.
+- It is valid to split a child task later in the epic once the contract, data shape, or UI loop is better understood and the split improves parallelism or reviewability.
+- Do not split work below the level of a useful PR; if a sub-issue has no standalone review value, it is too small.
 - For this product, separate content modeling, validation logic, and SPA UX work unless a very small change naturally spans them.
 - Do not keep sibling tasks in the same parent issue when one would require code from another unfinished sibling task. Merge them or split the parent issue differently.
+- Backend and frontend tasks may be paired for the same learner-facing slice, but pairing is preferred rather than required.
+- Backend-only or frontend-only child tasks are valid when they still deliver a complete result from the epic baseline.
 
 ## What counts as a task
 
@@ -56,6 +61,12 @@ Create a `parent issue` when:
 - the result cannot be shipped as one compact change;
 - completion requires a sequence of tasks that should be reviewed separately.
 
+When decomposing a parent issue:
+
+- start with the smallest set of child tasks that already have clear independent outcomes
+- add finer-grained child tasks later only where that improves parallel work or reduces blocking
+- keep the child set shaped around independently implementable results, not framework layers
+
 ## Git workflow
 
 - `main` is the production branch.
@@ -79,6 +90,7 @@ Create a `parent issue` when:
 - After push, each task branch should have its own PR against the epic branch.
 - Before moving a task to `Review`, verify that the task's PR is linked and visible in the `Linked pull requests` field.
 - If the platform requires manual issue linking for non-default-target PRs, link the PR manually before moving the task to `Review`.
+- If a child task is split during implementation, create the new child branches from the current epic branch head, not from the in-progress sibling branch.
 
 ## Fast board setup
 

@@ -14,6 +14,10 @@ The main user problem is the gap between reading Git theory and confidently usin
 - Detailed implementation tasks belong in the side-specific roadmaps.
 - Prefer parent issues that describe one learner-visible vertical slice or one planning block with clear boundaries.
 - Child tasks inside one parent issue must stay independently implementable from the parent baseline.
+- Keep the side-specific roadmaps in a task-ready state so all listed child tasks can be created immediately once the epic branch and its initial baseline commit exist.
+- If several child tasks need the same minimal seam such as DTO skeletons, provider interfaces, route placeholders, or fixture schemas, put that seam into the initial epic commit instead of assigning it to one child task.
+- Prefer decomposition by stable seams such as shell, content or policy, and rendering or integration rather than by a strict "first contract, then everything else" sequence.
+- Start with coarse child-task decomposition and refine it only when later task splits improve parallel work, reduce blocking, or create cleaner review units.
 - If a live hookup or sequencing step would require code from an unfinished sibling task, move that step into a separate follow-up task or a separate parent issue instead of chaining child tasks.
 
 ## Roadmap structure
@@ -37,7 +41,11 @@ The MVP is complete when:
 - Create parent issues from this file when the work describes one meaningful product block.
 - If a parent issue spans multiple technical sides, decompose it into side-specific tasks in the relevant roadmaps.
 - If a parent issue affects only one side, keep the detailed task breakdown only in that side's roadmap.
+- Before creating child tasks, make the initial epic commit carry only the shared baseline seams that every child task needs in order to branch independently.
 - When backend and frontend work describe the same learner-facing slice but remain independently implementable, keep them under the same parent issue and pair them through the project field `Pairs with`.
+- Prefer side-specific task sets that can be paired by functional slice so the epic can close with backend and frontend mutually complete for the same behavior when both sides are involved.
+- Independent backend-only or frontend-only tasks are also valid when they deliver a complete result without depending on unfinished sibling work.
+- Do not force one-to-one pairing when one side has legitimate standalone work such as content modeling, policy definition, state handling, or presentation-only improvements.
 - Keep the current queue and status mapping aligned with `docs/BOARD.md`.
 
 ## Parent issues
