@@ -21,7 +21,7 @@ public class BrowseScenarioCatalogUseCase {
         return new CatalogBrowseResult(
                 catalogQueryPolicy.apply(scenarioCatalogGateway.loadCatalog(query), query),
                 query,
-                scenarioCatalogGateway.sourceName()
+                scenarioCatalogGateway.sourceName(query)
         );
     }
 }
