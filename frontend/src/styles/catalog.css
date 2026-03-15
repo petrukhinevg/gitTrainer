@@ -15,23 +15,49 @@
 .flow-block {
     display: grid;
     gap: 8px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     border: 1px solid rgba(31, 23, 32, 0.1);
     border-radius: 16px;
     background: rgba(255, 250, 241, 0.68);
     text-decoration: none;
-    transition: color 140ms ease, background-color 140ms ease;
+    transform-origin: left center;
+    transition:
+        color 160ms ease,
+        background-color 160ms ease,
+        border-color 160ms ease,
+        transform 180ms ease,
+        box-shadow 180ms ease;
 }
 
 .flow-block--active {
     color: var(--accent);
     border-color: rgba(190, 91, 43, 0.3);
     background: rgba(190, 91, 43, 0.08);
+    box-shadow: 0 10px 22px rgba(190, 91, 43, 0.08);
 }
 
 .flow-block--subtask {
-    margin-left: 18px;
+    margin-left: 14px;
     background: rgba(255, 250, 241, 0.54);
+}
+
+.flow-block:hover {
+    transform: translateX(4px);
+    border-color: rgba(57, 89, 121, 0.18);
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.flow-block--active:hover {
+    border-color: rgba(190, 91, 43, 0.36);
+    background: rgba(190, 91, 43, 0.1);
+}
+
+.flow-subtask-group {
+    display: grid;
+    gap: 8px;
+    padding-top: 2px;
+    animation: flow-subtasks-enter 260ms ease;
+    transform-origin: top left;
 }
 
 .flow-block__eyebrow {
@@ -45,4 +71,16 @@
 .flow-block__title {
     margin: 0;
     line-height: 1.1;
+}
+
+@keyframes flow-subtasks-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scaleY(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+    }
 }

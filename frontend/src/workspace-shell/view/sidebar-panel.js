@@ -69,7 +69,11 @@ function renderWelcomeFlowBlock(state) {
 
 function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selectedFocus }) {
     const subtaskBlocks = isActive && activeDetail
-        ? activeDetail.workspace.task.steps.map((step) => renderSubtaskFlowBlock(item.slug, step, selectedFocus)).join("")
+        ? `
+            <div class="flow-subtask-group">
+                ${activeDetail.workspace.task.steps.map((step) => renderSubtaskFlowBlock(item.slug, step, selectedFocus)).join("")}
+            </div>
+        `
         : "";
 
     return `
