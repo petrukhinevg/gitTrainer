@@ -285,7 +285,8 @@ a {
 
 .scenario-rail__list,
 .scenario-list,
-.workspace-stack {
+.workspace-stack,
+.context-list {
     display: grid;
     gap: 12px;
 }
@@ -321,7 +322,8 @@ a {
 .workspace-stack__panel,
 .catalog-state,
 .scenario-card,
-.lesson-block {
+.lesson-block,
+.context-row {
     padding: 18px;
     border: 1px solid var(--border);
     border-radius: 22px;
@@ -331,6 +333,40 @@ a {
 .lesson-block {
     display: grid;
     gap: 10px;
+}
+
+.context-row {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+}
+
+.context-row__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+.context-pill,
+.context-mono {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.92);
+    font-size: 0.8rem;
+}
+
+.context-pill--active {
+    background: rgba(190, 91, 43, 0.14);
+}
+
+.context-mono {
+    font-family: "Courier New", Courier, monospace;
 }
 
 .lesson-list {

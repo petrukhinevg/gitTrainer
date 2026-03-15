@@ -45,6 +45,11 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Exercise route is loading provider-backed detail")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Selected scenario detail is loading")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Repository context now has visible workspace surfaces")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Recent commits")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("File cues")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace annotations")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("context-row__header")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
@@ -55,6 +60,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".workspace-grid")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".panel--workspace")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-list")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-pill--active")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
     }
 }
