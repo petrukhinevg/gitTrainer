@@ -1,25 +1,30 @@
-.workspace-stack,
-.context-list {
+.practice-stack {
+    height: 100%;
+    min-height: 0;
     display: grid;
-    gap: 12px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 16px;
+    overflow: hidden;
 }
 
-.practice-composer,
-.practice-composer__form,
-.practice-composer__field,
-.practice-composer__notice,
-.practice-context__panel {
-    display: grid;
-    gap: 12px;
-}
-
-.workspace-card,
-.workspace-stack__panel,
-.context-row {
+.workspace-card {
     padding: 18px;
     border: 1px solid var(--border);
     border-radius: 22px;
     background: var(--paper-muted);
+}
+
+.workspace-card,
+.workspace-card__header,
+.practice-composer,
+.practice-composer__form,
+.practice-composer__field,
+.practice-composer__notice,
+.branch-graph,
+.branch-graph__row,
+.branch-graph__label {
+    display: grid;
+    gap: 12px;
 }
 
 .workspace-card--focus {
@@ -28,15 +33,31 @@
         var(--paper-muted);
 }
 
+.workspace-card--viewer {
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.workspace-card--composer {
+    overflow: hidden;
+}
+
+.workspace-card--error {
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.1), rgba(246, 239, 226, 0.92)),
+        var(--paper-muted);
+}
+
 .workspace-card__header {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    justify-content: space-between;
 }
 
 .workspace-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-self: end;
     border-radius: 999px;
     padding: 4px 10px;
     background: rgba(57, 89, 121, 0.12);
@@ -51,28 +72,28 @@
     gap: 10px;
 }
 
-.workspace-card--viewer {
-    min-height: 0;
-}
-
 .practice-composer__field textarea,
-.practice-composer__actions button,
-.practice-context__tab {
+.practice-composer__actions button {
     font: inherit;
 }
 
 .practice-composer__field textarea {
     width: 100%;
+    min-height: 112px;
     padding: 12px 14px;
     border: 1px solid var(--border);
     border-radius: 18px;
     background: rgba(255, 250, 241, 0.94);
     color: var(--ink-strong);
-    resize: vertical;
+    resize: none;
 }
 
-.practice-composer__actions,
-.practice-context__tabs {
+.practice-composer__field textarea:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.practice-composer__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -91,68 +112,96 @@
         rgba(255, 250, 241, 0.78);
 }
 
-.practice-context__tab {
-    min-height: 34px;
-    padding: 0 12px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.9);
-    color: var(--ink-soft);
-    cursor: pointer;
-}
-
-.practice-context__tab--active {
-    background: rgba(57, 89, 121, 0.14);
-    color: var(--accent-cool);
-}
-
-.practice-context__panel {
+.branch-graph {
     min-height: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 250, 241, 0.96), rgba(246, 239, 226, 0.9)),
+        rgba(255, 250, 241, 0.92);
+    overflow: hidden;
+    align-content: start;
 }
 
-.context-row {
+.branch-graph--placeholder,
+.branch-graph--empty {
+    align-items: center;
+}
+
+.branch-graph__row {
+    grid-template-columns: 18px 18px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+}
+
+.branch-graph__row--current .branch-graph__label strong {
+    color: var(--accent);
+}
+
+.branch-graph__node {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--accent-cool);
+    box-shadow: 0 0 0 4px rgba(57, 89, 121, 0.1);
+}
+
+.branch-graph__row--current .branch-graph__node {
+    background: var(--accent);
+    box-shadow: 0 0 0 5px rgba(190, 91, 43, 0.14);
+}
+
+.branch-graph__track {
+    width: 2px;
+    height: 54px;
+    margin: -18px auto;
+    background: linear-gradient(180deg, rgba(57, 89, 121, 0.32), rgba(57, 89, 121, 0.08));
+}
+
+.branch-graph__track--last {
+    background: transparent;
+}
+
+.branch-graph__label strong,
+.branch-graph__label span {
+    display: block;
+}
+
+.branch-graph__label span {
+    color: var(--ink-soft);
+}
+
+.branch-graph__empty {
     display: grid;
     gap: 8px;
-    padding: 14px 16px;
 }
 
-.context-row__header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: center;
+.lesson-lane--practice .lesson-lane__body {
+    overflow: hidden;
+    padding-right: 0;
 }
 
-.context-pill,
-.context-mono {
-    display: inline-flex;
-    align-items: center;
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.92);
-    font-size: 0.8rem;
-}
+@media (max-width: 900px) {
+    .lesson-lane--practice .lesson-lane__body {
+        overflow: visible;
+    }
 
-.context-pill--active {
-    background: rgba(190, 91, 43, 0.14);
-}
-
-.context-mono {
-    font-family: "Courier New", Courier, monospace;
+    .practice-stack {
+        height: auto;
+        grid-template-rows: auto;
+        overflow: visible;
+    }
 }
 
 @media (max-width: 720px) {
-    .workspace-card__actions {
+    .workspace-card__actions,
+    .practice-composer__actions {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .practice-composer__actions,
-    .practice-context__tabs {
-        flex-direction: column;
-        align-items: stretch;
+    .branch-graph__row {
+        grid-template-columns: 18px 18px minmax(0, 1fr);
     }
 }

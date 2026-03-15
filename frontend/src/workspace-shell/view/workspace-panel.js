@@ -1,73 +1,51 @@
 import { renderLessonLane } from "./lesson-layout.js";
-import {
-    escapeHtml,
-} from "./render-helpers.js";
+import { escapeHtml } from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
-        return renderLessonLane({
-            lane: "practice",
-            label: "Practice lane",
-            title: "The right column is reserved for practice surfaces",
-            description: "The learner has not opened a task yet, but the shell already keeps the practice lane visible instead of hiding it behind a later screen swap.",
-            meta: [
-                "Mode: welcome",
-                "Detail: inactive"
-            ],
-            body: `
-                <section class="workspace-card workspace-card--focus">
-                    <div class="workspace-card__header">
-                        <span class="control-label">Practice boundary</span>
-                        <span class="workspace-card__badge">welcome mode</span>
-                    </div>
-                    <p class="panel-copy">No exercise detail request is active while the learner remains on the welcome page.</p>
-                    <div class="workspace-card__actions">
-                        <span class="scenario-link">Select a task block on the left to reserve the route handoff.</span>
-                    </div>
-                </section>
-            `
+        return renderPracticeShell({
+            viewer: renderPlaceholderViewer(
+                "Git branch view",
+                "Open a task on the left to load the branch picture for that scenario."
+            ),
+            composer: renderPlaceholderComposer(
+                "Command input",
+                "The answer field unlocks after you open a task."
+            )
         });
     }
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return renderLessonLane({
-            lane: "practice",
-            label: "Practice lane",
-            title: "Practice scaffolding stays mounted while detail loads",
-            description: "The right lane keeps its place while the provider resolves the workspace payload for the selected exercise route.",
-            meta: [
-                `Requested: ${state.selectedScenarioSlug ?? "unknown"}`,
-                "Detail: loading"
-            ],
-            body: `
-                <section class="workspace-card workspace-card--focus">
-                    <div class="workspace-card__header">
-                        <span class="control-label">Detail provider</span>
-                        <span class="workspace-card__badge">loading</span>
-                    </div>
-                    <p class="panel-copy">Requested slug: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</p>
-                </section>
-            `
+        return renderPracticeShell({
+            viewer: renderPlaceholderViewer(
+                "Loading branch view",
+                `Preparing branch context for ${escapeHtml(state.selectedScenarioSlug ?? "the selected task")}.`
+            ),
+            composer: renderPlaceholderComposer(
+                "Command input",
+                "The answer field stays mounted while the task detail loads."
+            )
         });
     }
 
     if (state.detail.status === "error") {
-        return renderLessonLane({
-            lane: "practice",
-            label: "Practice lane",
-            title: "Scenario detail provider seam failed",
-            description: "The shell keeps a coherent practice lane even when the active detail provider cannot load the requested scenario.",
-            meta: [
-                `Provider: ${state.providerName}`,
-                "Detail: error"
-            ],
-            body: `
-                <section class="workspace-card workspace-card--focus">
+        return renderPracticeShell({
+            viewer: `
+                <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Detail provider</span>
+                        <span class="control-label">Git branch view</span>
                         <span class="workspace-card__badge">error</span>
                     </div>
                     <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                </section>
+            `,
+            composer: `
+                <section class="workspace-card workspace-card--composer workspace-card--focus">
+                    <div class="workspace-card__header">
+                        <span class="control-label">Command input</span>
+                        <span class="workspace-card__badge">locked</span>
+                    </div>
+                    <p class="panel-copy">The command field is unavailable until the task payload is restored.</p>
                     <div class="workspace-card__actions">
                         <a class="scenario-action scenario-action--muted" href="#/catalog">Back to welcome</a>
                     </div>
@@ -78,27 +56,28 @@ export function renderWorkspacePanel(state) {
 
     const detail = state.detail.data;
     const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
-    return renderLessonLane({
-        lane: "practice",
-        label: detail.workspace.shell.rightPanelTitle,
-        title: "Practice input and Git context stay visible together",
-        description: "The right lane now keeps answer entry and repository context as separate surfaces, so the learner can type and inspect without losing either one.",
-        meta: [
-            `Context: ${repositoryContext.status}`,
-            `Viewer: ${state.practiceContextTab}`,
-            `Prepared: ${state.practiceDraft.preparedAnswer ? "yes" : "no"}`
-        ],
-        body: `
-            <section class="workspace-card workspace-card--focus practice-composer">
+
+    return renderPracticeShell({
+        viewer: `
+            <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Practice input</span>
+                    <span class="control-label">Git branch view</span>
+                    <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
+                </div>
+                <p class="panel-copy">A fixed branch picture stays visible above the input field.</p>
+                ${renderBranchGraph(repositoryContext.branches)}
+            </section>
+        `,
+        composer: `
+            <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
+                <div class="workspace-card__header">
+                    <span class="control-label">Command input</span>
                     <span class="workspace-card__badge">${state.practiceDraft.preparedAnswer ? "prepared" : "draft"}</span>
                 </div>
-                <p class="panel-copy">Keep the input surface separate from the Git context viewer so branch inspection can stay visible while the learner edits an answer.</p>
                 <form class="practice-composer__form" data-practice-draft-form>
                     <label class="practice-composer__field">
-                        <span class="control-label">Command draft</span>
-                        <textarea name="answer" rows="5" placeholder="Example: git status">${escapeHtml(state.practiceDraft.answer ?? "")}</textarea>
+                        <span class="control-label">Draft answer</span>
+                        <textarea name="answer" rows="4" placeholder="Example: git status">${escapeHtml(state.practiceDraft.answer ?? "")}</textarea>
                     </label>
                     <div class="practice-composer__actions">
                         <button class="scenario-action" type="submit">Prepare payload</button>
@@ -113,42 +92,65 @@ export function renderWorkspacePanel(state) {
                 ` : ""}
                 <div class="practice-composer__notice ${state.practiceDraft.preparedAnswer ? "practice-composer__notice--ready" : ""}">
                     <span class="control-label">Submission shell</span>
-                    <dl class="result-summary">
-                        <div>
-                            <dt>Scenario</dt>
-                            <dd>${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</dd>
-                        </div>
-                        <div>
-                            <dt>Draft answer</dt>
-                            <dd>${escapeHtml(state.practiceDraft.preparedAnswer ?? "No prepared payload yet")}</dd>
-                        </div>
-                        <div>
-                            <dt>Prepared at</dt>
-                            <dd>${escapeHtml(state.practiceDraft.preparedAt ?? "Pending")}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </section>
-            <section class="workspace-card workspace-card--viewer">
-                <div class="workspace-card__header">
-                    <span class="control-label">Git context viewer</span>
-                    <span class="workspace-card__badge">${escapeHtml(state.practiceContextTab)}</span>
-                </div>
-                <div class="practice-context__tabs" role="tablist" aria-label="Git context viewer">
-                    ${renderPracticeContextTab(state, "branches", `Branches ${repositoryContext.branches.length}`)}
-                    ${renderPracticeContextTab(state, "commits", `Commits ${repositoryContext.commits.length}`)}
-                    ${renderPracticeContextTab(state, "files", `Files ${repositoryContext.files.length}`)}
-                    ${renderPracticeContextTab(state, "annotations", `Notes ${repositoryContext.annotations.length}`)}
-                </div>
-                <div class="practice-context__panel">
-                    ${renderPracticeContextPanel(state, repositoryContext)}
-                </div>
-                <div class="workspace-card__actions">
-                    <a class="scenario-action" href="#/catalog">Back to welcome</a>
+                    <p class="panel-copy">${escapeHtml(state.practiceDraft.preparedAnswer ?? "No prepared payload yet")}</p>
                 </div>
             </section>
         `
     });
+}
+
+function renderPracticeShell({ viewer, composer }) {
+    return renderLessonLane({
+        lane: "practice",
+        label: "Workspace lane",
+        title: "Git branch view and command input",
+        description: "The right column stays split into two fixed surfaces.",
+        showHeader: false,
+        body: `
+            <div class="practice-stack">
+                ${viewer}
+                ${composer}
+            </div>
+        `
+    });
+}
+
+function renderPlaceholderViewer(title, copy) {
+    return `
+        <section class="workspace-card workspace-card--viewer">
+            <div class="workspace-card__header">
+                <span class="control-label">${escapeHtml(title)}</span>
+                <span class="workspace-card__badge">idle</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="branch-graph branch-graph--placeholder" aria-hidden="true">
+                <div class="branch-graph__row">
+                    <span class="branch-graph__node"></span>
+                    <span class="branch-graph__track"></span>
+                    <div class="branch-graph__label">
+                        <strong>main</strong>
+                        <span>waiting for task context</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderPlaceholderComposer(title, copy) {
+    return `
+        <section class="workspace-card workspace-card--composer workspace-card--focus">
+            <div class="workspace-card__header">
+                <span class="control-label">${escapeHtml(title)}</span>
+                <span class="workspace-card__badge">idle</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            <label class="practice-composer__field">
+                <span class="control-label">Draft answer</span>
+                <textarea rows="4" placeholder="Example: git status" disabled></textarea>
+            </label>
+        </section>
+    `;
 }
 
 function normalizeRepositoryContext(repositoryContext) {
@@ -157,82 +159,34 @@ function normalizeRepositoryContext(repositoryContext) {
         status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
             ? safeContext.status
             : "unavailable",
-        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
-        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
-        files: Array.isArray(safeContext.files) ? safeContext.files : [],
-        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : []
     };
 }
 
-function renderEmptyContextState(message) {
-    return `
-        <article class="context-row context-row--annotation">
-            <span class="control-label">Empty state</span>
-            <p class="panel-copy">${escapeHtml(message)}</p>
-        </article>
-    `;
-}
-
-function renderPracticeContextTab(state, value, label) {
-    const isActive = state.practiceContextTab === value;
-    return `
-        <button
-            type="button"
-            class="practice-context__tab ${isActive ? "practice-context__tab--active" : ""}"
-            data-practice-context-tab="${value}"
-            aria-pressed="${isActive}"
-        >
-            ${escapeHtml(label)}
-        </button>
-    `;
-}
-
-function renderPracticeContextPanel(state, repositoryContext) {
-    switch (state.practiceContextTab) {
-        case "commits":
-            return repositoryContext.commits.length > 0
-                ? `<div class="context-list">${repositoryContext.commits.map((commit) => `
-                    <article class="context-row">
-                        <div class="context-row__header">
-                            <strong>${escapeHtml(commit.summary)}</strong>
-                            <span class="context-mono">${escapeHtml(commit.id)}</span>
-                        </div>
-                    </article>
-                `).join("")}</div>`
-                : renderEmptyContextState("No recent commit cues are available from the active detail payload.");
-        case "files":
-            return repositoryContext.files.length > 0
-                ? `<div class="context-list">${repositoryContext.files.map((file) => `
-                    <article class="context-row">
-                        <div class="context-row__header">
-                            <strong>${escapeHtml(file.path)}</strong>
-                            <span class="context-pill">${escapeHtml(file.status)}</span>
-                        </div>
-                    </article>
-                `).join("")}</div>`
-                : renderEmptyContextState("No file cues are available from the active detail payload.");
-        case "annotations":
-            return repositoryContext.annotations.length > 0
-                ? `<div class="context-list">${repositoryContext.annotations.map((annotation) => `
-                    <article class="context-row context-row--annotation">
-                        <span class="control-label">${escapeHtml(annotation.label)}</span>
-                        <p class="panel-copy">${escapeHtml(annotation.message)}</p>
-                    </article>
-                `).join("")}</div>`
-                : renderEmptyContextState("No workspace annotations are available from the active detail payload.");
-        case "branches":
-        default:
-            return repositoryContext.branches.length > 0
-                ? `<div class="context-list">${repositoryContext.branches.map((branch) => `
-                    <article class="context-row">
-                        <div class="context-row__header">
-                            <strong>${escapeHtml(branch.name)}</strong>
-                            <span class="context-pill ${branch.current ? "context-pill--active" : ""}">
-                                ${branch.current ? "current" : "available"}
-                            </span>
-                        </div>
-                    </article>
-                `).join("")}</div>`
-                : renderEmptyContextState("No branch cues are available from the active detail payload.");
+function renderBranchGraph(branches) {
+    if (!branches.length) {
+        return `
+            <div class="branch-graph branch-graph--empty">
+                <div class="branch-graph__empty">
+                    <span class="control-label">Empty state</span>
+                    <p class="panel-copy">No branch cues are available from the active detail payload.</p>
+                </div>
+            </div>
+        `;
     }
+
+    return `
+        <div class="branch-graph" aria-label="Git branch picture">
+            ${branches.map((branch, index) => `
+                <article class="branch-graph__row ${branch.current ? "branch-graph__row--current" : ""}">
+                    <span class="branch-graph__node"></span>
+                    <span class="branch-graph__track ${index === branches.length - 1 ? "branch-graph__track--last" : ""}"></span>
+                    <div class="branch-graph__label">
+                        <strong>${escapeHtml(branch.name)}</strong>
+                        <span>${branch.current ? "current branch" : "available branch"}</span>
+                    </div>
+                </article>
+            `).join("")}
+        </div>
+    `;
 }
