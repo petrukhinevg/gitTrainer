@@ -19,6 +19,8 @@ This file contains repository-wide operating rules. For every new chat, start wi
 ## Workflow Pointers
 
 - Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
+- Reuse the command examples in `docs/TRACKER_WORKFLOW.md` for `gh`, linked branches, GraphQL issue/PR linkage, and epic-based PR flow instead of re-deriving those API calls each time.
+- If a task uncovers stable `gh` commands, API queries, GraphQL mutations, or other repeatable operational notes that would otherwise force another documentation search later, add them to the relevant repository instructions before finishing the task.
 - Do not push to `origin` during active implementation unless the user explicitly asks for it.
 - When a task is moved to `Review`, push the task branch, create or update its PR, and verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
 - Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.

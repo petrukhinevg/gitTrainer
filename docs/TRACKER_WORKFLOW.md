@@ -124,6 +124,98 @@ If the branch was created locally before GitHub issue linkage was configured, do
 - manually confirm the PR is associated with the issue
 - if GitHub still does not populate `Linked pull requests`, correct the linkage before relying on the board state
 
+## GitHub automation notes
+
+Use these notes when the tracker workflow is executed through `gh` or GraphQL instead of the browser.
+
+When a task reveals a stable command sequence, API query, mutation, or workaround that is likely to be reused, add that note here while the details are fresh instead of leaving it only in chat history.
+
+### Credentials from alternate worktrees
+
+If a command is executed from another worktree such as `gitTrainer_task138`, do not assume `.env` exists there. Source it from the repository root with an absolute path, for example:
+
+```sh
+set -a && source /Users/petrukhinevg/IdeaProjects/gitTrainer/.env
+export GH_TOKEN="$GITHUB_ADMIN_TOKEN"
+```
+
+### Linked branches
+
+To inspect linked branches for an issue:
+
+```sh
+gh issue develop --list 137 --repo petrukhinevg/gitTrainer
+```
+
+If the target branch does not exist yet, `gh issue develop` can create and register it.
+
+If the remote branch already exists, GitHub may refuse to backfill the linkage. In that case, create a new linked branch name first and open the PR from that linked branch instead of expecting the existing branch name to become linked retroactively.
+
+The GraphQL mutation that worked for creating a linked branch on a new name is:
+
+```graphql
+mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
+  createLinkedBranch(
+    input: {issueId: $issueId, repositoryId: $repoId, oid: $oid, name: $name}
+  ) {
+    linkedBranch {
+      ref {
+        name
+      }
+    }
+  }
+}
+```
+
+Required inputs:
+
+- `issueId`: GraphQL issue ID from `gh issue view <number> --json id`
+- `repoId`: GraphQL repository ID from `gh repo view <owner>/<repo> --json id`
+- `oid`: commit SHA that the linked branch should point to
+- `name`: new remote branch name such as `linked/137-catalog-browse-api-shell-stub-boundary`
+
+Observed behavior:
+
+- creating a linked branch on a fresh remote branch name worked
+- attempting to register an already existing remote branch name did not backfill reliably
+
+### Pull requests against epic branches
+
+For child task PRs with the epic branch as `base`, use `Refs #<issue>` in the PR body to keep the issue association without relying on default-branch closing behavior.
+
+Example:
+
+```sh
+gh pr create \
+  --base epic/98-scenario-catalog-browsing-mvp \
+  --head linked/137-catalog-browse-api-shell-stub-boundary \
+  --title "#137 Deliver catalog browse API shell and deterministic stub boundary" \
+  --body "Refs #137"
+```
+
+If a closed PR already exists for the same head and base and GitHub refuses to reopen it, create a new alias branch at the same commit and open a fresh PR from that alias branch instead of rewriting history.
+
+### `Linked pull requests` field
+
+Even after a linked branch and matching PR exist, the project field `Linked pull requests` may lag or may still require manual issue association for non-default-target PRs.
+
+Operational rule:
+
+- do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
+- if the field is still empty, keep the task in `In Progress` even if code and tests are done
+
+### Follow-up child tasks after seam work
+
+If a later child task depends on a seam that was delivered in an earlier child branch rather than in the initial epic baseline, do not start the later task from the old epic head.
+
+Instead:
+
+1. review the blocking child task
+2. merge that reviewed child branch into the epic branch
+3. create the next child branch from the updated epic head
+
+This exception is allowed when the later task is genuinely blocked without that integrated seam.
+
 ## Task template
 
 - Title: short and concrete
