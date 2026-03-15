@@ -200,9 +200,9 @@
 @media (max-width: 900px) {
     .lesson-layout {
         grid-template-areas:
+            "navigation"
             "lesson"
-            "practice"
-            "navigation";
+            "practice";
         grid-template-columns: 1fr;
     }
 
