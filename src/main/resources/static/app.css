@@ -60,7 +60,8 @@ a {
 
 .masthead-copy h1,
 .hero-panel h2,
-.panel h3 {
+.panel h3,
+.scenario-card h4 {
     margin: 0;
     font-weight: 600;
     line-height: 1.05;
@@ -264,16 +265,179 @@ a {
     flex: 1 1 0;
 }
 
-.debug-preview code {
-    display: block;
-    overflow-x: auto;
-    padding: 14px;
-    border-radius: 16px;
-    background: #251d1c;
-    color: #f8e7d0;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.9rem;
+.catalog-results-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+}
+
+.scenario-list-panel,
+.result-summary-panel {
+    display: grid;
+    gap: 16px;
+}
+
+.scenario-list {
+    display: grid;
+    gap: 14px;
+}
+
+.scenario-card {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(243, 199, 160, 0.18));
+    border: 1px solid rgba(31, 23, 32, 0.1);
+}
+
+.scenario-card-header,
+.scenario-card-footer,
+.scenario-tags,
+.result-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.scenario-card-header,
+.scenario-card-footer {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.scenario-card h4 {
+    font-size: 1.5rem;
+}
+
+.scenario-card p,
+.catalog-state p,
+.entry-note {
+    margin: 0;
+    color: var(--ink-soft);
     line-height: 1.5;
+}
+
+.difficulty-pill,
+.scenario-tag,
+.scenario-slug {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+}
+
+.difficulty-pill {
+    background: rgba(190, 91, 43, 0.14);
+    color: var(--ink-strong);
+    font-family: "Courier New", Courier, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.difficulty-intermediate {
+    background: rgba(31, 23, 32, 0.12);
+}
+
+.scenario-slug,
+.scenario-tag {
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.78);
+    color: var(--ink-soft);
+}
+
+.scenario-tags {
+    align-items: center;
+}
+
+.scenario-action {
+    min-height: 44px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--paper-strong);
+    font: inherit;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.catalog-state {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px dashed rgba(31, 23, 32, 0.18);
+    background: rgba(246, 239, 226, 0.72);
+}
+
+.catalog-state strong {
+    font-size: 1.1rem;
+}
+
+.catalog-state-error {
+    background: rgba(190, 91, 43, 0.08);
+}
+
+.catalog-state-empty {
+    background: rgba(31, 23, 32, 0.05);
+}
+
+.result-summary {
+    display: grid;
+    gap: 12px;
+}
+
+.result-summary div {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+}
+
+.result-summary dt {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+}
+
+.result-summary dd {
+    margin: 0;
+}
+
+.skeleton-card {
+    min-height: 176px;
+}
+
+.skeleton-line,
+.skeleton-pill {
+    display: block;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.9), rgba(190, 91, 43, 0.08));
+}
+
+.skeleton-line {
+    height: 16px;
+}
+
+.skeleton-line-short {
+    width: 35%;
+}
+
+.skeleton-tag-row {
+    display: flex;
+    gap: 10px;
+}
+
+.skeleton-pill {
+    width: 82px;
+    height: 30px;
 }
 
 @media (max-width: 700px) {
@@ -291,6 +455,16 @@ a {
     }
 
     .control-actions {
+        flex-direction: column;
+    }
+
+    .catalog-results-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .scenario-card-header,
+    .scenario-card-footer {
+        align-items: start;
         flex-direction: column;
     }
 }
