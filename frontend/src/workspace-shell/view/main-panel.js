@@ -1,10 +1,6 @@
 import { renderCatalogOverviewState } from "./catalog-surfaces.js";
 import {
-    describeCatalogStatus,
     escapeHtml,
-    resolveTaskAnnotations,
-    resolveTaskInstructions,
-    resolveTaskSteps
 } from "./render-helpers.js";
 
 export function renderMainPanel(state) {
@@ -154,4 +150,81 @@ function renderExerciseMainPanel(state) {
             </div>
         </section>
     `;
+}
+
+function describeCatalogStatus(state) {
+    switch (state.catalog.status) {
+        case "loading":
+            return {
+                description: "The shared shell is waiting for the active provider to resolve the latest catalog query."
+            };
+        case "empty":
+            return {
+                description: "The shell stays intact, but the current filters leave no scenario to route into the workspace."
+            };
+        case "error":
+            return {
+                description: state.catalog.error ?? "The active provider failed before returning scenario summaries."
+            };
+        case "ready":
+            return {
+                description: "Catalog results are ready and any listed scenario can reserve the exercise route inside this same shell."
+            };
+        default:
+            return {
+                description: "Pick a provider, tune the query, and choose which scenario should open the shared workspace route."
+            };
+    }
+}
+
+function resolveTaskInstructions(detail) {
+    return (detail.workspace.task.instructions ?? []).map((instruction, index) => {
+        if (typeof instruction === "string") {
+            return {
+                id: `instruction-${index + 1}`,
+                text: instruction
+            };
+        }
+
+        return {
+            id: instruction.id ?? `instruction-${index + 1}`,
+            text: instruction.text ?? ""
+        };
+    });
+}
+
+function resolveTaskSteps(detail) {
+    return (detail.workspace.task.steps ?? [])
+        .map((step, index) => {
+            if (typeof step === "string") {
+                return {
+                    position: index + 1,
+                    title: `Step ${index + 1}`,
+                    detail: step
+                };
+            }
+
+            return {
+                position: step.position ?? index + 1,
+                title: step.title ?? `Step ${index + 1}`,
+                detail: step.detail ?? ""
+            };
+        })
+        .sort((left, right) => left.position - right.position);
+}
+
+function resolveTaskAnnotations(detail) {
+    return (detail.workspace.task.annotations ?? []).map((annotation, index) => {
+        if (typeof annotation === "string") {
+            return {
+                label: `Note ${index + 1}`,
+                message: annotation
+            };
+        }
+
+        return {
+            label: annotation.label ?? `Note ${index + 1}`,
+            message: annotation.message ?? ""
+        };
+    });
 }

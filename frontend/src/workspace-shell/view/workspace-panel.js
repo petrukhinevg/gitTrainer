@@ -1,7 +1,5 @@
 import {
     escapeHtml,
-    normalizeRepositoryContext,
-    renderEmptyContextState
 } from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
@@ -172,5 +170,27 @@ export function renderWorkspacePanel(state) {
                 </div>
             </div>
         </section>
+    `;
+}
+
+function normalizeRepositoryContext(repositoryContext) {
+    const safeContext = repositoryContext ?? {};
+    return {
+        status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
+            ? safeContext.status
+            : "unavailable",
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
+        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : [],
+        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
+    };
+}
+
+function renderEmptyContextState(message) {
+    return `
+        <article class="context-row context-row--annotation">
+            <span class="control-label">Empty state</span>
+            <p class="panel-copy">${escapeHtml(message)}</p>
+        </article>
     `;
 }

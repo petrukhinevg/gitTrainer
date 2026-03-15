@@ -1,10 +1,6 @@
 import { renderScenarioRail } from "./catalog-surfaces.js";
 import {
     escapeHtml,
-    renderDifficultyOption,
-    renderProviderOption,
-    renderSortOption,
-    resolveLeftPanelTitle
 } from "./render-helpers.js";
 
 export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
@@ -70,4 +66,25 @@ export function renderSidebarPanel(state, selectedCatalogScenario, tagOptions) {
             </div>
         </aside>
     `;
+}
+
+function resolveLeftPanelTitle(state) {
+    if (state.route === "exercise" && state.detail.status === "ready") {
+        return state.detail.data.workspace.shell.leftPanelTitle;
+    }
+
+    return "Scenario map";
+}
+
+function renderProviderOption(state, value, label) {
+    return `<option value="${value}" ${state.providerName === value ? "selected" : ""}>${label}</option>`;
+}
+
+function renderDifficultyOption(state, value, label) {
+    return `<option value="${value ?? ""}" ${state.query.difficulty === value ? "selected" : ""}>${label}</option>`;
+}
+
+function renderSortOption(state, value, label) {
+    const selectedSort = state.query.sort ?? "title";
+    return `<option value="${value}" ${selectedSort === value ? "selected" : ""}>${label}</option>`;
 }
