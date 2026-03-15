@@ -162,7 +162,7 @@ function renderExerciseMainPanel(state) {
             <h3>${escapeHtml(detail.title)}</h3>
             <p class="panel-copy">${escapeHtml(detail.summary)}</p>
             <div class="lesson-block">
-                <h4 class="lesson-block__title">Task placeholder</h4>
+                <h4 class="lesson-block__title">Task goal</h4>
                 <p class="panel-copy">${escapeHtml(detail.workspace.task.goal)}</p>
                 <dl class="result-summary">
                     <div>
@@ -177,12 +177,55 @@ function renderExerciseMainPanel(state) {
                         <dt>Steps</dt>
                         <dd>${detail.workspace.task.steps.length}</dd>
                     </div>
+                    <div>
+                        <dt>Annotations</dt>
+                        <dd>${resolveTaskAnnotations(detail).length}</dd>
+                    </div>
                 </dl>
+            </div>
+            <div class="lesson-block">
+                <h4 class="lesson-block__title">Instruction flow</h4>
+                <ol class="task-sequence">
+                    ${resolveTaskInstructions(detail).map((instruction, index) => `
+                        <li class="task-sequence__item">
+                            <span class="task-sequence__index">${index + 1}</span>
+                            <div class="task-sequence__copy">
+                                <strong>${escapeHtml(instruction.id)}</strong>
+                                <p>${escapeHtml(instruction.text)}</p>
+                            </div>
+                        </li>
+                    `).join("")}
+                </ol>
+            </div>
+            <div class="lesson-block">
+                <h4 class="lesson-block__title">Ordered steps</h4>
+                <ol class="task-steps">
+                    ${resolveTaskSteps(detail).map((step) => `
+                        <li class="task-steps__item">
+                            <div class="task-steps__header">
+                                <span class="task-step__position">Step ${step.position}</span>
+                                <strong>${escapeHtml(step.title)}</strong>
+                            </div>
+                            <p>${escapeHtml(step.detail)}</p>
+                        </li>
+                    `).join("")}
+                </ol>
+            </div>
+            <div class="lesson-block">
+                <h4 class="lesson-block__title">Static workspace annotations</h4>
+                <div class="task-annotations">
+                    ${resolveTaskAnnotations(detail).map((annotation) => `
+                        <article class="task-annotation">
+                            <span class="control-label">${escapeHtml(annotation.label)}</span>
+                            <p>${escapeHtml(annotation.message)}</p>
+                        </article>
+                    `).join("")}
+                </div>
             </div>
             <div class="lesson-block">
                 <h4 class="lesson-block__title">Provider seam</h4>
                 <p class="panel-copy">
-                    This panel now renders from the scenario detail payload instead of the catalog summary route placeholder. Final task instructions and repository visuals still belong to later slices.
+                    Task presentation now uses the workspace payload directly, while repository-context visuals still stay deferred to the next slice.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -482,6 +525,56 @@ function renderDifficultyOption(state, value, label) {
 function renderSortOption(state, value, label) {
     const selectedSort = state.query.sort ?? "title";
     return `<option value="${value}" ${selectedSort === value ? "selected" : ""}>${label}</option>`;
+}
+
+function resolveTaskInstructions(detail) {
+    return (detail.workspace.task.instructions ?? []).map((instruction, index) => {
+        if (typeof instruction === "string") {
+            return {
+                id: `instruction-${index + 1}`,
+                text: instruction
+            };
+        }
+
+        return {
+            id: instruction.id ?? `instruction-${index + 1}`,
+            text: instruction.text ?? ""
+        };
+    });
+}
+
+function resolveTaskSteps(detail) {
+    return (detail.workspace.task.steps ?? []).map((step, index) => {
+        if (typeof step === "string") {
+            return {
+                position: index + 1,
+                title: `Step ${index + 1}`,
+                detail: step
+            };
+        }
+
+        return {
+            position: step.position ?? index + 1,
+            title: step.title ?? `Step ${index + 1}`,
+            detail: step.detail ?? ""
+        };
+    });
+}
+
+function resolveTaskAnnotations(detail) {
+    return (detail.workspace.task.annotations ?? []).map((annotation, index) => {
+        if (typeof annotation === "string") {
+            return {
+                label: `Note ${index + 1}`,
+                message: annotation
+            };
+        }
+
+        return {
+            label: annotation.label ?? `Note ${index + 1}`,
+            message: annotation.message ?? ""
+        };
+    });
 }
 
 function formatDifficulty(value) {

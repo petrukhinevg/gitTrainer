@@ -285,7 +285,8 @@ a {
 
 .scenario-rail__list,
 .scenario-list,
-.workspace-stack {
+.workspace-stack,
+.task-annotations {
     display: grid;
     gap: 12px;
 }
@@ -335,6 +336,61 @@ a {
 
 .lesson-list {
     padding-left: 18px;
+}
+
+.task-sequence,
+.task-steps {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.task-sequence__item,
+.task-steps__item,
+.task-annotation {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.task-sequence__item {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+}
+
+.task-sequence__index,
+.task-step__position {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(190, 91, 43, 0.14);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+}
+
+.task-sequence__copy,
+.task-steps__header,
+.task-annotation {
+    display: grid;
+    gap: 6px;
+}
+
+.task-sequence__copy p,
+.task-steps__item p,
+.task-annotation p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.5;
 }
 
 .scenario-card {
@@ -450,8 +506,13 @@ a {
 
     .control-actions,
     .workspace-card__actions,
-    .scenario-card-footer {
+    .scenario-card-footer,
+    .task-sequence__item {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .task-sequence__item {
+        grid-template-columns: 1fr;
     }
 }

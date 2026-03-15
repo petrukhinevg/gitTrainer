@@ -43,6 +43,12 @@ class CatalogShellPageTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario map")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Exercise route is loading provider-backed detail")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Instruction flow")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Ordered steps")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Static workspace annotations")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task presentation now uses the workspace payload directly")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("resolveTaskInstructions")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("resolveTaskSteps")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Selected scenario detail is loading")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Route handoff now resolves detail through a dedicated provider seam.")))
@@ -55,6 +61,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".workspace-grid")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".panel--workspace")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-sequence")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-annotation")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
     }
 }
