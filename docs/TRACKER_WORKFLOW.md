@@ -204,6 +204,12 @@ Operational rule:
 - do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
 - if the field is still empty, keep the task in `In Progress` even if code and tests are done
 
+Observed limitation:
+
+- even after creating a fresh linked branch through `gh issue develop`, pushing the task commit onto that linked branch, and opening a PR with `Refs #<issue>` against an epic branch, the project field may still remain empty
+- in that state, GitHub can already show a cross-reference from the issue timeline to the PR, but that is still not enough to treat `Linked pull requests` as satisfied
+- when this happens, leave the task in `In Progress` and finish the remaining linkage through the GitHub UI before moving the task to `Review`
+
 ### Project status updates
 
 When the project board status must be updated from the CLI, first inspect the project fields to get the current `Status` field id and option ids:

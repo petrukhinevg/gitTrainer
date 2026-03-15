@@ -48,18 +48,18 @@ function resolveIntroTitle(state) {
 
 function resolveIntroDescription(state) {
     if (state.route !== "exercise") {
-        return "The catalog still owns selection and provider state, but the learner no longer bounces between separate UI shells before entering the exercise flow.";
+        return "The catalog still owns selection and provider state, but the shell is now locked into the same three-lane lesson frame that exercise routes will use.";
     }
 
     if (state.detail.status === "ready") {
-        return "The learner has already left the catalog and landed in the same standalone workspace shell with a route-specific detail payload.";
+        return "The learner has already left the catalog and landed in a stable left-navigation, center-lesson, and right-practice layout backed by the route-specific detail payload.";
     }
 
     if (state.detail.status === "error") {
-        return "The route is preserved and the workspace shell stays mounted even when scenario detail loading fails.";
+        return "The route is preserved and the full three-lane workspace shell stays mounted even when scenario detail loading fails.";
     }
 
-    return "The exercise route now loads through a dedicated provider seam, with explicit loading flow before deeper task and repository content is implemented.";
+    return "The exercise route now loads through a dedicated provider seam, with the full lesson layout already in place before deeper task and practice surfaces are implemented.";
 }
 
 function resolveDetailStatusLabel(state) {

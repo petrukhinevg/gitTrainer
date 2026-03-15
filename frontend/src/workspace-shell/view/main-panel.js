@@ -1,4 +1,5 @@
 import { renderCatalogOverviewState } from "./catalog-surfaces.js";
+import { renderLessonLane } from "./lesson-layout.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
@@ -8,40 +9,55 @@ export function renderMainPanel(state) {
         return renderExerciseMainPanel(state);
     }
 
-    return `
-        <section class="panel panel--lesson">
-            <p class="panel-label">Catalog overview</p>
-            <h3>Choose a scenario before opening the workspace</h3>
-            <p class="panel-copy">${escapeHtml(describeCatalogStatus(state).description)}</p>
-            ${renderCatalogOverviewState(state)}
-        </section>
-    `;
+    return renderLessonLane({
+        lane: "lesson",
+        label: "Lesson lane",
+        title: "Catalog overview now occupies the center lesson column",
+        description: describeCatalogStatus(state).description,
+        meta: [
+            `Status: ${state.catalog.status}`,
+            `Scenarios: ${state.catalog.items.length}`
+        ],
+        body: renderCatalogOverviewState(state)
+    });
 }
 
 function renderExerciseMainPanel(state) {
     const detail = state.detail.data;
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return `
-            <section class="panel panel--lesson">
-                <p class="panel-label">Workspace lesson</p>
-                <h3>Loading workspace detail</h3>
-                <p class="panel-copy">
-                    The route is already stable. This shell is waiting for the active detail provider to resolve the selected scenario by slug.
-                </p>
-            </section>
-        `;
+        return renderLessonLane({
+            lane: "lesson",
+            label: "Lesson lane",
+            title: "Loading workspace detail in the center lesson column",
+            description: "The route is already stable. This lane waits for the active detail provider to resolve the selected scenario by slug.",
+            meta: [
+                `Route: ${state.route}`,
+                `Detail: ${state.detail.status}`
+            ],
+            body: `
+                <section class="lesson-block lesson-block--highlight">
+                    <h4 class="lesson-block__title">Lesson payload</h4>
+                    <p class="panel-copy">
+                        The learner already has the final shell shape. Only the scenario-specific lesson content is pending.
+                    </p>
+                </section>
+            `
+        });
     }
 
     if (state.detail.status === "error") {
-        return `
-            <section class="panel panel--lesson">
-                <p class="panel-label">Workspace lesson</p>
-                <h3>Exercise detail is unavailable</h3>
-                <p class="panel-copy">
-                    The exercise route now has explicit load and error flow handling. The shell stays in place, but the selected scenario detail provider failed before returning a payload.
-                </p>
-                <div class="lesson-block">
+        return renderLessonLane({
+            lane: "lesson",
+            label: "Lesson lane",
+            title: "Exercise detail is unavailable",
+            description: "The exercise route keeps its center lesson frame even when the selected scenario detail provider fails before returning a payload.",
+            meta: [
+                `Provider: ${state.providerName}`,
+                "Detail: error"
+            ],
+            body: `
+                <section class="lesson-block">
                     <h4 class="lesson-block__title">Requested route</h4>
                     <dl class="result-summary">
                         <div>
@@ -57,17 +73,23 @@ function renderExerciseMainPanel(state) {
                             <dd>${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</dd>
                         </div>
                     </dl>
-                </div>
-            </section>
-        `;
+                </section>
+            `
+        });
     }
 
-    return `
-        <section class="panel panel--lesson">
-            <p class="panel-label">${escapeHtml(detail.workspace.shell.centerPanelTitle)}</p>
-            <h3>${escapeHtml(detail.title)}</h3>
-            <p class="panel-copy">${escapeHtml(detail.summary)}</p>
-            <div class="lesson-block">
+    return renderLessonLane({
+        lane: "lesson",
+        label: detail.workspace.shell.centerPanelTitle,
+        title: detail.title,
+        description: detail.summary,
+        meta: [
+            `Task: ${detail.workspace.task.status}`,
+            `Difficulty: ${detail.difficulty}`,
+            `Source: ${detail.meta.source}`
+        ],
+        body: `
+            <section class="lesson-block lesson-block--highlight">
                 <h4 class="lesson-block__title">Task goal</h4>
                 <p class="panel-copy">${escapeHtml(detail.workspace.task.goal)}</p>
                 <dl class="result-summary">
@@ -88,8 +110,8 @@ function renderExerciseMainPanel(state) {
                         <dd>${resolveTaskAnnotations(detail).length}</dd>
                     </div>
                 </dl>
-            </div>
-            <div class="lesson-block">
+            </section>
+            <section class="lesson-block">
                 <h4 class="lesson-block__title">Instruction flow</h4>
                 <ol class="task-sequence">
                     ${resolveTaskInstructions(detail).map((instruction, index) => `
@@ -102,8 +124,8 @@ function renderExerciseMainPanel(state) {
                         </li>
                     `).join("")}
                 </ol>
-            </div>
-            <div class="lesson-block">
+            </section>
+            <section class="lesson-block">
                 <h4 class="lesson-block__title">Ordered steps</h4>
                 <ol class="task-steps">
                     ${resolveTaskSteps(detail).map((step) => `
@@ -116,8 +138,8 @@ function renderExerciseMainPanel(state) {
                         </li>
                     `).join("")}
                 </ol>
-            </div>
-            <div class="lesson-block">
+            </section>
+            <section class="lesson-block">
                 <h4 class="lesson-block__title">Static workspace annotations</h4>
                 <div class="task-annotations">
                     ${resolveTaskAnnotations(detail).map((annotation) => `
@@ -127,11 +149,11 @@ function renderExerciseMainPanel(state) {
                         </article>
                     `).join("")}
                 </div>
-            </div>
-            <div class="lesson-block">
+            </section>
+            <section class="lesson-block">
                 <h4 class="lesson-block__title">Provider seam</h4>
                 <p class="panel-copy">
-                    Task presentation and repository-context surfaces now use the workspace payload directly without reshaping the exercise shell.
+                    Task presentation and repository-context surfaces still consume the existing workspace payload directly, even though the overall screen has been promoted into stable lesson lanes.
                 </p>
                 <dl class="result-summary">
                     <div>
@@ -147,9 +169,9 @@ function renderExerciseMainPanel(state) {
                         <dd>${escapeHtml(detail.difficulty)}</dd>
                     </div>
                 </dl>
-            </div>
-        </section>
-    `;
+            </section>
+        `
+    });
 }
 
 function describeCatalogStatus(state) {
