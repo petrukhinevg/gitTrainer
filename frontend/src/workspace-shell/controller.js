@@ -15,8 +15,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         selectedFocus: null,
         expandedScenarioSlugs: [],
         providerName: DEFAULT_PROVIDER_NAME,
-        practiceContextTab: "branches",
-        practiceDraft: createInitialPracticeDraft(),
+        submissionDraft: createInitialSubmissionDraftState(),
         query: cloneQuery(DEFAULT_QUERY),
         catalog: {
             status: "idle",
@@ -217,60 +216,60 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     function bindPracticeSurfaceControls() {
-        document.querySelectorAll("[data-practice-context-tab]").forEach((button) => {
-            button.addEventListener("click", () => {
-                const nextTab = button.dataset.practiceContextTab;
-                if (!nextTab || nextTab === state.practiceContextTab) {
-                    return;
-                }
-
-                state.practiceContextTab = nextTab;
-                render();
-            });
-        });
-
-        const form = document.querySelector("[data-practice-draft-form]");
+        const form = document.querySelector("[data-submission-draft-form]");
         if (!form) {
             return;
         }
 
-        form.addEventListener("input", handlePracticeDraftInput);
-        form.addEventListener("submit", handlePracticeDraftSubmit);
-        form.querySelector("[data-reset-practice-draft]")?.addEventListener("click", resetPracticeDraft);
+        form.addEventListener("input", handleSubmissionDraftInput);
+        form.addEventListener("submit", handleSubmissionDraftSubmit);
+        form.querySelector("[data-reset-submission-draft]")?.addEventListener("click", resetSubmissionDraft);
     }
 
-    function handlePracticeDraftInput(event) {
+    function handleSubmissionDraftInput(event) {
         const formData = new FormData(event.currentTarget);
-        state.practiceDraft.answer = String(formData.get("answer") ?? "");
-        state.practiceDraft.validationError = null;
+        const nextAnswerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
+        const nextAnswer = String(formData.get("answer") ?? "");
+        const preparedSubmission = state.submissionDraft.preparedSubmission;
 
-        if (state.practiceDraft.preparedAnswer && state.practiceDraft.preparedAnswer !== state.practiceDraft.answer.trim()) {
-            state.practiceDraft.preparedAnswer = null;
-            state.practiceDraft.preparedAt = null;
+        state.submissionDraft.answerType = nextAnswerType;
+        state.submissionDraft.answer = nextAnswer;
+        state.submissionDraft.validationError = null;
+
+        if (preparedSubmission && (
+            preparedSubmission.answerType !== nextAnswerType
+            || preparedSubmission.answer !== nextAnswer.trim()
+        )) {
+            state.submissionDraft.preparedSubmission = null;
         }
     }
 
-    function handlePracticeDraftSubmit(event) {
+    function handleSubmissionDraftSubmit(event) {
         event.preventDefault();
 
         const formData = new FormData(event.currentTarget);
         const answer = String(formData.get("answer") ?? "").trim();
 
         if (!answer) {
-            state.practiceDraft.validationError = "Enter a Git command before preparing the practice payload.";
+            state.submissionDraft.validationError = "Enter the Git command or action you want to submit.";
             render();
             return;
         }
 
-        state.practiceDraft.answer = String(formData.get("answer") ?? "");
-        state.practiceDraft.validationError = null;
-        state.practiceDraft.preparedAnswer = answer;
-        state.practiceDraft.preparedAt = new Date().toISOString();
+        state.submissionDraft.answerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
+        state.submissionDraft.answer = String(formData.get("answer") ?? "");
+        state.submissionDraft.validationError = null;
+        state.submissionDraft.preparedSubmission = {
+            scenarioSlug: state.selectedScenarioSlug,
+            answerType: state.submissionDraft.answerType,
+            answer,
+            preparedAt: new Date().toISOString()
+        };
         render();
     }
 
-    function resetPracticeDraft() {
-        state.practiceDraft = createInitialPracticeDraft();
+    function resetSubmissionDraft() {
+        state.submissionDraft = createInitialSubmissionDraftState();
         render();
     }
 
@@ -282,8 +281,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     function resetRouteScopedState() {
-        state.practiceContextTab = "branches";
-        state.practiceDraft = createInitialPracticeDraft();
+        state.submissionDraft = createInitialSubmissionDraftState();
 
         if (state.route !== "exercise") {
             state.selectedFocus = null;
@@ -520,12 +518,12 @@ function cloneQuery(query) {
     };
 }
 
-function createInitialPracticeDraft() {
+function createInitialSubmissionDraftState() {
     return {
+        answerType: "command_text",
         answer: "",
         validationError: null,
-        preparedAnswer: null,
-        preparedAt: null
+        preparedSubmission: null
     };
 }
 

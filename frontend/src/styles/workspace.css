@@ -31,7 +31,6 @@
 .practice-composer__form,
 .practice-editor,
 .practice-inline-note,
-.practice-status-line,
 .branch-graph,
 .branch-graph__row,
 .branch-graph__label {
@@ -89,6 +88,26 @@
     gap: 14px;
 }
 
+.practice-shell__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.practice-shell__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    background: rgba(255, 250, 241, 0.58);
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+}
+
 .practice-inline-note {
     gap: 8px;
 }
@@ -101,8 +120,7 @@
 }
 
 .practice-editor__prompt,
-.practice-action,
-.practice-status-line {
+.practice-action {
     font-family: "Courier New", Courier, monospace;
 }
 
@@ -151,15 +169,15 @@
     color: var(--accent);
 }
 
-.practice-status-line {
+.practice-output {
+    display: grid;
+    gap: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
     color: var(--ink-soft);
-    font-size: 0.78rem;
-    line-height: 1.5;
 }
 
-.practice-status-line--ready {
+.practice-output--ready {
     color: var(--ink-strong);
 }
 
@@ -270,6 +288,7 @@
 }
 
 @media (max-width: 720px) {
+    .practice-shell__meta,
     .workspace-card__actions,
     .practice-composer__actions {
         flex-direction: column;
