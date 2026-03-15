@@ -13,7 +13,8 @@ The main user problem is the gap between reading Git theory and confidently usin
 - One parent issue may include backend work, frontend work, or both.
 - Detailed implementation tasks belong in the side-specific roadmaps.
 - Prefer parent issues that describe one learner-visible vertical slice or one planning block with clear boundaries.
-- If child tasks inside an epic would require code from unfinished sibling tasks, split the epic differently or merge that work into one task.
+- Child tasks inside one parent issue must stay independently implementable from the parent baseline.
+- If a live hookup or sequencing step would require code from an unfinished sibling task, move that step into a separate follow-up task or a separate parent issue instead of chaining child tasks.
 
 ## Roadmap structure
 
@@ -36,7 +37,7 @@ The MVP is complete when:
 - Create parent issues from this file when the work describes one meaningful product block.
 - If a parent issue spans multiple technical sides, decompose it into side-specific tasks in the relevant roadmaps.
 - If a parent issue affects only one side, keep the detailed task breakdown only in that side's roadmap.
-- When backend and frontend work describe the same learner-facing slice, keep them under the same parent issue and link them as paired child tasks.
+- When backend and frontend work describe the same learner-facing slice but remain independently implementable, keep them under the same parent issue and pair them through the project field `Pairs with`.
 - Keep the current queue and status mapping aligned with `docs/BOARD.md`.
 
 ## Parent issues

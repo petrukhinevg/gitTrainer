@@ -21,6 +21,8 @@
 
 Keep the actual board state in `docs/BOARD.md` or the remote project board.
 
+Use the project field `Pairs with` when a backend task and a frontend task represent the same learner-facing slice but remain independently implementable.
+
 ## Decomposition rules
 
 - A task must produce a clear and testable result.
@@ -28,6 +30,7 @@ Keep the actual board state in `docs/BOARD.md` or the remote project board.
 - If a feature requires major changes across multiple areas at once, it is a good candidate for a `parent issue`.
 - If the result cannot be described in one short outcome statement, split the task.
 - For this product, separate content modeling, validation logic, and SPA UX work unless a very small change naturally spans them.
+- Do not keep sibling tasks in the same parent issue when one would require code from another unfinished sibling task. Merge them or split the parent issue differently.
 
 ## What counts as a task
 
