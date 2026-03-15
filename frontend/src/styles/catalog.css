@@ -49,9 +49,29 @@
 
 .tag-option,
 .scenario-tag,
+.scenario-slug,
+.difficulty-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+}
+
+.tag-option,
+.scenario-tag,
 .scenario-slug {
     border: 1px solid var(--border);
     background: rgba(255, 250, 241, 0.92);
+}
+
+.difficulty-pill {
+    background: rgba(190, 91, 43, 0.14);
+}
+
+.difficulty-intermediate {
+    background: rgba(57, 89, 121, 0.14);
 }
 
 .scenario-rail {
@@ -112,6 +132,12 @@
     gap: 12px;
 }
 
+.scenario-card h4 {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.05;
+}
+
 .scenario-card-header,
 .scenario-card-footer {
     display: flex;
@@ -132,6 +158,12 @@
 
 .catalog-state-empty {
     background: rgba(57, 89, 121, 0.08);
+}
+
+.catalog-state p {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--ink-soft);
 }
 
 .skeleton-card {

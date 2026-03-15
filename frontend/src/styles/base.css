@@ -41,22 +41,18 @@ a {
     color: var(--ink-soft);
 }
 
-.masthead-copy h1,
-.workspace-intro h2,
-.panel h3,
-.scenario-card h4,
-.lesson-block__title {
+.panel h3 {
     margin: 0;
     font-weight: 600;
     line-height: 1.05;
 }
 
-.masthead-copy p,
 .panel-copy,
-.workspace-intro p,
-.lesson-list,
-.catalog-state p {
+.result-summary dd {
     margin: 0;
+}
+
+.panel-copy {
     line-height: 1.55;
     color: var(--ink-soft);
 }
@@ -91,26 +87,6 @@ a {
     background: var(--accent-cool);
 }
 
-.tag-option,
-.scenario-tag,
-.scenario-slug,
-.difficulty-pill {
-    display: inline-flex;
-    align-items: center;
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-}
-
-.difficulty-pill {
-    background: rgba(190, 91, 43, 0.14);
-}
-
-.difficulty-intermediate {
-    background: rgba(57, 89, 121, 0.14);
-}
-
 .result-summary {
     display: grid;
     gap: 12px;
@@ -120,8 +96,4 @@ a {
 .result-summary div {
     display: grid;
     gap: 4px;
-}
-
-.result-summary dd {
-    margin: 0;
 }

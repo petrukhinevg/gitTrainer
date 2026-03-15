@@ -16,9 +16,23 @@
     gap: 12px;
 }
 
+.masthead-copy h1,
+.workspace-intro h2 {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.05;
+}
+
 .masthead-copy h1 {
     max-width: 12ch;
     font-size: clamp(2.8rem, 6vw, 5.2rem);
+}
+
+.masthead-copy p,
+.workspace-intro p {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--ink-soft);
 }
 
 .masthead-nav a {
