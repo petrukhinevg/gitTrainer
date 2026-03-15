@@ -1,6 +1,7 @@
 package com.example.gittrainer.scenario.api;
 
 import com.example.gittrainer.scenario.application.CatalogBrowseResult;
+import com.example.gittrainer.scenario.domain.ScenarioDifficulty;
 import com.example.gittrainer.scenario.domain.ScenarioSummary;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +28,15 @@ public class ScenarioCatalogResponseMapper {
                 scenarioSummary.slug(),
                 scenarioSummary.title(),
                 scenarioSummary.summary(),
-                scenarioSummary.difficulty().name(),
+                toWireDifficulty(scenarioSummary.difficulty()),
                 scenarioSummary.tags()
         );
+    }
+
+    private String toWireDifficulty(ScenarioDifficulty difficulty) {
+        return switch (difficulty) {
+            case BEGINNER -> "beginner";
+            case INTERMEDIATE -> "intermediate";
+        };
     }
 }

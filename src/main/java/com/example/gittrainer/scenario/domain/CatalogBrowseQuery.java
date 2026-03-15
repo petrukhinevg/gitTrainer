@@ -5,6 +5,6 @@ import java.util.List;
 public record CatalogBrowseQuery(String difficulty, List<String> tags, String sort) {
 
     public CatalogBrowseQuery {
-        tags = tags == null ? List.of() : List.copyOf(tags);
+        tags = tags == null ? null : List.copyOf(tags);
     }
 }

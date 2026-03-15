@@ -37,7 +37,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.source").value("stub"))
                 .andExpect(jsonPath("$.items.length()").value(3))
                 .andExpect(jsonPath("$.items[0].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[0].difficulty").value("BEGINNER"))
+                .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
                 .andExpect(jsonPath("$.items[1].slug").value("branch-safety"))
                 .andExpect(jsonPath("$.items[2].tags[1]").value("cleanup"));
     }
@@ -56,5 +56,15 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.query.tags[0]").value("status"))
                 .andExpect(jsonPath("$.meta.query.tags[1]").value("basics"))
                 .andExpect(jsonPath("$.items.length()").value(3));
+    }
+
+    @Test
+    void omitsTagsFromQueryMetaWhenTagFilterWasNotProvided() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.query.difficulty").doesNotExist())
+                .andExpect(jsonPath("$.meta.query.sort").doesNotExist())
+                .andExpect(jsonPath("$.meta.query.tags").doesNotExist());
     }
 }
