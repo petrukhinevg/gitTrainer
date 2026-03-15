@@ -78,7 +78,7 @@ function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selected
 
     return `
         <a
-            class="flow-block ${isActive && !selectedFocus ? "flow-block--active" : ""}"
+            class="flow-block ${isActive ? "flow-block--active" : ""}"
             href="#/exercise/${encodeURIComponent(item.slug)}"
         >
             <span class="flow-block__eyebrow">Task ${index + 1}</span>

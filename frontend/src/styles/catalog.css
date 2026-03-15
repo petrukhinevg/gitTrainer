@@ -25,7 +25,7 @@
         color 160ms ease,
         background-color 160ms ease,
         border-color 160ms ease,
-        transform 180ms ease,
+        padding-left 180ms ease,
         box-shadow 180ms ease;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .flow-block:hover {
-    transform: translateX(4px);
+    padding-left: 18px;
     border-color: rgba(57, 89, 121, 0.18);
     background: rgba(255, 250, 241, 0.78);
 }
@@ -56,8 +56,6 @@
     display: grid;
     gap: 8px;
     padding-top: 2px;
-    animation: flow-subtasks-enter 260ms ease;
-    transform-origin: top left;
 }
 
 .flow-block__eyebrow {
@@ -71,16 +69,4 @@
 .flow-block__title {
     margin: 0;
     line-height: 1.1;
-}
-
-@keyframes flow-subtasks-enter {
-    from {
-        opacity: 0;
-        transform: translateY(-8px) scaleY(0.96);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scaleY(1);
-    }
 }
