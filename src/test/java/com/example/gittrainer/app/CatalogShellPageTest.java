@@ -41,16 +41,18 @@ class CatalogShellPageTest {
 
         mockMvc.perform(get("/app.js"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Catalog summaries are now browseable.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario map")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Three-panel shell is ready for handoff")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace route keeps the learner in the same shell")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario selection is now routable")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Back to catalog")));
 
         mockMvc.perform(get("/app.css"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString(".catalog-results-grid")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 640px)")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".workspace-grid")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".panel--workspace")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
     }
 }
