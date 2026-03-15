@@ -21,6 +21,9 @@ Project custom field: `Pairs with` stores the counterpart backend/frontend issue
 - `#150` Sub-issue 1.2. Deliver catalog query controls and browse-state handling
 - `#151` Sub-issue 1.3. Deliver MVP catalog summary content and browse-state fixtures
 - `#152` Sub-issue 1.3. Deliver catalog list rendering and entry-action presentation
+- `#203` Sub-issue 2.4. Refactor workspace shell into a stable three-column lesson layout
+- `#204` Sub-issue 2.5. Deliver lesson-navigation rail and focused center lesson presentation
+- `#205` Sub-issue 3.4. Refactor the right workspace lane into a practice surface with input and branch-state output
 
 ### In Progress
 

@@ -83,6 +83,18 @@ Result: the frontend renders repository context cues such as branches, commits, 
 
 Pairs with backend sub-issue 2.3.
 
+#### Sub-issue 2.4. Refactor workspace shell into a stable three-column lesson layout
+
+Result: the frontend reshapes the exercise screen into a desktop-first three-column layout with dedicated left navigation, center lesson, and right practice lanes while preserving the existing route and provider boundaries.
+
+Frontend-only follow-up task for parent issue 2 after the initial workspace shell and repository-context surfaces are already in place.
+
+#### Sub-issue 2.5. Deliver lesson-navigation rail and focused center lesson presentation
+
+Result: the frontend turns the left lane into a level or lesson navigator and focuses the center lane on the active task description so the learner can scan progression and instructions without the practice lane competing for space.
+
+Frontend-only follow-up task for parent issue 2 that builds on the existing workspace payload and shell seams.
+
 ### Parent Issue 3. Submission and correctness frontend
 
 Goal: provide the frontend slice needed for answer submission and first-pass correctness feedback.
@@ -104,6 +116,12 @@ Pairs with backend sub-issue 3.3.
 Result: the frontend renders machine-readable correctness outcomes for the first MVP answer types, including correct, incorrect, and unsupported-answer cases, without changing the answer input shell.
 
 Pairs with backend sub-issue 3.2.
+
+#### Sub-issue 3.4. Refactor the right workspace lane into a practice surface with input and branch-state output
+
+Result: the frontend turns the right lane into a practice-focused surface that combines answer entry with visible Git branch state or execution output scaffolding, without requiring the final validation loop to be complete.
+
+Frontend-only follow-up task for parent issue 3 that extends the answer-input shell into the target practice layout.
 
 ### Parent Issue 4. Guided retry and hints frontend
 
