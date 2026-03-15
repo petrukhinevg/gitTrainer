@@ -1,5 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -80,15 +81,11 @@ public class ScenarioTaskContentFixtureSource {
     );
 
     public ScenarioTaskContentFixture fixtureFor(String scenarioSlug) {
-        return FIXTURES.getOrDefault(
-                scenarioSlug,
-                new ScenarioTaskContentFixture(
-                        "authored-fixture",
-                        "Task goal is not authored for this scenario yet.",
-                        java.util.List.of(),
-                        java.util.List.of(),
-                        java.util.List.of()
-                )
-        );
+        ScenarioTaskContentFixture fixture = FIXTURES.get(scenarioSlug);
+        if (fixture == null) {
+            throw new ScenarioTaskContentNotAuthoredException(scenarioSlug);
+        }
+
+        return fixture;
     }
 }
