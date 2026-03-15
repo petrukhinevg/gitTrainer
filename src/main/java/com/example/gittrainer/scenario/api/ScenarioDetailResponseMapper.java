@@ -27,8 +27,25 @@ public class ScenarioDetailResponseMapper {
                         new ScenarioTaskPreviewResponse(
                                 detail.task().status(),
                                 detail.task().goal(),
-                                detail.task().instructions(),
-                                detail.task().steps()
+                                detail.task().instructions().stream()
+                                        .map(instruction -> new ScenarioTaskInstructionResponse(
+                                                instruction.id(),
+                                                instruction.text()
+                                        ))
+                                        .toList(),
+                                detail.task().steps().stream()
+                                        .map(step -> new ScenarioTaskStepResponse(
+                                                step.position(),
+                                                step.title(),
+                                                step.detail()
+                                        ))
+                                        .toList(),
+                                detail.task().annotations().stream()
+                                        .map(annotation -> new ScenarioTaskAnnotationResponse(
+                                                annotation.label(),
+                                                annotation.message()
+                                        ))
+                                        .toList()
                         ),
                         new ScenarioRepositoryContextResponse(
                                 detail.repositoryContext().status(),
