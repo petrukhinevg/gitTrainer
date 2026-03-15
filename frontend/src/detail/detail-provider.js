@@ -30,9 +30,25 @@ export function createBackendApiDetailProvider(fetchImpl = window.fetch.bind(win
             const url = new URL(`/api/scenarios/${encodeURIComponent(slug)}`, window.location.origin);
             const response = await fetchImpl(url);
             if (!response.ok) {
-                throw new Error(`Scenario detail request failed with status ${response.status}`);
+                throw new Error(await resolveDetailErrorMessage(response));
             }
             return response.json();
         }
     };
+}
+
+async function resolveDetailErrorMessage(response) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("json")) {
+        try {
+            const payload = await response.json();
+            if (payload && typeof payload.detail === "string" && payload.detail.trim() !== "") {
+                return payload.detail;
+            }
+        } catch {
+            // Fall back to a generic transport message when the body is not valid JSON.
+        }
+    }
+
+    return `Scenario detail request failed with status ${response.status}`;
 }
