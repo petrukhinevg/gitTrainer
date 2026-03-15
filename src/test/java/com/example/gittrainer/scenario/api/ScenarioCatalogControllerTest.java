@@ -136,4 +136,46 @@ class ScenarioCatalogControllerTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
     }
+
+    @Test
+    void exposesScenarioDetailStubBoundaryForKnownScenario() throws Exception {
+        mockMvc.perform(get("/api/scenarios/status-basics")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("status-basics"))
+                .andExpect(jsonPath("$.slug").value("status-basics"))
+                .andExpect(jsonPath("$.difficulty").value("beginner"))
+                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
+                .andExpect(jsonPath("$.meta.stub").value(true))
+                .andExpect(jsonPath("$.workspace.shell.leftPanelTitle").value("Scenario map"))
+                .andExpect(jsonPath("$.workspace.shell.centerPanelTitle").value("Workspace lesson"))
+                .andExpect(jsonPath("$.workspace.shell.rightPanelTitle").value("Workspace lane"))
+                .andExpect(jsonPath("$.workspace.task.status").value("stub"))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Task content arrives in sub-issue 2.2."))
+                .andExpect(jsonPath("$.workspace.task.instructions.length()").value(0))
+                .andExpect(jsonPath("$.workspace.task.steps.length()").value(0))
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("stub"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(0))
+                .andExpect(jsonPath("$.workspace.repositoryContext.commits.length()").value(0))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(0))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(0));
+    }
+
+    @Test
+    void returnsNotFoundWhenRequestedScenarioDetailDoesNotExistInActiveSource() throws Exception {
+        mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Scenario detail is unavailable for slug: not-a-real-scenario"));
+    }
+
+    @Test
+    void exposesUnavailableDetailSourceThroughDetailBoundary() throws Exception {
+        mockMvc.perform(get("/api/scenarios/status-basics")
+                        .param("source", "unavailable")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
+    }
 }
