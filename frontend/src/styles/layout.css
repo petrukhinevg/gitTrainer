@@ -1,0 +1,232 @@
+.page-shell {
+    width: min(1220px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 32px 0 56px;
+}
+
+.masthead {
+    display: grid;
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 24px;
+}
+
+.masthead-copy {
+    display: grid;
+    gap: 12px;
+}
+
+.masthead-copy h1,
+.workspace-intro h2 {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.05;
+}
+
+.masthead-copy h1 {
+    max-width: 12ch;
+    font-size: clamp(2.8rem, 6vw, 5.2rem);
+}
+
+.masthead-copy p,
+.workspace-intro p {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--ink-soft);
+}
+
+.masthead-nav a {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.72);
+    box-shadow: var(--shadow);
+}
+
+.app-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.workspace-intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: end;
+    padding: 24px;
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.12), rgba(255, 250, 241, 0.92)),
+        var(--paper-strong);
+}
+
+.workspace-intro__copy {
+    display: grid;
+    gap: 10px;
+    max-width: 64ch;
+}
+
+.workspace-intro__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.workspace-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.82);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.8rem;
+}
+
+.lesson-layout {
+    display: grid;
+    grid-template-areas: "navigation lesson practice";
+    grid-template-columns: minmax(250px, 0.82fr) minmax(420px, 1.38fr) minmax(300px, 0.96fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.lesson-layout__lane--navigation {
+    grid-area: navigation;
+}
+
+.lesson-layout__lane--lesson {
+    grid-area: lesson;
+}
+
+.lesson-layout__lane--practice {
+    grid-area: practice;
+}
+
+.lesson-lane {
+    padding: 22px;
+    min-height: calc(100vh - 260px);
+    display: grid;
+    align-content: start;
+    gap: 20px;
+}
+
+.lesson-lane--navigation {
+    background:
+        linear-gradient(180deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.94)),
+        var(--paper-strong);
+}
+
+.lesson-lane--lesson {
+    background:
+        linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(255, 250, 241, 0.98)),
+        var(--paper-strong);
+}
+
+.lesson-lane--practice {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
+        var(--paper-strong);
+}
+
+.lesson-lane__header,
+.lesson-lane__heading,
+.lesson-lane__body {
+    display: grid;
+    gap: 12px;
+}
+
+.lesson-lane__header {
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.lesson-lane__heading {
+    gap: 8px;
+}
+
+.lesson-lane__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lesson-lane__meta-chip,
+.lane-summary__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 250, 241, 0.86);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+}
+
+.lane-summary {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--paper-muted);
+}
+
+.lane-summary__header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@media (max-width: 1180px) {
+    .lesson-layout {
+        grid-template-areas:
+            "lesson lesson"
+            "navigation practice";
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .lesson-layout {
+        grid-template-areas:
+            "navigation"
+            "lesson"
+            "practice";
+        grid-template-columns: 1fr;
+    }
+
+    .lesson-lane {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 720px) {
+    .page-shell {
+        width: min(100vw - 20px, 1220px);
+        padding-top: 20px;
+    }
+
+    .workspace-intro {
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .workspace-intro__meta {
+        justify-content: start;
+    }
+
+    .lesson-lane {
+        padding: 18px;
+    }
+}

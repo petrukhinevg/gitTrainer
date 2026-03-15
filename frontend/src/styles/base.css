@@ -1,0 +1,99 @@
+:root {
+    --ink-strong: #1f1720;
+    --ink-soft: #5e5560;
+    --paper: #f6efe2;
+    --paper-strong: rgba(255, 250, 241, 0.94);
+    --paper-muted: rgba(246, 239, 226, 0.84);
+    --border: rgba(31, 23, 32, 0.12);
+    --accent: #be5b2b;
+    --accent-cool: #395979;
+    --shadow: 0 20px 45px rgba(47, 31, 19, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink-strong);
+    background:
+        radial-gradient(circle at top left, rgba(255, 242, 220, 0.95), transparent 42%),
+        radial-gradient(circle at bottom right, rgba(57, 89, 121, 0.16), transparent 34%),
+        linear-gradient(160deg, #efe2cb 0%, #f6efe2 48%, #f0e6d8 100%);
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+
+a {
+    color: inherit;
+}
+
+.eyebrow,
+.panel-label,
+.control-label,
+.result-summary dt {
+    margin: 0;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.panel h3 {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.05;
+}
+
+.panel-copy,
+.result-summary dd {
+    margin: 0;
+}
+
+.panel-copy {
+    line-height: 1.55;
+    color: var(--ink-soft);
+}
+
+.masthead-nav a,
+.scenario-action,
+.scenario-link {
+    text-decoration: none;
+}
+
+.panel {
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background: var(--paper-strong);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.scenario-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fffaf1;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+}
+
+.scenario-action--muted {
+    background: var(--accent-cool);
+}
+
+.result-summary {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+}
+
+.result-summary div {
+    display: grid;
+    gap: 4px;
+}

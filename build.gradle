@@ -24,6 +24,12 @@ repositories {
     mavenCentral()
 }
 
+def frontendDir = layout.projectDirectory.dir("frontend")
+def frontendDistDir = frontendDir.dir("dist")
+def frontendTestStaticDir = layout.buildDirectory.dir("resources/main/static")
+def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+def npmCommand = isWindows ? "npm.cmd" : "npm"
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -35,4 +41,49 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    mustRunAfter tasks.named('syncFrontendAssets')
+}
+
+tasks.named('compileTestJava') {
+    mustRunAfter tasks.named('syncFrontendAssets')
+}
+
+tasks.register('frontendInstall', Exec) {
+    workingDir frontendDir.asFile
+    inputs.files(
+            frontendDir.file("package.json"),
+            frontendDir.file("package-lock.json")
+    )
+    outputs.dir(frontendDir.dir("node_modules"))
+    commandLine npmCommand, "ci"
+}
+
+tasks.register('frontendBuild', Exec) {
+    dependsOn tasks.named('frontendInstall')
+    workingDir frontendDir.asFile
+    inputs.files(fileTree(frontendDir) {
+        exclude "dist/**", "node_modules/**"
+    })
+    outputs.dir(frontendDistDir)
+    commandLine npmCommand, "run", "build"
+}
+
+tasks.register('syncFrontendAssets', Copy) {
+    dependsOn tasks.named('frontendBuild')
+    from(frontendDistDir)
+    into(frontendTestStaticDir)
+    onlyIf {
+        frontendDir.file("dist/index.html").asFile.exists()
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('syncFrontendAssets')
+}
+
+tasks.named('bootJar') {
+    dependsOn tasks.named('frontendBuild')
+    from(frontendDistDir) {
+        into "BOOT-INF/classes/static"
+    }
 }
