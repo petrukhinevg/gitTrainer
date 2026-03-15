@@ -12,6 +12,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         route: "catalog",
         selectedScenarioSlug: null,
         selectedFocus: null,
+        expandedScenarioSlugs: [],
         providerName: DEFAULT_PROVIDER_NAME,
         practiceContextTab: "branches",
         practiceDraft: createInitialPracticeDraft(),
@@ -26,14 +27,18 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             status: "idle",
             data: null,
             error: null
+        },
+        detailCache: {
         }
     };
 
     let latestCatalogRequestId = 0;
     let latestDetailRequestId = 0;
+    const detailLoadTasks = new Map();
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
+        window.addEventListener("resize", syncNavigationPaneWidth);
 
         if (!window.location.hash) {
             window.location.hash = "#/catalog";
@@ -48,6 +53,9 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
         state.selectedFocus = route.focus;
+        if (route.name === "exercise" && route.scenarioSlug) {
+            expandScenario(route.scenarioSlug, { loadDetail: false });
+        }
         resetRouteScopedState();
         render();
 
@@ -57,7 +65,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
         await Promise.all([
             loadCatalog(),
-            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve()
+            state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve()
         ]);
     }
 
@@ -105,8 +113,8 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         render();
     }
 
-    async function loadScenarioDetail() {
-        if (!state.selectedScenarioSlug) {
+    async function loadScenarioDetail(slug = state.selectedScenarioSlug, { syncSelected = false } = {}) {
+        if (!slug) {
             state.detail.status = "missing";
             state.detail.data = null;
             state.detail.error = "Scenario slug is missing from the exercise route.";
@@ -114,44 +122,68 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             return;
         }
 
-        const requestId = ++latestDetailRequestId;
+        const requestId = syncSelected ? ++latestDetailRequestId : latestDetailRequestId;
         const providerName = state.providerName;
-        const slug = state.selectedScenarioSlug;
+        const cachedDetail = state.detailCache[slug];
 
-        state.detail.status = "loading";
-        state.detail.data = null;
-        state.detail.error = null;
-        render();
-
-        try {
-            const providerFactory = detailProviderFactories[providerName];
-            if (!providerFactory) {
-                throw new Error(`Unknown scenario detail provider: ${providerName}`);
+        if (cachedDetail?.status === "ready") {
+            if (syncSelected) {
+                state.detail.status = "ready";
+                state.detail.data = cachedDetail.data;
+                state.detail.error = null;
+                render();
             }
-
-            const provider = providerFactory();
-            const detail = await provider.loadScenarioDetail(slug);
-            if (requestId !== latestDetailRequestId) {
-                return;
-            }
-
-            state.detail.data = detail;
-            state.detail.status = "ready";
-        } catch (error) {
-            if (requestId !== latestDetailRequestId) {
-                return;
-            }
-
-            state.detail.data = null;
-            state.detail.error = error instanceof Error ? error.message : "Unknown scenario detail error";
-            state.detail.status = "error";
-        }
-
-        if (requestId !== latestDetailRequestId) {
             return;
         }
 
+        if (syncSelected) {
+            state.detail.status = "loading";
+            state.detail.data = null;
+            state.detail.error = null;
+        }
+
+        state.detailCache[slug] = {
+            status: "loading",
+            data: null,
+            error: null
+        };
         render();
+
+        if (detailLoadTasks.has(slug)) {
+            await detailLoadTasks.get(slug);
+            syncSelectedDetailFromCache(slug, requestId, syncSelected);
+            return;
+        }
+
+        try {
+            const detailLoadTask = (async () => {
+                const providerFactory = detailProviderFactories[providerName];
+                if (!providerFactory) {
+                    throw new Error(`Unknown scenario detail provider: ${providerName}`);
+                }
+
+                const provider = providerFactory();
+                const detail = await provider.loadScenarioDetail(slug);
+                state.detailCache[slug] = {
+                    status: "ready",
+                    data: detail,
+                    error: null
+                };
+            })();
+
+            detailLoadTasks.set(slug, detailLoadTask);
+            await detailLoadTask;
+        } catch (error) {
+            state.detailCache[slug] = {
+                status: "error",
+                data: null,
+                error: error instanceof Error ? error.message : "Unknown scenario detail error"
+            };
+        } finally {
+            detailLoadTasks.delete(slug);
+        }
+
+        syncSelectedDetailFromCache(slug, requestId, syncSelected);
     }
 
     function render() {
@@ -164,7 +196,30 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             tagOptions
         });
 
+        syncNavigationPaneWidth();
+        bindNavigationControls();
         bindPracticeSurfaceControls();
+    }
+
+    function bindNavigationControls() {
+        document.querySelectorAll("[data-scenario-toggle]").forEach((button) => {
+            button.addEventListener("click", async () => {
+                const slug = button.dataset.scenarioToggle;
+                if (!slug) {
+                    return;
+                }
+
+                if (state.expandedScenarioSlugs.includes(slug)) {
+                    collapseScenario(slug);
+                    render();
+                    return;
+                }
+
+                expandScenario(slug, { loadDetail: false });
+                render();
+                await loadScenarioDetail(slug, { syncSelected: false });
+            });
+        });
     }
 
     function bindPracticeSurfaceControls() {
@@ -247,6 +302,66 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     return {
         bootstrap
     };
+
+    function syncNavigationPaneWidth() {
+        const lessonLayout = appRoot.querySelector(".lesson-layout");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        if (!lessonLayout || !navigationLane || window.innerWidth <= 900) {
+            lessonLayout?.style.removeProperty("--navigation-pane-width");
+            return;
+        }
+
+        const flowBlocks = [...navigationLane.querySelectorAll(".flow-block")];
+        if (!flowBlocks.length) {
+            lessonLayout.style.removeProperty("--navigation-pane-width");
+            return;
+        }
+
+        const maxContentWidth = measureNaturalNavigationWidth(navigationLane);
+
+        const maxWidth = Math.ceil(maxContentWidth + 36);
+        const minWidth = Math.ceil(maxWidth / 2);
+        const preferredWidth = Math.round(window.innerWidth * 0.24);
+        const targetWidth = Math.min(maxWidth, Math.max(minWidth, preferredWidth));
+
+        lessonLayout.style.setProperty("--navigation-pane-width", `${targetWidth}px`);
+    }
+
+    function expandScenario(slug, { loadDetail = true } = {}) {
+        if (!slug || state.expandedScenarioSlugs.includes(slug)) {
+            return;
+        }
+
+        state.expandedScenarioSlugs = [...state.expandedScenarioSlugs, slug];
+        if (loadDetail) {
+            void loadScenarioDetail(slug, { syncSelected: false });
+        }
+    }
+
+    function collapseScenario(slug) {
+        state.expandedScenarioSlugs = state.expandedScenarioSlugs.filter((item) => item !== slug);
+    }
+
+    function syncSelectedDetailFromCache(slug, requestId, syncSelected) {
+        if (!syncSelected || requestId !== latestDetailRequestId || slug !== state.selectedScenarioSlug) {
+            render();
+            return;
+        }
+
+        const cachedDetail = state.detailCache[slug];
+        if (!cachedDetail) {
+            state.detail.status = "error";
+            state.detail.data = null;
+            state.detail.error = "Unknown scenario detail error";
+            render();
+            return;
+        }
+
+        state.detail.status = cachedDetail.status;
+        state.detail.data = cachedDetail.data;
+        state.detail.error = cachedDetail.error;
+        render();
+    }
 }
 
 function parseRoute(hash) {
@@ -308,4 +423,36 @@ function createInitialPracticeDraft() {
         preparedAnswer: null,
         preparedAt: null
     };
+}
+
+function measureNaturalNavigationWidth(navigationLane) {
+    const scrollContent = navigationLane.querySelector(".lesson-lane__scroll-content");
+    if (!scrollContent) {
+        return navigationLane.scrollWidth;
+    }
+
+    const measureRoot = document.createElement("div");
+    measureRoot.style.position = "fixed";
+    measureRoot.style.left = "-10000px";
+    measureRoot.style.top = "0";
+    measureRoot.style.visibility = "hidden";
+    measureRoot.style.pointerEvents = "none";
+    measureRoot.style.width = "max-content";
+    measureRoot.style.maxWidth = "none";
+    measureRoot.style.minWidth = "0";
+
+    const clone = scrollContent.cloneNode(true);
+    clone.style.width = "max-content";
+    clone.style.minWidth = "max-content";
+    clone.style.maxWidth = "none";
+    clone.style.paddingLeft = "18px";
+    clone.style.paddingRight = "18px";
+
+    measureRoot.append(clone);
+    document.body.append(measureRoot);
+
+    const width = clone.getBoundingClientRect().width;
+    measureRoot.remove();
+
+    return width;
 }

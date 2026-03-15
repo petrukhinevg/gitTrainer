@@ -44,15 +44,14 @@ function renderTrainingFlow(state) {
         `;
     }
 
-    const activeDetail = state.route === "exercise" && state.detail.status === "ready" ? state.detail.data : null;
     return `
         <div class="flow-block-list">
             ${renderWelcomeFlowBlock(state)}
             ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
+                state,
                 item,
                 index,
                 isActive: item.slug === state.selectedScenarioSlug,
-                activeDetail,
                 selectedFocus: state.selectedFocus
             })).join("")}
         </div>
@@ -69,33 +68,87 @@ function renderWelcomeFlowBlock(state) {
     `;
 }
 
-function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selectedFocus }) {
-    const subtaskBlocks = isActive && activeDetail
-        ? `
-            <div class="flow-subtask-group">
-                ${renderOverviewFlowBlock(item.slug, selectedFocus)}
-                ${activeDetail.workspace.task.steps.map((step) => renderSubtaskFlowBlock(item.slug, step, selectedFocus)).join("")}
-            </div>
-        `
+function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
+    const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
+    const navigationDetail = resolveNavigationDetail(state, item.slug);
+    const subtaskBlocks = isExpanded
+        ? renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive)
         : "";
 
     return `
-        <a
-            class="flow-block ${isActive ? "flow-block--active" : ""}"
-            href="#/exercise/${encodeURIComponent(item.slug)}"
-        >
-            <span class="flow-block__eyebrow">Task ${index + 1}</span>
-            <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
-        </a>
-        ${subtaskBlocks}
+        <section class="flow-node">
+            <button
+                class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
+                type="button"
+                data-scenario-toggle="${encodeHashSegment(item.slug)}"
+                aria-expanded="${isExpanded ? "true" : "false"}"
+                aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
+            >
+                <span class="flow-block__heading">
+                    <span class="flow-block__eyebrow">Task ${index + 1}</span>
+                    <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
+                </span>
+                <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
+            </button>
+            ${subtaskBlocks}
+        </section>
     `;
 }
 
-function renderOverviewFlowBlock(slug, selectedFocus) {
+function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, isActiveScenario) {
+    if (!navigationDetail || navigationDetail.status === "idle" || navigationDetail.status === "loading") {
+        return `
+            <div class="flow-subtask-group">
+                <div class="flow-subtask-placeholder">
+                    <span class="flow-block__eyebrow">Loading</span>
+                    <strong class="flow-block__title">Preparing sub-tasks</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    if (navigationDetail.status === "error") {
+        return `
+            <div class="flow-subtask-group">
+                <div class="flow-subtask-placeholder flow-subtask-placeholder--error">
+                    <span class="flow-block__eyebrow">Unavailable</span>
+                    <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Sub-tasks are unavailable")}</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="flow-subtask-group" id="flow-subtasks-${encodeHashSegment(slug)}">
+            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario)}
+            ${navigationDetail.data.workspace.task.steps.map((step) => (
+                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario)
+            )).join("")}
+        </div>
+    `;
+}
+
+function resolveNavigationDetail(state, slug) {
+    if (slug === state.selectedScenarioSlug && state.detail.status !== "idle") {
+        return {
+            status: state.detail.status,
+            data: state.detail.data,
+            error: state.detail.error
+        };
+    }
+
+    return state.detailCache[slug] ?? {
+        status: "idle",
+        data: null,
+        error: null
+    };
+}
+
+function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario) {
     const focusId = "overview";
     return `
         <a
-            class="flow-block flow-block--subtask ${selectedFocus === null || selectedFocus === focusId ? "flow-block--active" : ""}"
+            class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
         >
             <span class="flow-block__eyebrow">Task page</span>
@@ -104,11 +157,11 @@ function renderOverviewFlowBlock(slug, selectedFocus) {
     `;
 }
 
-function renderSubtaskFlowBlock(slug, step, selectedFocus) {
+function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
     const focusId = `step-${step.position}`;
     return `
         <a
-            class="flow-block flow-block--subtask ${selectedFocus === focusId ? "flow-block--active" : ""}"
+            class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
         >
             <span class="flow-block__eyebrow">Sub-task ${step.position}</span>

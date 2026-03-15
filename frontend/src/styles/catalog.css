@@ -4,25 +4,31 @@
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: rgba(255, 233, 188, 0.7);
+    background: rgba(255, 250, 241, 0.18);
 }
 
 .flow-block-list {
     display: grid;
     gap: 6px;
-    width: max-content;
-    min-width: max-content;
+    width: 100%;
+    min-width: 0;
+}
+
+.flow-node,
+.flow-subtask-placeholder {
+    display: grid;
+    gap: 6px;
 }
 
 .flow-block {
     display: grid;
     gap: 4px;
     width: 100%;
-    min-width: max-content;
+    min-width: 0;
     padding: 6px 8px;
     border: 1px solid rgba(31, 23, 32, 0.1);
     border-radius: 12px;
-    background: rgba(255, 250, 241, 0.68);
+    background: rgba(211, 207, 199, 0.68);
     text-decoration: none;
     transform-origin: left center;
     transition:
@@ -35,9 +41,15 @@
 
 .flow-block--active {
     color: var(--accent);
-    border-color: rgba(23, 55, 68, 0.08);
-    background: rgba(255, 217, 150, 0.15);
+    border-color: rgba(9, 25, 31, 0.18);
+    background: rgba(57, 89, 121, 0.37);
     box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
+}
+
+.flow-block--toggle {
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
 .flow-block--subtask {
@@ -46,25 +58,25 @@
 }
 
 .flow-block--subtask.flow-block--active {
-    border-color: rgba(23, 55, 68, 0.08);
-    background: rgba(255, 217, 150, 0.15);
+    border-color: rgba(9, 25, 31, 0.18);
+    background: rgba(57, 89, 121, 0.37);
     box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
 }
 
 .flow-block:hover {
     transform: translateX(2px);
-    border-color: rgba(41, 76, 91, 0.08);
-    background: rgba(255, 250, 241, 0.78);
+    border-color: rgba(9, 25, 31, 0.18);
+    background: rgba(57, 89, 121, 0.37);
 }
 
 .flow-block--active:hover {
-    border-color: rgba(23, 55, 68, 0.08);
+    border-color: rgba(9, 25, 31, 0.18);
     background: rgba(255, 217, 150, 0.15);
 }
 
 .flow-block--subtask.flow-block--active:hover {
-    border-color: rgba(23, 55, 68, 0.08);
-    background: rgba(255, 217, 150, 0.15);
+    border-color: rgba(9, 25, 31, 0.18);
+    background: rgba(57, 89, 121, 0.37);
 }
 
 .flow-subtask-group {
@@ -73,6 +85,33 @@
     padding-top: 1px;
     width: 100%;
     min-width: 0;
+}
+
+.flow-block__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.flow-block__indicator {
+    flex: 0 0 auto;
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.flow-subtask-placeholder {
+    margin-left: 8px;
+    padding: 8px 10px;
+    border: 1px dashed rgba(31, 23, 32, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 250, 241, 0.46);
+}
+
+.flow-subtask-placeholder--error {
+    background: rgba(255, 243, 236, 0.72);
 }
 
 .flow-block__eyebrow {
