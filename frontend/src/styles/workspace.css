@@ -31,14 +31,14 @@
 
 .workspace-card {
     min-height: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.1);
+    border-radius: 16px;
+    background: rgba(255, 250, 241, 0.68);
 }
 
 .workspace-card--focus {
-    background: transparent;
+    background: rgba(255, 250, 241, 0.72);
 }
 
 .workspace-card--viewer {
@@ -51,7 +51,7 @@
 }
 
 .workspace-card--error {
-    background: transparent;
+    background: rgba(255, 250, 241, 0.72);
 }
 
 .workspace-card__header {
@@ -104,7 +104,7 @@
 .practice-editor textarea {
     width: 100%;
     min-height: 116px;
-    padding: 0;
+    padding: 4px 0 0;
     border: 0;
     background: transparent;
     color: var(--ink-strong);
@@ -155,10 +155,10 @@
 
 .branch-graph {
     min-height: 0;
-    padding: 6px 0 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 8px 10px 0;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 250, 241, 0.5);
     overflow: hidden;
     align-content: start;
 }

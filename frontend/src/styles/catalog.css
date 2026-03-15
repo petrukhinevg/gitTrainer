@@ -1,32 +1,37 @@
 .lesson-rail__summary {
     display: grid;
     gap: 8px;
-    padding: 0 0 14px;
-    border-bottom: 1px solid var(--border);
-    background: transparent;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255, 250, 241, 0.7);
 }
 
 .flow-block-list {
     display: grid;
-    gap: 0;
+    gap: 10px;
 }
 
 .flow-block {
     display: grid;
     gap: 8px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-    background: transparent;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.1);
+    border-radius: 16px;
+    background: rgba(255, 250, 241, 0.68);
     text-decoration: none;
     transition: color 140ms ease, background-color 140ms ease;
 }
 
 .flow-block--active {
     color: var(--accent);
+    border-color: rgba(190, 91, 43, 0.3);
+    background: rgba(190, 91, 43, 0.08);
 }
 
 .flow-block--subtask {
     margin-left: 18px;
+    background: rgba(255, 250, 241, 0.54);
 }
 
 .flow-block__eyebrow {

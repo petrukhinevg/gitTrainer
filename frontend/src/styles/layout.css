@@ -38,7 +38,7 @@ body {
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: rgba(255, 250, 241, 0.64);
+    background: rgba(255, 250, 241, 0.74);
     align-items: stretch;
 }
 
@@ -81,16 +81,13 @@ body {
     overflow: hidden;
 }
 
-.lesson-lane--navigation {
-    background: rgba(255, 250, 241, 0.78);
-}
-
-.lesson-lane--lesson {
-    background: rgba(255, 250, 241, 0.86);
-}
-
+.lesson-lane--navigation,
+.lesson-lane--lesson,
 .lesson-lane--practice {
     background: rgba(255, 250, 241, 0.78);
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
+        var(--paper-strong);
 }
 
 .lesson-lane__header,
