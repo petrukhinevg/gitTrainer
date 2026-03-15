@@ -1,0 +1,88 @@
+.lesson-block {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--paper-muted);
+}
+
+.lesson-list {
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+}
+
+.lesson-block__title {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.05;
+}
+
+.task-annotations,
+.task-sequence,
+.task-steps {
+    display: grid;
+    gap: 12px;
+}
+
+.task-sequence,
+.task-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.task-sequence__item,
+.task-steps__item,
+.task-annotation {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.task-sequence__item {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+}
+
+.task-sequence__index,
+.task-step__position {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(190, 91, 43, 0.14);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+}
+
+.task-sequence__copy,
+.task-steps__header,
+.task-annotation {
+    display: grid;
+    gap: 6px;
+}
+
+.task-sequence__copy p,
+.task-steps__item p,
+.task-annotation p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+    .task-sequence__item {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+}

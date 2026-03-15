@@ -204,6 +204,40 @@ Operational rule:
 - do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
 - if the field is still empty, keep the task in `In Progress` even if code and tests are done
 
+### Project status updates
+
+When the project board status must be updated from the CLI, first inspect the project fields to get the current `Status` field id and option ids:
+
+```sh
+gh project field-list 4 --owner petrukhinevg
+```
+
+If `gh project item-list` output is not enough to identify the item's project card id, query it from the issue directly:
+
+```sh
+gh api graphql -f query='query {
+  repository(owner: "petrukhinevg", name: "gitTrainer") {
+    issue(number: 199) {
+      projectItems(first: 10) {
+        nodes {
+          id
+        }
+      }
+    }
+  }
+}'
+```
+
+Then update a single-select status value with:
+
+```sh
+gh project item-edit \
+  --id <project-item-id> \
+  --project-id <project-id> \
+  --field-id <status-field-id> \
+  --single-select-option-id <status-option-id>
+```
+
 ### Follow-up child tasks after seam work
 
 If a later child task depends on a seam that was delivered in an earlier child branch rather than in the initial epic baseline, do not start the later task from the old epic head.
