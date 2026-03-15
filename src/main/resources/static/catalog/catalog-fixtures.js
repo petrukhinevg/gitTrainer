@@ -5,7 +5,7 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             slug: "status-basics",
             title: "Read the working tree before acting",
             summary: "Inspect a noisy repository and identify the next safe Git command before making changes.",
-            difficulty: "BEGINNER",
+            difficulty: "beginner",
             tags: ["status", "working-tree", "basics"]
         },
         {
@@ -13,7 +13,7 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             slug: "branch-safety",
             title: "Choose the right branch before editing",
             summary: "Spot the active branch, compare task intent, and decide whether to stay put or switch first.",
-            difficulty: "BEGINNER",
+            difficulty: "beginner",
             tags: ["branching", "navigation", "basics"]
         },
         {
@@ -21,7 +21,7 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             slug: "history-cleanup-preview",
             title: "Preview a history cleanup plan",
             summary: "Read a messy commit stack and prepare for a later cleanup exercise without changing history yet.",
-            difficulty: "INTERMEDIATE",
+            difficulty: "intermediate",
             tags: ["history", "cleanup", "planning"]
         }
     ],
@@ -34,3 +34,11 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
         }
     }
 });
+
+export const CATALOG_TAG_OPTIONS = Object.freeze(
+    Array.from(
+        new Set(
+            FIXTURE_SCENARIO_CATALOG.items.flatMap((item) => item.tags)
+        )
+    ).sort()
+);

@@ -1,8 +1,14 @@
-import { createBackendApiCatalogProvider, createLocalFixtureCatalogProvider } from "./catalog/catalog-provider.js";
+import {
+    createBackendApiCatalogProvider,
+    createLocalFixtureCatalogProvider,
+    createUnavailableFixtureCatalogProvider
+} from "./catalog/catalog-provider.js";
+import { CATALOG_TAG_OPTIONS } from "./catalog/catalog-fixtures.js";
 
 const providerFactories = Object.freeze({
     "local-fixture": () => createLocalFixtureCatalogProvider(),
-    "backend-api": () => createBackendApiCatalogProvider()
+    "backend-api": () => createBackendApiCatalogProvider(),
+    "fixture-unavailable": () => createUnavailableFixtureCatalogProvider()
 });
 
 const state = {
@@ -59,7 +65,7 @@ async function loadCatalog() {
         }
         const provider = providerFactory();
         state.catalog = await provider.browseCatalog(state.query);
-        state.status = "ready";
+        state.status = state.catalog.items.length === 0 ? "empty" : "ready";
     } catch (error) {
         state.catalog = null;
         state.error = error instanceof Error ? error.message : "Unknown catalog error";
@@ -86,14 +92,15 @@ function render() {
         source: state.providerName,
         query: state.query
     };
+    const statusCopy = describeStatus();
 
     appRoot.innerHTML = `
         <section class="hero-panel">
             <p class="panel-label">Scenario Catalog</p>
-            <h2>Catalog route shell is live.</h2>
+            <h2>Catalog browse state is now interactive.</h2>
             <p>
-                This screen already owns the route, provider seam, and state boundary. Query controls and final scenario
-                cards stay intentionally deferred to issues 1.2 and 1.3.
+                Query controls, provider switching, and state handling are active. Final scenario cards still stay
+                intentionally deferred to issue 1.3.
             </p>
             <div class="provider-badge">Provider: ${escapeHtml(state.providerName)}</div>
         </section>
@@ -115,49 +122,81 @@ function render() {
                         <span class="metric-label">Items loaded</span>
                         <strong class="metric-value">${catalogItems.length}</strong>
                     </div>
+                    <div class="metric">
+                        <span class="metric-label">Active tags</span>
+                        <strong class="metric-value">${state.query.tags.length}</strong>
+                    </div>
                 </div>
             </article>
 
             <article class="panel">
-                <p class="panel-label">Provider seam</p>
-                <h3>Local-first, swappable later</h3>
+                <p class="panel-label">Browse controls</p>
+                <h3>Query and provider handling</h3>
                 <p>
-                    The screen currently reads from fixture-backed provider data, while a backend API provider already exists
-                    behind the same contract for later integration work.
+                    Issue 1.2 owns filtering, sorting, loading, empty, and unavailable-source flow while keeping the
+                    temporary debug preview instead of final catalog cards.
                 </p>
-                <div class="metrics">
-                    <div class="metric">
-                        <span class="metric-label">Active source</span>
-                        <strong class="metric-value">${escapeHtml(meta.source)}</strong>
+                <form class="catalog-controls" data-catalog-controls>
+                    <label>
+                        <span class="control-label">Provider</span>
+                        <select name="provider">
+                            ${renderProviderOption("local-fixture", "Local fixture")}
+                            ${renderProviderOption("backend-api", "Backend API")}
+                            ${renderProviderOption("fixture-unavailable", "Unavailable fixture")}
+                        </select>
+                    </label>
+                    <label>
+                        <span class="control-label">Difficulty</span>
+                        <select name="difficulty">
+                            ${renderDifficultyOption(null, "All difficulties")}
+                            ${renderDifficultyOption("beginner", "Beginner")}
+                            ${renderDifficultyOption("intermediate", "Intermediate")}
+                        </select>
+                    </label>
+                    <label>
+                        <span class="control-label">Sort</span>
+                        <select name="sort">
+                            ${renderSortOption("title", "Title")}
+                            ${renderSortOption("difficulty", "Difficulty")}
+                        </select>
+                    </label>
+                    <fieldset>
+                        <legend class="control-label">Tags</legend>
+                        <div class="tag-grid">
+                            ${CATALOG_TAG_OPTIONS.map((tag) => `
+                                <label class="tag-option">
+                                    <input
+                                        type="checkbox"
+                                        name="tag"
+                                        value="${escapeHtml(tag)}"
+                                        ${state.query.tags.includes(tag) ? "checked" : ""}
+                                    >
+                                    <span>${escapeHtml(tag)}</span>
+                                </label>
+                            `).join("")}
+                        </div>
+                    </fieldset>
+                    <div class="control-actions">
+                        <button type="submit">Reload catalog</button>
+                        <button type="button" data-reset-query>Reset</button>
                     </div>
-                    <div class="metric">
-                        <span class="metric-label">Difficulty</span>
-                        <strong class="metric-value">${escapeHtml(meta.query?.difficulty ?? "none")}</strong>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Sort</span>
-                        <strong class="metric-value">${escapeHtml(meta.query?.sort ?? "none")}</strong>
-                    </div>
-                </div>
+                </form>
             </article>
         </section>
 
         <section class="grid two-up">
             <article class="placeholder">
                 <p class="placeholder-label">Issue 1.2</p>
-                <h3>Query controls arrive next</h3>
-                <p>
-                    Filtering, sorting, loading, and unavailable-source UX belong to the next task, so this shell only
-                    exposes the state boundary and current query snapshot.
-                </p>
+                <h3>${escapeHtml(statusCopy.title)}</h3>
+                <p>${escapeHtml(statusCopy.description)}</p>
             </article>
 
             <article class="placeholder">
                 <p class="placeholder-label">Issue 1.3</p>
-                <h3>Scenario cards arrive after that</h3>
+                <h3>Scenario cards still arrive after this</h3>
                 <p>
                     Final catalog rows or cards, tags, difficulty styling, and entry actions are intentionally held back so
-                    this issue stays focused on the route shell and provider seam.
+                    this task can stay focused on browse state and controls.
                 </p>
             </article>
         </section>
@@ -170,11 +209,97 @@ function render() {
             </p>
             <code>${escapeHtml(JSON.stringify({
                 meta,
+                status: state.status,
                 itemTitles: catalogItems.map((item) => item.title)
             }, null, 2))}</code>
             ${state.error ? `<p>Last error: ${escapeHtml(state.error)}</p>` : ""}
         </section>
     `;
+
+    bindCatalogControls();
+}
+
+function bindCatalogControls() {
+    const form = document.querySelector("[data-catalog-controls]");
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", handleCatalogControlsSubmit);
+    form.querySelector("[data-reset-query]")?.addEventListener("click", resetQueryControls);
+}
+
+async function handleCatalogControlsSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    state.providerName = formData.get("provider");
+    state.query = {
+        difficulty: normalizeOptionalValue(formData.get("difficulty")),
+        tags: formData.getAll("tag").map(String),
+        sort: normalizeOptionalValue(formData.get("sort")) ?? "title"
+    };
+
+    await loadCatalog();
+}
+
+async function resetQueryControls() {
+    state.providerName = "local-fixture";
+    state.query = {
+        difficulty: null,
+        tags: [],
+        sort: "title"
+    };
+
+    await loadCatalog();
+}
+
+function renderProviderOption(value, label) {
+    return `<option value="${value}" ${state.providerName === value ? "selected" : ""}>${label}</option>`;
+}
+
+function renderDifficultyOption(value, label) {
+    return `<option value="${value ?? ""}" ${state.query.difficulty === value ? "selected" : ""}>${label}</option>`;
+}
+
+function renderSortOption(value, label) {
+    const selectedSort = state.query.sort ?? "title";
+    return `<option value="${value}" ${selectedSort === value ? "selected" : ""}>${label}</option>`;
+}
+
+function describeStatus() {
+    switch (state.status) {
+        case "loading":
+            return {
+                title: "Loading fresh catalog results",
+                description: "The previous result set is cleared while the active provider resolves the latest query."
+            };
+        case "empty":
+            return {
+                title: "No scenarios match this query",
+                description: "The current filters are valid, but this combination produces an empty result set."
+            };
+        case "error":
+            return {
+                title: "Catalog source is unavailable",
+                description: state.error ?? "The active provider failed before returning a catalog payload."
+            };
+        case "ready":
+            return {
+                title: "Filtered catalog result is ready",
+                description: "The screen has a resolved provider result and keeps final list presentation deferred to issue 1.3."
+            };
+        default:
+            return {
+                title: "Browse controls are ready",
+                description: "Pick a provider, tune the query, and load the next result set."
+            };
+    }
+}
+
+function normalizeOptionalValue(value) {
+    const normalized = String(value ?? "").trim();
+    return normalized.length ? normalized : null;
 }
 
 function escapeHtml(value) {
