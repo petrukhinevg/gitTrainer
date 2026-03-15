@@ -7,7 +7,6 @@ import com.example.gittrainer.scenario.domain.ScenarioSummary;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -15,13 +14,16 @@ public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
 
     private final ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;
     private final ScenarioTaskContentAssembler scenarioTaskContentAssembler;
+    private final ScenarioRepositoryContextFixtureSource scenarioRepositoryContextFixtureSource;
 
     public FixtureScenarioDetailGateway(
             ScenarioCatalogFixtureSource scenarioCatalogFixtureSource,
-            ScenarioTaskContentAssembler scenarioTaskContentAssembler
+            ScenarioTaskContentAssembler scenarioTaskContentAssembler,
+            ScenarioRepositoryContextFixtureSource scenarioRepositoryContextFixtureSource
     ) {
         this.scenarioCatalogFixtureSource = scenarioCatalogFixtureSource;
         this.scenarioTaskContentAssembler = scenarioTaskContentAssembler;
+        this.scenarioRepositoryContextFixtureSource = scenarioRepositoryContextFixtureSource;
     }
 
     @Override
@@ -66,13 +68,7 @@ public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
                         "Workspace lane"
                 ),
                 scenarioTaskContentAssembler.assemble(scenarioSummary.slug()),
-                new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
-                        "stub",
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of()
-                )
+                scenarioRepositoryContextFixtureSource.fixtureFor(scenarioSummary.slug())
         );
     }
 }

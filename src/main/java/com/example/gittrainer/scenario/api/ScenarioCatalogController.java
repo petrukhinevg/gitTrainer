@@ -4,6 +4,7 @@ import com.example.gittrainer.scenario.application.BrowseScenarioCatalogUseCase;
 import com.example.gittrainer.scenario.domain.CatalogBrowseQuery;
 import com.example.gittrainer.scenario.application.LoadScenarioDetailUseCase;
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
 import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
@@ -72,6 +73,11 @@ public class ScenarioCatalogController {
 
     @ExceptionHandler(ScenarioTaskContentNotAuthoredException.class)
     ProblemDetail handleMissingTaskContent(ScenarioTaskContentNotAuthoredException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+    }
+
+    @ExceptionHandler(ScenarioRepositoryContextNotAuthoredException.class)
+    ProblemDetail handleMissingRepositoryContext(ScenarioRepositoryContextNotAuthoredException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 }
