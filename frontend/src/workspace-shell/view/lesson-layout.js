@@ -18,17 +18,19 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
     `;
 }
 
-export function renderLessonLane({ lane, label, title, description, meta = [], body }) {
+export function renderLessonLane({ lane, label, title, description, meta = [], body, showHeader = true }) {
     return `
         <section class="lesson-lane lesson-lane--${escapeHtml(lane)} panel">
-            <header class="lesson-lane__header">
-                <div class="lesson-lane__heading">
-                    <p class="panel-label">${escapeHtml(label)}</p>
-                    <h3>${escapeHtml(title)}</h3>
-                    <p class="panel-copy">${escapeHtml(description)}</p>
-                </div>
-                ${renderLaneMeta(meta)}
-            </header>
+            ${showHeader ? `
+                <header class="lesson-lane__header">
+                    <div class="lesson-lane__heading">
+                        <p class="panel-label">${escapeHtml(label)}</p>
+                        <h3>${escapeHtml(title)}</h3>
+                        <p class="panel-copy">${escapeHtml(description)}</p>
+                    </div>
+                    ${renderLaneMeta(meta)}
+                </header>
+            ` : ""}
             <div class="lesson-lane__body">
                 ${body}
             </div>

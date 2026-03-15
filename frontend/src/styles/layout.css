@@ -1,125 +1,56 @@
+body {
+    overflow: hidden;
+}
+
 .page-shell {
-    width: min(1220px, calc(100vw - 32px));
-    margin: 0 auto;
-    padding: 32px 0 56px;
-    min-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-}
-
-.masthead {
-    display: grid;
-    gap: 18px;
-    align-items: start;
-    margin-bottom: 24px;
-}
-
-.masthead-copy {
-    display: grid;
-    gap: 12px;
-}
-
-.masthead-copy h1,
-.workspace-intro h2 {
-    margin: 0;
-    font-weight: 600;
-    line-height: 1.05;
-}
-
-.masthead-copy h1 {
-    max-width: 12ch;
-    font-size: clamp(2.8rem, 6vw, 5.2rem);
-}
-
-.masthead-copy p,
-.workspace-intro p {
-    margin: 0;
-    line-height: 1.55;
-    color: var(--ink-soft);
-}
-
-.masthead-nav a {
-    display: inline-flex;
-    align-items: center;
-    padding: 10px 16px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.72);
-    box-shadow: var(--shadow);
+    overflow: hidden;
 }
 
 .app-shell {
-    display: grid;
-    gap: 18px;
-}
-
-.app-shell--exercise {
     flex: 1 1 auto;
     min-height: 0;
-    display: block;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+.app-shell > * {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .workspace-intro {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    align-items: end;
     padding: 24px;
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.12), rgba(255, 250, 241, 0.92)),
-        var(--paper-strong);
-}
-
-.workspace-intro__copy {
-    display: grid;
-    gap: 10px;
-    max-width: 64ch;
-}
-
-.workspace-intro__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.workspace-chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.82);
-    font-family: "Courier New", Courier, monospace;
-    font-size: 0.8rem;
 }
 
 .lesson-layout {
     display: grid;
     grid-template-areas: "navigation lesson practice";
     grid-template-columns: minmax(250px, 0.82fr) minmax(420px, 1.38fr) minmax(300px, 0.96fr);
-    gap: 18px;
-    align-items: start;
-}
-
-.app-shell--exercise .lesson-layout {
     gap: 0;
+    width: 100%;
     height: 100%;
     min-height: 0;
-    border: 1px solid var(--border);
-    border-radius: 32px;
     overflow: hidden;
-    background: rgba(255, 250, 241, 0.82);
+    background: rgba(255, 250, 241, 0.74);
+    align-items: stretch;
 }
 
-.app-shell--exercise .lesson-layout__lane {
+.lesson-layout__lane {
     min-width: 0;
     min-height: 0;
     display: flex;
+    height: 100%;
+    overflow: hidden;
 }
 
-.app-shell--exercise .lesson-layout__lane + .lesson-layout__lane {
+.lesson-layout__lane + .lesson-layout__lane {
     border-left: 1px solid var(--border);
 }
 
@@ -136,22 +67,18 @@
 }
 
 .lesson-lane {
-    padding: 22px;
-    min-height: calc(100vh - 260px);
-    display: grid;
-    align-content: start;
-    gap: 20px;
-}
-
-.app-shell--exercise .lesson-lane {
     width: 100%;
     height: 100%;
     min-height: 0;
     padding: 22px 22px 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 20px;
     border: 0;
     border-radius: 0;
     box-shadow: none;
     backdrop-filter: none;
+    overflow: hidden;
 }
 
 .lesson-lane--navigation {
@@ -167,9 +94,6 @@
 }
 
 .lesson-lane--practice {
-    display: grid;
-    align-content: start;
-    gap: 16px;
     background:
         linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
         var(--paper-strong);
@@ -182,13 +106,6 @@
     gap: 12px;
 }
 
-.app-shell--exercise .lesson-lane__body {
-    min-height: 0;
-    overflow-y: auto;
-    padding-bottom: 22px;
-    padding-right: 4px;
-}
-
 .lesson-lane__header {
     padding-bottom: 18px;
     border-bottom: 1px solid var(--border);
@@ -196,6 +113,15 @@
 
 .lesson-lane__heading {
     gap: 8px;
+}
+
+.lesson-lane__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+    padding-bottom: 22px;
+    align-content: start;
 }
 
 .lesson-lane__meta {
@@ -237,32 +163,21 @@
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        grid-template-areas:
-            "lesson lesson"
-            "navigation practice";
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-
-    .app-shell--exercise .lesson-layout {
-        grid-template-areas: "navigation lesson practice";
         grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr) minmax(280px, 0.95fr);
     }
 }
 
 @media (max-width: 900px) {
+    body {
+        overflow: auto;
+    }
+
+    .page-shell {
+        height: auto;
+        min-height: 100vh;
+    }
+
     .lesson-layout {
-        grid-template-areas:
-            "navigation"
-            "lesson"
-            "practice";
-        grid-template-columns: 1fr;
-    }
-
-    .lesson-lane {
-        min-height: auto;
-    }
-
-    .app-shell--exercise .lesson-layout {
         grid-template-areas:
             "navigation"
             "lesson"
@@ -270,17 +185,15 @@
         grid-template-columns: 1fr;
         gap: 16px;
         height: auto;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
         overflow: visible;
+        background: transparent;
     }
 
-    .app-shell--exercise .lesson-layout__lane + .lesson-layout__lane {
+    .lesson-layout__lane + .lesson-layout__lane {
         border-left: 0;
     }
 
-    .app-shell--exercise .lesson-lane {
+    .lesson-lane {
         min-height: auto;
         padding: 18px;
         border: 1px solid var(--border);
@@ -289,7 +202,7 @@
         backdrop-filter: blur(10px);
     }
 
-    .app-shell--exercise .lesson-lane__body {
+    .lesson-lane__body {
         overflow: visible;
         padding-right: 0;
         padding-bottom: 0;
@@ -297,20 +210,6 @@
 }
 
 @media (max-width: 720px) {
-    .page-shell {
-        width: min(100vw - 20px, 1220px);
-        padding-top: 20px;
-    }
-
-    .workspace-intro {
-        flex-direction: column;
-        align-items: start;
-    }
-
-    .workspace-intro__meta {
-        justify-content: start;
-    }
-
     .lesson-lane {
         padding: 18px;
     }

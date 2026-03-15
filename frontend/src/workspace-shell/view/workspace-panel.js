@@ -9,20 +9,20 @@ export function renderWorkspacePanel(state) {
             lane: "practice",
             label: "Practice lane",
             title: "The right column is reserved for practice surfaces",
-            description: "The learner has not entered a scenario yet, but the shell already keeps the practice lane visible instead of hiding it behind a later screen swap.",
+            description: "The learner has not opened a task yet, but the shell already keeps the practice lane visible instead of hiding it behind a later screen swap.",
             meta: [
-                "Mode: catalog",
+                "Mode: welcome",
                 "Detail: inactive"
             ],
             body: `
                 <section class="workspace-card workspace-card--focus">
                     <div class="workspace-card__header">
                         <span class="control-label">Practice boundary</span>
-                        <span class="workspace-card__badge">catalog mode</span>
+                        <span class="workspace-card__badge">welcome mode</span>
                     </div>
-                    <p class="panel-copy">No exercise detail request is active while the learner remains on the catalog route.</p>
+                    <p class="panel-copy">No exercise detail request is active while the learner remains on the welcome page.</p>
                     <div class="workspace-card__actions">
-                        <span class="scenario-link">Select a scenario to reserve the route handoff.</span>
+                        <span class="scenario-link">Select a task block on the left to reserve the route handoff.</span>
                     </div>
                 </section>
             `
@@ -69,7 +69,7 @@ export function renderWorkspacePanel(state) {
                     </div>
                     <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
                     <div class="workspace-card__actions">
-                        <a class="scenario-action scenario-action--muted" href="#/catalog">Back to catalog</a>
+                        <a class="scenario-action scenario-action--muted" href="#/catalog">Back to welcome</a>
                     </div>
                 </section>
             `
@@ -144,7 +144,7 @@ export function renderWorkspacePanel(state) {
                     ${renderPracticeContextPanel(state, repositoryContext)}
                 </div>
                 <div class="workspace-card__actions">
-                    <a class="scenario-action" href="#/catalog">Back to catalog</a>
+                    <a class="scenario-action" href="#/catalog">Back to welcome</a>
                 </div>
             </section>
         `

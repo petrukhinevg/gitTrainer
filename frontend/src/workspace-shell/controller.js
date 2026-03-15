@@ -11,8 +11,8 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     const state = {
         route: "catalog",
         selectedScenarioSlug: null,
+        selectedFocus: null,
         providerName: DEFAULT_PROVIDER_NAME,
-        exerciseSidebarTab: "tasks",
         practiceContextTab: "branches",
         practiceDraft: createInitialPracticeDraft(),
         query: cloneQuery(DEFAULT_QUERY),
@@ -47,6 +47,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         const route = parseRoute(window.location.hash);
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
+        state.selectedFocus = route.focus;
         resetRouteScopedState();
         render();
 
@@ -153,63 +154,17 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         render();
     }
 
-    async function handleCatalogControlsSubmit(event) {
-        event.preventDefault();
-
-        const formData = new FormData(event.currentTarget);
-        state.providerName = formData.get("provider");
-        state.query = {
-            difficulty: normalizeOptionalValue(formData.get("difficulty")),
-            tags: formData.getAll("tag").map(String),
-            sort: normalizeSortValue(formData.get("sort"))
-        };
-
-        await reloadActiveRouteData();
-    }
-
-    async function resetQueryControls() {
-        state.providerName = DEFAULT_PROVIDER_NAME;
-        state.query = cloneQuery(DEFAULT_QUERY);
-
-        await reloadActiveRouteData();
-    }
-
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
-        appRoot.classList.toggle("app-shell--exercise", state.route === "exercise");
+        const isExerciseRoute = state.route === "exercise";
+        appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
             selectedCatalogScenario,
             tagOptions
         });
 
-        bindCatalogControls();
-        bindExerciseSidebarControls();
         bindPracticeSurfaceControls();
-    }
-
-    function bindCatalogControls() {
-        const form = document.querySelector("[data-catalog-controls]");
-        if (!form) {
-            return;
-        }
-
-        form.addEventListener("submit", handleCatalogControlsSubmit);
-        form.querySelector("[data-reset-query]")?.addEventListener("click", resetQueryControls);
-    }
-
-    function bindExerciseSidebarControls() {
-        document.querySelectorAll("[data-exercise-sidebar-tab]").forEach((button) => {
-            button.addEventListener("click", () => {
-                const nextTab = button.dataset.exerciseSidebarTab;
-                if (!nextTab || nextTab === state.exerciseSidebarTab) {
-                    return;
-                }
-
-                state.exerciseSidebarTab = nextTab;
-                render();
-            });
-        });
     }
 
     function bindPracticeSurfaceControls() {
@@ -278,11 +233,11 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     function resetRouteScopedState() {
-        state.exerciseSidebarTab = "tasks";
         state.practiceContextTab = "branches";
         state.practiceDraft = createInitialPracticeDraft();
 
         if (state.route !== "exercise") {
+            state.selectedFocus = null;
             state.detail.status = "idle";
             state.detail.data = null;
             state.detail.error = null;
@@ -298,21 +253,25 @@ function parseRoute(hash) {
     if (hash === "#/catalog") {
         return {
             name: "catalog",
-            scenarioSlug: null
+            scenarioSlug: null,
+            focus: null
         };
     }
 
-    const exerciseMatch = hash.match(/^#\/exercise\/([^/?#]+)$/);
+    const exerciseMatch = hash.match(/^#\/exercise\/([^?#]+)(?:\?([^#]+))?$/);
     if (exerciseMatch) {
+        const query = new URLSearchParams(exerciseMatch[2] ?? "");
         return {
             name: "exercise",
-            scenarioSlug: decodeURIComponent(exerciseMatch[1])
+            scenarioSlug: decodeURIComponent(exerciseMatch[1]),
+            focus: normalizeOptionalValue(query.get("focus"))
         };
     }
 
     return {
         name: "not-found",
-        scenarioSlug: null
+        scenarioSlug: null,
+        focus: null
     };
 }
 
