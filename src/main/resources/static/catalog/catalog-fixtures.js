@@ -23,6 +23,14 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             summary: "Read a messy commit stack and prepare for a later cleanup exercise without changing history yet.",
             difficulty: "intermediate",
             tags: ["history", "cleanup", "planning"]
+        },
+        {
+            id: "remote-sync-preview",
+            slug: "remote-sync-preview",
+            title: "Read remote tracking state before you pull",
+            summary: "Compare ahead-behind cues and choose whether a fetch or pull makes sense before syncing.",
+            difficulty: "intermediate",
+            tags: ["remote", "inspection", "planning"]
         }
     ],
     meta: {

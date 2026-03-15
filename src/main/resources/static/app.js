@@ -118,10 +118,10 @@ function render() {
     appRoot.innerHTML = `
         <section class="hero-panel">
             <p class="panel-label">Scenario Catalog</p>
-            <h2>Catalog browse state is now interactive.</h2>
+            <h2>Catalog summaries are now browseable.</h2>
             <p>
-                Query controls, provider switching, and state handling are active. Final scenario cards still stay
-                intentionally deferred to issue 1.3.
+                Query controls and provider switching stay intact, while this slice upgrades the catalog from a debug
+                boundary preview into learner-facing scenario cards with entry-action presentation.
             </p>
             <div class="provider-badge">Provider: ${escapeHtml(state.providerName)}</div>
         </section>
@@ -154,8 +154,8 @@ function render() {
                 <p class="panel-label">Browse controls</p>
                 <h3>Query and provider handling</h3>
                 <p>
-                    Issue 1.2 owns filtering, sorting, loading, empty, and unavailable-source flow while keeping the
-                    temporary debug preview instead of final catalog cards.
+                    Filtering, sorting, loading, empty, and unavailable-source handling stay driven by the existing
+                    browse-state model while the list surface now renders actual scenario summaries.
                 </p>
                 <form class="catalog-controls" data-catalog-controls>
                     <label>
@@ -205,35 +205,43 @@ function render() {
             </article>
         </section>
 
-        <section class="grid two-up">
-            <article class="placeholder">
-                <p class="placeholder-label">Issue 1.2</p>
+        <section class="catalog-results-grid">
+            <article class="panel scenario-list-panel">
+                <p class="panel-label">Scenario list</p>
                 <h3>${escapeHtml(statusCopy.title)}</h3>
                 <p>${escapeHtml(statusCopy.description)}</p>
+                ${renderCatalogListSurface(catalogItems)}
             </article>
 
-            <article class="placeholder">
-                <p class="placeholder-label">Issue 1.3</p>
-                <h3>Scenario cards still arrive after this</h3>
+            <article class="panel result-summary-panel">
+                <p class="panel-label">Result summary</p>
+                <h3>Current boundary snapshot</h3>
                 <p>
-                    Final catalog rows or cards, tags, difficulty styling, and entry actions are intentionally held back so
-                    this task can stay focused on browse state and controls.
+                    The query-state contract stays unchanged, but the result surface now shows the same summary metadata a
+                    learner would use to choose the next exercise.
+                </p>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Source</dt>
+                        <dd>${escapeHtml(meta.source ?? state.providerName)}</dd>
+                    </div>
+                    <div>
+                        <dt>Difficulty</dt>
+                        <dd>${escapeHtml(meta.query?.difficulty ?? "Any")}</dd>
+                    </div>
+                    <div>
+                        <dt>Sort</dt>
+                        <dd>${escapeHtml(meta.query?.sort ?? "Default title order")}</dd>
+                    </div>
+                    <div>
+                        <dt>Tags</dt>
+                        <dd>${renderActiveFilterTags(meta.query?.tags ?? [])}</dd>
+                    </div>
+                </dl>
+                <p class="entry-note">
+                    Entry actions are intentionally presentational for now. The dedicated workspace route lands in issue 2.1.
                 </p>
             </article>
-        </section>
-
-        <section class="debug-preview">
-            <p class="panel-label">Fixture-backed preview</p>
-            <h3>Contract snapshot</h3>
-            <p>
-                This is a debugging view of the provider result, not the final catalog presentation.
-            </p>
-            <code>${escapeHtml(JSON.stringify({
-                meta,
-                status: state.status,
-                itemTitles: catalogItems.map((item) => item.title)
-            }, null, 2))}</code>
-            ${state.error ? `<p>Last error: ${escapeHtml(state.error)}</p>` : ""}
         </section>
     `;
 
@@ -258,7 +266,7 @@ async function handleCatalogControlsSubmit(event) {
     state.query = {
         difficulty: normalizeOptionalValue(formData.get("difficulty")),
         tags: formData.getAll("tag").map(String),
-        sort: normalizeOptionalValue(formData.get("sort")) ?? "title"
+        sort: normalizeSortValue(formData.get("sort"))
     };
 
     await loadCatalog();
@@ -289,34 +297,117 @@ function describeStatus() {
         case "loading":
             return {
                 title: "Loading fresh catalog results",
-                description: "The previous result set is cleared while the active provider resolves the latest query."
+                description: "The card surface keeps its layout while the active provider resolves the latest catalog query."
             };
         case "empty":
             return {
                 title: "No scenarios match this query",
-                description: "The current filters are valid, but this combination produces an empty result set."
+                description: "The current filters are valid, but this combination leaves no scenario cards to choose from."
             };
         case "error":
             return {
                 title: "Catalog source is unavailable",
-                description: state.error ?? "The active provider failed before returning a catalog payload."
+                description: state.error ?? "The active provider failed before returning scenario summaries."
             };
         case "ready":
             return {
                 title: "Filtered catalog result is ready",
-                description: "The screen has a resolved provider result and keeps final list presentation deferred to issue 1.3."
+                description: "The screen has a resolved provider result with scenario cards, difficulty cues, tags, and entry actions."
             };
         default:
             return {
                 title: "Browse controls are ready",
-                description: "Pick a provider, tune the query, and load the next result set."
+                description: "Pick a provider, tune the query, and load the next set of scenario cards."
             };
     }
+}
+
+function renderCatalogListSurface(catalogItems) {
+    switch (state.status) {
+        case "loading":
+            return `
+                <div class="scenario-list skeleton-list" aria-hidden="true">
+                    ${Array.from({length: 3}, () => `
+                        <article class="scenario-card skeleton-card">
+                            <div class="skeleton-line skeleton-line-short"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-tag-row">
+                                <span class="skeleton-pill"></span>
+                                <span class="skeleton-pill"></span>
+                                <span class="skeleton-pill"></span>
+                            </div>
+                        </article>
+                    `).join("")}
+                </div>
+            `;
+        case "error":
+            return `
+                <section class="catalog-state catalog-state-error">
+                    <strong>Provider unavailable</strong>
+                    <p>${escapeHtml(state.error ?? "The selected catalog source failed before returning items.")}</p>
+                </section>
+            `;
+        case "empty":
+            return `
+                <section class="catalog-state catalog-state-empty">
+                    <strong>No scenarios in this slice</strong>
+                    <p>Relax the active filters or swap providers to repopulate the catalog.</p>
+                </section>
+            `;
+        default:
+            return `
+                <div class="scenario-list">
+                    ${catalogItems.map(renderScenarioCard).join("")}
+                </div>
+            `;
+    }
+}
+
+function renderScenarioCard(item) {
+    return `
+        <article class="scenario-card">
+            <div class="scenario-card-header">
+                <span class="difficulty-pill difficulty-${escapeHtml(item.difficulty)}">${escapeHtml(formatDifficulty(item.difficulty))}</span>
+                <span class="scenario-slug">${escapeHtml(item.slug)}</span>
+            </div>
+            <h4>${escapeHtml(item.title)}</h4>
+            <p>${escapeHtml(item.summary)}</p>
+            <div class="scenario-tags">
+                ${item.tags.map((tag) => `<span class="scenario-tag">${escapeHtml(tag)}</span>`).join("")}
+            </div>
+            <div class="scenario-card-footer">
+                <button type="button" class="scenario-action" disabled>Open scenario</button>
+                <span class="entry-note">Workspace route ships in issue 2.1.</span>
+            </div>
+        </article>
+    `;
+}
+
+function renderActiveFilterTags(tags) {
+    if (!tags.length) {
+        return "Any tags";
+    }
+
+    return tags.map((tag) => escapeHtml(tag)).join(", ");
+}
+
+function formatDifficulty(value) {
+    if (!value) {
+        return "Unknown";
+    }
+
+    return String(value).charAt(0).toUpperCase() + String(value).slice(1);
 }
 
 function normalizeOptionalValue(value) {
     const normalized = String(value ?? "").trim();
     return normalized.length ? normalized : null;
+}
+
+function normalizeSortValue(value) {
+    const normalized = normalizeOptionalValue(value);
+    return normalized === "title" ? null : normalized;
 }
 
 function cloneQuery(query) {

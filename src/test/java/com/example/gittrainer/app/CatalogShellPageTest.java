@@ -37,6 +37,11 @@ class CatalogShellPageTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Practice Git by reading the repo before you touch it.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("/app.js")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario catalog route shell for issue 1.1.")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario catalog route shell and browse-state controls are already live.")));
+
+        mockMvc.perform(get("/app.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Catalog summaries are now browseable.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Open scenario")));
     }
 }
