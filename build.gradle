@@ -24,6 +24,11 @@ repositories {
     mavenCentral()
 }
 
+def frontendDir = layout.projectDirectory.dir("frontend")
+def frontendDistDir = frontendDir.dir("dist")
+def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+def npmCommand = isWindows ? "npm.cmd" : "npm"
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -35,4 +40,31 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('frontendInstall', Exec) {
+    workingDir frontendDir.asFile
+    inputs.files(
+            frontendDir.file("package.json"),
+            frontendDir.file("package-lock.json")
+    )
+    outputs.dir(frontendDir.dir("node_modules"))
+    commandLine npmCommand, "ci"
+}
+
+tasks.register('frontendBuild', Exec) {
+    dependsOn tasks.named('frontendInstall')
+    workingDir frontendDir.asFile
+    inputs.files(fileTree(frontendDir) {
+        exclude "dist/**", "node_modules/**"
+    })
+    outputs.dir(frontendDistDir)
+    commandLine npmCommand, "run", "build"
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('frontendBuild')
+    from(frontendDistDir) {
+        into "static"
+    }
 }

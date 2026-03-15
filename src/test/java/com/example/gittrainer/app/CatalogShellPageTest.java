@@ -46,5 +46,11 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario selection is now routable")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Back to catalog")));
+
+        mockMvc.perform(get("/app.css"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".catalog-results-grid")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 640px)")));
     }
 }

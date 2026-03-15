@@ -2,7 +2,14 @@
 
 `gitTrainer` is a web application for practicing Git through interactive training scenarios. The target product is a single-page app where a learner chooses an exercise, studies the repository situation, submits a Git action, and receives validation with explanations.
 
-The repository currently contains a Spring Boot 4 backend skeleton on Java 21 plus project instructions that define product scope, architecture, workflow, and roadmap. The frontend SPA is planned but not added as a separate module yet.
+The repository currently contains a Spring Boot 4 backend on Java 21 and a standalone `frontend/` SPA workspace that is built into the backend static resources for production delivery.
+
+Frontend workflow:
+
+- `cd frontend && npm install` to install dependencies
+- `cd frontend && npm run dev` to run the local SPA dev server
+- `cd frontend && npm run build` to create the production bundle
+- `./gradlew check` to verify backend tests and frontend build integration together
 
 Core project documents:
 
