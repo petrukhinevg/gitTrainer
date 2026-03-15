@@ -36,14 +36,14 @@ class ScenarioCatalogControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.meta.source").value("stub"))
                 .andExpect(jsonPath("$.items.length()").value(3))
-                .andExpect(jsonPath("$.items[0].id").value("status-basics"))
+                .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
-                .andExpect(jsonPath("$.items[1].slug").value("branch-safety"))
-                .andExpect(jsonPath("$.items[2].tags[1]").value("cleanup"));
+                .andExpect(jsonPath("$.items[1].slug").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.items[1].tags[1]").value("cleanup"));
     }
 
     @Test
-    void echoesCatalogQueryShapeWithoutApplyingPolicyYet() throws Exception {
+    void echoesCatalogQueryShapeWhileApplyingFilteringAndSortingPolicy() throws Exception {
         mockMvc.perform(get("/api/scenarios")
                         .param("difficulty", "BEGINNER")
                         .param("sort", "difficulty")
@@ -55,7 +55,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.query.sort").value("difficulty"))
                 .andExpect(jsonPath("$.meta.query.tags[0]").value("status"))
                 .andExpect(jsonPath("$.meta.query.tags[1]").value("basics"))
-                .andExpect(jsonPath("$.items.length()").value(3));
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value("status-basics"));
     }
 
     @Test
@@ -66,5 +67,40 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.meta.query.difficulty").doesNotExist())
                 .andExpect(jsonPath("$.meta.query.sort").doesNotExist())
                 .andExpect(jsonPath("$.meta.query.tags").doesNotExist());
+    }
+
+    @Test
+    void filtersCatalogByDifficultyIgnoringCase() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("difficulty", "beginner")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
+                .andExpect(jsonPath("$.items[1].id").value("status-basics"));
+    }
+
+    @Test
+    void sortsCatalogByDifficultyThenTitleWhenRequested() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("sort", "difficulty")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(3))
+                .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
+                .andExpect(jsonPath("$.items[1].id").value("status-basics"))
+                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"));
+    }
+
+    @Test
+    void returnsEmptyItemsWhenFiltersExcludeEverything() throws Exception {
+        mockMvc.perform(get("/api/scenarios")
+                        .param("difficulty", "intermediate")
+                        .param("tag", "basics")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0))
+                .andExpect(jsonPath("$.meta.query.difficulty").value("intermediate"))
+                .andExpect(jsonPath("$.meta.query.tags[0]").value("basics"));
     }
 }
