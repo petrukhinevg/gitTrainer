@@ -62,7 +62,6 @@ function renderWelcomeFlowBlock(state) {
         <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/catalog">
             <span class="flow-block__eyebrow">Welcome</span>
             <strong class="flow-block__title">Start here</strong>
-            <p class="panel-copy">Open the greeting page, then choose a task block below.</p>
         </a>
     `;
 }
@@ -83,7 +82,6 @@ function renderScenarioFlowBlock({ item, index, isActive, activeDetail, selected
         >
             <span class="flow-block__eyebrow">Task ${index + 1}</span>
             <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
-            <p class="panel-copy">${escapeHtml(item.summary)}</p>
         </a>
         ${subtaskBlocks}
     `;
@@ -98,7 +96,6 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus) {
         >
             <span class="flow-block__eyebrow">Sub-task ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
-            <p class="panel-copy">${escapeHtml(step.detail)}</p>
         </a>
     `;
 }

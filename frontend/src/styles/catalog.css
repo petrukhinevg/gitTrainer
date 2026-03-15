@@ -1,23 +1,23 @@
 .lesson-rail__summary {
     display: grid;
-    gap: 6px;
-    padding: 10px 12px;
+    gap: 5px;
+    padding: 8px 10px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(255, 250, 241, 0.7);
 }
 
 .flow-block-list {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .flow-block {
     display: grid;
-    gap: 6px;
-    padding: 9px 11px;
+    gap: 4px;
+    padding: 6px 8px;
     border: 1px solid rgba(31, 23, 32, 0.1);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(255, 250, 241, 0.68);
     text-decoration: none;
     transform-origin: left center;
@@ -37,12 +37,12 @@
 }
 
 .flow-block--subtask {
-    margin-left: 10px;
+    margin-left: 8px;
     background: rgba(255, 250, 241, 0.54);
 }
 
 .flow-block:hover {
-    padding-left: 14px;
+    padding-left: 10px;
     border-color: rgba(41, 76, 91, 0.08);
     background: rgba(255, 250, 241, 0.78);
 }
@@ -54,13 +54,13 @@
 
 .flow-subtask-group {
     display: grid;
-    gap: 6px;
-    padding-top: 2px;
+    gap: 4px;
+    padding-top: 1px;
 }
 
 .flow-block__eyebrow {
     font-family: "Courier New", Courier, monospace;
-    font-size: 0.66rem;
+    font-size: 0.6rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
@@ -69,5 +69,9 @@
 .flow-block__title {
     margin: 0;
     line-height: 1.1;
-    font-size: 0.95rem;
+    font-size: 0.82rem;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
