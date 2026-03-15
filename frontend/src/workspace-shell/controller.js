@@ -120,6 +120,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         const providerName = state.providerName;
         const slug = state.selectedScenarioSlug;
 
+        invalidatePreparedSubmissionDraft();
         state.detail.status = "loading";
         state.detail.data = null;
         state.detail.error = null;
@@ -275,6 +276,11 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         )) {
             state.submissionDraft.preparedSubmission = null;
         }
+    }
+
+    function invalidatePreparedSubmissionDraft() {
+        state.submissionDraft.preparedSubmission = null;
+        state.submissionDraft.validationError = null;
     }
 
     return {
