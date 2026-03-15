@@ -143,6 +143,23 @@ class SessionControllerTest {
     }
 
     @Test
+    void rejectsUnsupportedSubmissionAnswerType() throws Exception {
+        String sessionId = startSessionAndExtractId();
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "file_patch",
+                                  "answer": "git status"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Answer type is unsupported for this session boundary: file_patch"));
+    }
+
+    @Test
     void returnsNotFoundWhenSubmittingAgainstUnknownSession() throws Exception {
         mockMvc.perform(post("/api/sessions/{sessionId}/submissions", "session_missing")
                         .contentType(MediaType.APPLICATION_JSON)

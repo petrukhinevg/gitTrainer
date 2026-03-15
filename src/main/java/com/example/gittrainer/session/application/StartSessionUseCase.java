@@ -9,12 +9,8 @@ import com.example.gittrainer.session.domain.TrainingSession;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-
 @Service
 public class StartSessionUseCase {
-
-    private static final List<String> SUPPORTED_ANSWER_TYPES = List.of("command_text");
 
     private final SessionRepository sessionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
@@ -52,7 +48,7 @@ public class StartSessionUseCase {
 
         return new StartSessionResult(
                 session,
-                SUPPORTED_ANSWER_TYPES,
+                SessionSubmissionAnswerTypes.supportedAnswerTypes(),
                 SubmissionPlaceholderOutcome.boundaryReady()
         );
     }

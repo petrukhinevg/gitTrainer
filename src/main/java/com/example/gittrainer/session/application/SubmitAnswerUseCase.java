@@ -26,6 +26,11 @@ public class SubmitAnswerUseCase {
         if (normalizedSessionId == null) {
             throw new SessionRequestValidationException("Session id is required to submit an answer.");
         }
+        if (!SessionSubmissionAnswerTypes.isSupported(command.answerType())) {
+            throw new SessionRequestValidationException(
+                    "Answer type is unsupported for this session boundary: " + command.answerType()
+            );
+        }
         if (command.answer().isBlank()) {
             throw new SessionRequestValidationException("Answer text is required to submit a session attempt.");
         }
