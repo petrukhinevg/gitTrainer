@@ -266,7 +266,7 @@ async function handleCatalogControlsSubmit(event) {
     state.query = {
         difficulty: normalizeOptionalValue(formData.get("difficulty")),
         tags: formData.getAll("tag").map(String),
-        sort: normalizeOptionalValue(formData.get("sort")) ?? "title"
+        sort: normalizeSortValue(formData.get("sort"))
     };
 
     await loadCatalog();
@@ -403,6 +403,11 @@ function formatDifficulty(value) {
 function normalizeOptionalValue(value) {
     const normalized = String(value ?? "").trim();
     return normalized.length ? normalized : null;
+}
+
+function normalizeSortValue(value) {
+    const normalized = normalizeOptionalValue(value);
+    return normalized === "title" ? null : normalized;
 }
 
 function cloneQuery(query) {
