@@ -23,6 +23,12 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             status: "idle",
             data: null,
             error: null
+        },
+        submissionDraft: {
+            answerType: "command_text",
+            answer: "",
+            validationError: null,
+            preparedSubmission: null
         }
     };
 
@@ -180,6 +186,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         });
 
         bindCatalogControls();
+        bindSubmissionDraftControls();
     }
 
     function bindCatalogControls() {
@@ -200,10 +207,73 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     function resetRouteScopedState() {
-        if (state.route !== "exercise") {
-            state.detail.status = "idle";
-            state.detail.data = null;
-            state.detail.error = null;
+        state.submissionDraft = createInitialSubmissionDraftState();
+
+        if (state.route === "exercise") {
+            return;
+        }
+
+        state.detail.status = "idle";
+        state.detail.data = null;
+        state.detail.error = null;
+    }
+
+    function bindSubmissionDraftControls() {
+        const form = document.querySelector("[data-submission-draft-form]");
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener("change", handleSubmissionDraftChange);
+        form.addEventListener("submit", handleSubmissionDraftSubmit);
+        form.querySelector("[data-reset-draft]")?.addEventListener("click", resetSubmissionDraft);
+    }
+
+    function handleSubmissionDraftChange(event) {
+        syncSubmissionDraftFromForm(event.currentTarget);
+    }
+
+    function handleSubmissionDraftSubmit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        syncSubmissionDraftFromForm(form);
+
+        if (!state.submissionDraft.answer.trim()) {
+            state.submissionDraft.validationError = "Enter the Git command or action you want to submit.";
+            render();
+            return;
+        }
+
+        state.submissionDraft.validationError = null;
+        state.submissionDraft.preparedSubmission = {
+            scenarioSlug: state.selectedScenarioSlug,
+            answerType: state.submissionDraft.answerType,
+            answer: state.submissionDraft.answer.trim(),
+            preparedAt: new Date().toISOString()
+        };
+        render();
+    }
+
+    function resetSubmissionDraft() {
+        state.submissionDraft = createInitialSubmissionDraftState();
+        render();
+    }
+
+    function syncSubmissionDraftFromForm(form) {
+        const formData = new FormData(form);
+        const nextAnswerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
+        const nextAnswer = String(formData.get("answer") ?? "");
+        const preparedSubmission = state.submissionDraft.preparedSubmission;
+
+        state.submissionDraft.answerType = nextAnswerType;
+        state.submissionDraft.answer = nextAnswer;
+        state.submissionDraft.validationError = null;
+
+        if (preparedSubmission && (
+            preparedSubmission.answerType !== nextAnswerType
+            || preparedSubmission.answer !== nextAnswer.trim()
+        )) {
+            state.submissionDraft.preparedSubmission = null;
         }
     }
 
@@ -257,5 +327,14 @@ function cloneQuery(query) {
         difficulty: query.difficulty,
         tags: [...query.tags],
         sort: query.sort
+    };
+}
+
+function createInitialSubmissionDraftState() {
+    return {
+        answerType: "command_text",
+        answer: "",
+        validationError: null,
+        preparedSubmission: null
     };
 }
