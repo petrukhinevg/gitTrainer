@@ -1,6 +1,7 @@
 import { renderCatalogWorkspace } from "./view.js";
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
+const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
 const DEFAULT_QUERY = Object.freeze({
     difficulty: null,
     tags: [],
@@ -35,6 +36,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     let latestCatalogRequestId = 0;
     let latestDetailRequestId = 0;
     const detailLoadTasks = new Map();
+    let navigationAnimationInProgress = false;
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
@@ -203,21 +205,13 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
     function bindNavigationControls() {
         document.querySelectorAll("[data-scenario-toggle]").forEach((button) => {
-            button.addEventListener("click", async () => {
+            button.addEventListener("click", () => {
                 const slug = button.dataset.scenarioToggle;
                 if (!slug) {
                     return;
                 }
 
-                if (state.expandedScenarioSlugs.includes(slug)) {
-                    collapseScenario(slug);
-                    render();
-                    return;
-                }
-
-                expandScenario(slug, { loadDetail: false });
-                render();
-                await loadScenarioDetail(slug, { syncSelected: false });
+                void toggleScenarioExpansion(slug);
             });
         });
     }
@@ -318,7 +312,6 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         }
 
         const maxContentWidth = measureNaturalNavigationWidth(navigationLane);
-
         const maxWidth = Math.ceil(maxContentWidth + 36);
         const minWidth = Math.ceil(maxWidth / 2);
         const preferredWidth = Math.round(window.innerWidth * 0.24);
@@ -361,6 +354,117 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         state.detail.data = cachedDetail.data;
         state.detail.error = cachedDetail.error;
         render();
+    }
+
+    async function toggleScenarioExpansion(slug) {
+        if (navigationAnimationInProgress) {
+            return;
+        }
+
+        navigationAnimationInProgress = true;
+
+        try {
+            if (state.expandedScenarioSlugs.includes(slug)) {
+                await animateScenarioCollapse(slug);
+                collapseScenario(slug);
+                render();
+                return;
+            }
+
+            expandScenario(slug, { loadDetail: false });
+            render();
+            await animateScenarioExpansion(slug);
+            await loadScenarioDetail(slug, { syncSelected: false });
+        } finally {
+            navigationAnimationInProgress = false;
+        }
+    }
+
+    function animateScenarioExpansion(slug) {
+        const panel = findScenarioPanel(slug);
+        if (!panel || prefersReducedMotion()) {
+            return Promise.resolve();
+        }
+
+        panel.style.height = "0px";
+        panel.style.opacity = "0";
+        panel.style.overflow = "hidden";
+
+        const targetHeight = panel.scrollHeight;
+        panel.getBoundingClientRect();
+
+        panel.style.transition = createScenarioPanelTransition();
+        panel.style.height = `${targetHeight}px`;
+        panel.style.opacity = "1";
+
+        return waitForScenarioAnimation(panel, () => {
+            panel.style.removeProperty("height");
+            panel.style.removeProperty("opacity");
+            panel.style.removeProperty("overflow");
+            panel.style.removeProperty("transition");
+        });
+    }
+
+    function animateScenarioCollapse(slug) {
+        const panel = findScenarioPanel(slug);
+        if (!panel || prefersReducedMotion()) {
+            return Promise.resolve();
+        }
+
+        panel.style.height = `${panel.getBoundingClientRect().height}px`;
+        panel.style.opacity = "1";
+        panel.style.overflow = "hidden";
+        panel.getBoundingClientRect();
+
+        panel.style.transition = createScenarioPanelTransition();
+        panel.style.height = "0px";
+        panel.style.opacity = "0";
+
+        return waitForScenarioAnimation(panel, () => {
+            panel.style.removeProperty("transition");
+        });
+    }
+
+    function findScenarioPanel(slug) {
+        return appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`);
+    }
+
+    function createScenarioPanelTransition() {
+        return [
+            `height ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            `opacity ${Math.round(NAVIGATION_TOGGLE_ANIMATION_MS * 0.7)}ms ease`
+        ].join(", ");
+    }
+
+    function waitForScenarioAnimation(panel, cleanup) {
+        return new Promise((resolve) => {
+            let settled = false;
+
+            const finalize = () => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+                panel.removeEventListener("transitionend", handleTransitionEnd);
+                window.clearTimeout(timeoutId);
+                cleanup();
+                resolve();
+            };
+
+            const handleTransitionEnd = (event) => {
+                if (event.target === panel && event.propertyName === "height") {
+                    finalize();
+                }
+            };
+
+            const timeoutId = window.setTimeout(finalize, NAVIGATION_TOGGLE_ANIMATION_MS + 120);
+            panel.addEventListener("transitionend", handleTransitionEnd);
+        });
+    }
+
+    function prefersReducedMotion() {
+        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     }
 }
 
@@ -455,4 +559,12 @@ function measureNaturalNavigationWidth(navigationLane) {
     measureRoot.remove();
 
     return width;
+}
+
+function escapeSelectorValue(value) {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+        return CSS.escape(value);
+    }
+
+    return value.replace(/"/g, '\\"');
 }

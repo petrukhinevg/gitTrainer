@@ -72,7 +72,15 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const subtaskBlocks = isExpanded
-        ? renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive)
+        ? `
+            <div
+                class="flow-subtask-region"
+                id="flow-subtasks-${encodeHashSegment(item.slug)}"
+                data-scenario-panel="${escapeHtml(item.slug)}"
+            >
+                ${renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive)}
+            </div>
+        `
         : "";
 
     return `
@@ -119,7 +127,7 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
     }
 
     return `
-        <div class="flow-subtask-group" id="flow-subtasks-${encodeHashSegment(slug)}">
+        <div class="flow-subtask-group">
             ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario)}
             ${navigationDetail.data.workspace.task.steps.map((step) => (
                 renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario)
