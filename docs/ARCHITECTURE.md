@@ -1,66 +1,66 @@
-# Architecture
+# Архитектура
 
-## Goal
+## Цель
 
-Define the minimum project structure needed so the Git training product can grow from a simple MVP into a maintainable learning platform without unclear ownership or mixed responsibilities.
+Определить минимальную структуру проекта, достаточную для того, чтобы продукт по обучению Git мог вырасти из простого MVP в поддерживаемую платформу без размытой ответственности и смешения ролей.
 
-## High-level structure
+## Структура верхнего уровня
 
-- Root project: single Spring Boot application that currently hosts backend code and may later serve the compiled SPA or expose APIs to a separate frontend app
-- `frontend/`: planned SPA client for the training workspace; add only when UI implementation starts as a separate application
-- `docs/`: roadmap, workflow, architecture decisions
-- Other important folders: `src/main/java` for application code, `src/test/java` for backend tests, `src/main/resources` for configuration and future static content
+- Корневой проект: единое Spring Boot application, которое сейчас хостит backend-код и позже может либо раздавать собранный SPA, либо работать как API для отдельного frontend-приложения
+- `frontend/`: планируемый SPA-клиент для учебного workspace; добавляй и развивай его как отдельное приложение по мере роста UI
+- `docs/`: roadmap, workflow, архитектурные решения
+- Другие важные папки: `src/main/java` для application-кода, `src/test/java` для backend-тестов, `src/main/resources` для конфигурации и будущего статического контента
 
-## Backend layers
+## Слои backend
 
-Backend code lives under `src/main/java/com/example/gittrainer` and should be split by business capability, not by framework artifact type.
+Backend-код живёт под `src/main/java/com/example/gittrainer` и должен быть разбит по бизнес-возможностям, а не по типу framework-артефакта.
 
-- `app`: application bootstrap, configuration, health endpoints, and shared technical wiring
-- `common`: shared primitives used by multiple features, such as error models, clock abstractions, IDs, and shared validation helpers
-- `<capability-name>`: all code for one business capability, named after what the capability actually is
+- `app`: bootstrap приложения, конфигурация, health endpoints и общее техническое wiring
+- `common`: общие примитивы, используемые несколькими фичами, например error models, абстракции времени, IDs и shared validation helpers
+- `<capability-name>`: весь код одной бизнес-возможности, названной по реальной предметной области
 
-## Capability package template
+## Шаблон capability package
 
-New business work should be placed under:
+Новую бизнес-логику размещай под:
 
 `com.example.gittrainer.<capability-name>`
 
-Recommended internal structure:
+Рекомендуемая внутренняя структура:
 
-- `domain`: exercise definitions, value objects, enums, scoring rules, and domain services
-- `application`: use cases for starting sessions, validating answers, returning hints, and tracking completion
-- `api`: controllers, request DTOs, response DTOs, and contract mappers
-- `infrastructure`: persistence, exercise catalog loading, storage access, and technical adapters
+- `domain`: определения упражнений, value objects, enums, scoring rules и domain services
+- `application`: use cases для запуска сессий, валидации ответов, возврата hints и трекинга completion
+- `api`: controllers, request DTOs, response DTOs и contract mappers
+- `infrastructure`: persistence, загрузка каталога упражнений, доступ к storage и технические адаптеры
 
-Use only the packages the capability actually needs, but keep naming consistent.
+Используй только те подпакеты, которые реально нужны конкретной capability, но сохраняй единый стиль именования.
 
-## Planned backend capability areas
+## Планируемые capability-области backend
 
-Use business-oriented package names tied to the training product. Do not add a generic `feature` segment to the package path.
+Используй бизнес-ориентированные имена пакетов, связанные с учебным продуктом. Не добавляй общий сегмент `feature` в package path.
 
-- `scenario` for exercise catalog, difficulty, tags, and scenario metadata
-- `session` for active training attempts, user progress, and step state
-- `validation` for checking Git commands, expected outcomes, and explanation generation
-- `progress` for summaries, streaks, scoring, and completion history
+- `scenario` для каталога упражнений, сложности, тегов и метаданных сценариев
+- `session` для активных попыток обучения, пользовательского прогресса и step-state
+- `validation` для проверки Git-команд, ожидаемых результатов и генерации объяснений
+- `progress` для summary, streaks, scoring и истории завершения
 
-## Package placement rules
+## Правила размещения пакетов
 
-- Business-specific code belongs inside its capability package, not in shared buckets.
-- Shared code used by multiple features belongs in `common`.
-- Framework/bootstrap concerns belong in `app`.
-- Avoid generic buckets such as `service`, `util`, `manager`, or `repository` at the top level unless the project deliberately adopts that convention later.
-- Avoid mixing controller, persistence, and domain logic in one class.
+- Бизнес-специфичный код должен жить внутри capability package, а не в общих корзинах.
+- Shared code, используемый несколькими фичами, помещай в `common`.
+- Framework/bootstrap concerns помещай в `app`.
+- Избегай общих корзин верхнего уровня вроде `service`, `util`, `manager` или `repository`, если только проект осознанно не примет это соглашение позже.
+- Не смешивай controller, persistence и domain logic в одном классе.
 
-## Frontend/backend boundary
+## Граница frontend/backend
 
-- Backend owns: scenario catalog, validation rules, exercise progression, scoring, hints, persistence, and API contracts
-- Frontend owns: route-level flow, training workspace state, input handling, visual explanation of repository state, and progress presentation
-- Frontend may mirror lightweight validation for immediate UX feedback, but backend remains the source of truth for whether a learner solved the task correctly.
-- If a capability changes both sides, define the API contract first and then wire the consumer side to it.
+- Backend отвечает за: каталог сценариев, правила валидации, progression упражнения, scoring, hints, persistence и API contracts
+- Frontend отвечает за: route-level flow, состояние учебного workspace, обработку ввода, визуальное объяснение состояния репозитория и представление прогресса
+- Frontend может зеркалить лёгкую валидацию ради мгновенного UX-feedback, но backend остаётся source of truth для решения, зачтено упражнение или нет
+- Если capability затрагивает обе стороны, сначала определяй API contract, а затем подключай consumer-side
 
-## Testing guidance
+## Рекомендации по тестированию
 
-- Domain and application logic should have focused tests near the capability they cover.
-- API behavior should be tested at controller or integration level once endpoints exist.
-- Validation logic for Git answers should be tested with representative success and failure scenarios, not only happy paths.
-- Frontend should keep UI concerns isolated from backend implementation details and rely on explicit contracts.
+- Domain и application logic должны иметь сфокусированные тесты рядом с той capability, которую они покрывают.
+- API behavior стоит тестировать на controller или integration уровне, как только появляются endpoints.
+- Validation logic для Git-ответов нужно проверять на репрезентативных success и failure сценариях, а не только на happy path.
+- Frontend должен изолировать UI concerns от деталей backend-реализации и опираться на явные контракты.

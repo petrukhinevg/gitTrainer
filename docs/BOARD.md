@@ -1,23 +1,24 @@
-# Project Board (do not write there anything)
+# Доска проекта (ничего туда не записывать)
 
-Local description of the project board for `gitTrainer`.
+Локальное описание project board для `gitTrainer`.
 
-Repository: https://github.com/petrukhinevg/gitTrainer
+Репозиторий: https://github.com/petrukhinevg/gitTrainer
 
-Online board: https://github.com/users/petrukhinevg/projects/4
+Онлайн-доска: https://github.com/users/petrukhinevg/projects/4
 
-Project custom field: `Pairs with` stores the counterpart backend/frontend issue when a child task has a paired issue on the other side.
+Пользовательское поле проекта `Pairs with` хранит связанную backend/frontend issue, когда у дочерней задачи есть парная задача на другой стороне.
 
-## Columns
-- `Backlog`: everything captured but not ready for implementation
-- `Ready`: tasks with a clear result and acceptance criteria
-- `In Progress`: active implementation
-- `Review`: implemented and waiting for review
-- `Done`: accepted and completed
+## Колонки
 
-## Update rule (work only with the online board)
+- `Backlog`: всё зафиксировано, но ещё не готово к реализации
+- `Ready`: задачи с понятным результатом и acceptance criteria
+- `In Progress`: активная реализация
+- `Review`: реализовано и ждёт ревью
+- `Done`: принято и завершено
 
-- New work should first be recorded in the roadmap or issue list.
-- When a task is taken into work, move it to `In Progress`.
-- After implementation, move it to `Review`.
-- After acceptance, move it to `Done`.
+## Правило обновления (работать только с онлайн-доской)
+
+- Новую работу сначала фиксируй в roadmap или в списке issue.
+- Когда задача берётся в работу, переводи её в `In Progress`.
+- После реализации переводи в `Review`.
+- После принятия переводи в `Done`.

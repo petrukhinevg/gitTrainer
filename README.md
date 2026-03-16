@@ -1,23 +1,24 @@
 # gitTrainer
 
-`gitTrainer` is a web application for practicing Git through interactive training scenarios. The target product is a single-page app where a learner chooses an exercise, studies the repository situation, submits a Git action, and receives validation with explanations.
+`gitTrainer` — это веб-приложение для практики Git через интерактивные учебные сценарии. Целевой продукт — одностраничное приложение, в котором пользователь выбирает упражнение, изучает состояние репозитория, отправляет Git-действие и получает проверку с объяснениями.
 
-The repository currently contains a Spring Boot 4 backend on Java 21 and a standalone `frontend/` SPA workspace that is built into the backend static resources for production delivery.
+Сейчас репозиторий содержит backend на Spring Boot 4 и Java 21, а также отдельное SPA-пространство `frontend/`, которое в production-сборке встраивается в статические ресурсы backend.
 
-Frontend workflow:
+Рабочий цикл frontend:
 
-- `cd frontend && npm install` to install dependencies
-- `cd frontend && npm run dev` to run the local SPA dev server
-- `cd frontend && npm run build` to create the production bundle
-- `./gradlew check` to verify backend tests and frontend build integration together
+- `cd frontend && npm install` — установить зависимости
+- `cd frontend && npm run dev` — запустить локальный dev server SPA
+- `cd frontend && npm run build` — собрать production bundle
+- `./gradlew check` — проверить backend-тесты и интеграцию frontend-сборки вместе
 
-Core project documents:
+Основные документы проекта:
 
-- `LOCAL_AGENT_START.md`: fast bootstrap for each new session
-- `AGENTS.md`: repository operating rules and git workflow
-- `docs/ROADMAP.md`: shared product roadmap and MVP definition
-- `docs/ARCHITECTURE.md`: package boundaries and system ownership
-- `docs/BACKEND_ROADMAP.md`: backend delivery plan
-- `docs/FRONTEND_ROADMAP.md`: frontend delivery plan
-- `docs/TRACKER_WORKFLOW.md`: task decomposition and tracker flow
-- `docs/BOARD.md`: local board snapshot
+- `LOCAL_AGENT_START.md`: быстрый bootstrap для каждой новой сессии
+- `AGENTS.md`: правила работы с репозиторием и git workflow
+- `docs/APPLICATION_PROGRAM.md`: текущее состояние продукта, пробелы и граница до первого демо
+- `docs/ROADMAP.md`: общий roadmap продукта и определение MVP
+- `docs/ARCHITECTURE.md`: границы пакетов и распределение ответственности в системе
+- `docs/BACKEND_ROADMAP.md`: план поставки backend-части
+- `docs/FRONTEND_ROADMAP.md`: план поставки frontend-части
+- `docs/TRACKER_WORKFLOW.md`: декомпозиция задач и workflow в трекере
+- `docs/BOARD.md`: локальный снимок доски проекта

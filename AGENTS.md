@@ -1,52 +1,88 @@
-# Repository Agent Instructions
+# Инструкции для агента репозитория
 
-This file contains repository-wide operating rules. For every new chat, start with `LOCAL_AGENT_START.md`; it provides the fast bootstrap and routes you to the right project documents.
+Этот файл содержит правила работы для всего репозитория. Для каждого нового чата начинай с `LOCAL_AGENT_START.md`; он даёт быстрый bootstrap и подсказывает, какие документы нужны под конкретную задачу.
 
-## New Chat Bootstrap
+## Bootstrap новой сессии
 
-1. Read `LOCAL_AGENT_START.md`.
-2. Follow the session routing in that file and open only the documents needed for the current task.
-3. Return to this file for repository rules, local credential handling, and agent-specific execution constraints.
+0. Всегда отвечай и используй только русский язык
+1. Прочитай `LOCAL_AGENT_START.md`.
+2. Следуй маршрутизации из этого файла и открывай только те документы, которые нужны для текущей задачи.
+3. Возвращайся к этому файлу за правилами репозитория, локальными учётными данными и ограничениями выполнения для агента.
 
-## Local Files And Credentials
+## Локальные файлы и учётные данные
 
-- Do not commit `LOCAL_AGENT_START.md` or `.env`.
-- Use `GIT_USERNAME` and `GIT_TOKEN` for git and remote platform actions if authenticated operations are needed.
-- Use admin credentials only for owner-level repository actions.
-- Do not rely on password auth unless explicitly required.
-- Check `.env` only when the task needs local credentials or tokens.
+- Не коммить `LOCAL_AGENT_START.md` и `.env`.
+- Для git-операций и действий на удалённой платформе используй `GIT_USERNAME` и `GIT_TOKEN`, если нужны аутентифицированные операции.
+- Admin credentials используй только для owner-level действий над репозиторием.
+- Не полагайся на password auth, если это явно не требуется.
+- Открывай `.env` только тогда, когда задаче действительно нужны локальные креды или токены.
 
-## Workflow Pointers
+## Подсказки по workflow
 
-- Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
-- Reuse the command examples in `docs/TRACKER_WORKFLOW.md` for `gh`, linked branches, GraphQL issue/PR linkage, and epic-based PR flow instead of re-deriving those API calls each time.
-- If a task uncovers stable `gh` commands, API queries, GraphQL mutations, or other repeatable operational notes that would otherwise force another documentation search later, add them to the relevant repository instructions before finishing the task.
-- Work in the single local repository directory by default. Do not create alternate local project folders or `git worktree` checkouts for tasks unless the user explicitly asks for that setup.
-- Do not push to `origin` during active implementation unless the user explicitly asks for it.
-- When a task is moved to `Review`, push the task branch, create or update its PR, and verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
-- Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
-- After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
-- After the initial epic commit exists, create the child task branches for the epic's current sub-issues immediately from that updated epic branch head.
-- When working inside an epic, always branch each child task from the epic branch itself, never from another child task branch.
-- Do not move `main` or the epic branch forward locally just to continue development on later child tasks.
-- Merging a child task branch into its epic branch is allowed when further development is genuinely blocked without that integration.
-- Keep review fixes in the same task branch. Do not create a separate review-fix branch.
-- When needed, add one follow-up commit with a `review fix` postfix.
-- The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
-- When creating child task branches, also create or register the matching linked branch for the issue so GitHub can populate `Linked pull requests` automatically.
+- Используй `docs/TRACKER_WORKFLOW.md` как единственный источник истины для декомпозиции задач, flow по веткам, PR flow, состояний доски, WIP по дочерним задачам и тайминга merge.
+- Переиспользуй примеры команд из `docs/TRACKER_WORKFLOW.md` для `gh`, linked branches, GraphQL linkage issue/PR и epic-based PR flow вместо того, чтобы каждый раз выводить эти вызовы заново.
+- Если в задаче всплывают стабильные `gh`-команды, API-запросы, GraphQL-мутаторы или другие повторяемые операционные заметки, которые иначе пришлось бы искать заново, добавляй их в соответствующие инструкции репозитория до завершения задачи.
+- По умолчанию работай только в текущей локальной директории репозитория.
+- Не создавай и не используй альтернативные локальные директории проекта, соседние клоны репозитория или `git worktree`, если пользователь явно этого не запросил.
+- Если на диске уже есть альтернативные локальные копии, игнорируй их и продолжай работу в этом репозитории, если пользователь явно не перенаправил тебя.
+- Не пушь в `origin` во время активной реализации, если пользователь явно этого не попросил.
+- Когда задача переводится в `Review`, запушь ветку задачи, создай или обнови её PR и убедись, что PR виден в project field `Linked pull requests`, прежде чем считать handoff в review завершённым.
+- Для PR, которые нацелены в epic branch, а не в `main`, не полагайся только на автоматическую связку. Если `Linked pull requests` по-прежнему пуст после создания PR, заверши ручную привязку issue/PR до того, как считать handoff завершённым.
+- Используй формат коммита из `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` для основного implementation commit задачи.
+- После создания epic branch сделай в ней начальный epic commit ещё до создания любых дочерних task branches.
+- После появления initial epic commit сразу создай child task branches для текущих подзадач этого epic от обновлённой головы epic branch.
+- При работе внутри epic всегда ветвь каждую дочернюю задачу от самой epic branch, а не от другой child task branch.
+- Не двигай локально `main` или epic branch вперёд только ради продолжения разработки следующих child tasks.
+- Merge child task branch в epic branch допустим, только если дальнейшая разработка действительно заблокирована без этой интеграции.
+- Держи review fixes в той же task branch. Не создавай отдельную ветку под review fix.
+- Если нужно, добавь один follow-up commit с постфиксом `review fix`.
+- Существующее project field для видимости PR — `Linked pull requests`. Не создавай пользовательскую замену, если настройки проекта не изменились.
+- При создании child task branches также создай или зарегистрируй соответствующую linked branch для issue, чтобы GitHub мог автоматически заполнить `Linked pull requests`.
+- Не оставляй задачу в состоянии, где PR уже есть, а доска всё ещё показывает placeholder link entry; исправляй linkage в рамках того же handoff.
 
-## Validation Before Push
+## Валидация перед push
 
-- Before each `git push`, run `./gradlew check`.
-- If backend code changed, prefer `./gradlew test`.
-- If a future `frontend/` directory exists and frontend code changed, run that app's production build command inside `frontend/` before push.
+- Перед каждым `git push` запускай `./gradlew check`.
+- Если менялся backend-код, дополнительно предпочитай `./gradlew test`.
+- Если в будущем появится директория `frontend/` и менялся frontend-код, перед push запускай production build этого приложения внутри `frontend/`.
 
-## Scope And Change Hygiene
+## Границы изменений и гигиена правок
 
-- If local changes are already large, or work is switching to another task, commit the current logical unit first.
-- Keep commits scoped: do not split one task into noisy micro-commits, but do not batch unrelated work together.
-- For larger changes, prefer clear package boundaries and simple extensible structure.
-- Keep business logic for Git training scenarios, validation, hints, and progress tracking inside capability packages named after the actual domain area instead of generic shared buckets.
-- Use `docs/ARCHITECTURE.md` for backend/frontend boundaries.
-- Use the roadmap documents as a source for new issues.
-- If the requested change is not described there yet, update roadmap or board notes before starting large implementation work.
+- Если локальные изменения уже большие или работа переключается на другую задачу, сначала закоммить текущую логическую единицу.
+- Держи коммиты scoped: не дроби одну задачу на шумные микрокоммиты, но и не складывай несвязанные изменения в один пакет.
+- Для более крупных изменений предпочитай явные границы пакетов и простую расширяемую структуру.
+- Держи бизнес-логику для Git-тренировок, валидации, подсказок и трекинга прогресса внутри capability packages, названных по предметной области, а не в общих абстрактных корзинах.
+- Используй `docs/ARCHITECTURE.md` для границ backend/frontend.
+- Используй roadmap-документы как источник новых issue.
+- Если запрошенное изменение ещё не описано в roadmap, обнови roadmap или board notes до начала крупной реализации.
+
+## Навыки
+
+Skill — это набор локальных инструкций, хранящийся в файле `SKILL.md`. Ниже перечислены skills, которые можно использовать. Для каждого указаны имя, описание и путь к файлу, чтобы при необходимости открыть исходные инструкции.
+
+### Доступные навыки
+
+- `skill-creator`: руководство по созданию эффективных skills. Используй, когда пользователь хочет создать новый skill или обновить существующий, чтобы расширить возможности Codex специализированными знаниями, workflow или tool-интеграциями. Файл: `/Users/petrukhinevg/Library/Caches/JetBrains/IntelliJIdea2025.3/aia/codex/skills/.system/skill-creator/SKILL.md`
+- `skill-installer`: установка skills в `$CODEX_HOME/skills` из curated list или по пути к GitHub-репозиторию. Используй, когда пользователь просит перечислить доступные skills, установить curated skill или поставить skill из другого репозитория, включая приватные. Файл: `/Users/petrukhinevg/Library/Caches/JetBrains/IntelliJIdea2025.3/aia/codex/skills/.system/skill-installer/SKILL.md`
+- `slides`: сборка, редактирование, рендеринг, импорт и экспорт презентаций через предзагруженный JavaScript surface `@oai/artifact-tool` с помощью artifacts tool. Файл: `/Users/petrukhinevg/Library/Caches/JetBrains/IntelliJIdea2025.3/aia/codex/skills/.system/slides/SKILL.md`
+- `spreadsheets`: сборка, редактирование, перерасчёт, импорт и экспорт таблиц через предзагруженный JavaScript surface `@oai/artifact-tool` с помощью artifacts tool. Файл: `/Users/petrukhinevg/Library/Caches/JetBrains/IntelliJIdea2025.3/aia/codex/skills/.system/spreadsheets/SKILL.md`
+
+### Как использовать навыки
+
+- Discovery: список выше — это skills, доступные в текущей сессии, с именем, описанием и путём к файлу. Содержимое каждого skill лежит на диске по указанному пути.
+- Trigger rules: если пользователь называет skill явно через `$SkillName` или обычным текстом, либо задача явно соответствует описанию skill, этот skill нужно использовать в текущем ходе. Если упомянуто несколько skills, нужно использовать их все. Не переноси skills между ходами, если их не упомянули снова.
+- Missing/blocked: если указанный skill отсутствует в списке или его путь не удаётся прочитать, коротко сообщи об этом и продолжай с лучшим доступным fallback.
+- Как использовать skill:
+  1. После решения использовать skill открой его `SKILL.md`. Читай только столько, сколько нужно для выполнения workflow.
+  2. Если `SKILL.md` ссылается на относительные пути, например `scripts/foo.py`, сначала резолви их относительно директории самого skill, указанной выше, и только при необходимости смотри другие пути.
+  3. Если `SKILL.md` указывает на дополнительные папки вроде `references/`, загружай только конкретные файлы, нужные для запроса, а не весь каталог сразу.
+  4. Если есть `scripts/`, предпочитай запускать или патчить их вместо перепечатывания больших блоков кода.
+  5. Если есть `assets/` или шаблоны, переиспользуй их вместо создания с нуля.
+- Coordination and sequencing:
+  - Если подходит несколько skills, выбирай минимальный набор, покрывающий запрос, и коротко укажи порядок использования.
+  - Сообщай, какой skill или skills ты используешь и почему, одной короткой строкой. Если не используешь очевидный skill, кратко объясни почему.
+- Context hygiene:
+  - Держи контекст компактным: длинные секции пересказывай, а не вставляй целиком; открывай дополнительные файлы только когда это нужно.
+  - Избегай глубокого reference-chasing: предпочитай открывать только файлы, на которые напрямую ссылается `SKILL.md`, если только не заблокирован.
+  - Если есть варианты по framework, provider или domain, выбирай только релевантные reference-файлы и отмечай этот выбор.
+- Safety and fallback: если skill нельзя применить чисто, например отсутствуют файлы или инструкции неясны, прямо обозначь проблему, выбери следующий лучший подход и продолжай.

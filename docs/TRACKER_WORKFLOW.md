@@ -1,159 +1,161 @@
-# Tracker Workflow
+# Процесс работы с трекером
 
-## Basic process
+## Базовый процесс
 
-1. A user creates a task in the tracker.
-2. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
-3. An assignee takes a task into work in its dedicated branch.
-4. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
-5. After implementation, the assignee pushes the branch, creates or updates the PR, verifies the PR appears in `Linked pull requests`, and then moves the task to `Review`.
-6. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
-7. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
-8. Each task should describe a complete and reviewable result.
+1. Пользователь создаёт задачу в трекере.
+2. Для epic исполнитель создаёт epic branch, делает initial epic commit в этой ветке и только после этого создаёт child task branches от текущей головы epic branch.
+3. Исполнитель берёт задачу в работу в её выделенной ветке.
+4. Ветку задачи также нужно зарегистрировать как linked branch для issue, чтобы GitHub мог связать будущие PR с `Linked pull requests`.
+5. После реализации исполнитель пушит ветку, создаёт или обновляет PR, привязывает PR в `Linked pull requests`, а затем переводит задачу в `Review`.
+6. Если review находит проблемы, исправляй их в той же ветке follow-up коммитом с пометкой review fix.
+7. Если review обнаруживает, что задача смешивает product discovery и implementation, раздели scope и сначала обнови roadmap.
+8. Каждая задача должна описывать завершённый и пригодный для review результат.
 
-## Board columns
+## Колонки доски
 
-- `Backlog`: captured but not ready
-- `Ready`: sufficiently defined and ready for implementation
-- `In Progress`: active development
-- `Review`: implemented and waiting for review
-- `Done`: accepted and finished
+- `Backlog`: всё зафиксировано, но ещё не готово
+- `Ready`: задача достаточно определена и готова к реализации
+- `In Progress`: активная разработка
+- `Review`: реализовано и ожидает ревью
+- `Done`: принято и завершено
 
-Keep the actual board state in `docs/BOARD.md` or the remote project board.
+Держи фактическое состояние доски в `docs/BOARD.md` или в удалённой project board.
 
-Use the project field `Pairs with` when a backend task and a frontend task represent the same learner-facing slice but remain independently implementable.
+Используй project field `Pairs with`, когда backend-задача и frontend-задача представляют один и тот же пользовательский slice, но остаются независимо реализуемыми.
 
-## Decomposition rules
+## Правила декомпозиции
 
-- A task must produce a clear and testable result.
-- A task should be small enough to implement, test, and review without excessive context.
-- If a feature requires major changes across multiple areas at once, it is a good candidate for a `parent issue`.
-- If the result cannot be described in one short outcome statement, split the task.
-- Do not over-decompose at the start of an epic when the stable seams are not yet clear.
-- It is valid to split a child task later in the epic once the contract, data shape, or UI loop is better understood and the split improves parallelism or reviewability.
-- Do not split work below the level of a useful PR; if a sub-issue has no standalone review value, it is too small.
-- For this product, separate content modeling, validation logic, and SPA UX work unless a very small change naturally spans them.
-- Do not keep sibling tasks in the same parent issue when one would require code from another unfinished sibling task. Merge them or split the parent issue differently.
-- Backend and frontend tasks may be paired for the same learner-facing slice, but pairing is preferred rather than required.
-- Backend-only or frontend-only child tasks are valid when they still deliver a complete result from the epic baseline.
+- Задача должна давать понятный и тестируемый результат.
+- Задача должна быть достаточно маленькой, чтобы её можно было реализовать, протестировать и отревьюить без чрезмерного контекста.
+- Если фича требует крупных изменений сразу в нескольких областях, это хороший кандидат на `parent issue`.
+- Если результат нельзя описать одним коротким outcome statement, задачу нужно делить.
+- Не переусложняй декомпозицию в начале epic, если стабильные seams ещё не ясны.
+- Позже допустимо дробить child task внутри epic, когда контракт, форма данных или UI loop стали яснее, и это улучшает параллельность или reviewability.
+- Не дроби работу ниже уровня полезного PR; если у sub-issue нет самостоятельной ценности для ревью, она слишком мала.
+- Для этого продукта разделяй content modeling, validation logic и SPA UX work, если только очень маленькое изменение естественно не охватывает всё сразу.
+- Не держи sibling tasks в одном parent issue, если одной из них потребуется код из другой незавершённой sibling task. В таком случае объединяй их или меняй структуру parent issue.
+- Backend и frontend задачи могут быть связаны по одному пользовательскому slice, но pairing предпочтителен, а не обязателен.
+- Backend-only и frontend-only child tasks допустимы, если они всё равно дают завершённый результат от epic baseline.
 
-## What counts as a task
+## Что считать задачей
 
-Suitable task:
+Подходящая задача:
 
-- one learner-facing capability, such as starting a scenario or viewing progress;
-- one technical sub-feature needed to unlock the next capability, such as validation payloads or session persistence;
-- one infrastructure or platform step that enables further work;
-- one content or configuration step that unlocks the next increment, such as seeding the initial Git exercise catalog.
+- одна пользовательская capability, например запуск сценария или просмотр прогресса;
+- одна техническая подфича, нужная для разблокировки следующей capability, например validation payloads или persistence сессий;
+- один инфраструктурный или платформенный шаг, открывающий дальнейшую работу;
+- один шаг по контенту или конфигурации, открывающий следующий инкремент, например seed начального каталога Git-упражнений.
 
-Unsuitable task:
+Неподходящая задача:
 
-- "build the entire frontend";
-- "implement the whole Git engine";
-- "add all training scenarios";
-- any work item that naturally splits into several independent results.
+- «собрать весь frontend»;
+- «реализовать весь Git engine»;
+- «добавить все учебные сценарии»;
+- любая work item, которая естественно распадается на несколько независимых результатов.
 
-## What counts as a parent issue
+## Что считать parent issue
 
-Create a `parent issue` when:
+Создавай `parent issue`, когда:
 
-- a feature contains several independent user flows;
-- the result cannot be shipped as one compact change;
-- completion requires a sequence of tasks that should be reviewed separately.
+- фича содержит несколько независимых пользовательских flow;
+- результат нельзя поставить одним компактным изменением;
+- завершение требует последовательности задач, которые должны проходить review отдельно.
 
-When decomposing a parent issue:
+При декомпозиции parent issue:
 
-- start with the smallest set of child tasks that already have clear independent outcomes
-- add finer-grained child tasks later only where that improves parallel work or reduces blocking
-- keep the child set shaped around independently implementable results, not framework layers
+- начинай с минимального набора child tasks, у которых уже есть ясные независимые результаты
+- добавляй более мелкие child tasks позже только там, где это улучшает параллельную работу или уменьшает блокировки
+- строй набор child tasks вокруг независимо реализуемых результатов, а не вокруг слоёв framework
 
-## Git workflow
+## Git-процесс
 
-- `main` is the production branch.
-- Use a single local repository directory by default. Do not create a separate local folder or `git worktree` for each task unless the user explicitly requests it.
-- Epic branches and standalone task branches are created from `main`.
-- After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
-- After the initial epic commit exists, create child task branches for all currently defined sub-issues right away.
-- Child task branches inside an epic are created from the current epic branch head, not from `main`.
-- A child task branch must be created from the current epic branch head, never from another child task branch.
-- If the epic branch has absorbed reviewed work during the allowed merge phase, later child branches are still created from that updated epic branch, not from the merged child branch tip.
-- Do not merge child work into the epic branch or merge the epic branch into `main` early just to unblock later development.
-- If a child task depends on unfinished or still-unmerged child work, treat that task as blocked, preserve any exploratory work outside the canonical `task/*` branch names, and continue only with independent child tasks.
-- Exception: merging a child task branch into its epic branch is allowed when further development is genuinely impossible without that integrated result.
-- Each epic branch should have its own PR to `main`, linked to the epic issue.
-- Child task branches are implemented separately and should not be merged into the epic branch before review is complete and the task is `Done`.
-- Each task branch should have one main implementation commit unless review fixes are needed.
-- The main implementation commit should be named as `number_ShortCommitDescription`, where `number` is the task number.
-- Treat child task branches as isolated WIP while other child tasks can still be developed independently from the epic branch baseline.
-- If implementing a later child task would require merging an earlier child branch into the epic branch before the epic is otherwise ready, skip that task for now and continue with other unblocked child tasks.
-- Merge reviewed child branches into the epic branch only when the remaining unfinished tasks are specifically blocked by those completed child branches and no independent child work remains.
-- When a child or standalone task is moved to `Review`, push the branch before changing the board status.
-- After push, each task branch should have its own PR against the epic branch.
-- Before moving a task to `Review`, verify that the task's PR is linked and visible in the `Linked pull requests` field.
-- If the platform requires manual issue linking for non-default-target PRs, link the PR manually before moving the task to `Review`.
-- If a child task is split during implementation, create the new child branches from the current epic branch head, not from the in-progress sibling branch.
+- `main` — production branch.
+- По умолчанию используй только текущую локальную директорию репозитория.
+- Не создавай и не используй отдельную локальную папку, соседний клон репозитория или `git worktree` для выполнения задачи, если пользователь явно этого не запросил.
+- Если существует несколько локальных копий репозитория, игнорируй их и продолжай работу в текущем репозитории, если пользователь явно не перенаправил тебя.
+- Epic branches и standalone task branches создаются от `main`.
+- После создания epic branch сделай initial epic commit в ней до создания child task branches.
+- После появления initial epic commit сразу создай child task branches для всех текущих sub-issues.
+- Child task branches внутри epic создаются от текущей головы epic branch, а не от `main`.
+- Child task branch должна создаваться от текущей головы epic branch, а не от другой child task branch.
+- Если epic branch уже впитала проверенную работу во время допустимой merge-фазы, более поздние child branches всё равно создаются от обновлённой epic branch, а не от кончика слитой child branch.
+- Не мержи child work в epic branch и не мержи epic branch в `main` раньше времени только ради разблокировки последующей разработки.
+- Если child task зависит от незавершённой или ещё не слитой child work, считай такую задачу заблокированной, сохраняй exploratory work вне канонических имён `task/*` и продолжай только с независимыми child tasks.
+- Исключение: merge child task branch в epic branch допустим, если дальнейшая разработка действительно невозможна без уже интегрированного результата.
+- У каждой epic branch должен быть свой PR в `main`, привязанный к epic issue.
+- Child task branches реализуются отдельно и не должны мержиться в epic branch до завершения review и статуса `Done`.
+- У каждой task branch должен быть один основной implementation commit, если только не понадобились review fixes.
+- Основной implementation commit должен называться как `number_ShortCommitDescription`, где `number` — номер задачи.
+- Относись к child task branches как к изолированному WIP, пока другие child tasks могут независимо развиваться от epic baseline.
+- Если реализация более поздней child task потребует merge более ранней child branch в epic branch до естественной готовности epic, пропусти эту задачу и продолжай с другими незаблокированными child tasks.
+- Merge проверенных child branches в epic branch делай только тогда, когда оставшиеся незавершённые задачи действительно заблокированы без этих результатов и независимой child work больше не осталось.
+- Когда child task или standalone task переводится в `Review`, запушь ветку до изменения board status.
+- После push каждая task branch должна иметь собственный PR против epic branch.
+- Перед переводом задачи в `Review` проверь, что PR привязан и виден в поле `Linked pull requests`.
+- Если платформа требует ручной linkage для PR не в default branch, сделай её вручную до перевода в `Review`.
+- Если child task делится во время реализации, создавай новые child branches от текущей головы epic branch, а не от in-progress sibling branch.
 
-## Fast board setup
+## Быстрая настройка доски
 
-Use this sequence to avoid manual cleanup later:
+Используй эту последовательность, чтобы потом не пришлось вручную чистить состояние:
 
-1. Create the parent issue and all child issues.
-2. Link every child issue to its parent issue immediately.
-3. Create the epic branch from `main`.
-4. Make the initial epic commit on the epic branch.
-5. Push the epic branch to `origin`.
-6. Create the epic PR to `main`.
-7. Create each child task branch from the current epic branch head.
-8. Register each child branch as the linked branch for its issue before implementation starts.
-9. Add all issues to the board and set their initial `Status`.
+1. Создай parent issue и все child issues.
+2. Сразу привяжи каждую child issue к своему parent issue.
+3. Создай epic branch от `main`.
+4. Сделай initial epic commit в epic branch.
+5. Запушь epic branch в `origin`.
+6. Создай epic PR в `main`.
+7. Создай каждую child task branch от текущей головы epic branch.
+8. Зарегистрируй каждую child branch как linked branch для её issue до начала реализации.
+9. Добавь все issues на доску и выставь им начальный `Status`.
 
-## Linked branch and PR setup
+## Настройка linked branches и PR
 
-Use this sequence for each child task so `Linked pull requests` is populated predictably:
+Используй эту последовательность для каждой child task, чтобы `Linked pull requests` заполнялось предсказуемо:
 
-1. Ensure the epic branch already exists on `origin`.
-2. Create the local task branch from the current epic branch head.
-3. Push the task branch to `origin`.
-4. Register the task branch as the issue's linked branch.
-5. Implement the task and create the task PR with the epic branch as `base`.
-6. Verify the issue shows the PR in `Linked pull requests` before moving the task to `Review`.
+1. Убедись, что epic branch уже существует на `origin`.
+2. Создай локальную task branch от текущей головы epic branch.
+3. Запушь task branch в `origin`.
+4. Зарегистрируй task branch как linked branch для issue.
+5. Реализуй задачу и создай task PR с epic branch как `base`.
+6. Проверь, что issue показывает этот PR в `Linked pull requests` до перевода задачи в `Review`.
 
-If the branch was created locally before GitHub issue linkage was configured, do not assume the field will backfill automatically. In that case:
+Если ветка была создана локально до настройки GitHub issue linkage, не предполагай, что поле заполнят задним числом автоматически. В таком случае:
 
-- verify the task branch exists on `origin`
-- verify the PR base is the epic branch
-- manually confirm the PR is associated with the issue
-- if GitHub still does not populate `Linked pull requests`, correct the linkage before relying on the board state
+- проверь, что task branch существует на `origin`
+- проверь, что PR нацелен в epic branch
+- вручную убедись, что PR ассоциирован с issue
+- если GitHub всё равно не заполняет `Linked pull requests`, исправь linkage до того, как полагаться на состояние доски
 
-## GitHub automation notes
+## Заметки по GitHub automation
 
-Use these notes when the tracker workflow is executed through `gh` or GraphQL instead of the browser.
+Используй эти заметки, когда workflow трекера выполняется через `gh` или GraphQL вместо браузера.
 
-When a task reveals a stable command sequence, API query, mutation, or workaround that is likely to be reused, add that note here while the details are fresh instead of leaving it only in chat history.
+Если задача раскрывает стабильную последовательность команд, API query, mutation или workaround, которые, вероятно, ещё пригодятся, добавляй эту заметку сюда сразу, пока детали свежие, а не оставляй её только в истории чата.
 
-### Single local checkout
+### Один локальный checkout
 
-Default workflow uses one local checkout of the repository.
+Базовый workflow использует один локальный checkout репозитория.
 
-Operational rule:
+Операционное правило:
 
-- switch branches inside the same local directory instead of creating separate task folders
-- before switching tasks or branches, keep the worktree clean by committing the current logical unit or explicitly coordinating any remaining local changes
-- use alternate local folders or `git worktree` only when the user explicitly requests that setup
+- переключай ветки внутри одной локальной директории вместо создания отдельных task-папок
+- перед переключением задач или веток держи worktree чистым: коммить текущую логическую единицу или явно согласовывай оставшиеся локальные изменения
+- используй альтернативные локальные директории или `git worktree` только если пользователь явно попросил такую схему
 
-### Linked branches
+### Связанные ветки
 
-To inspect linked branches for an issue:
+Чтобы посмотреть linked branches для issue:
 
 ```sh
 gh issue develop --list 137 --repo petrukhinevg/gitTrainer
 ```
 
-If the target branch does not exist yet, `gh issue develop` can create and register it.
+Если целевая ветка ещё не существует, `gh issue develop` может создать и зарегистрировать её.
 
-If the remote branch already exists, GitHub may refuse to backfill the linkage. In that case, create a new linked branch name first and open the PR from that linked branch instead of expecting the existing branch name to become linked retroactively.
+Если удалённая ветка уже существует, GitHub может отказаться заполнять linkage задним числом. В таком случае сначала создай новое linked branch name и открывай PR уже из него, а не рассчитывай, что существующее имя ветки начнёт считаться linked post factum.
 
-The GraphQL mutation that worked for creating a linked branch on a new name is:
+GraphQL mutation, которая сработала для создания linked branch на новом имени:
 
 ```graphql
 mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
@@ -169,23 +171,23 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 }
 ```
 
-Required inputs:
+Нужные параметры:
 
-- `issueId`: GraphQL issue ID from `gh issue view <number> --json id`
-- `repoId`: GraphQL repository ID from `gh repo view <owner>/<repo> --json id`
-- `oid`: commit SHA that the linked branch should point to
-- `name`: new remote branch name such as `linked/137-catalog-browse-api-shell-stub-boundary`
+- `issueId`: GraphQL ID issue из `gh issue view <number> --json id`
+- `repoId`: GraphQL ID репозитория из `gh repo view <owner>/<repo> --json id`
+- `oid`: commit SHA, на который должна указывать linked branch
+- `name`: новое имя удалённой ветки, например `linked/137-catalog-browse-api-shell-stub-boundary`
 
-Observed behavior:
+Наблюдаемое поведение:
 
-- creating a linked branch on a fresh remote branch name worked
-- attempting to register an already existing remote branch name did not backfill reliably
+- создание linked branch на новом remote-имени сработало
+- попытка зарегистрировать уже существующее имя удалённой ветки не дала надёжного backfill
 
-### Pull requests against epic branches
+### Pull requests для epic branches
 
-For child task PRs with the epic branch as `base`, use `Refs #<issue>` in the PR body to keep the issue association without relying on default-branch closing behavior.
+Для child task PR, у которых epic branch является `base`, используй `Refs #<issue>` в теле PR, чтобы сохранить ассоциацию с issue и не полагаться на closing behavior default branch.
 
-Example:
+Пример:
 
 ```sh
 gh pr create \
@@ -195,32 +197,33 @@ gh pr create \
   --body "Refs #137"
 ```
 
-If a closed PR already exists for the same head and base and GitHub refuses to reopen it, create a new alias branch at the same commit and open a fresh PR from that alias branch instead of rewriting history.
+Если уже существует закрытый PR с теми же `head` и `base`, и GitHub отказывается его переоткрыть, создай новую alias branch на том же коммите и открой свежий PR уже из alias branch вместо переписывания истории.
 
-### `Linked pull requests` field
+### Поле `Linked pull requests`
 
-Even after a linked branch and matching PR exist, the project field `Linked pull requests` may lag or may still require manual issue association for non-default-target PRs.
+Даже если linked branch и соответствующий PR уже существуют, project field `Linked pull requests` может обновляться с задержкой или всё ещё требовать ручной issue association для PR не в default branch.
 
-Operational rule:
+Операционное правило:
 
-- do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
-- if the field is still empty, keep the task in `In Progress` even if code and tests are done
+- не переводи задачу в `Review`, пока PR реально не появился в поле `Linked pull requests`
+- если поле всё ещё пустое, оставляй задачу в `In Progress`, даже если код и тесты уже готовы
+- если автоматический linkage не заполнил поле, завершай ручную ассоциацию в GitHub UI в рамках той же передачи задачи, а не откладывай это на потом
 
-Observed limitation:
+Наблюдаемое ограничение:
 
-- even after creating a fresh linked branch through `gh issue develop`, pushing the task commit onto that linked branch, and opening a PR with `Refs #<issue>` against an epic branch, the project field may still remain empty
-- in that state, GitHub can already show a cross-reference from the issue timeline to the PR, but that is still not enough to treat `Linked pull requests` as satisfied
-- when this happens, leave the task in `In Progress` and finish the remaining linkage through the GitHub UI before moving the task to `Review`
+- даже после создания свежей linked branch через `gh issue develop`, push коммита в эту linked branch и открытия PR с `Refs #<issue>` против epic branch поле проекта может оставаться пустым
+- в таком состоянии GitHub уже может показывать cross-reference из таймлайна issue в PR, но этого всё равно недостаточно, чтобы считать `Linked pull requests` выполненным
+- если это происходит, оставляй задачу в `In Progress` и заверши оставшийся linkage через GitHub UI до перевода в `Review`
 
-### Project status updates
+### Обновление project status
 
-When the project board status must be updated from the CLI, first inspect the project fields to get the current `Status` field id and option ids:
+Если нужно обновить статус в project board через CLI, сначала посмотри project fields, чтобы получить id текущего поля `Status` и id его опций:
 
 ```sh
 gh project field-list 4 --owner petrukhinevg
 ```
 
-If `gh project item-list` output is not enough to identify the item's project card id, query it from the issue directly:
+Если вывода `gh project item-list` недостаточно, чтобы определить id карточки задачи, запроси его прямо у issue:
 
 ```sh
 gh api graphql -f query='query {
@@ -236,7 +239,7 @@ gh api graphql -f query='query {
 }'
 ```
 
-Then update a single-select status value with:
+После этого обнови значение single-select статуса так:
 
 ```sh
 gh project item-edit \
@@ -246,30 +249,12 @@ gh project item-edit \
   --single-select-option-id <status-option-id>
 ```
 
-### Follow-up child tasks after seam work
+### Последующие дочерние задачи после seam work
 
-If a later child task depends on a seam that was delivered in an earlier child branch rather than in the initial epic baseline, do not start the later task from the old epic head.
+Если более поздняя child task зависит от seam, которая была доставлена в более ранней child branch, а не в initial epic baseline, не начинай следующую задачу от старой головы epic.
 
-Instead:
+Вместо этого:
 
-1. review the blocking child task
-2. merge that reviewed child branch into the epic branch
-3. create the next child branch from the updated epic head
-
-This exception is allowed when the later task is genuinely blocked without that integrated seam.
-
-## Task template
-
-- Title: short and concrete
-- Result: what becomes possible after completion
-- Done criteria: 2-5 testable points
-- Constraints: what is out of scope
-- Side: `backend`, `frontend`, `fullstack`, `content`, or another project-specific label
-
-## Parent issue template
-
-- Title: large product or platform area
-- Goal: what complete block is being built
-- `Sub-issues`: each should provide an independent testable result
-- Boundary: what stays out of scope
-- Order: recommended implementation sequence
+1. проведи review блокирующей child task
+2. смержи эту проверенную child branch в epic branch
+3. создай следующую child branch от обновлённой головы epic
