@@ -6,7 +6,7 @@
 2. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
 3. An assignee takes a task into work in its dedicated branch.
 4. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
-5. After implementation, the assignee pushes the branch, creates or updates the PR, verifies the PR appears in `Linked pull requests`, and then moves the task to `Review`.
+5. After implementation, the assignee pushes the branch, creates or updates the PR, link PR in `Linked pull requests`, and then moves the task to `Review`.
 6. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
 7. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
 8. Each task should describe a complete and reviewable result.
