@@ -65,33 +65,45 @@ export function renderWorkspacePanel(state) {
                     <span class="control-label">Git branches</span>
                     <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
                 </div>
+                <div class="practice-shell__meta">
+                    <span class="practice-shell__chip">Branches: ${repositoryContext.branches.length}</span>
+                    <span class="practice-shell__chip">Files: ${repositoryContext.files.length}</span>
+                    <span class="practice-shell__chip">Status: ${escapeHtml(repositoryContext.status)}</span>
+                </div>
                 ${renderBranchGraph(repositoryContext.branches)}
+                <div class="practice-output">
+                    <span class="control-label">Output scaffold</span>
+                    <p class="panel-copy">This slot is reserved for branch feedback or command output once submit transport lands on top of the current local draft seam.</p>
+                </div>
             </section>
         `,
         composer: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Command</span>
-                    <span class="workspace-card__badge">${state.practiceDraft.preparedAnswer ? "prepared" : "draft"}</span>
+                    <span class="control-label">Answer input</span>
+                    <span class="workspace-card__badge">${resolveDraftBadge(state.submissionDraft)}</span>
                 </div>
-                <form class="practice-composer__form" data-practice-draft-form>
+                <div class="practice-shell__meta">
+                    <span class="practice-shell__chip">Answer type: command text</span>
+                    <span class="practice-shell__chip">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</span>
+                </div>
+                <form class="practice-composer__form" data-submission-draft-form>
+                    <input type="hidden" name="answerType" value="command_text">
                     <label class="practice-editor">
                         <span class="practice-editor__prompt">&gt;</span>
-                        <textarea name="answer" rows="4" placeholder="Example: git status">${escapeHtml(state.practiceDraft.answer ?? "")}</textarea>
+                        <textarea name="answer" rows="4" placeholder="Example: git status">${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
                     </label>
                     <div class="practice-composer__actions">
-                        <button class="practice-action practice-action--primary" type="submit">Prepare</button>
-                        <button class="practice-action" type="button" data-reset-practice-draft>Clear</button>
+                        <button class="practice-action practice-action--primary" type="submit">Prepare submission</button>
+                        <button class="practice-action" type="button" data-reset-submission-draft>Reset draft</button>
                     </div>
                 </form>
-                ${state.practiceDraft.validationError ? `
+                ${state.submissionDraft.validationError ? `
                     <div class="practice-inline-note">
-                        <p class="panel-copy">${escapeHtml(state.practiceDraft.validationError)}</p>
+                        <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                <div class="practice-status-line ${state.practiceDraft.preparedAnswer ? "practice-status-line--ready" : ""}">
-                    <span>${escapeHtml(state.practiceDraft.preparedAnswer ?? "No prepared payload yet")}</span>
-                </div>
+                ${renderPreparedSubmission(state.submissionDraft.preparedSubmission)}
             </section>
         `
     });
@@ -151,6 +163,10 @@ function renderPlaceholderComposer(title, copy) {
                 <span class="practice-editor__prompt">&gt;</span>
                 <textarea rows="4" placeholder="Example: git status" disabled></textarea>
             </label>
+            <div class="practice-output">
+                <span class="control-label">Output scaffold</span>
+                <p class="panel-copy">Prepared payload and execution feedback appear here after a scenario is opened.</p>
+            </div>
         </section>
     `;
 }
@@ -161,8 +177,56 @@ function normalizeRepositoryContext(repositoryContext) {
         status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
             ? safeContext.status
             : "unavailable",
-        branches: Array.isArray(safeContext.branches) ? safeContext.branches : []
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : []
     };
+}
+
+function resolveDraftBadge(submissionDraft) {
+    if (submissionDraft?.preparedSubmission) {
+        return "prepared";
+    }
+
+    if (typeof submissionDraft?.answer === "string" && submissionDraft.answer.trim() !== "") {
+        return "draft";
+    }
+
+    return "idle";
+}
+
+function renderPreparedSubmission(preparedSubmission) {
+    if (!preparedSubmission) {
+        return `
+            <div class="practice-output">
+                <span class="control-label">Prepared payload</span>
+                <p class="panel-copy">The right lane now owns local answer drafting. Session transport and correctness rendering still land in later tasks.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="practice-output practice-output--ready">
+            <span class="control-label">Prepared payload</span>
+            <dl class="result-summary">
+                <div>
+                    <dt>Scenario</dt>
+                    <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "unknown")}</dd>
+                </div>
+                <div>
+                    <dt>Answer type</dt>
+                    <dd>${escapeHtml(preparedSubmission.answerType)}</dd>
+                </div>
+                <div>
+                    <dt>Draft answer</dt>
+                    <dd>${escapeHtml(preparedSubmission.answer)}</dd>
+                </div>
+                <div>
+                    <dt>Prepared at</dt>
+                    <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
+                </div>
+            </dl>
+        </div>
+    `;
 }
 
 function renderBranchGraph(branches) {
