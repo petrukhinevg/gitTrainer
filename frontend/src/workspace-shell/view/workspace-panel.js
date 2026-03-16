@@ -87,13 +87,21 @@ export function renderWorkspacePanel(state) {
                     <span class="workspace-card__badge">${resolveDraftBadge(state.submissionDraft, submissionState)}</span>
                 </div>
                 <div class="practice-shell__meta">
-                    <span class="practice-shell__chip">Answer type: command text</span>
+                    <span class="practice-shell__chip">Answer type: ${escapeHtml(resolveActiveAnswerType(state.submissionDraft))}</span>
                     <span class="practice-shell__chip">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</span>
                     <span class="practice-shell__chip">Attempts: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
                 </div>
                 ${renderBootstrapNotice(bootstrapState)}
                 <form class="practice-composer__form" data-submission-draft-form>
-                    <input type="hidden" name="answerType" value="command_text">
+                    <div class="practice-composer__controls">
+                        <label class="practice-select">
+                            <span class="control-label">Answer type</span>
+                            <select name="answerType"${submissionState.status === "pending" ? " disabled" : ""}>
+                                <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Command text</option>
+                                <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>File patch preview</option>
+                            </select>
+                        </label>
+                    </div>
                     <label class="practice-editor">
                         <span class="practice-editor__prompt">&gt;</span>
                         <textarea name="answer" rows="4" placeholder="Example: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
@@ -108,7 +116,11 @@ export function renderWorkspacePanel(state) {
                         <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                ${renderSubmissionTransportOutput(state.submissionDraft.preparedSubmission, submissionState)}
+                ${renderSubmissionTransportOutput(
+                    state.submissionDraft.preparedSubmission,
+                    submissionState,
+                    bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                )}
             </section>
         `
     });
@@ -239,7 +251,7 @@ function renderSessionTransportOutput(bootstrapState, lifecycle) {
             </dl>
             <p class="panel-copy">
                 Placeholder outcome: ${escapeHtml(bootstrapState.response.submission?.placeholderOutcome?.code ?? "validation-pending")}.
-                Correctness-specific rendering lands in the next task.
+                Supported answer types: ${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).join(", ") || "unknown")}.
             </p>
         </div>
     `;
@@ -279,7 +291,7 @@ function renderBootstrapNotice(bootstrapState) {
     return "";
 }
 
-function renderSubmissionTransportOutput(preparedSubmission, submissionState) {
+function renderSubmissionTransportOutput(preparedSubmission, submissionState, supportedAnswerTypes) {
     if (submissionState.status === "pending") {
         return renderSubmissionRequestBlock({
             label: "Submission transport",
@@ -317,9 +329,14 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState) {
     }
 
     if (submissionState.status === "ready" && submissionState.response) {
+        const outcome = submissionState.response.outcome ?? null;
         return `
+            ${renderCorrectnessFeedbackBlock(submissionState.response, supportedAnswerTypes)}
             <div class="practice-output practice-output--ready">
-                <span class="control-label">Submission transport</span>
+                <div class="practice-output__header">
+                    <span class="control-label">Submission receipt</span>
+                    <span class="workspace-card__badge">${escapeHtml(resolveSubmissionReceiptBadge(outcome))}</span>
+                </div>
                 <dl class="result-summary">
                     <div>
                         <dt>Submission id</dt>
@@ -341,20 +358,8 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState) {
                         <dt>Answer value</dt>
                         <dd>${escapeHtml(submissionState.response.answer?.value ?? "")}</dd>
                     </div>
-                    <div>
-                        <dt>Outcome status</dt>
-                        <dd>${escapeHtml(submissionState.response.outcome?.status ?? "unknown")}</dd>
-                    </div>
-                    <div>
-                        <dt>Outcome correctness</dt>
-                        <dd>${escapeHtml(submissionState.response.outcome?.correctness ?? "unknown")}</dd>
-                    </div>
-                    <div>
-                        <dt>Outcome code</dt>
-                        <dd>${escapeHtml(submissionState.response.outcome?.code ?? "unknown")}</dd>
-                    </div>
                 </dl>
-                <p class="panel-copy">${escapeHtml(submissionState.response.outcome?.message ?? "Correctness-specific feedback lands in the next task.")}</p>
+                <p class="panel-copy">Submission transport is complete and the evaluated outcome is rendered above.</p>
             </div>
         `;
     }
@@ -424,6 +429,51 @@ function renderPreparedPayloadSummary(preparedSubmission) {
                 <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
             </div>
         </dl>
+    `;
+}
+
+function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes) {
+    const outcome = submissionResponse?.outcome ?? null;
+    if (!outcome) {
+        return `
+            <div class="practice-output practice-output--ready">
+                <span class="control-label">Correctness feedback</span>
+                <p class="panel-copy">Submission completed, but no evaluated outcome is available yet.</p>
+            </div>
+        `;
+    }
+
+    const correctness = normalizeOutcomeCorrectness(outcome.correctness);
+    const tone = resolveOutcomeTone(correctness);
+    const supportedTypesCopy = supportedAnswerTypes.length ? supportedAnswerTypes.join(", ") : "command_text";
+
+    return `
+        <div class="practice-output practice-output--${escapeHtml(tone)}">
+            <div class="practice-output__header">
+                <span class="control-label">Correctness feedback</span>
+                <span class="workspace-card__badge">${escapeHtml(correctness)}</span>
+            </div>
+            <div class="practice-feedback">
+                <div class="practice-feedback__summary">
+                    <h4 class="practice-feedback__title">${escapeHtml(resolveOutcomeTitle(correctness))}</h4>
+                    <p class="panel-copy">${escapeHtml(outcome.message ?? "Outcome message is unavailable.")}</p>
+                </div>
+                <div class="practice-feedback__meta">
+                    <span class="practice-feedback__pill">Status: ${escapeHtml(outcome.status ?? "unknown")}</span>
+                    <span class="practice-feedback__pill">Code: ${escapeHtml(outcome.code ?? "unknown")}</span>
+                    <span class="practice-feedback__pill">Answer type: ${escapeHtml(submissionResponse.answer?.type ?? "unknown")}</span>
+                    <span class="practice-feedback__pill">Attempt: ${escapeHtml(String(submissionResponse.attemptNumber ?? "?"))}</span>
+                </div>
+                ${correctness === "unsupported" ? `
+                    <div class="practice-inline-note practice-inline-note--warning">
+                        <p class="panel-copy">
+                            This session currently supports: ${escapeHtml(supportedTypesCopy)}.
+                            Switch the answer type back to a supported value to re-submit.
+                        </p>
+                    </div>
+                ` : ""}
+            </div>
+        </div>
     `;
 }
 
@@ -499,7 +549,7 @@ function resolveDraftBadge(submissionDraft, submissionState) {
     }
 
     if (submissionState.status === "ready") {
-        return "transported";
+        return normalizeOutcomeCorrectness(submissionState.response?.outcome?.correctness);
     }
 
     if (submissionState.status === "retryable-error") {
@@ -559,7 +609,7 @@ function resolveTransportBadge(bootstrapState, submissionState) {
     }
 
     if (submissionState.status === "ready") {
-        return "submitted";
+        return normalizeOutcomeCorrectness(submissionState.response?.outcome?.correctness);
     }
 
     if (bootstrapState.status === "ready") {
@@ -579,4 +629,48 @@ function resolveTransportBadge(bootstrapState, submissionState) {
     }
 
     return "idle";
+}
+
+function resolveActiveAnswerType(submissionDraft) {
+    return submissionDraft?.answerType === "file_patch" ? "file patch preview" : "command text";
+}
+
+function resolveSelectedAnswerType(submissionDraft, value) {
+    return submissionDraft?.answerType === value ? " selected" : "";
+}
+
+function normalizeOutcomeCorrectness(correctness) {
+    return typeof correctness === "string" && correctness.trim() !== ""
+        ? correctness
+        : "submitted";
+}
+
+function resolveOutcomeTone(correctness) {
+    switch (correctness) {
+        case "correct":
+            return "correct";
+        case "incorrect":
+            return "incorrect";
+        case "unsupported":
+            return "unsupported";
+        default:
+            return "ready";
+    }
+}
+
+function resolveOutcomeTitle(correctness) {
+    switch (correctness) {
+        case "correct":
+            return "Correct next action";
+        case "incorrect":
+            return "Not the expected command";
+        case "unsupported":
+            return "Unsupported answer type";
+        default:
+            return "Submission accepted";
+    }
+}
+
+function resolveSubmissionReceiptBadge(outcome) {
+    return normalizeOutcomeCorrectness(outcome?.correctness);
 }
