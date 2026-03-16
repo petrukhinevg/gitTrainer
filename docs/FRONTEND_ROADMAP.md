@@ -1,168 +1,174 @@
-# Frontend Roadmap
+# Дорожная карта фронтенда
 
-## Goal
+## Цель
 
-The frontend must provide a focused single-page training experience where learners move from scenario selection to solving Git tasks without page reloads or context loss. It should make repository state, expected task goal, current answer, and feedback easy to compare on one screen.
+Frontend должен обеспечивать сфокусированный одностраничный учебный опыт, в котором пользователь переходит от выбора сценария к решению Git-задач без перезагрузки страницы и потери контекста. Он должен делать состояние репозитория, ожидаемую цель задачи, текущий ответ и обратную связь удобными для сравнения на одном экране.
 
-For the MVP, the frontend should enable a learner to browse exercises, enter a training session, submit an answer, and understand the result through clear feedback and progress cues.
+Для MVP frontend должен позволять пользователю просматривать упражнения, входить в тренировочную сессию, отправлять ответ и понимать результат через ясную обратную связь и подсказки по прогрессу.
 
-## Roadmap usage rules
+## Правила использования дорожной карты
 
-- Items below should be suitable for creating issues.
-- One task should produce a complete and testable frontend result.
-- If a frontend item grows too large, convert it into a `parent issue` with `sub-issues`.
-- Prefer issue sizes that can usually be implemented and reviewed in one focused PR.
-- Prefer self-contained frontend tasks that can move forward from fixtures or stable contracts without waiting on unmerged sibling frontend work.
-- The sub-issues below should stay task-ready: they should all be creatable immediately after the epic's initial baseline commit.
-- If several frontend sub-issues need the same minimal route placeholders, provider interfaces, props shapes, or fixture schemas, place that seam in the initial epic commit rather than in a child task.
-- Prefer splitting frontend work by shell or screen state, presentation surfaces, and provider or transport integration so sibling tasks can move in parallel from the same epic baseline.
-- Prefer starting an epic with only the frontend sub-issues that already have clear UI or state seams; split further later only where that improves parallelism or reviewability.
-- Prefer frontend sub-issues that align with backend sub-issues for the same epic when both sides are implementing the same learner-facing slice.
-- Frontend-only sub-issues are valid when they deliver a complete UI state, presentation surface, or interaction loop against a stable or swappable provider seam.
-- If several frontend steps are only meaningful together as one screen or one interaction loop, keep them in one broader frontend task instead of chaining sibling tasks.
+- Элементы ниже должны подходить для создания issue.
+- Одна задача должна давать законченный и проверяемый frontend-результат.
+- Если frontend-элемент становится слишком большим, превращай его в `parent issue` с `sub-issues`.
+- Предпочитай такие размеры issue, которые обычно можно реализовать и отревьюить в одном сфокусированном PR.
+- Предпочитай самодостаточные frontend-задачи, которые могут двигаться от fixtures или стабильных контрактов без ожидания невлитой sibling frontend-работы.
+- Sub-issues ниже должны оставаться task-ready: их все должно быть можно создать сразу после начального baseline commit эпика.
+- Если нескольким frontend sub-issues нужны одни и те же минимальные route placeholder, provider interface, формы props или схемы fixture, вынеси этот seam в начальный epic commit, а не в дочернюю задачу.
+- Предпочитай деление frontend-работы по shell или screen state, presentation surface, а также provider- или transport-integration, чтобы sibling tasks могли идти параллельно от одной и той же baseline эпика.
+- Начинай эпик только с тех frontend sub-issues, у которых уже есть ясные UI- или state-seam; дроби дальше позже только там, где это улучшает параллельность или reviewability.
+- Предпочитай frontend sub-issues, которые выравниваются с backend sub-issues того же эпика, если обе стороны реализуют один и тот же пользовательский срез.
+- Frontend-only sub-issues допустимы, если они дают законченное UI-state, presentation surface или interaction loop поверх стабильного либо заменяемого provider seam.
+- Если несколько frontend-шагов имеют смысл только вместе как один экран или один interaction loop, оставляй их в одной более широкой frontend-задаче вместо цепочки sibling-задач.
 
-## Base UI constraints
+## Базовые ограничения UI
 
-- application type: SPA
-- main work surface: training workspace with scenario panel, answer input area, and validation feedback panel
-- responsive targets: desktop first, usable on tablet, basic support on mobile for reading and light interaction
-- visual or accessibility constraints: keyboard-friendly input flow, high-contrast status states, no feedback conveyed by color alone, readable Git command typography
+- тип приложения: SPA
+- основная рабочая поверхность: тренировочное рабочее пространство с панелью сценария, областью ввода ответа и панелью обратной связи по валидации
+- целевая адаптивность: desktop first, пригодно для tablet, базовая поддержка mobile для чтения и лёгкого взаимодействия
+- визуальные требования и доступность: keyboard-friendly поток ввода, высококонтрастные состояния статуса, никакая обратная связь не должна передаваться только цветом, читабельная типографика для Git-команд
 
-## MVP for frontend
+## MVP для фронтенда
 
-Frontend MVP is complete when:
+Frontend MVP завершён, когда:
 
-1. the learner can browse and filter the Git exercise catalog in one SPA flow
-2. the learner can open an exercise and see task description, repository context, and answer input controls
-3. the learner can submit an answer and receive clear validation feedback without leaving the page
-4. the learner can see which exercises were completed and what to practice next
+1. пользователь может просматривать и фильтровать каталог Git-упражнений в одном SPA-потоке
+2. пользователь может открыть упражнение и увидеть описание задачи, контекст репозитория и элементы ввода ответа
+3. пользователь может отправить ответ и получить понятную обратную связь по валидации, не покидая страницу
+4. пользователь может видеть, какие упражнения завершены и что стоит практиковать дальше
 
-## Parent issues
+## Родительские задачи
 
-### Parent Issue 1. Scenario catalog browsing frontend
+### Родительская задача 1. Фронтенд для просмотра каталога сценариев
 
-Goal: provide the frontend slice needed for browsing and choosing exercises.
+Цель: предоставить frontend-срез, нужный для просмотра и выбора упражнений.
 
-#### Sub-issue 1.1. Deliver catalog route shell and swappable provider seam
+#### Подзадача 1.1. Поставить shell маршрута каталога и заменяемый provider seam
 
-Result: the frontend provides the catalog route shell, screen-level state boundary, and a swappable provider seam with local fixtures so catalog work can proceed without waiting on live backend integration.
+Результат: frontend предоставляет shell маршрута каталога, boundary состояния на уровне экрана и заменяемый provider seam с локальными fixtures, чтобы работа над каталогом могла идти без ожидания live-интеграции с backend.
 
-Pairs with backend sub-issue 1.1.
+Парная подзадача backend 1.1.
 
-#### Sub-issue 1.2. Deliver catalog query controls and browse-state handling
+#### Подзадача 1.2. Поставить элементы запроса каталога и обработку состояний просмотра
 
-Result: the frontend handles initial load, filtering, sorting, empty results, loading, and unavailable-source states through the catalog screen state model without depending on final list presentation details.
+Результат: frontend обрабатывает начальную загрузку, фильтрацию, сортировку, пустые результаты, loading и unavailable-source состояния через модель состояния экрана каталога без зависимости от финальных деталей рендеринга списка.
 
-Pairs with backend sub-issue 1.2.
+Парная подзадача backend 1.2.
 
-#### Sub-issue 1.3. Deliver catalog list rendering and entry-action presentation
+#### Подзадача 1.3. Поставить рендеринг списка каталога и представление действий входа
 
-Result: the frontend renders scenario summary cards or rows, tags, difficulty cues, and entry actions against the catalog provider seam without changing the screen state contract.
+Результат: frontend рендерит summary-карточки или строки сценариев, теги, признаки сложности и действия входа поверх provider seam каталога без изменения контракта состояния экрана.
 
-Pairs with backend sub-issue 1.3.
+Парная подзадача backend 1.3.
 
-### Parent Issue 2. Exercise context and workspace frontend
+### Родительская задача 2. Фронтенд для контекста упражнения и рабочего пространства
 
-Goal: provide the frontend slice needed to open an exercise and understand its context.
+Цель: предоставить frontend-срез, нужный для открытия упражнения и понимания его контекста.
 
-#### Sub-issue 2.1. Deliver exercise route, workspace shell, and swappable detail provider seam
+#### Подзадача 2.1. Поставить маршрут упражнения, shell рабочего пространства и заменяемый detail provider seam
 
-Result: the frontend wires exercise routing, load or error flow, and a swappable detail provider seam with local fixtures, delivering the stable workspace shell before final content rendering is complete.
+Результат: frontend подключает маршрутизацию упражнения, поток загрузки или ошибки и заменяемый detail provider seam с локальными fixtures, поставляя стабильный shell рабочего пространства до завершения финального рендеринга контента.
 
-Pairs with backend sub-issue 2.1.
+Парная подзадача backend 2.1.
 
-#### Sub-issue 2.2. Deliver task instruction and ordered-step presentation
+#### Подзадача 2.2. Поставить представление инструкций задачи и упорядоченных шагов
 
-Result: the frontend renders task goal text, instructions, ordered steps, and static workspace annotations from the workspace payload without depending on repository context visuals.
+Результат: frontend рендерит текст цели задачи, инструкции, упорядоченные шаги и статические аннотации рабочего пространства из payload рабочего пространства без зависимости от визуализации контекста репозитория.
 
-Pairs with backend sub-issue 2.2.
+Парная подзадача backend 2.2.
 
-#### Sub-issue 2.3. Deliver repository context presentation surfaces
+#### Подзадача 2.3. Поставить поверхности представления контекста репозитория
 
-Result: the frontend renders repository context cues such as branches, commits, files, and annotations using the workspace payload without redesigning the shell.
+Результат: frontend рендерит подсказки контекста репозитория, такие как ветки, коммиты, файлы и аннотации, используя payload рабочего пространства без переработки shell.
 
-Pairs with backend sub-issue 2.3.
+Парная подзадача backend 2.3.
 
-#### Sub-issue 2.4. Refactor workspace shell into a stable three-column lesson layout
+#### Подзадача 2.4. Рефакторинг shell рабочего пространства в устойчивый трёхколоночный lesson layout
 
-Result: the frontend reshapes the exercise screen into a desktop-first three-column layout with dedicated left navigation, center lesson, and right practice lanes while preserving the existing route and provider boundaries.
+Результат: frontend перестраивает экран упражнения в desktop-first трёхколоночный layout с выделенными левой навигацией, центральным lesson-блоком и правой practice-областью, сохраняя существующие границы маршрута и provider.
 
-Frontend-only follow-up task for parent issue 2 after the initial workspace shell and repository-context surfaces are already in place.
+Frontend-only follow-up задача для parent issue 2 после того, как исходный shell рабочего пространства и поверхности контекста репозитория уже на месте.
 
-#### Sub-issue 2.5. Deliver lesson-navigation rail and focused center lesson presentation
+#### Подзадача 2.5. Поставить navigation rail урока и сфокусированное представление центрального lesson
 
-Result: the frontend turns the left lane into a level or lesson navigator and focuses the center lane on the active task description so the learner can scan progression and instructions without the practice lane competing for space.
+Результат: frontend превращает левую область в навигатор уровней или уроков и фокусирует центральную область на активном описании задачи, чтобы пользователь мог сканировать прогрессию и инструкции без конкуренции с practice-областью за место.
 
-Frontend-only follow-up task for parent issue 2 that builds on the existing workspace payload and shell seams.
+Frontend-only follow-up задача для parent issue 2, которая опирается на существующие payload рабочего пространства и seam shell.
 
-### Parent Issue 3. Submission and correctness frontend
+### Родительская задача 3. Фронтенд для отправки ответа и проверки корректности
 
-Goal: provide the frontend slice needed for answer submission and first-pass correctness feedback.
+Цель: предоставить frontend-срез, нужный для отправки ответа и первичной обратной связи о корректности.
 
-#### Sub-issue 3.1. Deliver answer input shell and local draft-state flow
+#### Подзадача 3.1. Поставить shell ввода ответа и локальный поток draft-state
 
-Result: the frontend delivers answer input controls, local draft state, and submission-ready form behavior without depending on live transport or final correctness rendering.
+Результат: frontend поставляет элементы ввода ответа, локальное состояние черновика и поведение формы, готовое к отправке, без зависимости от live transport или финального рендеринга корректности.
 
-Frontend-only supporting task for parent issue 3. Backend pairing starts at transport and correctness slices in sub-issues 3.2 and 3.3.
+Frontend-only supporting task для parent issue 3. Парность с backend начинается на transport- и correctness-срезах в sub-issues 3.2 и 3.3.
 
-#### Sub-issue 3.2. Deliver submission transport integration and request-state handling
+#### Подзадача 3.2. Поставить transport integration отправки и обработку request-state
 
-Result: the frontend integrates session bootstrap and answer submission with a swappable provider, including pending, retryable request failure, and terminal request failure states.
+Результат: frontend интегрирует bootstrap сессии и отправку ответа через заменяемый provider, включая pending, retryable request failure и terminal request failure состояния.
 
-Pairs with backend sub-issue 3.3.
+Парная подзадача backend 3.3.
 
-#### Sub-issue 3.3. Deliver correctness and unsupported-answer feedback rendering
+#### Подзадача 3.3. Поставить рендеринг корректности и обратной связи для unsupported-answer
 
-Result: the frontend renders machine-readable correctness outcomes for the first MVP answer types, including correct, incorrect, and unsupported-answer cases, without changing the answer input shell.
+Результат: frontend рендерит machine-readable результаты корректности для первых MVP-типов ответов, включая корректный, некорректный и unsupported-answer случаи, не меняя shell ввода ответа.
 
-Pairs with backend sub-issue 3.2.
+Парная подзадача backend 3.2.
 
-#### Sub-issue 3.4. Refactor the right workspace lane into a practice surface with input and branch-state output
+#### Подзадача 3.4. Рефакторинг правой области рабочего пространства в practice-surface с вводом и выводом состояния веток
 
-Result: the frontend turns the right lane into a practice-focused surface that combines answer entry with visible Git branch state or execution output scaffolding, without requiring the final validation loop to be complete.
+Результат: frontend превращает правую область в поверхность, ориентированную на практику, которая объединяет ввод ответа с видимым состоянием Git-веток или каркасом вывода выполнения, без требования завершить финальный цикл валидации.
 
-Frontend-only follow-up task for parent issue 3 that extends the answer-input shell into the target practice layout.
+Frontend-only follow-up задача для parent issue 3, которая расширяет shell ввода ответа до целевого practice-layout.
 
-### Parent Issue 4. Guided retry and hints frontend
+#### Подзадача 3.5. Доработать shell рабочего пространства до непрерывных независимо прокручиваемых колонок
 
-Goal: provide the frontend slice needed for instructional retries.
+Результат: frontend перестраивает рабочее пространство упражнения в всегда видимые непрерывные колонки с независимой прокруткой, одновременно убирая общий обзорный текст из центрального потока чтения, чтобы навигация, lesson и practice-поверхности могли оставаться видимыми одновременно.
 
-#### Sub-issue 4.1. Deliver feedback panel shell and preserved exercise context state
+Frontend-only follow-up задача для parent issue 3, которая уплотняет композицию shell и размещение контента после появления первых practice-поверхностей.
 
-Result: the frontend provides the feedback panel shell and preserves active exercise context after failed submissions without depending on the final explanation or transport details.
+### Родительская задача 4. Фронтенд для управляемых повторных попыток и подсказок
 
-Pairs with backend sub-issue 4.1.
+Цель: предоставить frontend-срез, нужный для обучающих повторных попыток.
 
-#### Sub-issue 4.2. Deliver explanation rendering and progressive hint interactions
+#### Подзадача 4.1. Поставить shell панели обратной связи и сохранённое состояние контекста упражнения
 
-Result: the frontend renders instructional explanations, partial-match messaging, and progressive hint reveal behavior from payload props without changing the feedback panel shell.
+Результат: frontend предоставляет shell панели обратной связи и сохраняет контекст активного упражнения после неудачных отправок без зависимости от финальных деталей объяснений или транспорта.
 
-Pairs with backend sub-issue 4.2.
+Парная подзадача backend 4.1.
 
-#### Sub-issue 4.3. Deliver retry boundary integration and retry-state transitions
+#### Подзадача 4.2. Поставить рендеринг объяснений и прогрессивные взаимодействия с подсказками
 
-Result: the frontend wires the retry feedback boundary, handles retry-state transitions, and synchronizes hint level or retry eligibility with the existing feedback panel.
+Результат: frontend рендерит обучающие объяснения, сообщения о частичном совпадении и поведение постепенного раскрытия подсказок из props payload, не меняя shell панели обратной связи.
 
-Pairs with backend sub-issue 4.3.
+Парная подзадача backend 4.2.
 
-### Parent Issue 5. Progress and next-step guidance frontend
+#### Подзадача 4.3. Поставить integration retry boundary и переходы retry-state
 
-Goal: provide the frontend slice needed for visible progress and sensible follow-up guidance.
+Результат: frontend подключает boundary обратной связи для retry, обрабатывает переходы retry-state и синхронизирует уровень подсказки или допустимость повторной попытки с существующей панелью обратной связи.
 
-#### Sub-issue 5.1. Deliver progress surface shell and status marker components
+Парная подзадача backend 4.3.
 
-Result: the frontend delivers progress surfaces, completion markers, in-progress indicators, and recent-activity component states against local props or fixture data without depending on final provider integration.
+### Родительская задача 5. Фронтенд для прогресса и подсказок следующего шага
 
-Frontend-only supporting task for parent issue 5. Backend pairing starts at summary and recommendation slices in sub-issues 5.2 and 5.3.
+Цель: предоставить frontend-срез, нужный для видимого прогресса и разумных рекомендаций по продолжению.
 
-#### Sub-issue 5.2. Deliver progress summary integration and activity-state handling
+#### Подзадача 5.1. Поставить shell поверхности прогресса и компоненты маркеров статуса
 
-Result: the frontend consumes the progress summary boundary through a swappable provider seam and handles loading, empty, and unavailable progress states without redesigning the progress surface.
+Результат: frontend поставляет поверхности прогресса, маркеры завершения, индикаторы in-progress и состояния компонентов недавней активности поверх локальных props или fixture-данных без зависимости от финальной provider-integration.
 
-Pairs with backend sub-issue 5.2.
+Frontend-only supporting task для parent issue 5. Парность с backend начинается на summary- и recommendation-срезах в sub-issues 5.2 и 5.3.
 
-#### Sub-issue 5.3. Deliver recommendation presentation and follow-up guidance UX
+#### Подзадача 5.2. Поставить integration summary прогресса и обработку activity-state
 
-Result: the frontend presents next-step recommendations, solved-versus-next distinctions, and follow-up guidance actions using the recommendation payload without redesigning the progress surface.
+Результат: frontend потребляет boundary summary прогресса через заменяемый provider seam и обрабатывает loading, empty и unavailable состояния прогресса без переработки поверхности прогресса.
 
-Pairs with backend sub-issue 5.3.
+Парная подзадача backend 5.2.
+
+#### Подзадача 5.3. Поставить представление рекомендаций и UX следующего шага
+
+Результат: frontend показывает рекомендации по следующему шагу, различия между решёнными и следующими упражнениями и действия follow-up guidance, используя recommendation payload без переработки поверхности прогресса.
+
+Парная подзадача backend 5.3.

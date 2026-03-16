@@ -1,106 +1,106 @@
-# Roadmap
+# Дорожная карта
 
-## Goal
+## Цель
 
-The product is a single-page web application for practicing Git through short, structured exercises. A learner should be able to open the app, choose a scenario such as branching, rebasing, conflict resolution, or history cleanup, and work through a guided task with immediate validation.
+Продукт представляет собой одностраничное веб-приложение для практики Git через короткие структурированные упражнения. Пользователь должен иметь возможность открыть приложение, выбрать сценарий вроде ветвления, rebase, разрешения конфликтов или очистки истории и пройти управляемое задание с мгновенной проверкой.
 
-The main user problem is the gap between reading Git theory and confidently using commands in context. The MVP should focus on practical repetition: clear tasks, observable repository state, answer validation, and explanations that help the learner understand mistakes.
+Главная пользовательская проблема — разрыв между чтением теории по Git и уверенным использованием команд по месту. MVP должен сосредоточиться на практическом повторении: понятные задания, наблюдаемое состояние репозитория, валидация ответа и объяснения, которые помогают понять ошибки.
 
-## Roadmap usage rules
+## Правила использования дорожной карты
 
-- This roadmap should describe product-level `parent issues` only.
-- Do not use this file as the direct source for implementation-sized tasks.
-- One parent issue may include backend work, frontend work, or both.
-- Detailed implementation tasks belong in the side-specific roadmaps.
-- Prefer parent issues that describe one learner-visible vertical slice or one planning block with clear boundaries.
-- Child tasks inside one parent issue must stay independently implementable from the parent baseline.
-- Keep the side-specific roadmaps in a task-ready state so all listed child tasks can be created immediately once the epic branch and its initial baseline commit exist.
-- If several child tasks need the same minimal seam such as DTO skeletons, provider interfaces, route placeholders, or fixture schemas, put that seam into the initial epic commit instead of assigning it to one child task.
-- Prefer decomposition by stable seams such as shell, content or policy, and rendering or integration rather than by a strict "first contract, then everything else" sequence.
-- Start with coarse child-task decomposition and refine it only when later task splits improve parallel work, reduce blocking, or create cleaner review units.
-- If a live hookup or sequencing step would require code from an unfinished sibling task, move that step into a separate follow-up task or a separate parent issue instead of chaining child tasks.
+- Этот roadmap должен описывать только product-level `parent issues`.
+- Не используй этот файл как прямой источник задач размера реализации.
+- Один parent issue может включать backend-работу, frontend-работу или обе стороны сразу.
+- Детализированные implementation-задачи должны жить в side-specific roadmap.
+- Предпочитай parent issues, которые описывают один заметный пользователю вертикальный срез или один блок планирования с ясными границами.
+- Child tasks внутри одного parent issue должны оставаться независимо реализуемыми от базовой линии parent.
+- Держи side-specific roadmap в task-ready состоянии, чтобы все перечисленные дочерние задачи можно было создать сразу после появления epic branch и её начального baseline commit.
+- Если нескольким child tasks нужен один и тот же минимальный seam, например DTO skeleton, provider interface, route placeholder или fixture schema, вынеси этот seam в начальный epic commit, а не отдавай его одной дочерней задаче.
+- Предпочитай декомпозицию по стабильным seam, таким как shell или boundary, content или policy, а также rendering или integration, вместо жёсткой последовательности "сначала контракт, потом всё остальное".
+- Начинай с грубой декомпозиции child tasks и уточняй её позже только тогда, когда дальнейшее деление улучшает параллельную работу, уменьшает блокировки или создаёт более чистые единицы review.
+- Если для live-hookup или sequencing step понадобился бы код из незавершённой sibling task, выноси этот шаг в отдельную follow-up задачу или отдельный parent issue вместо сцепления child tasks в цепочку.
 
-## Roadmap structure
+## Структура дорожной карты
 
-This project keeps shared scope in this file and uses side-specific breakdowns in:
+Этот проект хранит общие рамки в этом файле, а детализацию по сторонам — в:
 
 - `docs/BACKEND_ROADMAP.md`
 - `docs/FRONTEND_ROADMAP.md`
 
-## MVP definition
+## Определение MVP
 
-The MVP is complete when:
+MVP завершён, когда:
 
-1. a learner can open the app and choose from a small catalog of Git training scenarios
-2. a learner can complete an exercise by entering or selecting Git actions in a guided workspace
-3. the system validates the attempt and explains why the answer is correct or incorrect
-4. the app records progress so the learner can see completed exercises and return for more practice
+1. пользователь может открыть приложение и выбрать один из небольшого каталога Git-тренировок
+2. пользователь может пройти упражнение, вводя или выбирая Git-действия в управляемом рабочем пространстве
+3. система проверяет попытку и объясняет, почему ответ правильный или неправильный
+4. приложение сохраняет прогресс, чтобы пользователь видел завершённые упражнения и мог возвращаться за новой практикой
 
-## How to use in the tracker
+## Как использовать в трекере
 
-- Create parent issues from this file when the work describes one meaningful product block.
-- If a parent issue spans multiple technical sides, decompose it into side-specific tasks in the relevant roadmaps.
-- If a parent issue affects only one side, keep the detailed task breakdown only in that side's roadmap.
-- Before creating child tasks, make the initial epic commit carry only the shared baseline seams that every child task needs in order to branch independently.
-- When backend and frontend work describe the same learner-facing slice but remain independently implementable, keep them under the same parent issue and pair them through the project field `Pairs with`.
-- Prefer side-specific task sets that can be paired by functional slice so the epic can close with backend and frontend mutually complete for the same behavior when both sides are involved.
-- Independent backend-only or frontend-only tasks are also valid when they deliver a complete result without depending on unfinished sibling work.
-- Do not force one-to-one pairing when one side has legitimate standalone work such as content modeling, policy definition, state handling, or presentation-only improvements.
-- Keep the current queue and status mapping aligned with `docs/BOARD.md`.
+- Создавай parent issues из этого файла, когда работа описывает один значимый продуктовый блок.
+- Если parent issue затрагивает несколько технических сторон, декомпозируй его в side-specific задачи в соответствующих roadmap.
+- Если parent issue относится только к одной стороне, держи детальную декомпозицию задач только в roadmap этой стороны.
+- Перед созданием child tasks сделай так, чтобы initial epic commit содержал только те общие baseline-seam, которые нужны всем дочерним задачам для независимого ветвления.
+- Когда backend- и frontend-работа описывают один пользовательский срез, но остаются независимо реализуемыми, держи их в одном parent issue и связывай через поле проекта `Pairs with`.
+- Предпочитай side-specific наборы задач, которые можно спарить по функциональному срезу, чтобы эпик закрывался взаимно завершённым backend и frontend для одного и того же поведения, когда участвуют обе стороны.
+- Независимые backend-only и frontend-only задачи тоже допустимы, если они дают законченный результат и не зависят от незавершённой sibling work.
+- Не заставляй все задачи иметь строгое one-to-one pairing, если у одной из сторон есть оправданная самостоятельная работа, например моделирование контента, определение policy, обработка state или presentation-only улучшения.
+- Держи текущую очередь и соответствие статусов синхронизированными с `docs/BOARD.md`.
 
-## Parent issues
+## Родительские задачи
 
-### Parent Issue 1. Scenario catalog browsing MVP
+### Родительская задача 1. MVP просмотра каталога сценариев
 
-Goal: let the learner browse a small catalog of Git exercises and choose one to open.
+Цель: дать пользователю возможность просматривать небольшой каталог Git-упражнений и выбирать одно из них для открытия.
 
-Includes work such as:
+Включает такие работы, как:
 
-- delivering scenario summary data for the first MVP exercises
-- exposing an initial catalog from backend or local fixtures
-- rendering the catalog list, filters, and entry actions
-- handling loading, empty, and error states for catalog browsing
+- поставка summary-данных по сценариям для первых MVP-упражнений
+- публикация начального каталога из backend или локальных fixtures
+- рендеринг списка каталога, фильтров и действий входа
+- обработка состояний загрузки, пустого результата и ошибок при просмотре каталога
 
-### Parent Issue 2. Exercise context and workspace MVP
+### Родительская задача 2. MVP контекста упражнения и рабочего пространства
 
-Goal: let the learner open one exercise and understand the task, repository situation, and expected target before answering.
+Цель: дать пользователю возможность открыть упражнение и понять задачу, ситуацию в репозитории и ожидаемую цель до отправки ответа.
 
-Includes work such as:
+Включает такие работы, как:
 
-- delivering scenario detail payloads and repository context
-- rendering task instructions, step content, and repository cues
-- wiring the exercise route and workspace shell
-- keeping the exercise screen understandable before validation is added
+- поставка detail payload сценария и контекста репозитория
+- рендеринг инструкций, контента шагов и подсказок по репозиторию
+- подключение маршрута упражнения и shell рабочего пространства
+- поддержание понятности экрана упражнения до добавления валидации
 
-### Parent Issue 3. Submission and correctness MVP
+### Родительская задача 3. MVP отправки ответа и проверки корректности
 
-Goal: let the learner submit an answer and receive an immediate correctness result.
+Цель: дать пользователю возможность отправить ответ и сразу получить результат о корректности.
 
-Includes work such as:
+Включает такие работы, как:
 
-- starting an exercise session and accepting learner submissions
-- validating the first supported answer types
-- rendering answer input, pending states, and correctness feedback
-- returning machine-readable validation outcomes that the UI can present clearly
+- запуск сессии упражнения и приём пользовательских отправок
+- валидацию первых поддержанных типов ответов
+- рендеринг ввода ответа, pending-состояний и обратной связи о корректности
+- возврат machine-readable результатов валидации, которые UI может ясно показать
 
-### Parent Issue 4. Guided retry and hints MVP
+### Родительская задача 4. MVP управляемых повторных попыток и подсказок
 
-Goal: help the learner recover from mistakes without losing context.
+Цель: помочь пользователю восстановиться после ошибки, не теряя контекст.
 
-Includes work such as:
+Включает такие работы, как:
 
-- returning explanations for incorrect or partial answers
-- preserving exercise context across retries
-- revealing stronger hints after repeated failures
-- making the retry loop instructional instead of binary
+- возврат объяснений для неправильных или частично правильных ответов
+- сохранение контекста упражнения между повторными попытками
+- показ более сильных подсказок после повторяющихся ошибок
+- превращение цикла повторной попытки в обучающий процесс, а не в бинарную проверку
 
-### Parent Issue 5. Progress and next-step guidance MVP
+### Родительская задача 5. MVP прогресса и подсказок по следующему шагу
 
-Goal: make repeat practice visible so the learner can track progress and choose what to do next.
+Цель: сделать повторную практику заметной, чтобы пользователь мог отслеживать прогресс и понимать, что делать дальше.
 
-Includes work such as:
+Включает такие работы, как:
 
-- storing attempt outcomes and completion state
-- presenting solved and in-progress exercises
-- summarizing learner progress over time
-- recommending sensible next exercises
+- сохранение результатов попыток и состояния завершения
+- отображение решённых и незавершённых упражнений
+- сводку прогресса пользователя во времени
+- рекомендации по разумным следующим упражнениям

@@ -1,52 +1,57 @@
-# Repository Agent Instructions
+# Инструкции для агента репозитория
 
-This file contains repository-wide operating rules. For every new chat, start with `LOCAL_AGENT_START.md`; it provides the fast bootstrap and routes you to the right project documents.
+Этот файл содержит общие правила работы в репозитории. В каждом новом чате начинай с `LOCAL_AGENT_START.md`: он даёт быстрый bootstrap и подсказывает, какие документы нужны для текущей задачи.
 
-## New Chat Bootstrap
+## Старт нового чата
 
-1. Read `LOCAL_AGENT_START.md`.
-2. Follow the session routing in that file and open only the documents needed for the current task.
-3. Return to this file for repository rules, local credential handling, and agent-specific execution constraints.
+0. Всегда отвечай и работай только на русском языке
+1. Прочитай `LOCAL_AGENT_START.md`.
+2. Следуй маршрутизации сессии из этого файла и открывай только те документы, которые действительно нужны для текущей задачи.
+3. Вернись к этому файлу за правилами работы в репозитории, инструкциями по локальным доступам и ограничениями на действия агента.
 
-## Local Files And Credentials
+## Локальные файлы и доступы
 
-- Do not commit `LOCAL_AGENT_START.md` or `.env`.
-- Use `GIT_USERNAME` and `GIT_TOKEN` for git and remote platform actions if authenticated operations are needed.
-- Use admin credentials only for owner-level repository actions.
-- Do not rely on password auth unless explicitly required.
-- Check `.env` only when the task needs local credentials or tokens.
+- Не коммить `LOCAL_AGENT_START.md` и `.env`.
+- Используй `GIT_USERNAME` и `GIT_TOKEN` для git-действий и операций с удалённой платформой, если нужны аутентифицированные действия.
+- Админские доступы используй только для owner-level операций над репозиторием.
+- Не полагайся на парольную аутентификацию, если этого явно не требуют.
+- Проверяй `.env` только тогда, когда задаче действительно нужны локальные доступы или токены.
 
-## Workflow Pointers
+## Подсказки по процессу
 
-- Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
-- Reuse the command examples in `docs/TRACKER_WORKFLOW.md` for `gh`, linked branches, GraphQL issue/PR linkage, and epic-based PR flow instead of re-deriving those API calls each time.
-- If a task uncovers stable `gh` commands, API queries, GraphQL mutations, or other repeatable operational notes that would otherwise force another documentation search later, add them to the relevant repository instructions before finishing the task.
-- Work in the single local repository directory by default. Do not create alternate local project folders or `git worktree` checkouts for tasks unless the user explicitly asks for that setup.
-- Do not push to `origin` during active implementation unless the user explicitly asks for it.
-- When a task is moved to `Review`, push the task branch, create or update its PR, and verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
-- Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
-- After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
-- After the initial epic commit exists, create the child task branches for the epic's current sub-issues immediately from that updated epic branch head.
-- When working inside an epic, always branch each child task from the epic branch itself, never from another child task branch.
-- Do not move `main` or the epic branch forward locally just to continue development on later child tasks.
-- Merging a child task branch into its epic branch is allowed when further development is genuinely blocked without that integration.
-- Keep review fixes in the same task branch. Do not create a separate review-fix branch.
-- When needed, add one follow-up commit with a `review fix` postfix.
-- The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
-- When creating child task branches, also create or register the matching linked branch for the issue so GitHub can populate `Linked pull requests` automatically.
+- Используй `docs/TRACKER_WORKFLOW.md` как единый источник истины для декомпозиции задач, потока веток, PR-flow, состояний доски, работы с WIP дочерних задач и момента merge.
+- Переиспользуй примеры команд из `docs/TRACKER_WORKFLOW.md` для `gh`, linked branches, привязки issue/PR через GraphQL и epic-based PR flow вместо того, чтобы каждый раз собирать эти API-вызовы заново.
+- Если в ходе задачи обнаружились стабильные `gh`-команды, API-запросы, GraphQL mutation или другие повторяемые операционные заметки, которые позже снова потребуют поиска по документации, добавь их в соответствующие инструкции репозитория до завершения работы.
+- По умолчанию работай только в текущем локальном каталоге репозитория.
+- Не создавай и не переключайся на альтернативные локальные папки проекта, соседние клоны репозитория или `git worktree`, если пользователь явно не попросил такой режим.
+- Если на диске уже есть другие локальные копии, игнорируй их и продолжай работу в текущем каталоге репозитория, если пользователь явно не указал иное.
+- Не делай push в `origin` во время активной реализации, если пользователь явно этого не попросил.
+- Когда задача переводится в `Review`, запушь ветку задачи, создай или обнови её PR и проверь, что PR виден в поле проекта `Linked pull requests`, прежде чем считать передачу в review завершённой.
+- Для PR, которые нацелены на epic branch вместо `main`, не полагайся только на автоматическую привязку. Если после создания PR поле `Linked pull requests` всё ещё пустое, вручную заверши привязку issue/PR до завершения handoff.
+- Используй формат коммита из `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` для основного implementation commit задачи.
+- После создания epic branch сделай начальный epic commit в этой ветке до создания любых дочерних task branches.
+- После появления начального epic commit сразу создай дочерние task branches для текущих sub-issues этого эпика от обновлённой головы epic branch.
+- При работе внутри эпика всегда ответвляй каждую дочернюю задачу непосредственно от epic branch, а не от другой child task branch.
+- Не продвигай локально `main` или epic branch только ради продолжения разработки следующих дочерних задач.
+- Merge дочерней task branch в epic branch допустим, когда без этой интеграции дальнейшая разработка действительно заблокирована.
+- Исправления по review оставляй в той же task branch. Не создавай отдельную review-fix branch.
+- При необходимости добавляй один дополнительный commit с суффиксом `review fix`.
+- Текущее поле проекта для видимости PR — `Linked pull requests`. Не создавай кастомную замену этому полю, если настройка проекта не изменилась.
+- При создании дочерних task branches также создавай или регистрируй соответствующую linked branch для issue, чтобы GitHub мог автоматически заполнить `Linked pull requests`.
+- Не оставляй задачу в состоянии, где PR уже существует, а на доске всё ещё висит placeholder-ссылка; исправляй привязку в рамках того же handoff.
 
-## Validation Before Push
+## Проверки перед отправкой
 
-- Before each `git push`, run `./gradlew check`.
-- If backend code changed, prefer `./gradlew test`.
-- If a future `frontend/` directory exists and frontend code changed, run that app's production build command inside `frontend/` before push.
+- Перед каждым `git push` запускай `./gradlew check`.
+- Если изменялся backend-код, по возможности запускай `./gradlew test`.
+- Если в будущем появится каталог `frontend/` и изменялся frontend-код, перед push запускай production build этой части внутри `frontend/`.
 
-## Scope And Change Hygiene
+## Границы изменений и гигиена правок
 
-- If local changes are already large, or work is switching to another task, commit the current logical unit first.
-- Keep commits scoped: do not split one task into noisy micro-commits, but do not batch unrelated work together.
-- For larger changes, prefer clear package boundaries and simple extensible structure.
-- Keep business logic for Git training scenarios, validation, hints, and progress tracking inside capability packages named after the actual domain area instead of generic shared buckets.
-- Use `docs/ARCHITECTURE.md` for backend/frontend boundaries.
-- Use the roadmap documents as a source for new issues.
-- If the requested change is not described there yet, update roadmap or board notes before starting large implementation work.
+- Если локальные изменения уже разрослись или работа переключается на другую задачу, сначала закоммить текущую логическую единицу.
+- Держи коммиты сфокусированными: не дроби одну задачу на шумные микрокоммиты, но и не смешивай в одном коммите несвязанные изменения.
+- Для крупных изменений предпочитай чёткие границы пакетов и простую расширяемую структуру.
+- Держи бизнес-логику для тренировочных Git-сценариев, валидации, подсказок и отслеживания прогресса внутри capability-пакетов, названных по реальной предметной области, а не в общих shared bucket.
+- Используй `docs/ARCHITECTURE.md` для границ backend/frontend.
+- Используй roadmap-документы как источник новых issue.
+- Если запрошенное изменение там ещё не описано, сначала обнови roadmap или заметки по board, а уже потом начинай крупную реализацию.
