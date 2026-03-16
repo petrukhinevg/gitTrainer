@@ -52,7 +52,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.submission.placeholderOutcome.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.correctness").value("not-evaluated"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("awaiting-first-submission"))
-                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."));
+                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."));
     }
 
     @Test

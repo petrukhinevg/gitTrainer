@@ -57,4 +57,16 @@ class FixtureSubmissionAnswerValidatorTest {
         assertEquals("unsupported", outcome.correctness());
         assertEquals("unsupported-answer-type", outcome.code());
     }
+
+    @Test
+    void marksUnknownScenarioRuleAsMissing() {
+        SubmissionOutcome outcome = validator.validate(
+                "unknown-scenario",
+                new SubmittedAnswer("command_text", "git status")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("incorrect", outcome.correctness());
+        assertEquals("validation-rule-missing", outcome.code());
+    }
 }

@@ -12,7 +12,7 @@ public record SubmissionOutcome(
                 "placeholder",
                 "not-evaluated",
                 "awaiting-first-submission",
-                "Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."
+                "Session transport is ready. Submit the first answer to receive an evaluated result immediately."
         );
     }
 

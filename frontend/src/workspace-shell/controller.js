@@ -241,6 +241,7 @@ export function createCatalogWorkspaceController({
         const form = document.querySelector("[data-submission-draft-form]");
         if (form) {
             form.addEventListener("input", handleSubmissionDraftInput);
+            form.addEventListener("change", handleSubmissionDraftInput);
             form.addEventListener("submit", (event) => {
                 void handleSubmissionDraftSubmit(event);
             });
@@ -388,10 +389,11 @@ export function createCatalogWorkspaceController({
                 return;
             }
 
+            const normalizedFailure = normalizeTransportFailure(error, "Session bootstrap failed.");
             state.session.bootstrap = {
-                status: `${normalizeTransportFailure(error, "Session bootstrap failed.").failureKind}-error`,
+                status: `${normalizedFailure.failureKind}-error`,
                 response: null,
-                error: normalizeTransportFailure(error, "Session bootstrap failed."),
+                error: normalizedFailure,
                 scenarioSlug
             };
         }
@@ -461,10 +463,11 @@ export function createCatalogWorkspaceController({
                 return;
             }
 
+            const normalizedFailure = normalizeTransportFailure(error, "Answer submission failed.");
             state.session.submission = {
-                status: `${normalizeTransportFailure(error, "Answer submission failed.").failureKind}-error`,
+                status: `${normalizedFailure.failureKind}-error`,
                 response: null,
-                error: normalizeTransportFailure(error, "Answer submission failed."),
+                error: normalizedFailure,
                 lastPayload: preparedSubmission
             };
         }
@@ -865,7 +868,12 @@ function createInitialSubmissionRequestState() {
 
 function normalizeTransportFailure(error, fallbackMessage) {
     if (error instanceof SessionTransportError) {
-        const failureKind = error.failureKind === "terminal" ? "terminal" : "retryable";
+        const failureKind = resolveFailureKind({
+            failureDisposition: error.failureDisposition,
+            retryable: error.retryable,
+            failureKind: error.failureKind,
+            status: error.status
+        });
         return {
             failureKind,
             failureDisposition: error.failureDisposition ?? failureKind,
@@ -901,6 +909,26 @@ function normalizeTransportFailure(error, fallbackMessage) {
         message: fallbackMessage,
         status: null
     };
+}
+
+function resolveFailureKind({ failureDisposition, retryable, failureKind, status }) {
+    if (failureDisposition === "terminal" || failureDisposition === "retryable") {
+        return failureDisposition;
+    }
+
+    if (typeof retryable === "boolean") {
+        return retryable ? "retryable" : "terminal";
+    }
+
+    if (failureKind === "terminal" || failureKind === "retryable") {
+        return failureKind;
+    }
+
+    if (status === 408 || status === 425 || status === 429 || status >= 500) {
+        return "retryable";
+    }
+
+    return "terminal";
 }
 
 function measureNaturalNavigationWidth(navigationLane) {

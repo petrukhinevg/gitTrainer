@@ -1,0 +1,22 @@
+{
+  "status-basics": [
+    "git status",
+    "git status --short",
+    "git status -sb"
+  ],
+  "branch-safety": [
+    "git branch --show-current",
+    "git status -sb",
+    "git status --short -b"
+  ],
+  "history-cleanup-preview": [
+    "git log --oneline --decorate",
+    "git log --oneline --graph --decorate",
+    "git log --graph --oneline --decorate"
+  ],
+  "remote-sync-preview": [
+    "git fetch",
+    "git fetch origin",
+    "git fetch --all --prune"
+  ]
+}

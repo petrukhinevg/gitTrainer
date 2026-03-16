@@ -1,28 +1,15 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
+import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json";
 
 const SUPPORTED_ANSWER_TYPES = Object.freeze(["command_text"]);
-const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze({
-    "status-basics": Object.freeze([
-        "git status",
-        "git status --short",
-        "git status -sb"
-    ]),
-    "branch-safety": Object.freeze([
-        "git branch --show-current",
-        "git status -sb",
-        "git status --short -b"
-    ]),
-    "history-cleanup-preview": Object.freeze([
-        "git log --oneline --decorate",
-        "git log --oneline --graph --decorate",
-        "git log --graph --oneline --decorate"
-    ]),
-    "remote-sync-preview": Object.freeze([
-        "git fetch",
-        "git fetch origin",
-        "git fetch --all --prune"
-    ])
-});
+const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze(
+    Object.fromEntries(
+        Object.entries(acceptedCommandsByScenario).map(([scenarioSlug, commands]) => [
+            scenarioSlug,
+            Object.freeze(Array.isArray(commands) ? [...commands] : [])
+        ])
+    )
+);
 
 export class SessionTransportError extends Error {
     constructor(
@@ -100,7 +87,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         status: "placeholder",
                         correctness: "not-evaluated",
                         code: "awaiting-first-submission",
-                        message: "Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."
+                        message: "Session transport is ready. Submit the first answer to receive an evaluated result immediately."
                     }
                 }
             };
@@ -220,11 +207,12 @@ async function postJson(fetchImpl, path, payload) {
 async function resolveSessionTransportError(response) {
     const problem = await readProblemPayload(response);
     const message = resolveTransportErrorMessage(response.status, problem);
+    const failurePolicy = resolveFailurePolicy(response.status, problem);
     return new SessionTransportError(message, {
-        failureKind: classifyFailureKind(response.status, problem),
+        failureKind: failurePolicy.failureKind,
         status: response.status,
-        failureDisposition: problem?.failureDisposition,
-        retryable: problem?.retryable,
+        failureDisposition: failurePolicy.failureDisposition,
+        retryable: failurePolicy.retryable,
         code: problem?.code,
         requestedAnswerType: problem?.requestedAnswerType,
         supportedAnswerTypes: problem?.supportedAnswerTypes
@@ -256,20 +244,37 @@ function resolveTransportErrorMessage(status, problem) {
     return `Session request failed with status ${status}`;
 }
 
-function classifyFailureKind(status, problem) {
-    if (problem?.failureDisposition === "terminal" || problem?.retryable === false) {
-        return "terminal";
+function resolveFailurePolicy(status, problem) {
+    const failureDisposition = normalizeFailureDisposition(problem?.failureDisposition);
+    if (failureDisposition) {
+        return {
+            failureKind: failureDisposition,
+            failureDisposition,
+            retryable: failureDisposition === "retryable"
+        };
     }
 
-    if (problem?.failureDisposition === "retryable" || problem?.retryable === true) {
-        return "retryable";
+    if (typeof problem?.retryable === "boolean") {
+        return {
+            failureKind: problem.retryable ? "retryable" : "terminal",
+            failureDisposition: problem.retryable ? "retryable" : "terminal",
+            retryable: problem.retryable
+        };
     }
 
     if (status === 408 || status === 425 || status === 429 || status >= 500) {
-        return "retryable";
+        return {
+            failureKind: "retryable",
+            failureDisposition: "retryable",
+            retryable: true
+        };
     }
 
-    return "terminal";
+    return {
+        failureKind: "terminal",
+        failureDisposition: "terminal",
+        retryable: false
+    };
 }
 
 function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
@@ -282,7 +287,16 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         };
     }
 
-    const acceptedCommands = ACCEPTED_COMMANDS_BY_SCENARIO[scenarioSlug] ?? [];
+    const acceptedCommands = ACCEPTED_COMMANDS_BY_SCENARIO[scenarioSlug];
+    if (!acceptedCommands?.length) {
+        return {
+            status: "evaluated",
+            correctness: "incorrect",
+            code: "validation-rule-missing",
+            message: "No validation rule is available for the active scenario yet."
+        };
+    }
+
     const normalizedAnswer = normalizeCommand(answer);
     if (acceptedCommands.some((expectedCommand) => normalizeCommand(expectedCommand) === normalizedAnswer)) {
         return {
@@ -329,4 +343,8 @@ function normalizeCommand(command) {
         .trim()
         .replace(/\s+/g, " ")
         .toLowerCase();
+}
+
+function normalizeFailureDisposition(value) {
+    return value === "retryable" || value === "terminal" ? value : null;
 }
