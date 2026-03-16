@@ -1,3 +1,4 @@
+import { SessionTransportError } from "../session/session-provider.js";
 import { renderCatalogWorkspace } from "./view.js";
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
@@ -8,7 +9,13 @@ const DEFAULT_QUERY = Object.freeze({
     sort: null
 });
 
-export function createCatalogWorkspaceController({ appRoot, catalogProviderFactories, detailProviderFactories, tagOptions }) {
+export function createCatalogWorkspaceController({
+    appRoot,
+    catalogProviderFactories,
+    detailProviderFactories,
+    sessionProviderFactories,
+    tagOptions
+}) {
     const state = {
         route: "catalog",
         selectedScenarioSlug: null,
@@ -16,6 +23,7 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
         expandedScenarioSlugs: [],
         providerName: DEFAULT_PROVIDER_NAME,
         submissionDraft: createInitialSubmissionDraftState(),
+        session: createInitialSessionState(),
         query: cloneQuery(DEFAULT_QUERY),
         catalog: {
             status: "idle",
@@ -34,7 +42,10 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
     let latestCatalogRequestId = 0;
     let latestDetailRequestId = 0;
+    let latestSessionBootstrapRequestId = 0;
+    let latestSubmissionRequestId = 0;
     const detailLoadTasks = new Map();
+    const sessionProviders = new Map();
     let navigationAnimationInProgress = false;
 
     async function bootstrap() {
@@ -50,14 +61,24 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
     }
 
     async function handleRouteChange() {
+        const previousRoute = state.route;
+        const previousScenarioSlug = state.selectedScenarioSlug;
+        const previousProviderName = state.providerName;
         const route = parseRoute(window.location.hash);
+
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
         state.selectedFocus = route.focus;
+
         if (route.name === "exercise" && route.scenarioSlug) {
             expandScenario(route.scenarioSlug, { loadDetail: false });
         }
-        resetRouteScopedState();
+
+        resetRouteScopedState({
+            previousRoute,
+            previousScenarioSlug,
+            previousProviderName
+        });
         render();
 
         if (state.route === "not-found") {
@@ -66,7 +87,8 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
         await Promise.all([
             loadCatalog(),
-            state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve()
+            state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve(),
+            state.route === "exercise" ? ensureExerciseSession() : Promise.resolve()
         ]);
     }
 
@@ -217,13 +239,33 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
 
     function bindPracticeSurfaceControls() {
         const form = document.querySelector("[data-submission-draft-form]");
-        if (!form) {
-            return;
+        if (form) {
+            form.addEventListener("input", handleSubmissionDraftInput);
+            form.addEventListener("submit", (event) => {
+                void handleSubmissionDraftSubmit(event);
+            });
+            form.querySelector("[data-reset-submission-draft]")?.addEventListener("click", resetSubmissionDraft);
         }
 
-        form.addEventListener("input", handleSubmissionDraftInput);
-        form.addEventListener("submit", handleSubmissionDraftSubmit);
-        form.querySelector("[data-reset-submission-draft]")?.addEventListener("click", resetSubmissionDraft);
+        document.querySelectorAll("[data-session-request-retry]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const target = button.dataset.sessionRequestRetry;
+                if (target === "bootstrap") {
+                    void ensureExerciseSession({ force: true });
+                    return;
+                }
+
+                if (target === "submission") {
+                    void retryLastSubmission();
+                }
+            });
+        });
+
+        document.querySelectorAll("[data-session-request-restart]").forEach((button) => {
+            button.addEventListener("click", () => {
+                void restartExerciseSession();
+            });
+        });
     }
 
     function handleSubmissionDraftInput(event) {
@@ -241,11 +283,16 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             || preparedSubmission.answer !== nextAnswer.trim()
         )) {
             state.submissionDraft.preparedSubmission = null;
+            resetSubmissionRequestState();
         }
     }
 
-    function handleSubmissionDraftSubmit(event) {
+    async function handleSubmissionDraftSubmit(event) {
         event.preventDefault();
+
+        if (state.session.submission.status === "pending" || state.session.bootstrap.status === "pending") {
+            return;
+        }
 
         const formData = new FormData(event.currentTarget);
         const answer = String(formData.get("answer") ?? "").trim();
@@ -256,32 +303,218 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             return;
         }
 
-        state.submissionDraft.answerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
-        state.submissionDraft.answer = String(formData.get("answer") ?? "");
-        state.submissionDraft.validationError = null;
-        state.submissionDraft.preparedSubmission = {
+        const preparedSubmission = {
             scenarioSlug: state.selectedScenarioSlug,
-            answerType: state.submissionDraft.answerType,
+            answerType: normalizeOptionalValue(formData.get("answerType")) ?? "command_text",
             answer,
             preparedAt: new Date().toISOString()
         };
+
+        state.submissionDraft.answerType = preparedSubmission.answerType;
+        state.submissionDraft.answer = String(formData.get("answer") ?? "");
+        state.submissionDraft.validationError = null;
+        state.submissionDraft.preparedSubmission = preparedSubmission;
         render();
+
+        if (state.session.bootstrap.status !== "ready") {
+            await ensureExerciseSession({
+                force: state.session.bootstrap.status !== "idle"
+            });
+        }
+
+        if (state.session.bootstrap.status !== "ready") {
+            return;
+        }
+
+        await submitPreparedSubmission(preparedSubmission);
     }
 
     function resetSubmissionDraft() {
         state.submissionDraft = createInitialSubmissionDraftState();
+        resetSubmissionRequestState();
         render();
+    }
+
+    async function ensureExerciseSession({ force = false } = {}) {
+        if (state.route !== "exercise" || !state.selectedScenarioSlug) {
+            return;
+        }
+
+        const scenarioSlug = state.selectedScenarioSlug;
+        const bootstrapState = state.session.bootstrap;
+
+        if (!force && bootstrapState.status === "ready" && bootstrapState.response?.scenario?.slug === scenarioSlug) {
+            return;
+        }
+
+        if (!force && bootstrapState.status === "pending" && bootstrapState.scenarioSlug === scenarioSlug) {
+            return;
+        }
+
+        const requestId = ++latestSessionBootstrapRequestId;
+        ++latestSubmissionRequestId;
+
+        state.session.bootstrap = {
+            status: "pending",
+            response: null,
+            error: null,
+            scenarioSlug
+        };
+        resetSubmissionRequestState();
+        render();
+
+        try {
+            const provider = resolveSessionProvider(state.providerName);
+            const response = await provider.startSession({
+                scenarioSlug
+            });
+            if (requestId !== latestSessionBootstrapRequestId || scenarioSlug !== state.selectedScenarioSlug) {
+                return;
+            }
+
+            state.session.bootstrap = {
+                status: "ready",
+                response,
+                error: null,
+                scenarioSlug
+            };
+            resetSubmissionRequestState();
+        } catch (error) {
+            if (requestId !== latestSessionBootstrapRequestId || scenarioSlug !== state.selectedScenarioSlug) {
+                return;
+            }
+
+            state.session.bootstrap = {
+                status: `${normalizeTransportFailure(error, "Session bootstrap failed.").failureKind}-error`,
+                response: null,
+                error: normalizeTransportFailure(error, "Session bootstrap failed."),
+                scenarioSlug
+            };
+        }
+
+        if (requestId !== latestSessionBootstrapRequestId || scenarioSlug !== state.selectedScenarioSlug) {
+            return;
+        }
+
+        render();
+    }
+
+    async function submitPreparedSubmission(preparedSubmission) {
+        if (state.session.bootstrap.status !== "ready") {
+            return;
+        }
+
+        const activeSessionId = state.session.bootstrap.response?.sessionId;
+        if (!activeSessionId) {
+            state.session.submission = {
+                status: "terminal-error",
+                response: null,
+                error: {
+                    failureKind: "terminal",
+                    message: "Session transport is missing an active session id.",
+                    status: null
+                },
+                lastPayload: preparedSubmission
+            };
+            render();
+            return;
+        }
+
+        const requestId = ++latestSubmissionRequestId;
+        state.session.submission = {
+            status: "pending",
+            response: null,
+            error: null,
+            lastPayload: preparedSubmission
+        };
+        render();
+
+        try {
+            const provider = resolveSessionProvider(state.providerName);
+            const response = await provider.submitAnswer(activeSessionId, {
+                answerType: preparedSubmission.answerType,
+                answer: preparedSubmission.answer
+            });
+            if (requestId !== latestSubmissionRequestId) {
+                return;
+            }
+
+            state.session.submission = {
+                status: "ready",
+                response,
+                error: null,
+                lastPayload: preparedSubmission
+            };
+
+            if (state.session.bootstrap.response) {
+                state.session.bootstrap.response = {
+                    ...state.session.bootstrap.response,
+                    lifecycle: response.lifecycle
+                };
+            }
+        } catch (error) {
+            if (requestId !== latestSubmissionRequestId) {
+                return;
+            }
+
+            state.session.submission = {
+                status: `${normalizeTransportFailure(error, "Answer submission failed.").failureKind}-error`,
+                response: null,
+                error: normalizeTransportFailure(error, "Answer submission failed."),
+                lastPayload: preparedSubmission
+            };
+        }
+
+        if (requestId !== latestSubmissionRequestId) {
+            return;
+        }
+
+        render();
+    }
+
+    async function retryLastSubmission() {
+        const lastPayload = state.session.submission.lastPayload ?? state.submissionDraft.preparedSubmission;
+        if (!lastPayload) {
+            return;
+        }
+
+        if (state.session.bootstrap.status !== "ready") {
+            await ensureExerciseSession({ force: true });
+            if (state.session.bootstrap.status !== "ready") {
+                return;
+            }
+        }
+
+        await submitPreparedSubmission(lastPayload);
+    }
+
+    async function restartExerciseSession() {
+        state.session = createInitialSessionState();
+        resetSubmissionRequestState();
+        render();
+        await ensureExerciseSession({ force: true });
     }
 
     async function reloadActiveRouteData() {
         await Promise.all([
             loadCatalog(),
-            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve()
+            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve(),
+            state.route === "exercise" ? ensureExerciseSession({ force: true }) : Promise.resolve()
         ]);
     }
 
-    function resetRouteScopedState() {
-        state.submissionDraft = createInitialSubmissionDraftState();
+    function resetRouteScopedState({ previousRoute, previousScenarioSlug, previousProviderName }) {
+        const sameExerciseScenario = previousRoute === "exercise"
+            && state.route === "exercise"
+            && previousScenarioSlug === state.selectedScenarioSlug
+            && previousProviderName === state.providerName;
+
+        if (!sameExerciseScenario) {
+            state.submissionDraft = createInitialSubmissionDraftState();
+            state.session = createInitialSessionState();
+            ++latestSessionBootstrapRequestId;
+            ++latestSubmissionRequestId;
+        }
 
         if (state.route !== "exercise") {
             state.selectedFocus = null;
@@ -289,6 +522,27 @@ export function createCatalogWorkspaceController({ appRoot, catalogProviderFacto
             state.detail.data = null;
             state.detail.error = null;
         }
+    }
+
+    function resetSubmissionRequestState() {
+        state.session.submission = createInitialSubmissionRequestState();
+    }
+
+    function resolveSessionProvider(providerName) {
+        if (sessionProviders.has(providerName)) {
+            return sessionProviders.get(providerName);
+        }
+
+        const providerFactory = sessionProviderFactories[providerName];
+        if (!providerFactory) {
+            throw new SessionTransportError(`Unknown session provider: ${providerName}`, {
+                failureKind: "terminal"
+            });
+        }
+
+        const provider = providerFactory();
+        sessionProviders.set(providerName, provider);
+        return provider;
     }
 
     return {
@@ -505,11 +759,6 @@ function normalizeOptionalValue(value) {
     return normalized.length ? normalized : null;
 }
 
-function normalizeSortValue(value) {
-    const normalized = normalizeOptionalValue(value);
-    return normalized === "title" ? null : normalized;
-}
-
 function cloneQuery(query) {
     return {
         difficulty: query.difficulty,
@@ -524,6 +773,51 @@ function createInitialSubmissionDraftState() {
         answer: "",
         validationError: null,
         preparedSubmission: null
+    };
+}
+
+function createInitialSessionState() {
+    return {
+        bootstrap: {
+            status: "idle",
+            response: null,
+            error: null,
+            scenarioSlug: null
+        },
+        submission: createInitialSubmissionRequestState()
+    };
+}
+
+function createInitialSubmissionRequestState() {
+    return {
+        status: "idle",
+        response: null,
+        error: null,
+        lastPayload: null
+    };
+}
+
+function normalizeTransportFailure(error, fallbackMessage) {
+    if (error instanceof SessionTransportError) {
+        return {
+            failureKind: error.failureKind === "terminal" ? "terminal" : "retryable",
+            message: error.message || fallbackMessage,
+            status: error.status
+        };
+    }
+
+    if (error instanceof Error) {
+        return {
+            failureKind: "retryable",
+            message: error.message || fallbackMessage,
+            status: null
+        };
+    }
+
+    return {
+        failureKind: "retryable",
+        message: fallbackMessage,
+        status: null
     };
 }
 

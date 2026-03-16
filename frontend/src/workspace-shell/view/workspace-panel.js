@@ -57,6 +57,11 @@ export function renderWorkspacePanel(state) {
 
     const detail = state.detail.data;
     const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
+    const bootstrapState = normalizeBootstrapState(state.session?.bootstrap);
+    const submissionState = normalizeSubmissionState(state.session?.submission);
+    const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
+    const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
+    const resetDisabled = bootstrapState.status === "pending" || submissionState.status === "pending";
 
     return renderPracticeShell({
         viewer: `
@@ -69,33 +74,33 @@ export function renderWorkspacePanel(state) {
                     <span class="practice-shell__chip">Branches: ${repositoryContext.branches.length}</span>
                     <span class="practice-shell__chip">Files: ${repositoryContext.files.length}</span>
                     <span class="practice-shell__chip">Status: ${escapeHtml(repositoryContext.status)}</span>
+                    <span class="practice-shell__chip">Session: ${escapeHtml(resolveTransportBadge(bootstrapState, submissionState))}</span>
                 </div>
                 ${renderBranchGraph(repositoryContext.branches)}
-                <div class="practice-output">
-                    <span class="control-label">Output scaffold</span>
-                    <p class="panel-copy">This slot is reserved for branch feedback or command output once submit transport lands on top of the current local draft seam.</p>
-                </div>
+                ${renderSessionTransportOutput(bootstrapState, lifecycle)}
             </section>
         `,
         composer: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
                     <span class="control-label">Answer input</span>
-                    <span class="workspace-card__badge">${resolveDraftBadge(state.submissionDraft)}</span>
+                    <span class="workspace-card__badge">${resolveDraftBadge(state.submissionDraft, submissionState)}</span>
                 </div>
                 <div class="practice-shell__meta">
                     <span class="practice-shell__chip">Answer type: command text</span>
                     <span class="practice-shell__chip">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</span>
+                    <span class="practice-shell__chip">Attempts: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
                 </div>
+                ${renderBootstrapNotice(bootstrapState)}
                 <form class="practice-composer__form" data-submission-draft-form>
                     <input type="hidden" name="answerType" value="command_text">
                     <label class="practice-editor">
                         <span class="practice-editor__prompt">&gt;</span>
-                        <textarea name="answer" rows="4" placeholder="Example: git status">${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
+                        <textarea name="answer" rows="4" placeholder="Example: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
                     </label>
                     <div class="practice-composer__actions">
-                        <button class="practice-action practice-action--primary" type="submit">Prepare submission</button>
-                        <button class="practice-action" type="button" data-reset-submission-draft>Reset draft</button>
+                        <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
+                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Reset draft</button>
                     </div>
                 </form>
                 ${state.submissionDraft.validationError ? `
@@ -103,7 +108,7 @@ export function renderWorkspacePanel(state) {
                         <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                ${renderPreparedSubmission(state.submissionDraft.preparedSubmission)}
+                ${renderSubmissionTransportOutput(state.submissionDraft.preparedSubmission, submissionState)}
             </section>
         `
     });
@@ -165,67 +170,260 @@ function renderPlaceholderComposer(title, copy) {
             </label>
             <div class="practice-output">
                 <span class="control-label">Output scaffold</span>
-                <p class="panel-copy">Prepared payload and execution feedback appear here after a scenario is opened.</p>
+                <p class="panel-copy">Prepared payload and transport feedback appear here after a scenario is opened.</p>
             </div>
         </section>
     `;
 }
 
-function normalizeRepositoryContext(repositoryContext) {
-    const safeContext = repositoryContext ?? {};
-    return {
-        status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
-            ? safeContext.status
-            : "unavailable",
-        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
-        files: Array.isArray(safeContext.files) ? safeContext.files : []
-    };
-}
-
-function resolveDraftBadge(submissionDraft) {
-    if (submissionDraft?.preparedSubmission) {
-        return "prepared";
+function renderSessionTransportOutput(bootstrapState, lifecycle) {
+    if (bootstrapState.status === "pending") {
+        return renderRequestStateBlock({
+            label: "Session transport",
+            status: "pending",
+            badge: "pending",
+            copy: "Bootstrapping a session for the active scenario before submissions are sent."
+        });
     }
 
-    if (typeof submissionDraft?.answer === "string" && submissionDraft.answer.trim() !== "") {
-        return "draft";
+    if (bootstrapState.status === "retryable-error") {
+        return renderRequestStateBlock({
+            label: "Session transport",
+            status: "retryable",
+            badge: "retryable",
+            copy: bootstrapState.error?.message ?? "Session bootstrap failed.",
+            actions: `
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Retry session</button>
+            `
+        });
     }
 
-    return "idle";
+    if (bootstrapState.status === "terminal-error") {
+        return renderRequestStateBlock({
+            label: "Session transport",
+            status: "terminal",
+            badge: "terminal",
+            copy: bootstrapState.error?.message ?? "Session bootstrap failed in a terminal way."
+        });
+    }
+
+    if (bootstrapState.status !== "ready" || !bootstrapState.response) {
+        return renderRequestStateBlock({
+            label: "Session transport",
+            status: "idle",
+            badge: "idle",
+            copy: "A session starts automatically after the exercise route resolves."
+        });
+    }
+
+    return `
+        <div class="practice-output practice-output--ready">
+            <span class="control-label">Session transport</span>
+            <dl class="result-summary">
+                <div>
+                    <dt>Session id</dt>
+                    <dd>${escapeHtml(bootstrapState.response.sessionId)}</dd>
+                </div>
+                <div>
+                    <dt>Lifecycle</dt>
+                    <dd>${escapeHtml(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active")}</dd>
+                </div>
+                <div>
+                    <dt>Submissions</dt>
+                    <dd>${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</dd>
+                </div>
+                <div>
+                    <dt>Answer types</dt>
+                    <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).join(", ") || "unknown")}</dd>
+                </div>
+            </dl>
+            <p class="panel-copy">
+                Placeholder outcome: ${escapeHtml(bootstrapState.response.submission?.placeholderOutcome?.code ?? "validation-pending")}.
+                Correctness-specific rendering lands in the next task.
+            </p>
+        </div>
+    `;
 }
 
-function renderPreparedSubmission(preparedSubmission) {
-    if (!preparedSubmission) {
+function renderBootstrapNotice(bootstrapState) {
+    if (bootstrapState.status === "pending") {
         return `
-            <div class="practice-output">
+            <div class="practice-request practice-request--pending">
+                <span class="control-label">Request state</span>
+                <p class="panel-copy">Starting a session for this scenario. Submission unlocks when the transport is ready.</p>
+            </div>
+        `;
+    }
+
+    if (bootstrapState.status === "retryable-error") {
+        return `
+            <div class="practice-request practice-request--retryable">
+                <span class="control-label">Request state</span>
+                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Session bootstrap failed.")}</p>
+                <div class="practice-output__actions">
+                    <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Retry session</button>
+                </div>
+            </div>
+        `;
+    }
+
+    if (bootstrapState.status === "terminal-error") {
+        return `
+            <div class="practice-request practice-request--terminal">
+                <span class="control-label">Request state</span>
+                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Session bootstrap failed in a terminal way.")}</p>
+            </div>
+        `;
+    }
+
+    return "";
+}
+
+function renderSubmissionTransportOutput(preparedSubmission, submissionState) {
+    if (submissionState.status === "pending") {
+        return renderSubmissionRequestBlock({
+            label: "Submission transport",
+            status: "pending",
+            badge: "pending",
+            copy: "Sending the prepared answer through the active session.",
+            payload: submissionState.lastPayload
+        });
+    }
+
+    if (submissionState.status === "retryable-error") {
+        return renderSubmissionRequestBlock({
+            label: "Submission transport",
+            status: "retryable",
+            badge: "retryable",
+            copy: submissionState.error?.message ?? "Submission failed and can be retried.",
+            payload: submissionState.lastPayload,
+            actions: `
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="submission">Retry submit</button>
+            `
+        });
+    }
+
+    if (submissionState.status === "terminal-error") {
+        return renderSubmissionRequestBlock({
+            label: "Submission transport",
+            status: "terminal",
+            badge: "terminal",
+            copy: submissionState.error?.message ?? "Submission failed in a terminal way.",
+            payload: submissionState.lastPayload,
+            actions: `
+                <button class="practice-action practice-action--primary" type="button" data-session-request-restart>Start new session</button>
+            `
+        });
+    }
+
+    if (submissionState.status === "ready" && submissionState.response) {
+        return `
+            <div class="practice-output practice-output--ready">
+                <span class="control-label">Submission transport</span>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Submission id</dt>
+                        <dd>${escapeHtml(submissionState.response.submissionId)}</dd>
+                    </div>
+                    <div>
+                        <dt>Attempt</dt>
+                        <dd>${escapeHtml(String(submissionState.response.attemptNumber))}</dd>
+                    </div>
+                    <div>
+                        <dt>Submitted at</dt>
+                        <dd>${escapeHtml(submissionState.response.submittedAt)}</dd>
+                    </div>
+                    <div>
+                        <dt>Answer type</dt>
+                        <dd>${escapeHtml(submissionState.response.answer?.type ?? "unknown")}</dd>
+                    </div>
+                    <div>
+                        <dt>Answer value</dt>
+                        <dd>${escapeHtml(submissionState.response.answer?.value ?? "")}</dd>
+                    </div>
+                    <div>
+                        <dt>Outcome status</dt>
+                        <dd>${escapeHtml(submissionState.response.outcome?.status ?? "unknown")}</dd>
+                    </div>
+                    <div>
+                        <dt>Outcome correctness</dt>
+                        <dd>${escapeHtml(submissionState.response.outcome?.correctness ?? "unknown")}</dd>
+                    </div>
+                    <div>
+                        <dt>Outcome code</dt>
+                        <dd>${escapeHtml(submissionState.response.outcome?.code ?? "unknown")}</dd>
+                    </div>
+                </dl>
+                <p class="panel-copy">${escapeHtml(submissionState.response.outcome?.message ?? "Correctness-specific feedback lands in the next task.")}</p>
+            </div>
+        `;
+    }
+
+    if (preparedSubmission) {
+        return `
+            <div class="practice-output practice-output--ready">
                 <span class="control-label">Prepared payload</span>
-                <p class="panel-copy">The right lane now owns local answer drafting. Session transport and correctness rendering still land in later tasks.</p>
+                ${renderPreparedPayloadSummary(preparedSubmission)}
+                <p class="panel-copy">The answer is ready for transport once the active session is available.</p>
             </div>
         `;
     }
 
     return `
-        <div class="practice-output practice-output--ready">
-            <span class="control-label">Prepared payload</span>
-            <dl class="result-summary">
-                <div>
-                    <dt>Scenario</dt>
-                    <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "unknown")}</dd>
-                </div>
-                <div>
-                    <dt>Answer type</dt>
-                    <dd>${escapeHtml(preparedSubmission.answerType)}</dd>
-                </div>
-                <div>
-                    <dt>Draft answer</dt>
-                    <dd>${escapeHtml(preparedSubmission.answer)}</dd>
-                </div>
-                <div>
-                    <dt>Prepared at</dt>
-                    <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
-                </div>
-            </dl>
+        <div class="practice-output">
+            <span class="control-label">Submission transport</span>
+            <p class="panel-copy">Transport feedback appears here after the active session accepts a submission.</p>
         </div>
+    `;
+}
+
+function renderSubmissionRequestBlock({ label, status, badge, copy, payload, actions = "" }) {
+    return `
+        <div class="practice-output practice-output--${escapeHtml(status)}">
+            <div class="practice-output__header">
+                <span class="control-label">${escapeHtml(label)}</span>
+                <span class="workspace-card__badge">${escapeHtml(badge)}</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            ${payload ? renderPreparedPayloadSummary(payload) : ""}
+            ${actions ? `<div class="practice-output__actions">${actions}</div>` : ""}
+        </div>
+    `;
+}
+
+function renderRequestStateBlock({ label, status, badge, copy, actions = "" }) {
+    return `
+        <div class="practice-output practice-output--${escapeHtml(status)}">
+            <div class="practice-output__header">
+                <span class="control-label">${escapeHtml(label)}</span>
+                <span class="workspace-card__badge">${escapeHtml(badge)}</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            ${actions ? `<div class="practice-output__actions">${actions}</div>` : ""}
+        </div>
+    `;
+}
+
+function renderPreparedPayloadSummary(preparedSubmission) {
+    return `
+        <dl class="result-summary">
+            <div>
+                <dt>Scenario</dt>
+                <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "unknown")}</dd>
+            </div>
+            <div>
+                <dt>Answer type</dt>
+                <dd>${escapeHtml(preparedSubmission.answerType)}</dd>
+            </div>
+            <div>
+                <dt>Draft answer</dt>
+                <dd>${escapeHtml(preparedSubmission.answer)}</dd>
+            </div>
+            <div>
+                <dt>Prepared at</dt>
+                <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
+            </div>
+        </dl>
     `;
 }
 
@@ -255,4 +453,130 @@ function renderBranchGraph(branches) {
             `).join("")}
         </div>
     `;
+}
+
+function normalizeRepositoryContext(repositoryContext) {
+    const safeContext = repositoryContext ?? {};
+    return {
+        status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
+            ? safeContext.status
+            : "unavailable",
+        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : []
+    };
+}
+
+function normalizeBootstrapState(bootstrapState) {
+    const safeState = bootstrapState ?? {};
+    return {
+        status: typeof safeState.status === "string" ? safeState.status : "idle",
+        response: safeState.response ?? null,
+        error: safeState.error ?? null
+    };
+}
+
+function normalizeSubmissionState(submissionState) {
+    const safeState = submissionState ?? {};
+    return {
+        status: typeof safeState.status === "string" ? safeState.status : "idle",
+        response: safeState.response ?? null,
+        error: safeState.error ?? null,
+        lastPayload: safeState.lastPayload ?? null
+    };
+}
+
+function isSubmitDisabled(bootstrapState, submissionState) {
+    if (submissionState.status === "pending") {
+        return true;
+    }
+
+    return bootstrapState.status !== "ready";
+}
+
+function resolveDraftBadge(submissionDraft, submissionState) {
+    if (submissionState.status === "pending") {
+        return "submitting";
+    }
+
+    if (submissionState.status === "ready") {
+        return "transported";
+    }
+
+    if (submissionState.status === "retryable-error") {
+        return "retryable";
+    }
+
+    if (submissionState.status === "terminal-error") {
+        return "terminal";
+    }
+
+    if (submissionDraft?.preparedSubmission) {
+        return "prepared";
+    }
+
+    if (typeof submissionDraft?.answer === "string" && submissionDraft.answer.trim() !== "") {
+        return "draft";
+    }
+
+    return "idle";
+}
+
+function resolvePrimaryActionLabel(bootstrapState, submissionState) {
+    if (submissionState.status === "pending") {
+        return "Submitting...";
+    }
+
+    if (bootstrapState.status === "pending") {
+        return "Starting session...";
+    }
+
+    if (bootstrapState.status === "retryable-error") {
+        return "Retry session first";
+    }
+
+    if (bootstrapState.status === "terminal-error") {
+        return "Session unavailable";
+    }
+
+    if (bootstrapState.status === "ready") {
+        return "Submit answer";
+    }
+
+    return "Preparing session...";
+}
+
+function resolveTransportBadge(bootstrapState, submissionState) {
+    if (submissionState.status === "pending") {
+        return "submitting";
+    }
+
+    if (submissionState.status === "retryable-error") {
+        return "retryable";
+    }
+
+    if (submissionState.status === "terminal-error") {
+        return "terminal";
+    }
+
+    if (submissionState.status === "ready") {
+        return "submitted";
+    }
+
+    if (bootstrapState.status === "ready") {
+        return "active";
+    }
+
+    if (bootstrapState.status === "pending") {
+        return "booting";
+    }
+
+    if (bootstrapState.status === "retryable-error") {
+        return "retryable";
+    }
+
+    if (bootstrapState.status === "terminal-error") {
+        return "terminal";
+    }
+
+    return "idle";
 }
