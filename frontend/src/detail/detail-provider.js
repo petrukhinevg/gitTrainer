@@ -18,7 +18,7 @@ export function createUnavailableFixtureDetailProvider() {
     return {
         name: "fixture-unavailable",
         async loadScenarioDetail() {
-            throw new Error("Scenario detail source is unavailable right now. Try another provider.");
+            throw new Error("Scenario detail source is unavailable right now. Try again in a moment.");
         }
     };
 }
