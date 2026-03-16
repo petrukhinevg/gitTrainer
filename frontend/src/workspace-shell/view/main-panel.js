@@ -5,6 +5,7 @@ import {
     normalizeTaskInstructions,
     normalizeTaskSteps
 } from "./lesson-task.js";
+import { renderSubmissionDraftSection } from "./submission-draft.js";
 import {
     escapeHtml,
 } from "./render-helpers.js";
@@ -90,7 +91,8 @@ function renderExerciseMainPanel(state) {
         meta: [
             `Task: ${detail.workspace.task.status}`,
             `Difficulty: ${detail.difficulty}`,
-            `Source: ${detail.meta.source}`
+            `Source: ${detail.meta.source}`,
+            `Draft: ${resolveDraftStatus(state.submissionDraft)}`
         ],
         body: `
             <section class="lesson-spotlight">
@@ -174,6 +176,7 @@ function renderExerciseMainPanel(state) {
                     </div>
                 </dl>
             </section>
+            ${renderSubmissionDraftSection(state)}
         `
     });
 }
@@ -201,4 +204,16 @@ function describeCatalogStatus(state) {
                 description: "Pick a provider, tune the query, and choose which scenario should open the shared workspace route."
             };
     }
+}
+
+function resolveDraftStatus(submissionDraft) {
+    if (submissionDraft?.preparedSubmission) {
+        return "prepared";
+    }
+
+    if (typeof submissionDraft?.answer === "string" && submissionDraft.answer.trim() !== "") {
+        return "ready";
+    }
+
+    return "empty";
 }
