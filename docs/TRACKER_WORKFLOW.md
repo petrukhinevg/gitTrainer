@@ -70,7 +70,9 @@ When decomposing a parent issue:
 ## Git workflow
 
 - `main` is the production branch.
-- Use a single local repository directory by default. Do not create a separate local folder or `git worktree` for each task unless the user explicitly requests it.
+- Use only the current local repository directory by default.
+- Do not create or switch to a separate local folder, sibling repository clone, or `git worktree` for task execution unless the user explicitly requests that setup.
+- If multiple local copies of the repository already exist, ignore them and keep working in the current repository directory unless the user explicitly redirects you.
 - Epic branches and standalone task branches are created from `main`.
 - After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
 - After the initial epic commit exists, create child task branches for all currently defined sub-issues right away.
