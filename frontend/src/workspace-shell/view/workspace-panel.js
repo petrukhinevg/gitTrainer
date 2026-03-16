@@ -123,8 +123,8 @@ function renderPracticeShell({ viewer, composer }) {
         showHeader: false,
         body: `
             <div class="practice-stack">
-                <div class="practice-pane practice-pane--viewer">${viewer}</div>
                 <div class="practice-pane practice-pane--composer">${composer}</div>
+                <div class="practice-pane practice-pane--viewer">${viewer}</div>
             </div>
         `
     });

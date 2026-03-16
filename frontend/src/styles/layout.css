@@ -50,20 +50,18 @@ body {
     overflow: hidden;
 }
 
-.lesson-layout__lane + .lesson-layout__lane {
-    border-left: 1px solid var(--border);
-}
-
 .lesson-layout__lane--navigation {
     grid-area: navigation;
 }
 
 .lesson-layout__lane--lesson {
     grid-area: lesson;
+    border-left: 0;
 }
 
 .lesson-layout__lane--practice {
     grid-area: practice;
+    border-left: 1px solid var(--border);
 }
 
 .lesson-lane {
@@ -242,7 +240,7 @@ body {
         background: transparent;
     }
 
-    .lesson-layout__lane + .lesson-layout__lane {
+    .lesson-layout__lane--practice {
         border-left: 0;
     }
 
