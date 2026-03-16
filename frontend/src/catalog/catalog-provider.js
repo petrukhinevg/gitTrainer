@@ -24,7 +24,7 @@ export function createUnavailableFixtureCatalogProvider() {
     return {
         name: "fixture-unavailable",
         async browseCatalog() {
-            throw new Error("Catalog source is unavailable right now. Try another provider.");
+            throw new Error("Catalog source is unavailable right now. Try again in a moment.");
         }
     };
 }

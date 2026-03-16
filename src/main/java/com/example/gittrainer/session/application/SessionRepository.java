@@ -9,4 +9,6 @@ public interface SessionRepository {
     TrainingSession save(TrainingSession session);
 
     Optional<TrainingSession> findById(String sessionId);
+
+    Optional<TrainingSession> recordSubmission(String sessionId, String submissionId);
 }

@@ -130,13 +130,13 @@ export function createUnavailableFixtureSessionProvider() {
         name: "fixture-unavailable",
         async startSession() {
             throw new SessionTransportError(
-                "Session transport is unavailable right now. Try another provider.",
+                "Session transport is unavailable right now. Try again in a moment.",
                 { failureKind: "retryable", status: 503 }
             );
         },
         async submitAnswer() {
             throw new SessionTransportError(
-                "Session transport is unavailable right now. Try another provider.",
+                "Session transport is unavailable right now. Try again in a moment.",
                 { failureKind: "retryable", status: 503 }
             );
         }

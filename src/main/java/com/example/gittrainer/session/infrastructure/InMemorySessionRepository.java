@@ -23,4 +23,12 @@ public class InMemorySessionRepository implements SessionRepository {
     public Optional<TrainingSession> findById(String sessionId) {
         return Optional.ofNullable(sessions.get(sessionId));
     }
+
+    @Override
+    public Optional<TrainingSession> recordSubmission(String sessionId, String submissionId) {
+        return Optional.ofNullable(sessions.computeIfPresent(
+                sessionId,
+                (ignored, existingSession) -> existingSession.recordSubmission(submissionId)
+        ));
+    }
 }
