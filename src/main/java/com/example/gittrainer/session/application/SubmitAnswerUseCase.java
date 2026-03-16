@@ -24,15 +24,16 @@ public class SubmitAnswerUseCase {
     public SubmitAnswerResult submit(String sessionId, SubmitAnswerCommand command) {
         String normalizedSessionId = normalizeSessionId(sessionId);
         if (normalizedSessionId == null) {
-            throw new SessionRequestValidationException("Session id is required to submit an answer.");
+            throw SessionRequestValidationException.missingSessionId();
         }
         if (!SessionSubmissionAnswerTypes.isSupported(command.answerType())) {
-            throw new SessionRequestValidationException(
-                    "Answer type is unsupported for this session boundary: " + command.answerType()
+            throw new UnsupportedSubmissionAnswerTypeException(
+                    command.answerType(),
+                    SessionSubmissionAnswerTypes.supportedAnswerTypes()
             );
         }
         if (command.answer().isBlank()) {
-            throw new SessionRequestValidationException("Answer text is required to submit a session attempt.");
+            throw SessionRequestValidationException.missingAnswer();
         }
 
         TrainingSession session = sessionRepository.findById(normalizedSessionId)

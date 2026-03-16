@@ -65,7 +65,11 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Scenario slug is required to start a session."));
+                .andExpect(jsonPath("$.title").value("Invalid session request"))
+                .andExpect(jsonPath("$.detail").value("Scenario slug is required to start a session."))
+                .andExpect(jsonPath("$.code").value("scenario-slug-required"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false));
     }
 
     @Test
@@ -79,7 +83,11 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Scenario detail is unavailable for slug: not-a-real-scenario"));
+                .andExpect(jsonPath("$.title").value("Scenario not found"))
+                .andExpect(jsonPath("$.detail").value("Scenario detail is unavailable for slug: not-a-real-scenario"))
+                .andExpect(jsonPath("$.code").value("scenario-not-found"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false));
     }
 
     @Test
@@ -94,7 +102,12 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
+                .andExpect(jsonPath("$.title").value("Scenario source unavailable"))
+                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."))
+                .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
+                .andExpect(jsonPath("$.failureDisposition").value("retryable"))
+                .andExpect(jsonPath("$.retryable").value(true))
+                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
     }
 
     @Test
@@ -139,7 +152,11 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Answer text is required to submit a session attempt."));
+                .andExpect(jsonPath("$.title").value("Invalid session request"))
+                .andExpect(jsonPath("$.detail").value("Answer text is required to submit a session attempt."))
+                .andExpect(jsonPath("$.code").value("answer-required"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false));
     }
 
     @Test
@@ -155,8 +172,14 @@ class SessionControllerTest {
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Answer type is unsupported for this session boundary: file_patch"));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.title").value("Unsupported answer type"))
+                .andExpect(jsonPath("$.detail").value("Answer type is unsupported for this session boundary: file_patch"))
+                .andExpect(jsonPath("$.code").value("unsupported-answer-type"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false))
+                .andExpect(jsonPath("$.requestedAnswerType").value("file_patch"))
+                .andExpect(jsonPath("$.supportedAnswerTypes[0]").value("command_text"));
     }
 
     @Test
@@ -170,7 +193,40 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Session is unavailable for id: session_missing"));
+                .andExpect(jsonPath("$.title").value("Session not found"))
+                .andExpect(jsonPath("$.detail").value("Session is unavailable for id: session_missing"))
+                .andExpect(jsonPath("$.code").value("session-not-found"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false));
+    }
+
+    @Test
+    void doesNotConsumeAttemptNumberWhenUnsupportedAnswerTypeIsRejected() throws Exception {
+        String sessionId = startSessionAndExtractId();
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "file_patch",
+                                  "answer": "git status"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity());
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.attemptNumber").value(1))
+                .andExpect(jsonPath("$.lifecycle.submissionCount").value(1));
     }
 
     private String startSessionAndExtractId() throws Exception {
