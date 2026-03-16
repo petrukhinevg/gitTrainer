@@ -197,6 +197,14 @@ Observed behavior:
 
 For child task PRs with the epic branch as `base`, use `Refs #<issue>` in the PR body to keep the issue association without relying on default-branch closing behavior.
 
+Clarification:
+
+- `Closes #<issue>`, `Fixes #<issue>`, and `Resolves #<issue>` create the GitHub linkage shown as a pull request that will close the issue after merge into the default branch
+- `Refs #<issue>` keeps the PR associated with the issue without requesting auto-close
+- a plain `#<issue>` mention or `Refs #<issue>` is not the same as a closing linkage and may only appear in the timeline as a mention/reference
+- for PRs with `main` as `base`, use a closing keyword when the PR is intended to close the issue
+- for PRs with an epic branch as `base`, use `Refs #<issue>` instead of a closing keyword
+
 Example:
 
 ```sh
@@ -205,6 +213,16 @@ gh pr create \
   --head linked/137-catalog-browse-api-shell-stub-boundary \
   --title "#137 Deliver catalog browse API shell and deterministic stub boundary" \
   --body "Refs #137"
+```
+
+Example for a standalone PR to `main` that should close its issue:
+
+```sh
+gh pr create \
+  --base main \
+  --head task/227-translate-documentation-to-russian \
+  --title "#227 Translate repository documentation to Russian" \
+  --body "Closes #227"
 ```
 
 If a closed PR already exists for the same head and base and GitHub refuses to reopen it, create a new alias branch at the same commit and open a fresh PR from that alias branch instead of rewriting history.

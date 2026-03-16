@@ -30,6 +30,8 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - When a task is moved to `Review`, push the task branch and create or update its PR first.
 - If the task branch targets `main`, verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
 - If the task branch targets a non-`main` base such as an epic branch, do not block the move to `Review` on `Linked pull requests` being populated.
+- In PR bodies, use `Closes #<issue>`, `Fixes #<issue>`, or `Resolves #<issue>` only when the PR targets `main` and should close the issue after merge.
+- Use `Refs #<issue>` for epic-branch PRs or when the PR should stay associated with the issue without auto-closing it; a plain `#<issue>` or `Refs #<issue>` creates a mention/reference, not a closing linkage.
 - Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
 - After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
 - After the initial epic commit exists, create the child task branches for the epic's current sub-issues immediately from that updated epic branch head.
