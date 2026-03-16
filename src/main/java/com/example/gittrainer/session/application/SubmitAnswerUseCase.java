@@ -1,8 +1,9 @@
 package com.example.gittrainer.session.application;
 
-import com.example.gittrainer.session.domain.SubmissionPlaceholderOutcome;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
+import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -12,24 +13,22 @@ public class SubmitAnswerUseCase {
 
     private final SessionRepository sessionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
+    private final SubmissionAnswerValidator submissionAnswerValidator;
 
     public SubmitAnswerUseCase(
             SessionRepository sessionRepository,
-            SessionIdentityGenerator sessionIdentityGenerator
+            SessionIdentityGenerator sessionIdentityGenerator,
+            SubmissionAnswerValidator submissionAnswerValidator
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
+        this.submissionAnswerValidator = submissionAnswerValidator;
     }
 
     public SubmitAnswerResult submit(String sessionId, SubmitAnswerCommand command) {
         String normalizedSessionId = normalizeSessionId(sessionId);
         if (normalizedSessionId == null) {
             throw new SessionRequestValidationException("Session id is required to submit an answer.");
-        }
-        if (!SessionSubmissionAnswerTypes.isSupported(command.answerType())) {
-            throw new SessionRequestValidationException(
-                    "Answer type is unsupported for this session boundary: " + command.answerType()
-            );
         }
         if (command.answer().isBlank()) {
             throw new SessionRequestValidationException("Answer text is required to submit a session attempt.");
@@ -38,6 +37,8 @@ public class SubmitAnswerUseCase {
         TrainingSession session = sessionRepository.findById(normalizedSessionId)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
 
+        SubmittedAnswer submittedAnswer = new SubmittedAnswer(command.answerType(), command.answer());
+        SubmissionOutcome outcome = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
         TrainingSession updatedSession = session.recordSubmission(submissionId);
         sessionRepository.save(updatedSession);
@@ -47,8 +48,8 @@ public class SubmitAnswerUseCase {
                 updatedSession.submissionCount(),
                 Instant.now(),
                 updatedSession,
-                new SubmittedAnswer(command.answerType(), command.answer()),
-                SubmissionPlaceholderOutcome.submissionAccepted()
+                submittedAnswer,
+                outcome
         );
     }
 
