@@ -2,6 +2,7 @@ package com.example.gittrainer.session.api;
 
 import com.example.gittrainer.session.application.StartSessionResult;
 import com.example.gittrainer.session.application.SubmitAnswerResult;
+import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,7 @@ public class SessionResponseMapper {
                 new SessionSubmissionBoundaryResponse(
                         result.supportedAnswerTypes(),
                         toOutcomeResponse(result.placeholderOutcome()),
-                        toRetryFeedbackResponse(0, null)
+                        toRetryFeedbackResponse(result.retryState())
                 )
         );
     }
@@ -37,7 +38,7 @@ public class SessionResponseMapper {
                 toLifecycleResponse(result.session()),
                 new SubmittedAnswerResponse(result.answer().type(), result.answer().value()),
                 toOutcomeResponse(result.outcome()),
-                toRetryFeedbackResponse(result.attemptNumber(), result.outcome())
+                toRetryFeedbackResponse(result.retryState())
         );
     }
 
@@ -59,30 +60,21 @@ public class SessionResponseMapper {
         );
     }
 
-    private RetryFeedbackResponse toRetryFeedbackResponse(int attemptNumber, SubmissionOutcome outcome) {
-        String correctness = outcome == null ? null : outcome.correctness();
-        String retryStateStatus;
-        String eligibility;
-        if (correctness == null) {
-            retryStateStatus = "idle";
-            eligibility = "not-needed";
-        } else if ("correct".equals(correctness)) {
-            retryStateStatus = "complete";
-            eligibility = "not-needed";
-        } else {
-            retryStateStatus = "awaiting-policy";
-            eligibility = "pending";
-        }
-        String explanationMessage = correctness == null
+    private RetryFeedbackResponse toRetryFeedbackResponse(RetryState retryState) {
+        String explanationMessage = retryState.attemptCount() == 0
                 ? "Retry guidance will mount here after the first evaluated submission."
                 : "Retry explanation selection is reserved for the guided-retry epic tasks.";
-        String hintMessage = correctness == null
+        String hintMessage = retryState.attemptCount() == 0
                 ? "Hint progression is idle until the learner receives evaluated feedback."
                 : "Hint progression remains placeholder data until retry policy is connected.";
 
         return new RetryFeedbackResponse(
                 "placeholder",
-                new RetryStateResponse(retryStateStatus, attemptNumber, eligibility),
+                new RetryStateResponse(
+                        toRetryStateStatus(retryState),
+                        retryState.attemptCount(),
+                        toRetryEligibility(retryState)
+                ),
                 new RetryExplanationResponse(
                         "placeholder",
                         "Retry guidance",
@@ -94,5 +86,20 @@ public class SessionResponseMapper {
                         hintMessage
                 )
         );
+    }
+
+    private String toRetryStateStatus(RetryState retryState) {
+        return switch (retryState.phase()) {
+            case READY -> "idle";
+            case RETRY_AVAILABLE -> "awaiting-policy";
+            case COMPLETED -> "complete";
+        };
+    }
+
+    private String toRetryEligibility(RetryState retryState) {
+        return switch (retryState.retryEligibility()) {
+            case NOT_NEEDED -> "not-needed";
+            case ELIGIBLE -> "pending";
+        };
     }
 }

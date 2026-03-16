@@ -27,4 +27,8 @@ public record SubmissionOutcome(
     public static SubmissionOutcome unsupported(String code, String message) {
         return new SubmissionOutcome("evaluated", "unsupported", code, message);
     }
+
+    public boolean requiresRetry() {
+        return "evaluated".equals(status) && !"correct".equals(correctness);
+    }
 }
