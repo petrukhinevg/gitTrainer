@@ -22,7 +22,8 @@ public class SessionResponseMapper {
                 toLifecycleResponse(result.session()),
                 new SessionSubmissionBoundaryResponse(
                         result.supportedAnswerTypes(),
-                        toOutcomeResponse(result.placeholderOutcome())
+                        toOutcomeResponse(result.placeholderOutcome()),
+                        toRetryFeedbackResponse(0, null)
                 )
         );
     }
@@ -35,7 +36,8 @@ public class SessionResponseMapper {
                 result.submittedAt(),
                 toLifecycleResponse(result.session()),
                 new SubmittedAnswerResponse(result.answer().type(), result.answer().value()),
-                toOutcomeResponse(result.outcome())
+                toOutcomeResponse(result.outcome()),
+                toRetryFeedbackResponse(result.attemptNumber(), result.outcome())
         );
     }
 
@@ -54,6 +56,43 @@ public class SessionResponseMapper {
                 outcome.correctness(),
                 outcome.code(),
                 outcome.message()
+        );
+    }
+
+    private RetryFeedbackResponse toRetryFeedbackResponse(int attemptNumber, SubmissionOutcome outcome) {
+        String correctness = outcome == null ? null : outcome.correctness();
+        String retryStateStatus;
+        String eligibility;
+        if (correctness == null) {
+            retryStateStatus = "idle";
+            eligibility = "not-needed";
+        } else if ("correct".equals(correctness)) {
+            retryStateStatus = "complete";
+            eligibility = "not-needed";
+        } else {
+            retryStateStatus = "awaiting-policy";
+            eligibility = "pending";
+        }
+        String explanationMessage = correctness == null
+                ? "Retry guidance will mount here after the first evaluated submission."
+                : "Retry explanation selection is reserved for the guided-retry epic tasks.";
+        String hintMessage = correctness == null
+                ? "Hint progression is idle until the learner receives evaluated feedback."
+                : "Hint progression remains placeholder data until retry policy is connected.";
+
+        return new RetryFeedbackResponse(
+                "placeholder",
+                new RetryStateResponse(retryStateStatus, attemptNumber, eligibility),
+                new RetryExplanationResponse(
+                        "placeholder",
+                        "Retry guidance",
+                        explanationMessage
+                ),
+                new RetryHintResponse(
+                        "placeholder",
+                        "baseline",
+                        hintMessage
+                )
         );
     }
 }

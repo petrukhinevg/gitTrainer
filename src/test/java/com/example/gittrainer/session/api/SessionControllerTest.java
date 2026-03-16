@@ -52,7 +52,13 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.submission.placeholderOutcome.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.correctness").value("not-evaluated"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("awaiting-first-submission"))
-                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."));
+                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.status").value("placeholder"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.status").value("idle"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.attemptNumber").value(0))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.eligibility").value("not-needed"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.explanation.status").value("placeholder"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.hint.level").value("baseline"));
     }
 
     @Test
@@ -136,7 +142,11 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.answer.value").value("git status"))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("correct"))
-                .andExpect(jsonPath("$.outcome.code").value("expected-command"));
+                .andExpect(jsonPath("$.outcome.code").value("expected-command"))
+                .andExpect(jsonPath("$.retryFeedback.status").value("placeholder"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("complete"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.attemptNumber").value(1))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("not-needed"));
     }
 
     @Test
@@ -157,7 +167,9 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.attemptNumber").value(1))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
-                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"));
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("awaiting-policy"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("pending"));
     }
 
     @Test
@@ -222,6 +234,8 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("unsupported"))
                 .andExpect(jsonPath("$.outcome.code").value("unsupported-answer-type"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("awaiting-policy"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("pending"))
                 .andExpect(jsonPath("$.failureDisposition").doesNotExist())
                 .andExpect(jsonPath("$.retryable").doesNotExist());
     }

@@ -60,6 +60,7 @@ export function renderWorkspacePanel(state) {
     const bootstrapState = normalizeBootstrapState(state.session?.bootstrap);
     const submissionState = normalizeSubmissionState(state.session?.submission);
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
+    const retryFeedback = resolveRetryFeedback(bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
     const resetDisabled = bootstrapState.status === "pending" || submissionState.status === "pending";
 
@@ -121,6 +122,7 @@ export function renderWorkspacePanel(state) {
                     submissionState,
                     bootstrapState.response?.submission?.supportedAnswerTypes ?? []
                 )}
+                ${renderRetryFeedbackPanel(retryFeedback, submissionState)}
             </section>
         `
     });
@@ -429,6 +431,36 @@ function renderPreparedPayloadSummary(preparedSubmission) {
     `;
 }
 
+function renderRetryFeedbackPanel(retryFeedback, submissionState) {
+    const normalizedFeedback = normalizeRetryFeedback(retryFeedback);
+    const awaitingSubmission = submissionState.status !== "ready";
+    const copy = awaitingSubmission
+        ? "Retry guidance, explanation copy, and hint progression will stay mounted here after an evaluated submission."
+        : normalizedFeedback.explanation.message;
+
+    return `
+        <div class="practice-output practice-output--ready" data-retry-feedback-panel>
+            <div class="practice-output__header">
+                <span class="control-label">Retry feedback</span>
+                <span class="workspace-card__badge">${escapeHtml(normalizedFeedback.retryState.status)}</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="practice-feedback">
+                <div class="practice-feedback__summary">
+                    <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
+                    <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
+                </div>
+                <div class="practice-feedback__meta">
+                    <span class="practice-feedback__pill">Attempt: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
+                    <span class="practice-feedback__pill">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
+                    <span class="practice-feedback__pill">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
+                    <span class="practice-feedback__pill">Explanation: ${escapeHtml(normalizedFeedback.explanation.status)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes) {
     const outcome = submissionResponse?.outcome ?? null;
     if (!outcome) {
@@ -529,6 +561,58 @@ function normalizeSubmissionState(submissionState) {
         response: safeState.response ?? null,
         error: safeState.error ?? null,
         lastPayload: safeState.lastPayload ?? null
+    };
+}
+
+function resolveRetryFeedback(bootstrapState, submissionState) {
+    return submissionState.response?.retryFeedback
+        ?? bootstrapState.response?.submission?.placeholderRetryFeedback
+        ?? null;
+}
+
+function normalizeRetryFeedback(retryFeedback) {
+    const safeFeedback = retryFeedback ?? {};
+    const retryState = safeFeedback.retryState ?? {};
+    const explanation = safeFeedback.explanation ?? {};
+    const hint = safeFeedback.hint ?? {};
+
+    return {
+        status: typeof safeFeedback.status === "string" && safeFeedback.status.trim() !== ""
+            ? safeFeedback.status
+            : "placeholder",
+        retryState: {
+            status: typeof retryState.status === "string" && retryState.status.trim() !== ""
+                ? retryState.status
+                : "idle",
+            attemptNumber: typeof retryState.attemptNumber === "number"
+                ? retryState.attemptNumber
+                : 0,
+            eligibility: typeof retryState.eligibility === "string" && retryState.eligibility.trim() !== ""
+                ? retryState.eligibility
+                : "pending"
+        },
+        explanation: {
+            status: typeof explanation.status === "string" && explanation.status.trim() !== ""
+                ? explanation.status
+                : "placeholder",
+            title: typeof explanation.title === "string" && explanation.title.trim() !== ""
+                ? explanation.title
+                : "Retry guidance",
+            message: typeof explanation.message === "string" && explanation.message.trim() !== ""
+                ? explanation.message
+                : "Retry explanation content will appear here when the guided-retry policy is connected."
+        },
+        hint: {
+            status: typeof hint.status === "string" && hint.status.trim() !== ""
+                ? hint.status
+                : "placeholder",
+            level: typeof hint.level === "string" && hint.level.trim() !== ""
+                ? hint.level
+                : "baseline",
+            message: typeof hint.message === "string" && hint.message.trim() !== ""
+                ? hint.message
+                : "Hint progression remains placeholder data until retry policy is connected."
+        }
     };
 }
 

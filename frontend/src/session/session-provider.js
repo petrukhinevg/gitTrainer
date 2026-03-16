@@ -80,7 +80,11 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         correctness: "not-evaluated",
                         code: "awaiting-first-submission",
                         message: "Session transport is ready. Submit the first answer to receive an evaluated result immediately."
-                    }
+                    },
+                    placeholderRetryFeedback: createPlaceholderRetryFeedback({
+                        attemptNumber: 0,
+                        outcome: null
+                    })
                 }
             };
         },
@@ -108,6 +112,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
 
             session.submissionCount += 1;
             session.lastSubmissionId = submissionId;
+            const outcome = evaluateFixtureSubmission(session.scenarioSlug, answerType, answer);
 
             return {
                 submissionId,
@@ -119,7 +124,11 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     type: answerType,
                     value: answer
                 },
-                outcome: evaluateFixtureSubmission(session.scenarioSlug, answerType, answer)
+                outcome,
+                retryFeedback: createPlaceholderRetryFeedback({
+                    attemptNumber: session.submissionCount,
+                    outcome
+                })
             };
         }
     };
@@ -264,6 +273,41 @@ function resolveFailurePolicy(status, problem) {
         failureKind: "terminal",
         failureDisposition: "terminal",
         retryable: false
+    };
+}
+
+function createPlaceholderRetryFeedback({ attemptNumber = 0, outcome = null } = {}) {
+    const correctness = normalizeOptionalValue(outcome?.correctness);
+    const retryStateStatus = correctness === null
+        ? "idle"
+        : correctness === "correct"
+            ? "complete"
+            : "awaiting-policy";
+    const eligibility = correctness === null || correctness === "correct"
+        ? "not-needed"
+        : "pending";
+
+    return {
+        status: "placeholder",
+        retryState: {
+            status: retryStateStatus,
+            attemptNumber,
+            eligibility
+        },
+        explanation: {
+            status: "placeholder",
+            title: "Retry guidance",
+            message: correctness === null
+                ? "Retry guidance will mount here after the first evaluated submission."
+                : "Retry explanation selection is reserved for the guided-retry epic tasks."
+        },
+        hint: {
+            status: "placeholder",
+            level: "baseline",
+            message: correctness === null
+                ? "Hint progression is idle until the learner receives evaluated feedback."
+                : "Hint progression remains placeholder data until retry policy is connected."
+        }
     };
 }
 

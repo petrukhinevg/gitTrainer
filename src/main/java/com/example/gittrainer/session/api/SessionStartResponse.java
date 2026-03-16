@@ -28,7 +28,8 @@ record SessionLifecycleResponse(
 
 record SessionSubmissionBoundaryResponse(
         List<String> supportedAnswerTypes,
-        SubmissionOutcomeResponse placeholderOutcome
+        SubmissionOutcomeResponse placeholderOutcome,
+        RetryFeedbackResponse placeholderRetryFeedback
 ) {
 }
 
@@ -39,7 +40,8 @@ record SessionSubmissionResponse(
         Instant submittedAt,
         SessionLifecycleResponse lifecycle,
         SubmittedAnswerResponse answer,
-        SubmissionOutcomeResponse outcome
+        SubmissionOutcomeResponse outcome,
+        RetryFeedbackResponse retryFeedback
 ) {
 }
 
@@ -53,6 +55,35 @@ record SubmissionOutcomeResponse(
         String status,
         String correctness,
         String code,
+        String message
+) {
+}
+
+record RetryFeedbackResponse(
+        String status,
+        RetryStateResponse retryState,
+        RetryExplanationResponse explanation,
+        RetryHintResponse hint
+) {
+}
+
+record RetryStateResponse(
+        String status,
+        int attemptNumber,
+        String eligibility
+) {
+}
+
+record RetryExplanationResponse(
+        String status,
+        String title,
+        String message
+) {
+}
+
+record RetryHintResponse(
+        String status,
+        String level,
         String message
 ) {
 }

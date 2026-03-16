@@ -74,6 +74,8 @@ class MvpLifecycleFlowTest {
         Map<String, Object> submissionBoundary = mapValue(startSessionResponse, "submission");
         String supportedAnswerType = String.valueOf(firstValue(listValue(submissionBoundary, "supportedAnswerTypes")));
         Map<String, Object> placeholderOutcome = mapValue(submissionBoundary, "placeholderOutcome");
+        Map<String, Object> placeholderRetryFeedback = mapValue(submissionBoundary, "placeholderRetryFeedback");
+        Map<String, Object> placeholderRetryState = mapValue(placeholderRetryFeedback, "retryState");
 
         assertThat(sessionId).isNotBlank();
         assertThat(stringValue(sessionScenario, "slug")).isEqualTo(scenarioSlug);
@@ -81,6 +83,9 @@ class MvpLifecycleFlowTest {
         assertThat(stringValue(lifecycle, "status")).isEqualTo("active");
         assertThat(intValue(lifecycle, "submissionCount")).isZero();
         assertThat(stringValue(placeholderOutcome, "status")).isEqualTo("placeholder");
+        assertThat(stringValue(placeholderRetryFeedback, "status")).isEqualTo("placeholder");
+        assertThat(stringValue(placeholderRetryState, "status")).isEqualTo("idle");
+        assertThat(intValue(placeholderRetryState, "attemptNumber")).isZero();
         assertThat(supportedAnswerType).isEqualTo("command_text");
 
         Map<String, Object> submissionResponse = performJson(
@@ -97,6 +102,8 @@ class MvpLifecycleFlowTest {
         Map<String, Object> submittedAnswer = mapValue(submissionResponse, "answer");
         Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
         Map<String, Object> submissionLifecycle = mapValue(submissionResponse, "lifecycle");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+        Map<String, Object> retryState = mapValue(retryFeedback, "retryState");
 
         assertThat(stringValue(submissionResponse, "sessionId")).isEqualTo(sessionId);
         assertThat(intValue(submissionResponse, "attemptNumber")).isEqualTo(1);
@@ -105,6 +112,9 @@ class MvpLifecycleFlowTest {
         assertThat(stringValue(outcome, "status")).isEqualTo("evaluated");
         assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
         assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("placeholder");
+        assertThat(stringValue(retryState, "status")).isEqualTo("complete");
+        assertThat(intValue(retryState, "attemptNumber")).isEqualTo(1);
         assertThat(stringValue(submissionLifecycle, "status")).isEqualTo("active");
         assertThat(intValue(submissionLifecycle, "submissionCount")).isEqualTo(1);
         assertThat(stringValue(submissionLifecycle, "lastSubmissionId")).isEqualTo(
