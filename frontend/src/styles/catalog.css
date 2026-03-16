@@ -66,17 +66,17 @@
 .flow-block:hover {
     transform: translateX(2px);
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(57, 89, 121, 0.37);
+    background: rgba(100, 145, 189, 0.37);
 }
 
 .flow-block--active:hover {
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(255, 217, 150, 0.15);
+    background: rgba(100, 145, 189, 0.37);
 }
 
 .flow-block--subtask.flow-block--active:hover {
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(57, 89, 121, 0.37);
+    background: rgba(100, 145, 189, 0.37);
 }
 
 .flow-subtask-group {
