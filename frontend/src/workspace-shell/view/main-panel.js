@@ -1,29 +1,31 @@
-import { renderCatalogOverviewState } from "./catalog-surfaces.js";
 import { renderLessonLane } from "./lesson-layout.js";
 import {
     normalizeTaskAnnotations,
     normalizeTaskInstructions,
     normalizeTaskSteps
 } from "./lesson-task.js";
-import {
-    escapeHtml,
-} from "./render-helpers.js";
+import { escapeHtml } from "./render-helpers.js";
 
-export function renderMainPanel(state) {
+export function renderMainPanel(state, { tagOptions = [], providerOptions = [] } = {}) {
     if (state.route === "exercise") {
         return renderExerciseMainPanel(state);
     }
 
     return renderLessonLane({
         lane: "lesson",
-        label: "Lesson lane",
-        title: "Catalog overview now occupies the center lesson column",
-        description: describeCatalogStatus(state).description,
-        meta: [
-            `Status: ${state.catalog.status}`,
-            `Scenarios: ${state.catalog.items.length}`
-        ],
-        body: renderCatalogOverviewState(state)
+        showHeader: false,
+        body: `
+            ${renderMainLead({
+                label: "Welcome page",
+                title: "Choose a task block from the left lane",
+                description: "The catalog page is gone. The left column now owns the full task flow, and the center lane shows the selected page.",
+                meta: [
+                    `Scenarios: ${state.catalog.items.length}`,
+                    `Catalog: ${state.catalog.status}`
+                ]
+            })}
+            ${renderWelcomePage(state, { tagOptions, providerOptions })}
+        `
     });
 }
 
@@ -33,18 +35,21 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return renderLessonLane({
             lane: "lesson",
-            label: "Focused lesson",
-            title: "Loading the center lesson surface",
-            description: "The route is already stable. The center lane is holding a reading-first lesson frame while the active detail provider resolves the selected scenario by slug.",
-            meta: [
-                `Route: ${state.route}`,
-                `Detail: ${state.detail.status}`
-            ],
+            showHeader: false,
             body: `
+                ${renderMainLead({
+                    label: "Focused lesson",
+                    title: "Loading the center lesson surface",
+                    description: "The center lane is resolving the page selected from the left navigation flow.",
+                    meta: [
+                        `Route: ${state.route}`,
+                        `Detail: ${state.detail.status}`
+                    ]
+                })}
                 <section class="lesson-spotlight lesson-spotlight--loading">
                     <span class="control-label">Lesson state</span>
                     <h4 class="lesson-block__title">Waiting for task description</h4>
-                    <p class="panel-copy">The lesson rail can load before the final task copy, ordered steps, and annotations are ready to read.</p>
+                    <p class="panel-copy">The page shell is mounted. The selected task page is still loading.</p>
                 </section>
             `
         });
@@ -53,14 +58,17 @@ function renderExerciseMainPanel(state) {
     if (state.detail.status === "error") {
         return renderLessonLane({
             lane: "lesson",
-            label: "Focused lesson",
-            title: "Exercise detail is unavailable",
-            description: "The exercise route now has explicit load and error flow handling. The shell stays in place, but the center lesson surface cannot render without the selected scenario payload.",
-            meta: [
-                `Provider: ${state.providerName}`,
-                "Detail: error"
-            ],
+            showHeader: false,
             body: `
+                ${renderMainLead({
+                    label: "Focused lesson",
+                    title: "Exercise detail is unavailable",
+                    description: "The selected task page could not be loaded for this route.",
+                    meta: [
+                        `Provider: ${state.providerName}`,
+                        "Detail: error"
+                    ]
+                })}
                 <section class="lesson-block">
                     <h4 class="lesson-block__title">Requested route</h4>
                     <dl class="result-summary">
@@ -82,16 +90,182 @@ function renderExerciseMainPanel(state) {
         });
     }
 
+    const focusedContent = resolveFocusedLessonContent(detail, state.selectedFocus);
+
     return renderLessonLane({
         lane: "lesson",
-        label: detail.workspace.shell.centerPanelTitle,
+        showHeader: false,
+        body: `
+            ${renderMainLead({
+                label: detail.workspace.shell.centerPanelTitle,
+                title: focusedContent.title,
+                description: focusedContent.description,
+                meta: [
+                    `Task: ${detail.workspace.task.status}`,
+                    `Difficulty: ${detail.difficulty}`,
+                    `Page: ${focusedContent.metaLabel}`
+                ]
+            })}
+            ${focusedContent.body}
+        `
+    });
+}
+
+function renderWelcomePage(state, { tagOptions, providerOptions }) {
+    return `
+        <section class="lesson-spotlight">
+            <span class="control-label">Greeting</span>
+            <h4 class="lesson-block__title">Practice Git inside one workspace shell</h4>
+            <p class="panel-copy">The left lane now owns navigation. Pick a task block there to open its page here without leaving the SPA shell.</p>
+            <div class="lesson-spotlight__meta">
+                <span class="lesson-spotlight__pill">Tasks: ${state.catalog.items.length}</span>
+                <span class="lesson-spotlight__pill">Route: ${state.route}</span>
+            </div>
+        </section>
+        ${renderCatalogControlPanel(state, { tagOptions, providerOptions })}
+        <section class="lesson-block lesson-block--reading">
+            <div class="lesson-section__header">
+                <span class="control-label">Loop</span>
+                <h4 class="lesson-block__title">How to use this screen</h4>
+            </div>
+            <ol class="task-sequence">
+                <li class="task-sequence__item">
+                    <span class="task-sequence__index">1</span>
+                    <div class="task-sequence__copy">
+                        <strong>Choose a task on the left</strong>
+                        <p>The left column is now the task catalog and sub-task navigator at the same time.</p>
+                    </div>
+                </li>
+                <li class="task-sequence__item">
+                    <span class="task-sequence__index">2</span>
+                    <div class="task-sequence__copy">
+                        <strong>Read the selected page in the center</strong>
+                        <p>Task overview and focused sub-task content open here instead of on a separate catalog page.</p>
+                    </div>
+                </li>
+                <li class="task-sequence__item">
+                    <span class="task-sequence__index">3</span>
+                    <div class="task-sequence__copy">
+                        <strong>Keep practicing on the right</strong>
+                        <p>The right lane remains visible for Git context inspection and answer drafting.</p>
+                    </div>
+                </li>
+            </ol>
+        </section>
+    `;
+}
+
+function renderCatalogControlPanel(state, { tagOptions, providerOptions }) {
+    return `
+        <section class="lesson-block lesson-block--reading catalog-controls">
+            <div class="lesson-section__header">
+                <span class="control-label">Catalog controls</span>
+                <h4 class="lesson-block__title">Filter and source the current scenario slice</h4>
+            </div>
+            <form class="catalog-controls__form" data-catalog-controls-form>
+                <div class="catalog-controls__grid">
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Source</span>
+                        <select name="providerName">
+                            ${providerOptions.map((providerName) => `
+                                <option value="${escapeHtml(providerName)}"${providerName === state.providerName ? " selected" : ""}>${escapeHtml(providerName)}</option>
+                            `).join("")}
+                        </select>
+                    </label>
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Difficulty</span>
+                        <select name="difficulty">
+                            <option value="">All difficulties</option>
+                            <option value="beginner"${state.query.difficulty === "beginner" ? " selected" : ""}>Beginner</option>
+                            <option value="intermediate"${state.query.difficulty === "intermediate" ? " selected" : ""}>Intermediate</option>
+                        </select>
+                    </label>
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Sort</span>
+                        <select name="sort">
+                            <option value="">Title</option>
+                            <option value="difficulty"${state.query.sort === "difficulty" ? " selected" : ""}>Difficulty</option>
+                        </select>
+                    </label>
+                </div>
+                <fieldset class="catalog-controls__tags">
+                    <legend class="control-label">Tags</legend>
+                    <div class="catalog-controls__tag-list">
+                        ${tagOptions.map((tag) => `
+                            <label class="catalog-controls__tag-option">
+                                <input
+                                    type="checkbox"
+                                    name="tags"
+                                    value="${escapeHtml(tag)}"${state.query.tags.includes(tag) ? " checked" : ""}
+                                >
+                                <span>${escapeHtml(tag)}</span>
+                            </label>
+                        `).join("")}
+                    </div>
+                </fieldset>
+                <div class="catalog-controls__actions">
+                    <button class="scenario-action scenario-action--muted" type="button" data-reset-catalog-controls>Reset controls</button>
+                    <span class="catalog-controls__summary">
+                        ${escapeHtml(describeCatalogQuery(state))}
+                    </span>
+                </div>
+            </form>
+        </section>
+    `;
+}
+
+function describeCatalogQuery(state) {
+    const activeParts = [];
+    if (state.query.difficulty) {
+        activeParts.push(`difficulty: ${state.query.difficulty}`);
+    }
+    if (state.query.sort) {
+        activeParts.push(`sort: ${state.query.sort}`);
+    }
+    if (state.query.tags.length) {
+        activeParts.push(`tags: ${state.query.tags.join(", ")}`);
+    }
+
+    const queryLabel = activeParts.length ? activeParts.join(" | ") : "no active filters";
+    return `Source ${state.providerName} | ${queryLabel}`;
+}
+
+function resolveFocusedLessonContent(detail, selectedFocus) {
+    const normalizedFocus = selectedFocus === "overview" ? null : selectedFocus;
+    const selectedStep = normalizeTaskSteps(detail).find((step) => `step-${step.position}` === normalizedFocus);
+    if (selectedStep) {
+        return {
+            title: selectedStep.title,
+            description: selectedStep.detail,
+            metaLabel: `sub-task ${selectedStep.position}`,
+            body: `
+                <section class="lesson-spotlight">
+                    <span class="control-label">Sub-task ${selectedStep.position}</span>
+                    <h4 class="lesson-block__title">${escapeHtml(selectedStep.title)}</h4>
+                    <p class="panel-copy">${escapeHtml(selectedStep.detail)}</p>
+                </section>
+                <section class="lesson-block lesson-block--reading">
+                    <div class="lesson-section__header">
+                        <span class="control-label">Why this step matters</span>
+                        <h4 class="lesson-block__title">Step context</h4>
+                    </div>
+                    <div class="task-annotations">
+                        ${normalizeTaskAnnotations(detail).map((annotation) => `
+                            <article class="task-annotation">
+                                <span class="control-label">${escapeHtml(annotation.label)}</span>
+                                <p>${escapeHtml(annotation.message)}</p>
+                            </article>
+                        `).join("")}
+                    </div>
+                </section>
+            `
+        };
+    }
+
+    return {
         title: detail.title,
-        description: detail.summary,
-        meta: [
-            `Task: ${detail.workspace.task.status}`,
-            `Difficulty: ${detail.difficulty}`,
-            `Source: ${detail.meta.source}`
-        ],
+        description: detail.workspace.task.goal,
+        metaLabel: "overview",
         body: `
             <section class="lesson-spotlight">
                 <span class="control-label">Focused lesson</span>
@@ -137,68 +311,21 @@ function renderExerciseMainPanel(state) {
                     `).join("")}
                 </ol>
             </section>
-            <section class="lesson-block lesson-block--reading">
-                <div class="lesson-section__header">
-                    <span class="control-label">Keep in mind</span>
-                    <h4 class="lesson-block__title">Static workspace annotations</h4>
-                </div>
-                <div class="task-annotations">
-                    ${normalizeTaskAnnotations(detail).map((annotation) => `
-                        <article class="task-annotation">
-                            <span class="control-label">${escapeHtml(annotation.label)}</span>
-                            <p>${escapeHtml(annotation.message)}</p>
-                        </article>
-                    `).join("")}
-                </div>
-            </section>
-            <section class="lesson-block lesson-block--supporting">
-                <div class="lesson-section__header">
-                    <span class="control-label">Supporting seam</span>
-                    <h4 class="lesson-block__title">Provider seam</h4>
-                </div>
-                <p class="panel-copy">
-                    The focused lesson surface still reads directly from the existing workspace payload without requiring new backend progression contracts.
-                </p>
-                <dl class="result-summary">
-                    <div>
-                        <dt>Detail source</dt>
-                        <dd>${escapeHtml(detail.meta.source)}</dd>
-                    </div>
-                    <div>
-                        <dt>Stub payload</dt>
-                        <dd>${escapeHtml(String(detail.meta.stub))}</dd>
-                    </div>
-                    <div>
-                        <dt>Difficulty</dt>
-                        <dd>${escapeHtml(detail.difficulty)}</dd>
-                    </div>
-                </dl>
-            </section>
         `
-    });
+    };
 }
 
-function describeCatalogStatus(state) {
-    switch (state.catalog.status) {
-        case "loading":
-            return {
-                description: "The shared shell is waiting for the active provider to resolve the latest catalog query."
-            };
-        case "empty":
-            return {
-                description: "The shell stays intact, but the current filters leave no scenario to route into the workspace."
-            };
-        case "error":
-            return {
-                description: state.catalog.error ?? "The active provider failed before returning scenario summaries."
-            };
-        case "ready":
-            return {
-                description: "Catalog results are ready and any listed scenario can reserve the exercise route inside this same shell."
-            };
-        default:
-            return {
-                description: "Pick a provider, tune the query, and choose which scenario should open the shared workspace route."
-            };
-    }
+function renderMainLead({ label, title, description, meta }) {
+    return `
+        <section class="lesson-lead">
+            <div class="lesson-lead__heading">
+                <p class="panel-label">${escapeHtml(label)}</p>
+                <h3>${escapeHtml(title)}</h3>
+                <p class="panel-copy">${escapeHtml(description)}</p>
+            </div>
+            <div class="lesson-lead__meta">
+                ${meta.map((item) => `<span class="lesson-lead__meta-item">${escapeHtml(item)}</span>`).join("")}
+            </div>
+        </section>
+    `;
 }

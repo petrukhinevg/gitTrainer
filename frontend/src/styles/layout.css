@@ -1,97 +1,53 @@
+body {
+    overflow: hidden;
+}
+
 .page-shell {
-    width: min(1220px, calc(100vw - 32px));
-    margin: 0 auto;
-    padding: 32px 0 56px;
-}
-
-.masthead {
-    display: grid;
-    gap: 18px;
-    align-items: start;
-    margin-bottom: 24px;
-}
-
-.masthead-copy {
-    display: grid;
-    gap: 12px;
-}
-
-.masthead-copy h1,
-.workspace-intro h2 {
+    width: 100%;
+    height: 100vh;
     margin: 0;
-    font-weight: 600;
-    line-height: 1.05;
-}
-
-.masthead-copy h1 {
-    max-width: 12ch;
-    font-size: clamp(2.8rem, 6vw, 5.2rem);
-}
-
-.masthead-copy p,
-.workspace-intro p {
-    margin: 0;
-    line-height: 1.55;
-    color: var(--ink-soft);
-}
-
-.masthead-nav a {
-    display: inline-flex;
-    align-items: center;
-    padding: 10px 16px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.72);
-    box-shadow: var(--shadow);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .app-shell {
-    display: grid;
-    gap: 18px;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+.app-shell > * {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .workspace-intro {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    align-items: end;
     padding: 24px;
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.12), rgba(255, 250, 241, 0.92)),
-        var(--paper-strong);
-}
-
-.workspace-intro__copy {
-    display: grid;
-    gap: 10px;
-    max-width: 64ch;
-}
-
-.workspace-intro__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.workspace-chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.82);
-    font-family: "Courier New", Courier, monospace;
-    font-size: 0.8rem;
 }
 
 .lesson-layout {
     display: grid;
     grid-template-areas: "navigation lesson practice";
-    grid-template-columns: minmax(250px, 0.82fr) minmax(420px, 1.38fr) minmax(300px, 0.96fr);
-    gap: 18px;
-    align-items: start;
+    grid-template-columns: var(--navigation-pane-width, max-content) minmax(420px, 1.46fr) minmax(300px, 0.96fr);
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: rgba(255, 250, 241, 0.74);
+    align-items: stretch;
+}
+
+.lesson-layout__lane {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    height: 100%;
+    overflow: hidden;
 }
 
 .lesson-layout__lane--navigation {
@@ -100,36 +56,66 @@
 
 .lesson-layout__lane--lesson {
     grid-area: lesson;
+    border-left: 0;
 }
 
 .lesson-layout__lane--practice {
     grid-area: practice;
+    border-left: 1px solid var(--border);
 }
 
 .lesson-lane {
-    padding: 22px;
-    min-height: calc(100vh - 260px);
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 18px 18px 0;
     display: grid;
-    align-content: start;
-    gap: 20px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    overflow: hidden;
 }
 
 .lesson-lane--navigation {
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.08), rgba(255, 250, 241, 0.94)),
-        var(--paper-strong);
+    width: var(--navigation-pane-width, max-content);
+    max-width: 100%;
+    padding-left: 0;
+}
+
+.lesson-lane--navigation .lesson-lane__body {
+    direction: rtl;
+    padding-left: 0;
+    padding-right: 0;
+    justify-items: start;
+}
+
+.lesson-lane--navigation .lesson-lane__scroll-content {
+    direction: ltr;
+    width: 100%;
+    min-width: 0;
+    padding-left: 18px;
+    padding-right: 18px;
 }
 
 .lesson-lane--lesson {
-    background:
-        linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(255, 250, 241, 0.98)),
-        var(--paper-strong);
+    padding-right: 0;
 }
 
+.lesson-lane--lesson .lesson-lane__body {
+    padding-right: 0;
+}
+
+.lesson-lane--lesson .lesson-lane__scroll-content {
+    padding-right: 18px;
+}
+
+.lesson-lane--navigation,
+.lesson-lane--lesson,
 .lesson-lane--practice {
-    display: grid;
-    align-content: start;
-    gap: 16px;
+    background: rgba(255, 250, 241, 0.78);
     background:
         linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
         var(--paper-strong);
@@ -143,12 +129,49 @@
 }
 
 .lesson-lane__header {
-    padding-bottom: 18px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--border);
 }
 
 .lesson-lane__heading {
     gap: 8px;
+}
+
+.lesson-lane__body {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-bottom: 16px;
+    align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(31, 23, 32, 0.18) transparent;
+    scrollbar-gutter: stable;
+}
+
+.lesson-lane__scroll-content {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.lesson-lane__body::-webkit-scrollbar {
+    width: 12px;
+}
+
+.lesson-lane__body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lesson-lane__body::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background: rgba(31, 23, 32, 0.16);
+}
+
+.lesson-lane__body::-webkit-scrollbar-thumb:hover {
+    background: rgba(31, 23, 32, 0.24);
 }
 
 .lesson-lane__meta {
@@ -161,14 +184,15 @@
 .lane-summary__badge {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.86);
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
     font-family: "Courier New", Courier, monospace;
     font-size: 0.74rem;
     text-transform: uppercase;
+    color: var(--ink-soft);
 }
 
 .lane-summary {
@@ -190,42 +214,75 @@
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        grid-template-areas:
-            "lesson lesson"
-            "navigation practice";
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: var(--navigation-pane-width, max-content) minmax(0, 1.24fr) minmax(280px, 0.95fr);
     }
 }
 
 @media (max-width: 900px) {
+    body {
+        overflow: auto;
+    }
+
+    .page-shell {
+        height: auto;
+        min-height: 100vh;
+    }
+
     .lesson-layout {
         grid-template-areas:
             "navigation"
             "lesson"
             "practice";
         grid-template-columns: 1fr;
+        gap: 16px;
+        height: auto;
+        overflow: visible;
+        background: transparent;
+    }
+
+    .lesson-layout__lane--practice {
+        border-left: 0;
     }
 
     .lesson-lane {
         min-height: auto;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .lesson-lane--navigation,
+    .lesson-lane--lesson {
+        width: 100%;
+        max-width: none;
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .lesson-lane__body {
+        overflow: visible;
+        padding-right: 0;
+        padding-bottom: 0;
+    }
+
+    .lesson-lane--navigation .lesson-lane__body {
+        direction: ltr;
+    }
+
+    .lesson-lane--navigation .lesson-lane__scroll-content {
+        direction: ltr;
+    }
+
+    .lesson-lane--navigation .lesson-lane__scroll-content,
+    .lesson-lane--lesson .lesson-lane__scroll-content {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
 @media (max-width: 720px) {
-    .page-shell {
-        width: min(100vw - 20px, 1220px);
-        padding-top: 20px;
-    }
-
-    .workspace-intro {
-        flex-direction: column;
-        align-items: start;
-    }
-
-    .workspace-intro__meta {
-        justify-content: start;
-    }
-
     .lesson-lane {
         padding: 18px;
     }

@@ -41,7 +41,7 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    mustRunAfter tasks.named('syncFrontendAssets')
+    dependsOn tasks.named('syncFrontendAssets')
 }
 
 tasks.named('compileTestJava') {

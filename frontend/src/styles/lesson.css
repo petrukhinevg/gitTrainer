@@ -1,33 +1,25 @@
 .lesson-block {
     display: grid;
     gap: 10px;
-    padding: 18px;
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    background: var(--paper-muted);
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
 }
 
 .lesson-block--highlight {
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.09), rgba(246, 239, 226, 0.9)),
-        var(--paper-muted);
+    background: transparent;
 }
 
 .lesson-spotlight {
     display: grid;
     gap: 12px;
-    padding: 22px;
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    background:
-        linear-gradient(180deg, rgba(190, 91, 43, 0.1), rgba(255, 250, 241, 0.92)),
-        var(--paper-muted);
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
 }
 
 .lesson-spotlight--loading {
-    background:
-        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
-        var(--paper-muted);
+    background: transparent;
 }
 
 .lesson-spotlight__meta {
@@ -39,13 +31,14 @@
 .lesson-spotlight__pill {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 250, 241, 0.86);
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
     font-family: "Courier New", Courier, monospace;
     font-size: 0.76rem;
+    color: var(--ink-soft);
 }
 
 .lesson-block--reading {
@@ -53,12 +46,39 @@
 }
 
 .lesson-block--supporting {
-    background: rgba(255, 250, 241, 0.7);
+    background: transparent;
 }
 
 .lesson-section__header {
     display: grid;
     gap: 6px;
+}
+
+.lesson-lead {
+    display: grid;
+    gap: 10px;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.lesson-lead__heading,
+.lesson-lead__meta {
+    display: grid;
+    gap: 8px;
+}
+
+.lesson-lead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.lesson-lead__meta-item {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
 }
 
 .lesson-list {
@@ -93,10 +113,9 @@
 .task-annotation {
     display: grid;
     gap: 8px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: rgba(255, 250, 241, 0.78);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
 }
 
 .task-sequence__item {
@@ -109,14 +128,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 40px;
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: rgba(190, 91, 43, 0.14);
+    min-width: auto;
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
     font-family: "Courier New", Courier, monospace;
     font-size: 0.76rem;
     text-transform: uppercase;
+    color: var(--accent);
 }
 
 .task-sequence__copy,
@@ -134,9 +154,65 @@
     line-height: 1.5;
 }
 
+.submission-draft__form,
+.submission-draft__fields,
+.submission-draft__field,
+.submission-draft__notice {
+    display: grid;
+    gap: 10px;
+}
+
+.submission-draft__field select,
+.submission-draft__field textarea,
+.submission-draft__actions button {
+    font: inherit;
+}
+
+.submission-draft__field select,
+.submission-draft__field textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.92);
+    color: var(--ink-strong);
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.submission-draft__hint,
+.submission-draft__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.submission-draft__notice {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.submission-draft__notice--ready {
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.9)),
+        rgba(255, 250, 241, 0.78);
+}
+
+.submission-draft__actions button {
+    cursor: pointer;
+    border-width: 1px;
+}
+
 @media (max-width: 720px) {
     .task-sequence__item {
         grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .submission-draft__hint,
+    .submission-draft__actions {
+        flex-direction: column;
         align-items: stretch;
     }
 }
