@@ -666,27 +666,27 @@ export function createCatalogWorkspaceController({
     }
 
     async function toggleScenarioExpansion(slug) {
-        if (navigationAnimationInProgress) {
-            return;
-        }
-
-        navigationAnimationInProgress = true;
-
-        try {
-            if (state.expandedScenarioSlugs.includes(slug)) {
-                await animateScenarioCollapse(slug);
-                collapseScenario(slug);
-                render();
+        if (state.expandedScenarioSlugs.includes(slug)) {
+            if (navigationAnimationInProgress) {
                 return;
             }
 
-            expandScenario(slug, { loadDetail: false });
-            render();
-            await animateScenarioExpansion(slug);
-            await loadScenarioDetail(slug, { syncSelected: false });
-        } finally {
-            navigationAnimationInProgress = false;
+            navigationAnimationInProgress = true;
+
+            try {
+                await animateScenarioCollapse(slug);
+                collapseScenario(slug);
+                render();
+            } finally {
+                navigationAnimationInProgress = false;
+            }
+
+            return;
         }
+
+        expandScenario(slug, { loadDetail: false });
+        render();
+        void loadScenarioDetail(slug, { syncSelected: false });
     }
 
     function animateScenarioExpansion(slug) {
