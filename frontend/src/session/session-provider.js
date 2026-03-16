@@ -219,7 +219,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "unsupported",
             code: "unsupported-answer-type",
-            message: `Answer type '${answerType}' is not supported for this submission yet.`
+            message: "This MVP validation slice only evaluates command_text answers."
         };
     }
 
@@ -229,7 +229,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "correct",
             code: "expected-command",
-            message: "The submitted command matches the current fixture expectation."
+            message: "Submitted command matches the expected safe next action for this scenario."
         };
     }
 
@@ -237,7 +237,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         status: "evaluated",
         correctness: "incorrect",
         code: "unexpected-command",
-        message: "The submitted command did not match the current fixture expectation."
+        message: "Submitted command does not match the expected safe next action for this scenario."
     };
 }
 
