@@ -249,10 +249,7 @@ function renderSessionTransportOutput(bootstrapState, lifecycle) {
                     <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).join(", ") || "unknown")}</dd>
                 </div>
             </dl>
-            <p class="panel-copy">
-                Placeholder outcome: ${escapeHtml(bootstrapState.response.submission?.placeholderOutcome?.code ?? "validation-pending")}.
-                Supported answer types: ${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).join(", ") || "unknown")}.
-            </p>
+            <p class="panel-copy">${escapeHtml(resolveSubmissionBoundaryCopy(bootstrapState.response.submission))}</p>
         </div>
     `;
 }
@@ -673,4 +670,20 @@ function resolveOutcomeTitle(correctness) {
 
 function resolveSubmissionReceiptBadge(outcome) {
     return normalizeOutcomeCorrectness(outcome?.correctness);
+}
+
+function resolveSubmissionBoundaryCopy(submissionBoundary) {
+    const placeholderOutcome = submissionBoundary?.placeholderOutcome ?? null;
+    const boundaryMessage = typeof placeholderOutcome?.message === "string" && placeholderOutcome.message.trim() !== ""
+        ? placeholderOutcome.message
+        : "Session transport is ready for the first evaluated submission.";
+    const supportedTypesCopy = Array.isArray(submissionBoundary?.supportedAnswerTypes)
+        ? submissionBoundary.supportedAnswerTypes.join(", ")
+        : "";
+
+    if (!supportedTypesCopy) {
+        return boundaryMessage;
+    }
+
+    return `${boundaryMessage} Supported answer types: ${supportedTypesCopy}.`;
 }

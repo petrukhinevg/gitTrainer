@@ -51,7 +51,8 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.submission.supportedAnswerTypes[0]").value("command_text"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.correctness").value("not-evaluated"))
-                .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("validation-pending"));
+                .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("awaiting-first-submission"))
+                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."));
     }
 
     @Test
@@ -157,6 +158,27 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
                 .andExpect(jsonPath("$.outcome.code").value("unexpected-command"));
+    }
+
+    @Test
+    void acceptsAlternateCorrectCommandVariantForScenario() throws Exception {
+        String sessionId = startSessionAndExtractId();
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status --short"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value(sessionId))
+                .andExpect(jsonPath("$.attemptNumber").value(1))
+                .andExpect(jsonPath("$.outcome.status").value("evaluated"))
+                .andExpect(jsonPath("$.outcome.correctness").value("correct"))
+                .andExpect(jsonPath("$.outcome.code").value("expected-command"));
     }
 
     @Test

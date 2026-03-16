@@ -1,19 +1,55 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
 
 const SUPPORTED_ANSWER_TYPES = Object.freeze(["command_text"]);
-const EXPECTED_COMMANDS_BY_SCENARIO = Object.freeze({
-    "status-basics": "git status",
-    "branch-safety": "git branch --show-current",
-    "history-cleanup-preview": "git log --oneline --decorate",
-    "remote-sync-preview": "git fetch --all --prune"
+const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze({
+    "status-basics": Object.freeze([
+        "git status",
+        "git status --short",
+        "git status -sb"
+    ]),
+    "branch-safety": Object.freeze([
+        "git branch --show-current",
+        "git status -sb",
+        "git status --short -b"
+    ]),
+    "history-cleanup-preview": Object.freeze([
+        "git log --oneline --decorate",
+        "git log --oneline --graph --decorate",
+        "git log --graph --oneline --decorate"
+    ]),
+    "remote-sync-preview": Object.freeze([
+        "git fetch",
+        "git fetch origin",
+        "git fetch --all --prune"
+    ])
 });
 
 export class SessionTransportError extends Error {
-    constructor(message, { failureKind = "retryable", status = null } = {}) {
+    constructor(
+        message,
+        {
+            failureKind = "retryable",
+            status = null,
+            failureDisposition = null,
+            retryable = null,
+            code = null,
+            requestedAnswerType = null,
+            supportedAnswerTypes = []
+        } = {}
+    ) {
         super(message);
         this.name = "SessionTransportError";
         this.failureKind = failureKind;
         this.status = typeof status === "number" ? status : null;
+        this.failureDisposition = normalizeOptionalValue(failureDisposition);
+        this.retryable = typeof retryable === "boolean" ? retryable : null;
+        this.code = normalizeOptionalValue(code);
+        this.requestedAnswerType = normalizeOptionalValue(requestedAnswerType);
+        this.supportedAnswerTypes = Array.isArray(supportedAnswerTypes)
+            ? supportedAnswerTypes
+                .map((answerType) => normalizeOptionalValue(answerType))
+                .filter(Boolean)
+            : [];
     }
 }
 
@@ -63,8 +99,8 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     placeholderOutcome: {
                         status: "placeholder",
                         correctness: "not-evaluated",
-                        code: "validation-pending",
-                        message: "Submission transport is ready, but validation rules are not wired yet."
+                        code: "awaiting-first-submission",
+                        message: "Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."
                     }
                 }
             };
@@ -182,30 +218,53 @@ async function postJson(fetchImpl, path, payload) {
 }
 
 async function resolveSessionTransportError(response) {
-    const message = await resolveTransportErrorMessage(response);
+    const problem = await readProblemPayload(response);
+    const message = resolveTransportErrorMessage(response.status, problem);
     return new SessionTransportError(message, {
-        failureKind: classifyFailureKind(response.status),
-        status: response.status
+        failureKind: classifyFailureKind(response.status, problem),
+        status: response.status,
+        failureDisposition: problem?.failureDisposition,
+        retryable: problem?.retryable,
+        code: problem?.code,
+        requestedAnswerType: problem?.requestedAnswerType,
+        supportedAnswerTypes: problem?.supportedAnswerTypes
     });
 }
 
-async function resolveTransportErrorMessage(response) {
+async function readProblemPayload(response) {
     const contentType = response.headers.get("content-type") ?? "";
     if (contentType.includes("json")) {
         try {
-            const payload = await response.json();
-            if (payload && typeof payload.detail === "string" && payload.detail.trim() !== "") {
-                return payload.detail;
-            }
+            return await response.json();
         } catch {
-            // Fall back to a generic message when the response body is not valid JSON.
+            return null;
         }
     }
 
-    return `Session request failed with status ${response.status}`;
+    return null;
 }
 
-function classifyFailureKind(status) {
+function resolveTransportErrorMessage(status, problem) {
+    if (problem && typeof problem.detail === "string" && problem.detail.trim() !== "") {
+        return problem.detail;
+    }
+
+    if (problem && typeof problem.message === "string" && problem.message.trim() !== "") {
+        return problem.message;
+    }
+
+    return `Session request failed with status ${status}`;
+}
+
+function classifyFailureKind(status, problem) {
+    if (problem?.failureDisposition === "terminal" || problem?.retryable === false) {
+        return "terminal";
+    }
+
+    if (problem?.failureDisposition === "retryable" || problem?.retryable === true) {
+        return "retryable";
+    }
+
     if (status === 408 || status === 425 || status === 429 || status >= 500) {
         return "retryable";
     }
@@ -223,8 +282,9 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         };
     }
 
-    const expectedCommand = EXPECTED_COMMANDS_BY_SCENARIO[scenarioSlug];
-    if (expectedCommand && normalizeCommand(answer) === normalizeCommand(expectedCommand)) {
+    const acceptedCommands = ACCEPTED_COMMANDS_BY_SCENARIO[scenarioSlug] ?? [];
+    const normalizedAnswer = normalizeCommand(answer);
+    if (acceptedCommands.some((expectedCommand) => normalizeCommand(expectedCommand) === normalizedAnswer)) {
         return {
             status: "evaluated",
             correctness: "correct",

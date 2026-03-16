@@ -11,8 +11,8 @@ public record SubmissionOutcome(
         return new SubmissionOutcome(
                 "placeholder",
                 "not-evaluated",
-                "validation-pending",
-                "Submission transport is ready, but validation rules are not wired yet."
+                "awaiting-first-submission",
+                "Session transport and correctness checks are ready. Submit an answer to receive an evaluated result."
         );
     }
 

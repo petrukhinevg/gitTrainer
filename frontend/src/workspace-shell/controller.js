@@ -269,6 +269,7 @@ export function createCatalogWorkspaceController({
     }
 
     function handleSubmissionDraftInput(event) {
+        const draftFieldSnapshot = captureDraftFieldSnapshot(event.target);
         const formData = new FormData(event.currentTarget);
         const nextAnswerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
         const nextAnswer = String(formData.get("answer") ?? "");
@@ -285,6 +286,9 @@ export function createCatalogWorkspaceController({
             state.submissionDraft.preparedSubmission = null;
             resetSubmissionRequestState();
         }
+
+        render();
+        restoreDraftFieldSnapshot(draftFieldSnapshot);
     }
 
     async function handleSubmissionDraftSubmit(event) {
@@ -526,6 +530,59 @@ export function createCatalogWorkspaceController({
 
     function resetSubmissionRequestState() {
         state.session.submission = createInitialSubmissionRequestState();
+    }
+
+    function captureDraftFieldSnapshot(field) {
+        if (
+            !(field instanceof HTMLInputElement)
+            && !(field instanceof HTMLTextAreaElement)
+            && !(field instanceof HTMLSelectElement)
+        ) {
+            return null;
+        }
+
+        return {
+            name: field.name,
+            selectionStart: typeof field.selectionStart === "number" ? field.selectionStart : null,
+            selectionEnd: typeof field.selectionEnd === "number" ? field.selectionEnd : null,
+            selectionDirection: field.selectionDirection ?? "none"
+        };
+    }
+
+    function restoreDraftFieldSnapshot(snapshot) {
+        if (!snapshot?.name) {
+            return;
+        }
+
+        const restoredField = appRoot.querySelector(
+            `[data-submission-draft-form] [name="${escapeSelectorValue(snapshot.name)}"]`
+        );
+
+        if (
+            !(restoredField instanceof HTMLInputElement)
+            && !(restoredField instanceof HTMLTextAreaElement)
+            && !(restoredField instanceof HTMLSelectElement)
+        ) {
+            return;
+        }
+
+        restoredField.focus({ preventScroll: true });
+
+        if (
+            typeof snapshot.selectionStart === "number"
+            && typeof snapshot.selectionEnd === "number"
+            && (
+                restoredField instanceof HTMLInputElement
+                || restoredField instanceof HTMLTextAreaElement
+            )
+        ) {
+            const valueLength = restoredField.value.length;
+            restoredField.setSelectionRange(
+                Math.min(snapshot.selectionStart, valueLength),
+                Math.min(snapshot.selectionEnd, valueLength),
+                snapshot.selectionDirection
+            );
+        }
     }
 
     function resolveSessionProvider(providerName) {
@@ -799,8 +856,14 @@ function createInitialSubmissionRequestState() {
 
 function normalizeTransportFailure(error, fallbackMessage) {
     if (error instanceof SessionTransportError) {
+        const failureKind = error.failureKind === "terminal" ? "terminal" : "retryable";
         return {
-            failureKind: error.failureKind === "terminal" ? "terminal" : "retryable",
+            failureKind,
+            failureDisposition: error.failureDisposition ?? failureKind,
+            retryable: typeof error.retryable === "boolean" ? error.retryable : failureKind === "retryable",
+            code: error.code,
+            requestedAnswerType: error.requestedAnswerType,
+            supportedAnswerTypes: error.supportedAnswerTypes,
             message: error.message || fallbackMessage,
             status: error.status
         };
@@ -809,6 +872,11 @@ function normalizeTransportFailure(error, fallbackMessage) {
     if (error instanceof Error) {
         return {
             failureKind: "retryable",
+            failureDisposition: "retryable",
+            retryable: true,
+            code: null,
+            requestedAnswerType: null,
+            supportedAnswerTypes: [],
             message: error.message || fallbackMessage,
             status: null
         };
@@ -816,6 +884,11 @@ function normalizeTransportFailure(error, fallbackMessage) {
 
     return {
         failureKind: "retryable",
+        failureDisposition: "retryable",
+        retryable: true,
+        code: null,
+        requestedAnswerType: null,
+        supportedAnswerTypes: [],
         message: fallbackMessage,
         status: null
     };

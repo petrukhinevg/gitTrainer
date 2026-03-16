@@ -23,6 +23,18 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
+    void marksAcceptedCommandVariantAsCorrect() {
+        SubmissionOutcome outcome = validator.validate(
+                "status-basics",
+                new SubmittedAnswer("command_text", "git status --short")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
+    }
+
+    @Test
     void marksUnexpectedCommandAsIncorrect() {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
