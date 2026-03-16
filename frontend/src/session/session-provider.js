@@ -19,9 +19,7 @@ export class SessionTransportError extends Error {
             status = null,
             failureDisposition = null,
             retryable = null,
-            code = null,
-            requestedAnswerType = null,
-            supportedAnswerTypes = []
+            code = null
         } = {}
     ) {
         super(message);
@@ -31,12 +29,6 @@ export class SessionTransportError extends Error {
         this.failureDisposition = normalizeOptionalValue(failureDisposition);
         this.retryable = typeof retryable === "boolean" ? retryable : null;
         this.code = normalizeOptionalValue(code);
-        this.requestedAnswerType = normalizeOptionalValue(requestedAnswerType);
-        this.supportedAnswerTypes = Array.isArray(supportedAnswerTypes)
-            ? supportedAnswerTypes
-                .map((answerType) => normalizeOptionalValue(answerType))
-                .filter(Boolean)
-            : [];
     }
 }
 
@@ -213,9 +205,7 @@ async function resolveSessionTransportError(response) {
         status: response.status,
         failureDisposition: failurePolicy.failureDisposition,
         retryable: failurePolicy.retryable,
-        code: problem?.code,
-        requestedAnswerType: problem?.requestedAnswerType,
-        supportedAnswerTypes: problem?.supportedAnswerTypes
+        code: problem?.code
     });
 }
 
