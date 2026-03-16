@@ -1,50 +1,50 @@
-# Local Agent Start
+# Локальный старт агента
 
-Use this file as the bootstrap for every new chat in this repository.
+Используй этот файл как стартовую точку для каждого нового чата в этом репозитории.
 
-## Product snapshot
+## Кратко о продукте
 
-- Product: single-page web application for learning and practicing Git through interactive scenarios, missions, and progress feedback
-- MVP loop: choose a training scenario -> inspect the task and repository state -> enter or assemble Git actions -> get validation and explanation
-- Backend owns: scenario definitions, exercise state, answer validation, progress tracking, scoring, hints, and explanation generation rules
-- Frontend owns: SPA routing, training workspace UI, client-side interaction state, progress presentation, and feedback rendering
+- Продукт: одностраничное веб-приложение для изучения и практики Git через интерактивные сценарии, миссии и обратную связь по прогрессу
+- Цикл MVP: выбрать тренировочный сценарий -> изучить задачу и состояние репозитория -> ввести или собрать Git-действия -> получить проверку и объяснение
+- Backend отвечает за: определения сценариев, состояние упражнений, проверку ответов, отслеживание прогресса, оценивание, подсказки и правила генерации объяснений
+- Frontend отвечает за: маршрутизацию SPA, интерфейс тренировочного рабочего пространства, клиентское состояние взаимодействия, отображение прогресса и рендеринг обратной связи
 
-This project is aimed at learners who understand basic development workflows but want practical Git repetition in a safe environment. The app should help users understand not only which command to run, but also why that command fits the repository state and task goal.
+Проект ориентирован на пользователей, которые понимают базовые процессы разработки, но хотят безопасно и практически отрабатывать Git. Приложение должно помогать понять не только какую команду выполнить, но и почему именно она подходит для текущего состояния репозитория и цели задания.
 
-## Repository snapshot
+## Кратко о репозитории
 
-- Root project: single Gradle project with Spring Boot 4 and Java 21; currently backend-first with documentation for a future SPA frontend
-- `frontend/`: planned future SPA workspace for the training interface; not present yet, so frontend work currently starts with roadmap and architecture updates
-- `docs/`: roadmap, architecture, workflow, and local board notes
-- Other important folders: `src/main/java` for backend application code, `src/test/java` for automated tests, `src/main/resources` for configuration and static assets when introduced
+- Корневой проект: единый Gradle-проект со Spring Boot 4 и Java 21; сейчас ориентирован на backend и содержит документацию для будущего SPA-фронтенда
+- `frontend/`: запланированное SPA-приложение для тренировочного интерфейса; пока отсутствует, поэтому frontend-работа сейчас начинается с обновления roadmap и архитектуры
+- `docs/`: roadmap, архитектура, workflow и локальные заметки по доске
+- Другие важные каталоги: `src/main/java` для backend-кода приложения, `src/test/java` для автотестов, `src/main/resources` для конфигурации и статических ресурсов, когда они появятся
 
-## Session routing
+## Маршрутизация сессии
 
-Read these documents in every new chat:
+Читай эти документы в каждом новом чате:
 
-1. `docs/ROADMAP.md` for product scope, MVP boundaries, and task inventory.
-2. `docs/ARCHITECTURE.md` for backend/frontend boundaries and package placement.
+1. `docs/ROADMAP.md` для понимания границ продукта, рамок MVP и списка задач.
+2. `docs/ARCHITECTURE.md` для понимания границ backend/frontend и размещения пакетов.
 
-Read these only when the task needs them:
+Открывай эти документы только если они нужны для текущей задачи:
 
-3. `AGENTS.md` for repository operating rules, git actions, push constraints, PR flow, review handling, and validation before push.
-4. `docs/TRACKER_WORKFLOW.md` for issue flow, task decomposition, branch/PR flow, review state, or board updates.
-5. `docs/BACKEND_ROADMAP.md` for backend-only work or API/data/model changes.
-6. `docs/FRONTEND_ROADMAP.md` for frontend-only work or UX/UI changes.
-7. `.env` only when the task needs local credentials or tokens.
+3. `AGENTS.md` для правил работы с репозиторием, git-действий, ограничений на push, PR-flow, обработки ревью и проверок перед push.
+4. `docs/TRACKER_WORKFLOW.md` для статусов задач, декомпозиции, потока веток и PR, статуса review или обновления board.
+5. `docs/BACKEND_ROADMAP.md` для backend-only задач или изменений API, данных и моделей.
+6. `docs/FRONTEND_ROADMAP.md` для frontend-only задач или изменений UX/UI.
+7. `.env` только если задаче действительно нужны локальные креды или токены.
 
-## Action-based routing
+## Маршрутизация по типу действия
 
-- If the task changes product scope, MVP boundaries, or requires creating/refining work items, check `docs/ROADMAP.md`.
-- If the task changes backend/frontend responsibilities or package placement, check `docs/ARCHITECTURE.md`.
-- If the task involves git branches, commits, pushes, PR creation, review fixes, or pre-push checks, check `AGENTS.md`.
-- If the task involves issue states, decomposition, parent/sub-issue structure, review status, or project board updates, check `docs/TRACKER_WORKFLOW.md`.
-- If the task is backend-only, check `docs/BACKEND_ROADMAP.md`.
-- If the task is frontend-only, check `docs/FRONTEND_ROADMAP.md`.
-- If the task needs local credentials, tokens, or authenticated local tooling, check `.env`.
+- Если задача меняет рамки продукта, границы MVP или требует создания либо уточнения work items, смотри `docs/ROADMAP.md`.
+- Если задача меняет зоны ответственности backend/frontend или размещение пакетов, смотри `docs/ARCHITECTURE.md`.
+- Если задача связана с ветками git, коммитами, push, созданием PR, исправлениями по ревью или проверками перед push, смотри `AGENTS.md`.
+- Если задача связана со статусами issue, декомпозицией, структурой parent/sub-issue, статусом review или обновлением project board, смотри `docs/TRACKER_WORKFLOW.md`.
+- Если задача только про backend, смотри `docs/BACKEND_ROADMAP.md`.
+- Если задача только про frontend, смотри `docs/FRONTEND_ROADMAP.md`.
+- Если задаче нужны локальные креды, токены или аутентифицированные локальные инструменты, смотри `.env`.
 
-## Notes
+## Заметки
 
-- Repository-wide operating rules live in `AGENTS.md`; use this file only as the fast entry point and routing map.
-- Keep local-only secrets in `.env`.
-- There is no separate frontend application in the repository yet; do not assume `frontend/` exists unless it is added in a later task.
+- Общие правила работы по репозиторию находятся в `AGENTS.md`; этот файл используй только как быстрый вход и карту маршрутизации.
+- Локальные секреты храни в `.env`.
+- Отдельного frontend-приложения в репозитории пока нет; не предполагай наличие `frontend/`, если оно не появится в одной из следующих задач.

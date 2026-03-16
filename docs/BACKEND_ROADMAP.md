@@ -1,143 +1,143 @@
-# Backend Roadmap
+# Дорожная карта бэкенда
 
-## Goal
+## Цель
 
-The backend must provide the domain model and source of truth for the Git training experience. It owns exercise definitions, session lifecycle, answer validation, hints, explanations, and progress tracking.
+Backend должен предоставлять доменную модель и быть источником истины для учебного Git-опыта. Он отвечает за определения упражнений, жизненный цикл сессий, валидацию ответов, подсказки, объяснения и отслеживание прогресса.
 
-For the MVP, the backend should make it possible to serve a small scenario catalog, start a training session, validate a learner response, and return enough structured feedback for the frontend to render a useful explanation.
+Для MVP backend должен позволять отдавать небольшой каталог сценариев, запускать тренировочную сессию, проверять ответ пользователя и возвращать достаточно структурированной обратной связи, чтобы frontend мог показать полезное объяснение.
 
-## Roadmap usage rules
+## Правила использования дорожной карты
 
-- Items below should be suitable for creating issues.
-- One task should produce a complete and testable backend result.
-- If a backend item grows too large, convert it into a `parent issue` with `sub-issues`.
-- Prefer issue sizes that can usually be implemented and reviewed in one focused PR.
-- Prefer self-contained backend tasks that can branch from the parent baseline without requiring unmerged sibling backend code.
-- The sub-issues below should stay task-ready: they should all be creatable immediately after the epic's initial baseline commit.
-- If several backend sub-issues need the same minimal types, interfaces, or fixture schemas, place that seam in the initial epic commit rather than in a child task.
-- Prefer splitting backend work by shell or boundary, policy or domain logic, and authored content or fixtures so sibling tasks can move in parallel from the same epic baseline.
-- Prefer starting an epic with only the backend sub-issues that already have clear stable seams; split further later only where that improves parallelism or reviewability.
-- Prefer backend sub-issues that align with frontend sub-issues for the same epic when both sides are implementing the same learner-facing slice.
-- Backend-only sub-issues are valid when they deliver a complete backend capability, contract, content set, or policy without requiring unfinished sibling work.
-- If two backend steps only become meaningful together as one stable contract, merge them into one broader backend task instead of chaining sibling tasks.
+- Элементы ниже должны подходить для создания issue.
+- Одна задача должна давать законченный и проверяемый backend-результат.
+- Если backend-элемент становится слишком большим, превращай его в `parent issue` с `sub-issues`.
+- Предпочитай такие размеры issue, которые обычно можно реализовать и отревьюить в одном сфокусированном PR.
+- Предпочитай самодостаточные backend-задачи, которые можно ответвить от baseline parent issue без зависимости от невлитого sibling backend-кода.
+- Sub-issues ниже должны оставаться task-ready: их все должно быть можно создать сразу после начального baseline commit эпика.
+- Если нескольким backend sub-issues нужны одни и те же минимальные типы, интерфейсы или схемы fixture, вынеси этот seam в начальный epic commit, а не в дочернюю задачу.
+- Предпочитай деление backend-работы по shell или boundary, policy или domain logic, а также authored content или fixtures, чтобы sibling tasks могли идти параллельно от одной и той же baseline эпика.
+- Начинай эпик только с тех backend sub-issues, у которых уже есть ясные и стабильные seam; дроби дальше позже только там, где это улучшает параллельность или reviewability.
+- Предпочитай backend sub-issues, которые выравниваются с frontend sub-issues того же эпика, если обе стороны реализуют один и тот же пользовательский срез.
+- Backend-only sub-issues допустимы, если они дают законченную backend-capability, контракт, набор контента или policy без необходимости в незавершённой sibling work.
+- Если два backend-шага имеют смысл только вместе как один стабильный контракт, объединяй их в одну более широкую backend-задачу вместо цепочки sibling-задач.
 
-## MVP for backend
+## MVP для бэкенда
 
-Backend MVP is complete when:
+Backend MVP завершён, когда:
 
-1. the backend can expose a catalog of Git exercises with metadata and step content
-2. the backend can create and track a learner session for a selected exercise
-3. the backend can validate submitted Git answers and return structured correctness feedback
-4. the backend can store or at least consistently report attempt outcomes and completion status
+1. backend может отдавать каталог Git-упражнений с метаданными и контентом шагов
+2. backend может создавать и отслеживать пользовательскую сессию для выбранного упражнения
+3. backend может проверять отправленные Git-ответы и возвращать структурированную обратную связь о корректности
+4. backend может хранить или хотя бы последовательно сообщать результаты попыток и статус завершения
 
-## Parent issues
+## Родительские задачи
 
-### Parent Issue 1. Scenario catalog browsing backend
+### Родительская задача 1. Бэкенд для просмотра каталога сценариев
 
-Goal: provide the backend slice needed for browsing the first MVP catalog.
+Цель: предоставить backend-срез, нужный для просмотра первого MVP-каталога.
 
-#### Sub-issue 1.1. Deliver catalog browse API shell and deterministic stub boundary
+#### Подзадача 1.1. Поставить shell browse API каталога и детерминированную границу stub
 
-Result: the backend exposes the catalog browse endpoint, request or response DTO mapping, and a deterministic stub adapter so the browse boundary is callable before real catalog content is wired.
+Результат: backend публикует endpoint просмотра каталога, mapping request/response DTO и детерминированный stub adapter, чтобы boundary просмотра можно было вызывать до подключения реального контента каталога.
 
-Pairs with frontend sub-issue 1.1.
+Парная подзадача frontend 1.1.
 
-#### Sub-issue 1.2. Deliver catalog query policy for filtering and sorting
+#### Подзадача 1.2. Поставить policy запроса каталога для фильтрации и сортировки
 
-Result: the backend implements the MVP filtering, sorting, and empty-result behavior over the catalog summary model behind the browse boundary without depending on the authored scenario set.
+Результат: backend реализует MVP-фильтрацию, сортировку и поведение пустого результата поверх summary-модели каталога за boundary просмотра, не завися от authored набора сценариев.
 
-Pairs with frontend sub-issue 1.2.
+Парная подзадача frontend 1.2.
 
-#### Sub-issue 1.3. Deliver MVP catalog summary content and browse-state fixtures
+#### Подзадача 1.3. Поставить MVP-контент summary каталога и fixtures состояний просмотра
 
-Result: the backend provides the initial scenario summary dataset plus source fixtures for normal, empty, and unavailable-source browse cases using the epic baseline fixture schema.
+Результат: backend предоставляет начальный набор summary-данных сценариев плюс source fixtures для обычного, пустого и недоступного источника просмотра, используя baseline-схему fixture эпика.
 
-Pairs with frontend sub-issue 1.3.
+Парная подзадача frontend 1.3.
 
-### Parent Issue 2. Exercise context and workspace backend
+### Родительская задача 2. Бэкенд для контекста упражнения и рабочего пространства
 
-Goal: provide the backend slice needed to open one exercise and show its context.
+Цель: предоставить backend-срез, нужный для открытия одного упражнения и показа его контекста.
 
-#### Sub-issue 2.1. Deliver exercise detail API shell and stub workspace payload
+#### Подзадача 2.1. Поставить shell detail API упражнения и stub payload рабочего пространства
 
-Result: the backend exposes the exercise detail endpoint, DTO mapping, and a deterministic stub workspace payload so the detail boundary is callable before authored scenario detail content is wired.
+Результат: backend публикует endpoint деталей упражнения, mapping DTO и детерминированный stub payload рабочего пространства, чтобы boundary detail можно было вызывать до подключения authored detail-контента сценариев.
 
-Pairs with frontend sub-issue 2.1.
+Парная подзадача frontend 2.1.
 
-#### Sub-issue 2.2. Deliver task-content structure and ordered-step assembly rules
+#### Подзадача 2.2. Поставить структуру контента задачи и правила сборки упорядоченных шагов
 
-Result: the backend defines and assembles learner-facing task content such as instructions, ordered steps, target goal text, and static workspace annotations behind the exercise detail model.
+Результат: backend определяет и собирает пользовательский контент задачи, например инструкции, упорядоченные шаги, текст целевой цели и статические аннотации рабочего пространства за моделью detail упражнения.
 
-Pairs with frontend sub-issue 2.2.
+Парная подзадача frontend 2.2.
 
-#### Sub-issue 2.3. Deliver repository context schema and MVP scenario detail content
+#### Подзадача 2.3. Поставить схему контекста репозитория и MVP detail-контент сценариев
 
-Result: the backend provides the repository context model and authored scenario detail content for MVP exercises, including branches, commit cues, file cues, and other static repository annotations.
+Результат: backend предоставляет модель контекста репозитория и authored detail-контент сценариев для MVP-упражнений, включая ветки, commit cues, file cues и другие статические аннотации репозитория.
 
-Pairs with frontend sub-issue 2.3.
+Парная подзадача frontend 2.3.
 
-### Parent Issue 3. Submission and correctness backend
+### Родительская задача 3. Бэкенд для отправки ответа и проверки корректности
 
-Goal: provide the backend slice needed for answer submission and first-pass validation.
+Цель: предоставить backend-срез, нужный для отправки ответа и первичной валидации.
 
-#### Sub-issue 3.1. Deliver session lifecycle and submission transport boundary
+#### Подзадача 3.1. Поставить жизненный цикл сессии и транспортную boundary отправки
 
-Result: clients can start a session and submit an answer through a stable boundary that covers identifiers, lifecycle state, and transport-level success or failure handling with deterministic placeholder outcomes.
+Результат: клиенты могут запускать сессию и отправлять ответ через стабильную boundary, которая покрывает идентификаторы, состояние жизненного цикла и обработку транспортного успеха или ошибки с детерминированными placeholder-результатами.
 
-Backend-only supporting task for parent issue 3. Frontend transport work pairs through sub-issue 3.3 and correctness rendering pairs through sub-issue 3.2.
+Backend-only supporting task для parent issue 3. Frontend transport work спаривается через sub-issue 3.3, а рендеринг корректности — через sub-issue 3.2.
 
-#### Sub-issue 3.2. Deliver first answer-type validation rules and outcome model
+#### Подзадача 3.2. Поставить правила валидации первого типа ответов и модель результата
 
-Result: the backend evaluates the first MVP answer types and produces a stable machine-readable outcome model that distinguishes correct, incorrect, partial if used, and unsupported-answer cases.
+Результат: backend оценивает первые MVP-типы ответов и производит стабильную machine-readable модель результата, различающую корректный, некорректный, частичный при использовании и unsupported-answer случаи.
 
-Pairs with frontend sub-issue 3.3.
+Парная подзадача frontend 3.3.
 
-#### Sub-issue 3.3. Deliver submission failure policy and unsupported-answer mappings
+#### Подзадача 3.3. Поставить policy ошибок отправки и mapping unsupported-answer
 
-Result: the backend defines request failure behavior, retryable-versus-terminal submission errors, and unsupported-answer mappings so clients can render consistent failure feedback.
+Результат: backend определяет поведение при ошибках запроса, retryable-versus-terminal ошибки отправки и mapping unsupported-answer, чтобы клиенты могли показывать согласованную обратную связь об ошибках.
 
-Pairs with frontend sub-issue 3.2.
+Парная подзадача frontend 3.2.
 
-### Parent Issue 4. Guided retry and hints backend
+### Родительская задача 4. Бэкенд для управляемых повторных попыток и подсказок
 
-Goal: provide the backend slice needed for instructional retries.
+Цель: предоставить backend-срез, нужный для обучающих повторных попыток.
 
-#### Sub-issue 4.1. Deliver retry state model and retry eligibility policy
+#### Подзадача 4.1. Поставить модель retry-state и policy допустимости повторной попытки
 
-Result: the backend defines the retry state model, retry counters, and eligibility rules that determine whether another attempt or a stronger hint is available after a failed submission.
+Результат: backend определяет модель retry-state, счётчики повторных попыток и правила допустимости, которые определяют, доступна ли ещё одна попытка или более сильная подсказка после неудачной отправки.
 
-Pairs with frontend sub-issue 4.1.
+Парная подзадача frontend 4.1.
 
-#### Sub-issue 4.2. Deliver explanation selection and progressive hint policy
+#### Подзадача 4.2. Поставить выбор объяснений и policy прогрессивных подсказок
 
-Result: the backend defines instructional explanation selection and hint progression rules for incorrect and partial answers across the MVP scenarios.
+Результат: backend определяет выбор обучающих объяснений и правила продвижения подсказок для неправильных и частично правильных ответов в рамках MVP-сценариев.
 
-Pairs with frontend sub-issue 4.2.
+Парная подзадача frontend 4.2.
 
-#### Sub-issue 4.3. Deliver retry feedback payload assembly and boundary mapping
+#### Подзадача 4.3. Поставить сборку payload обратной связи для retry и mapping boundary
 
-Result: the backend exposes the retry feedback boundary that assembles attempt state, explanation content, hint level, and retry eligibility into a stable payload after failed submissions.
+Результат: backend публикует boundary обратной связи для retry, которая собирает состояние попытки, контент объяснения, уровень подсказки и допустимость повторной попытки в стабильный payload после неудачных отправок.
 
-Pairs with frontend sub-issue 4.3.
+Парная подзадача frontend 4.3.
 
-### Parent Issue 5. Progress and next-step guidance backend
+### Родительская задача 5. Бэкенд для прогресса и подсказок следующего шага
 
-Goal: provide the backend slice needed for durable progress tracking and follow-up guidance.
+Цель: предоставить backend-срез, нужный для устойчивого отслеживания прогресса и рекомендаций по продолжению.
 
-#### Sub-issue 5.1. Deliver attempt outcome storage model and completion event recording
+#### Подзадача 5.1. Поставить модель хранения результатов попыток и запись событий завершения
 
-Result: the backend defines how attempt outcomes, completion events, and in-progress state are recorded so later progress queries and recommendations have a stable source of truth.
+Результат: backend определяет, как фиксируются результаты попыток, события завершения и состояние in-progress, чтобы последующие запросы прогресса и рекомендации имели стабильный источник истины.
 
-Backend-only supporting task for parent issue 5. User-facing frontend progress work pairs through sub-issues 5.2 and 5.3.
+Backend-only supporting task для parent issue 5. Пользовательская frontend-работа по прогрессу спаривается через sub-issues 5.2 и 5.3.
 
-#### Sub-issue 5.2. Deliver progress summary contract and status derivation rules
+#### Подзадача 5.2. Поставить контракт summary прогресса и правила вывода статусов
 
-Result: the backend exposes the progress summary boundary and derives completion markers, in-progress status, and recent activity from the recorded attempt history.
+Результат: backend публикует boundary summary прогресса и выводит маркеры завершения, статус in-progress и недавнюю активность из записанной истории попыток.
 
-Pairs with frontend sub-issue 5.2.
+Парная подзадача frontend 5.2.
 
-#### Sub-issue 5.3. Deliver next-step recommendation policy and payload mapping
+#### Подзадача 5.3. Поставить policy рекомендаций следующего шага и mapping payload
 
-Result: the backend defines how solved, attempted, and next suggested exercises are derived and exposes the recommendation payload needed for follow-up guidance in the MVP.
+Результат: backend определяет, как выводятся решённые, попробованные и следующие рекомендуемые упражнения, и публикует recommendation payload, нужный для follow-up guidance в MVP.
 
-Pairs with frontend sub-issue 5.3.
+Парная подзадача frontend 5.3.
