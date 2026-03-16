@@ -3,13 +3,16 @@
 ## Basic process
 
 1. A user creates a task in the tracker.
-2. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
-3. An assignee takes a task into work in its dedicated branch.
-4. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
-5. After implementation, the assignee pushes the branch, creates or updates the PR, link PR in `Linked pull requests`, and then moves the task to `Review`.
-6. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
-7. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
-8. Each task should describe a complete and reviewable result.
+2. The task should receive the correct label set when it is created so its scope and side are explicit from the start.
+3. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
+4. An assignee takes a task into work in its dedicated branch.
+5. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
+6. After implementation, the assignee pushes the branch, creates or updates the PR, and then moves the task to `Review`.
+7. For task branches that target `main`, the assignee should verify the PR appears in `Linked pull requests` before considering the review handoff complete.
+8. For task branches that target a non-`main` base such as an epic branch, the assignee should not wait for `Linked pull requests` to populate before moving the task to `Review`.
+9. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
+10. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
+11. Each task should describe a complete and reviewable result.
 
 ## Board columns
 
@@ -45,6 +48,11 @@ Suitable task:
 - one technical sub-feature needed to unlock the next capability, such as validation payloads or session persistence;
 - one infrastructure or platform step that enables further work;
 - one content or configuration step that unlocks the next increment, such as seeding the initial Git exercise catalog.
+
+Issue creation rule:
+
+- assign the correct project label set when the task is created
+- do not leave a new issue unlabeled if the intended side or work type is already known
 
 Unsuitable task:
 
@@ -91,8 +99,9 @@ When decomposing a parent issue:
 - Merge reviewed child branches into the epic branch only when the remaining unfinished tasks are specifically blocked by those completed child branches and no independent child work remains.
 - When a child or standalone task is moved to `Review`, push the branch before changing the board status.
 - After push, each task branch should have its own PR against the epic branch.
-- Before moving a task to `Review`, verify that the task's PR is linked and visible in the `Linked pull requests` field.
-- If the platform requires manual issue linking for non-default-target PRs, link the PR manually before moving the task to `Review`.
+- Before moving a task to `Review`, verify that the task's PR is linked and visible in the `Linked pull requests` field only when the PR targets `main`.
+- If the PR targets a non-`main` base such as an epic branch, do not wait for `Linked pull requests` to populate before moving the task to `Review`.
+- If the platform requires manual issue linking for non-default-target PRs, complete that linkage as follow-up metadata work, but do not block the move to `Review` on the field becoming visible.
 - If a child task is split during implementation, create the new child branches from the current epic branch head, not from the in-progress sibling branch.
 
 ## Fast board setup
@@ -100,14 +109,15 @@ When decomposing a parent issue:
 Use this sequence to avoid manual cleanup later:
 
 1. Create the parent issue and all child issues.
-2. Link every child issue to its parent issue immediately.
-3. Create the epic branch from `main`.
-4. Make the initial epic commit on the epic branch.
-5. Push the epic branch to `origin`.
-6. Create the epic PR to `main`.
-7. Create each child task branch from the current epic branch head.
-8. Register each child branch as the linked branch for its issue before implementation starts.
-9. Add all issues to the board and set their initial `Status`.
+2. Assign the correct labels to every issue immediately.
+3. Link every child issue to its parent issue immediately.
+4. Create the epic branch from `main`.
+5. Make the initial epic commit on the epic branch.
+6. Push the epic branch to `origin`.
+7. Create the epic PR to `main`.
+8. Create each child task branch from the current epic branch head.
+9. Register each child branch as the linked branch for its issue before implementation starts.
+10. Add all issues to the board and set their initial `Status`.
 
 ## Linked branch and PR setup
 
@@ -118,7 +128,7 @@ Use this sequence for each child task so `Linked pull requests` is populated pre
 3. Push the task branch to `origin`.
 4. Register the task branch as the issue's linked branch.
 5. Implement the task and create the task PR with the epic branch as `base`.
-6. Verify the issue shows the PR in `Linked pull requests` before moving the task to `Review`.
+6. Verify the issue shows the PR in `Linked pull requests` before moving the task to `Review` only when the PR targets `main`.
 
 If the branch was created locally before GitHub issue linkage was configured, do not assume the field will backfill automatically. In that case:
 
@@ -205,15 +215,17 @@ Even after a linked branch and matching PR exist, the project field `Linked pull
 
 Operational rule:
 
-- do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
-- if the field is still empty, keep the task in `In Progress` even if code and tests are done
-- if automatic linkage does not populate the field, complete the manual association in the GitHub UI as part of the same task handoff instead of leaving that step to a later pass
+- if the PR targets `main`, do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
+- if the PR targets `main` and the field is still empty, keep the task in `In Progress` even if code and tests are done
+- if the PR targets a non-`main` base such as an epic branch, do not block the move to `Review` on the field being empty
+- if automatic linkage does not populate the field for a non-`main` PR, complete the manual association in the GitHub UI as follow-up metadata work instead of blocking the board transition
 
 Observed limitation:
 
 - even after creating a fresh linked branch through `gh issue develop`, pushing the task commit onto that linked branch, and opening a PR with `Refs #<issue>` against an epic branch, the project field may still remain empty
 - in that state, GitHub can already show a cross-reference from the issue timeline to the PR, but that is still not enough to treat `Linked pull requests` as satisfied
-- when this happens, leave the task in `In Progress` and finish the remaining linkage through the GitHub UI before moving the task to `Review`
+- when this happens for a PR that targets `main`, leave the task in `In Progress` and finish the remaining linkage through the GitHub UI before moving the task to `Review`
+- when this happens for a PR that targets a non-`main` base, move the task to `Review` after the branch is pushed and the PR exists, then finish the remaining linkage through the GitHub UI
 
 ### Project status updates
 
@@ -268,6 +280,7 @@ This exception is allowed when the later task is genuinely blocked without that 
 - Done criteria: 2-5 testable points
 - Constraints: what is out of scope
 - Side: `backend`, `frontend`, `fullstack`, `content`, or another project-specific label
+- Labels: assign the correct project labels for the task's actual scope when the issue is created
 
 ## Parent issue template
 
