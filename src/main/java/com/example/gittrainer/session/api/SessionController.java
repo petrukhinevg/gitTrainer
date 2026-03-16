@@ -8,6 +8,7 @@ import com.example.gittrainer.session.application.StartSessionCommand;
 import com.example.gittrainer.session.application.StartSessionUseCase;
 import com.example.gittrainer.session.application.SubmitAnswerCommand;
 import com.example.gittrainer.session.application.SubmitAnswerUseCase;
+import com.example.gittrainer.session.application.UnsupportedSubmissionAnswerTypeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -65,22 +66,27 @@ public class SessionController {
 
     @ExceptionHandler(SessionRequestValidationException.class)
     ProblemDetail handleValidationFailure(SessionRequestValidationException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+        return SessionFailureProblemFactory.invalidRequest(exception);
+    }
+
+    @ExceptionHandler(UnsupportedSubmissionAnswerTypeException.class)
+    ProblemDetail handleUnsupportedAnswerType(UnsupportedSubmissionAnswerTypeException exception) {
+        return SessionFailureProblemFactory.unsupportedAnswer(exception);
     }
 
     @ExceptionHandler(SessionNotFoundException.class)
     ProblemDetail handleMissingSession(SessionNotFoundException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+        return SessionFailureProblemFactory.missingSession(exception);
     }
 
     @ExceptionHandler(ScenarioDetailNotFoundException.class)
     ProblemDetail handleMissingScenario(ScenarioDetailNotFoundException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+        return SessionFailureProblemFactory.missingScenario(exception);
     }
 
     @ExceptionHandler(ScenarioCatalogSourceUnavailableException.class)
     ProblemDetail handleUnavailableSource(ScenarioCatalogSourceUnavailableException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+        return SessionFailureProblemFactory.unavailableScenarioSource(exception);
     }
 }
 

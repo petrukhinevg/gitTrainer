@@ -28,7 +28,7 @@ public class StartSessionUseCase {
 
     public StartSessionResult start(StartSessionCommand command) {
         if (command.scenarioSlug() == null) {
-            throw new SessionRequestValidationException("Scenario slug is required to start a session.");
+            throw SessionRequestValidationException.missingScenarioSlug();
         }
 
         ScenarioDetailResult detailResult = loadScenarioDetailUseCase.load(
