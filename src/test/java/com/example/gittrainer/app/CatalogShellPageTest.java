@@ -65,6 +65,9 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Practice scaffolding stays mounted while detail loads")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Scenario detail provider seam failed")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Repository context now anchors the practice lane")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Prepare answer draft")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Local draft state")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Prepare submission")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Recent commits")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("File cues")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Workspace annotations")))
@@ -86,6 +89,8 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".lesson-spotlight")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-sequence")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".task-annotation")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".submission-draft__form")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".submission-draft__notice--ready")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-list")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".context-pill--active")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("@media (max-width: 720px)")));
