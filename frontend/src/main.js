@@ -14,6 +14,11 @@ import {
     createLocalFixtureDetailProvider,
     createUnavailableFixtureDetailProvider
 } from "./detail/detail-provider.js";
+import {
+    createBackendApiSessionProvider,
+    createLocalFixtureSessionProvider,
+    createUnavailableFixtureSessionProvider
+} from "./session/session-provider.js";
 import { CATALOG_TAG_OPTIONS } from "./catalog/catalog-fixtures.js";
 import { createCatalogWorkspaceController } from "./workspace-shell/controller.js";
 
@@ -29,11 +34,18 @@ const detailProviderFactories = Object.freeze({
     "fixture-unavailable": () => createUnavailableFixtureDetailProvider()
 });
 
+const sessionProviderFactories = Object.freeze({
+    "local-fixture": () => createLocalFixtureSessionProvider(),
+    "backend-api": () => createBackendApiSessionProvider(),
+    "fixture-unavailable": () => createUnavailableFixtureSessionProvider()
+});
+
 const appRoot = document.querySelector("#app");
 
 createCatalogWorkspaceController({
     appRoot,
     catalogProviderFactories,
     detailProviderFactories,
+    sessionProviderFactories,
     tagOptions: CATALOG_TAG_OPTIONS
 }).bootstrap();
