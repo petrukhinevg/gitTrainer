@@ -125,7 +125,10 @@ export function createCatalogWorkspaceController({
 
             state.catalog.items = [];
             state.catalog.meta = null;
-            state.catalog.error = error instanceof Error ? error.message : "Unknown catalog error";
+            state.catalog.error = toUserFacingRecoveryMessage(
+                error instanceof Error ? error.message : null,
+                "Catalog source is unavailable right now. Try again in a moment."
+            );
             state.catalog.status = "error";
         }
 
@@ -200,7 +203,10 @@ export function createCatalogWorkspaceController({
             state.detailCache[slug] = {
                 status: "error",
                 data: null,
-                error: error instanceof Error ? error.message : "Unknown scenario detail error"
+                error: toUserFacingRecoveryMessage(
+                    error instanceof Error ? error.message : null,
+                    "Scenario detail source is unavailable right now. Try again in a moment."
+                )
             };
         } finally {
             detailLoadTasks.delete(slug);
@@ -881,7 +887,7 @@ function normalizeTransportFailure(error, fallbackMessage) {
             code: error.code,
             requestedAnswerType: error.requestedAnswerType,
             supportedAnswerTypes: error.supportedAnswerTypes,
-            message: error.message || fallbackMessage,
+            message: toUserFacingRecoveryMessage(error.message, fallbackMessage),
             status: error.status
         };
     }
@@ -894,7 +900,7 @@ function normalizeTransportFailure(error, fallbackMessage) {
             code: null,
             requestedAnswerType: null,
             supportedAnswerTypes: [],
-            message: error.message || fallbackMessage,
+            message: toUserFacingRecoveryMessage(error.message, fallbackMessage),
             status: null
         };
     }
@@ -929,6 +935,11 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
     }
 
     return "terminal";
+}
+
+function toUserFacingRecoveryMessage(message, fallbackMessage) {
+    const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
+    return resolvedMessage.replace(/Try\s+\w+\s+provider\.?$/i, "Try again in a moment.");
 }
 
 function measureNaturalNavigationWidth(navigationLane) {

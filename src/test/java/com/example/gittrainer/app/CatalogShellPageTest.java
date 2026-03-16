@@ -81,6 +81,9 @@ class CatalogShellPageTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Prepared payload")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("No branch cues are available from the active detail payload.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Input unlocks after you open a task.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Try again in a moment.")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("swap providers to repopulate the scenario map"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Try another provider."))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("#/exercise/")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Back to welcome")));
 

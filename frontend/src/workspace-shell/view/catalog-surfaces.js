@@ -33,7 +33,7 @@ export function renderCatalogOverviewState(state) {
             return `
                 <section class="catalog-state catalog-state-empty">
                     <strong>No scenarios in this slice</strong>
-                    <p>Relax the active filters or swap providers to repopulate the scenario map.</p>
+                    <p>Relax the active filters to repopulate the scenario map.</p>
                 </section>
             `;
         default:
