@@ -6,7 +6,7 @@
 2. For an epic, the assignee creates the epic branch, makes the initial epic commit on that branch, and only then creates child task branches from the current epic branch head.
 3. An assignee takes a task into work in its dedicated branch.
 4. The task branch should also be registered as the issue's linked branch so GitHub can connect future PRs to `Linked pull requests`.
-5. After implementation, the assignee pushes the branch, creates or updates the PR, verifies the PR appears in `Linked pull requests`, and then moves the task to `Review`.
+5. After implementation, the assignee pushes the branch, creates or updates the PR, link PR in `Linked pull requests`, and then moves the task to `Review`.
 6. If review finds issues, fix them in the same branch in a follow-up commit marked as a review fix.
 7. If review finds that the task mixes product discovery with implementation, split scope and update the roadmap first.
 8. Each task should describe a complete and reviewable result.
@@ -70,7 +70,9 @@ When decomposing a parent issue:
 ## Git workflow
 
 - `main` is the production branch.
-- Use a single local repository directory by default. Do not create a separate local folder or `git worktree` for each task unless the user explicitly requests it.
+- Use only the current local repository directory by default.
+- Do not create or switch to a separate local folder, sibling repository clone, or `git worktree` for task execution unless the user explicitly requests that setup.
+- If multiple local copies of the repository already exist, ignore them and keep working in the current repository directory unless the user explicitly redirects you.
 - Epic branches and standalone task branches are created from `main`.
 - After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
 - After the initial epic commit exists, create child task branches for all currently defined sub-issues right away.
@@ -205,6 +207,7 @@ Operational rule:
 
 - do not move a task to `Review` until the PR is actually visible in the `Linked pull requests` field
 - if the field is still empty, keep the task in `In Progress` even if code and tests are done
+- if automatic linkage does not populate the field, complete the manual association in the GitHub UI as part of the same task handoff instead of leaving that step to a later pass
 
 Observed limitation:
 

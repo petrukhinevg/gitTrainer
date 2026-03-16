@@ -123,6 +123,12 @@ Result: the frontend turns the right lane into a practice-focused surface that c
 
 Frontend-only follow-up task for parent issue 3 that extends the answer-input shell into the target practice layout.
 
+#### Sub-issue 3.5. Refine the workspace shell into contiguous independently scrolling columns
+
+Result: the frontend reshapes the exercise workspace into always-visible contiguous columns with independent scrolling, while moving shared overview copy out of the center reading flow so navigation, lesson, and practice surfaces can stay visible at the same time.
+
+Frontend-only follow-up task for parent issue 3 that tightens the shell composition and content placement after the first practice surfaces exist.
+
 ### Parent Issue 4. Guided retry and hints frontend
 
 Goal: provide the frontend slice needed for instructional retries.

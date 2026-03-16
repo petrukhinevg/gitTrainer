@@ -4,6 +4,7 @@ This file contains repository-wide operating rules. For every new chat, start wi
 
 ## New Chat Bootstrap
 
+0. Allways answer and use only Russian language
 1. Read `LOCAL_AGENT_START.md`.
 2. Follow the session routing in that file and open only the documents needed for the current task.
 3. Return to this file for repository rules, local credential handling, and agent-specific execution constraints.
@@ -21,9 +22,12 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - Use `docs/TRACKER_WORKFLOW.md` as the single source of truth for task decomposition, branch flow, PR flow, board states, child-task WIP handling, and merge timing.
 - Reuse the command examples in `docs/TRACKER_WORKFLOW.md` for `gh`, linked branches, GraphQL issue/PR linkage, and epic-based PR flow instead of re-deriving those API calls each time.
 - If a task uncovers stable `gh` commands, API queries, GraphQL mutations, or other repeatable operational notes that would otherwise force another documentation search later, add them to the relevant repository instructions before finishing the task.
-- Work in the single local repository directory by default. Do not create alternate local project folders or `git worktree` checkouts for tasks unless the user explicitly asks for that setup.
+- Work only in the current local repository directory by default.
+- Do not create or switch to alternate local project folders, sibling repository clones, or `git worktree` checkouts for task work unless the user explicitly asks for that setup.
+- If alternate local copies already exist on disk, ignore them and continue in this repository directory unless the user explicitly redirects you.
 - Do not push to `origin` during active implementation unless the user explicitly asks for it.
 - When a task is moved to `Review`, push the task branch, create or update its PR, and verify that the PR is visible through the `Linked pull requests` project field before considering the review handoff complete.
+- For PRs that target an epic branch instead of `main`, do not rely on automatic linkage alone. If `Linked pull requests` is still empty after PR creation, finish the manual issue/PR association before treating the handoff as complete.
 - Use the commit format defined in `docs/TRACKER_WORKFLOW.md`: `number_ShortCommitDescription` for the main implementation commit of a task.
 - After creating an epic branch, make the initial epic commit on that branch before creating any child task branches.
 - After the initial epic commit exists, create the child task branches for the epic's current sub-issues immediately from that updated epic branch head.
@@ -34,6 +38,7 @@ This file contains repository-wide operating rules. For every new chat, start wi
 - When needed, add one follow-up commit with a `review fix` postfix.
 - The existing project field for PR visibility is `Linked pull requests`. Do not create a custom replacement field unless the project setup changes.
 - When creating child task branches, also create or register the matching linked branch for the issue so GitHub can populate `Linked pull requests` automatically.
+- Do not leave a task in a state where the PR exists but the board still shows the placeholder link entry; correct the linkage as part of the same handoff.
 
 ## Validation Before Push
 
