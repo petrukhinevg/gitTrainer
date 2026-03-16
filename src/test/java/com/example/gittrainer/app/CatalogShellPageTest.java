@@ -63,6 +63,8 @@ class CatalogShellPageTest {
                 "name=\"tags\"",
                 "[data-submission-draft-form]",
                 "data-retry-feedback-panel",
+                "data-retry-context-summary",
+                "data-retry-feedback-slot",
                 "data-session-request-retry",
                 "app-shell--exercise",
                 "Try again in a moment."

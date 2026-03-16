@@ -505,6 +505,15 @@ export function createCatalogWorkspaceController({
             error: null,
             lastPayload: preparedSubmission
         };
+        state.session.feedbackPanel = createFeedbackPanelState({
+            previousFeedbackPanel: state.session.feedbackPanel,
+            detail: state.detail.data,
+            scenarioSlug: state.selectedScenarioSlug,
+            preparedSubmission,
+            status: "submitting",
+            attemptNumber: (state.session.bootstrap.response?.lifecycle?.submissionCount ?? 0) + 1,
+            transportDisposition: "pending"
+        });
         render();
 
         try {
@@ -523,6 +532,17 @@ export function createCatalogWorkspaceController({
                 error: null,
                 lastPayload: preparedSubmission
             };
+            state.session.feedbackPanel = createFeedbackPanelState({
+                previousFeedbackPanel: state.session.feedbackPanel,
+                detail: state.detail.data,
+                scenarioSlug: state.selectedScenarioSlug,
+                preparedSubmission,
+                status: response.outcome?.correctness === "correct" ? "resolved" : "retry-ready",
+                attemptNumber: response.attemptNumber,
+                transportDisposition: "evaluated",
+                correctness: response.outcome?.correctness ?? null,
+                outcomeCode: response.outcome?.code ?? null
+            });
 
             if (state.session.bootstrap.response) {
                 state.session.bootstrap.response = {
@@ -542,6 +562,16 @@ export function createCatalogWorkspaceController({
                 error: normalizedFailure,
                 lastPayload: preparedSubmission
             };
+            state.session.feedbackPanel = createFeedbackPanelState({
+                previousFeedbackPanel: state.session.feedbackPanel,
+                detail: state.detail.data,
+                scenarioSlug: state.selectedScenarioSlug,
+                preparedSubmission,
+                status: "request-failure",
+                attemptNumber: state.session.feedbackPanel?.contextSnapshot?.attemptNumber ?? 0,
+                transportDisposition: normalizedFailure.failureKind,
+                errorMessage: normalizedFailure.message
+            });
         }
 
         if (requestId !== latestSubmissionRequestId) {
@@ -970,7 +1000,8 @@ function createInitialSessionState() {
             error: null,
             scenarioSlug: null
         },
-        submission: createInitialSubmissionRequestState()
+        submission: createInitialSubmissionRequestState(),
+        feedbackPanel: createInitialFeedbackPanelState()
     };
 }
 
@@ -980,6 +1011,58 @@ function createInitialSubmissionRequestState() {
         response: null,
         error: null,
         lastPayload: null
+    };
+}
+
+function createInitialFeedbackPanelState() {
+    return {
+        status: "idle",
+        contextSnapshot: null,
+        updatedAt: null
+    };
+}
+
+function createFeedbackPanelState({
+    previousFeedbackPanel = null,
+    detail = null,
+    scenarioSlug = null,
+    preparedSubmission = null,
+    status = "idle",
+    attemptNumber = 0,
+    transportDisposition = "idle",
+    correctness = null,
+    outcomeCode = null,
+    errorMessage = null
+}) {
+    const previousContext = previousFeedbackPanel?.contextSnapshot ?? null;
+    const repositoryContext = detail?.workspace?.repositoryContext ?? null;
+    const branches = Array.isArray(repositoryContext?.branches) ? repositoryContext.branches : [];
+    const files = Array.isArray(repositoryContext?.files) ? repositoryContext.files : [];
+    const currentBranch = branches.find((branch) => branch?.current)?.name
+        ?? branches[0]?.name
+        ?? previousContext?.currentBranch
+        ?? "unknown";
+
+    return {
+        status,
+        contextSnapshot: {
+            scenarioSlug: scenarioSlug ?? previousContext?.scenarioSlug ?? null,
+            scenarioTitle: detail?.title ?? previousContext?.scenarioTitle ?? scenarioSlug ?? "unknown",
+            goal: detail?.workspace?.task?.goal
+                ?? previousContext?.goal
+                ?? "Task goal is unavailable for this exercise.",
+            currentBranch,
+            branchCount: branches.length || previousContext?.branchCount || 0,
+            fileCount: files.length || previousContext?.fileCount || 0,
+            answerType: preparedSubmission?.answerType ?? previousContext?.answerType ?? "command_text",
+            answer: preparedSubmission?.answer ?? previousContext?.answer ?? "",
+            attemptNumber: typeof attemptNumber === "number" ? attemptNumber : previousContext?.attemptNumber ?? 0,
+            transportDisposition,
+            correctness: correctness ?? previousContext?.correctness ?? null,
+            outcomeCode: outcomeCode ?? previousContext?.outcomeCode ?? null,
+            errorMessage: errorMessage ?? null
+        },
+        updatedAt: new Date().toISOString()
     };
 }
 
