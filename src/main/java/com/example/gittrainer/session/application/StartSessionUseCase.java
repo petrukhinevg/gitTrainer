@@ -3,6 +3,7 @@ package com.example.gittrainer.session.application;
 import com.example.gittrainer.scenario.application.LoadScenarioDetailUseCase;
 import com.example.gittrainer.scenario.application.ScenarioDetailResult;
 import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
+import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
@@ -43,13 +44,15 @@ public class StartSessionUseCase {
                 Instant.now(),
                 SessionState.ACTIVE,
                 0,
+                0,
                 null
         ));
 
         return new StartSessionResult(
                 session,
                 SessionSubmissionAnswerTypes.supportedAnswerTypes(),
-                SubmissionOutcome.boundaryReady()
+                SubmissionOutcome.boundaryReady(),
+                RetryStatePolicy.initialState()
         );
     }
 }
