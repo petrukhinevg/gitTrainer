@@ -6,7 +6,7 @@ import {
 } from "./lesson-task.js";
 import { escapeHtml } from "./render-helpers.js";
 
-export function renderMainPanel(state) {
+export function renderMainPanel(state, { tagOptions = [], providerOptions = [] } = {}) {
     if (state.route === "exercise") {
         return renderExerciseMainPanel(state);
     }
@@ -24,7 +24,7 @@ export function renderMainPanel(state) {
                     `Catalog: ${state.catalog.status}`
                 ]
             })}
-            ${renderWelcomePage(state)}
+            ${renderWelcomePage(state, { tagOptions, providerOptions })}
         `
     });
 }
@@ -111,7 +111,7 @@ function renderExerciseMainPanel(state) {
     });
 }
 
-function renderWelcomePage(state) {
+function renderWelcomePage(state, { tagOptions, providerOptions }) {
     return `
         <section class="lesson-spotlight">
             <span class="control-label">Greeting</span>
@@ -122,6 +122,7 @@ function renderWelcomePage(state) {
                 <span class="lesson-spotlight__pill">Route: ${state.route}</span>
             </div>
         </section>
+        ${renderCatalogControlPanel(state, { tagOptions, providerOptions })}
         <section class="lesson-block lesson-block--reading">
             <div class="lesson-section__header">
                 <span class="control-label">Loop</span>
@@ -152,6 +153,81 @@ function renderWelcomePage(state) {
             </ol>
         </section>
     `;
+}
+
+function renderCatalogControlPanel(state, { tagOptions, providerOptions }) {
+    return `
+        <section class="lesson-block lesson-block--reading catalog-controls">
+            <div class="lesson-section__header">
+                <span class="control-label">Catalog controls</span>
+                <h4 class="lesson-block__title">Filter and source the current scenario slice</h4>
+            </div>
+            <form class="catalog-controls__form" data-catalog-controls-form>
+                <div class="catalog-controls__grid">
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Source</span>
+                        <select name="providerName">
+                            ${providerOptions.map((providerName) => `
+                                <option value="${escapeHtml(providerName)}"${providerName === state.providerName ? " selected" : ""}>${escapeHtml(providerName)}</option>
+                            `).join("")}
+                        </select>
+                    </label>
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Difficulty</span>
+                        <select name="difficulty">
+                            <option value="">All difficulties</option>
+                            <option value="beginner"${state.query.difficulty === "beginner" ? " selected" : ""}>Beginner</option>
+                            <option value="intermediate"${state.query.difficulty === "intermediate" ? " selected" : ""}>Intermediate</option>
+                        </select>
+                    </label>
+                    <label class="catalog-controls__field">
+                        <span class="control-label">Sort</span>
+                        <select name="sort">
+                            <option value="">Title</option>
+                            <option value="difficulty"${state.query.sort === "difficulty" ? " selected" : ""}>Difficulty</option>
+                        </select>
+                    </label>
+                </div>
+                <fieldset class="catalog-controls__tags">
+                    <legend class="control-label">Tags</legend>
+                    <div class="catalog-controls__tag-list">
+                        ${tagOptions.map((tag) => `
+                            <label class="catalog-controls__tag-option">
+                                <input
+                                    type="checkbox"
+                                    name="tags"
+                                    value="${escapeHtml(tag)}"${state.query.tags.includes(tag) ? " checked" : ""}
+                                >
+                                <span>${escapeHtml(tag)}</span>
+                            </label>
+                        `).join("")}
+                    </div>
+                </fieldset>
+                <div class="catalog-controls__actions">
+                    <button class="scenario-action scenario-action--muted" type="button" data-reset-catalog-controls>Reset controls</button>
+                    <span class="catalog-controls__summary">
+                        ${escapeHtml(describeCatalogQuery(state))}
+                    </span>
+                </div>
+            </form>
+        </section>
+    `;
+}
+
+function describeCatalogQuery(state) {
+    const activeParts = [];
+    if (state.query.difficulty) {
+        activeParts.push(`difficulty: ${state.query.difficulty}`);
+    }
+    if (state.query.sort) {
+        activeParts.push(`sort: ${state.query.sort}`);
+    }
+    if (state.query.tags.length) {
+        activeParts.push(`tags: ${state.query.tags.join(", ")}`);
+    }
+
+    const queryLabel = activeParts.length ? activeParts.join(" | ") : "no active filters";
+    return `Source ${state.providerName} | ${queryLabel}`;
 }
 
 function resolveFocusedLessonContent(detail, selectedFocus) {

@@ -4,7 +4,7 @@ import { renderSidebarPanel } from "./view/sidebar-panel.js";
 import { renderRouteNotFound } from "./view/workspace-intro.js";
 import { renderWorkspacePanel } from "./view/workspace-panel.js";
 
-export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOptions }) {
+export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOptions, providerOptions }) {
     if (state.route === "not-found") {
         return renderRouteNotFound();
     }
@@ -13,7 +13,7 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
         ${renderLessonLayout({
             state,
             navigationLane: renderSidebarPanel(state, selectedCatalogScenario, tagOptions),
-            lessonLane: renderMainPanel(state),
+            lessonLane: renderMainPanel(state, { tagOptions, providerOptions }),
             practiceLane: renderWorkspacePanel(state)
         })}
     `;

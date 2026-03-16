@@ -47,6 +47,11 @@ export function createCatalogWorkspaceController({
     const detailLoadTasks = new Map();
     const sessionProviders = new Map();
     let navigationAnimationInProgress = false;
+    const providerOptions = resolveSharedProviderOptions({
+        catalogProviderFactories,
+        detailProviderFactories,
+        sessionProviderFactories
+    });
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
@@ -222,12 +227,31 @@ export function createCatalogWorkspaceController({
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
             selectedCatalogScenario,
-            tagOptions
+            tagOptions,
+            providerOptions
         });
 
         syncNavigationPaneWidth();
+        bindCatalogControls();
         bindNavigationControls();
         bindPracticeSurfaceControls();
+    }
+
+    function bindCatalogControls() {
+        const form = document.querySelector("[data-catalog-controls-form]");
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener("change", () => {
+            void applyCatalogControls(form);
+        });
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+        });
+        form.querySelector("[data-reset-catalog-controls]")?.addEventListener("click", () => {
+            void resetCatalogControls(form);
+        });
     }
 
     function bindNavigationControls() {
@@ -273,6 +297,48 @@ export function createCatalogWorkspaceController({
                 void restartExerciseSession();
             });
         });
+    }
+
+    async function applyCatalogControls(form) {
+        const nextControlsState = readCatalogControls(form);
+        const providerChanged = nextControlsState.providerName !== state.providerName;
+        const queryChanged = !isSameQuery(state.query, nextControlsState.query);
+
+        if (!providerChanged && !queryChanged) {
+            return;
+        }
+
+        state.providerName = nextControlsState.providerName;
+        state.query = nextControlsState.query;
+
+        if (providerChanged) {
+            resetProviderScopedState();
+        }
+
+        render();
+        await reloadActiveRouteData();
+    }
+
+    async function resetCatalogControls(form) {
+        const defaults = {
+            providerName: DEFAULT_PROVIDER_NAME,
+            query: cloneQuery(DEFAULT_QUERY)
+        };
+        const providerChanged = defaults.providerName !== state.providerName;
+        const queryChanged = !isSameQuery(state.query, defaults.query);
+        if (!providerChanged && !queryChanged) {
+            return;
+        }
+
+        state.providerName = defaults.providerName;
+        state.query = defaults.query;
+        if (providerChanged) {
+            resetProviderScopedState();
+        }
+
+        form.reset();
+        render();
+        await reloadActiveRouteData();
     }
 
     function handleSubmissionDraftInput(event) {
@@ -539,6 +605,19 @@ export function createCatalogWorkspaceController({
 
     function resetSubmissionRequestState() {
         state.session.submission = createInitialSubmissionRequestState();
+    }
+
+    function resetProviderScopedState() {
+        state.detail.status = state.route === "exercise" ? "loading" : "idle";
+        state.detail.data = null;
+        state.detail.error = null;
+        state.detailCache = {};
+        state.submissionDraft = createInitialSubmissionDraftState();
+        state.session = createInitialSessionState();
+        sessionProviders.clear();
+        ++latestDetailRequestId;
+        ++latestSessionBootstrapRequestId;
+        ++latestSubmissionRequestId;
     }
 
     function captureDraftFieldSnapshot(field) {
@@ -840,6 +919,38 @@ function cloneQuery(query) {
         tags: [...query.tags],
         sort: query.sort
     };
+}
+
+function isSameQuery(left, right) {
+    return left.difficulty === right.difficulty
+        && left.sort === right.sort
+        && left.tags.length === right.tags.length
+        && left.tags.every((tag, index) => tag === right.tags[index]);
+}
+
+function readCatalogControls(form) {
+    const formData = new FormData(form);
+    return {
+        providerName: normalizeOptionalValue(formData.get("providerName")) ?? DEFAULT_PROVIDER_NAME,
+        query: {
+            difficulty: normalizeOptionalValue(formData.get("difficulty")),
+            tags: formData.getAll("tags").map((tag) => String(tag)).filter(Boolean),
+            sort: normalizeOptionalValue(formData.get("sort"))
+        }
+    };
+}
+
+function resolveSharedProviderOptions({
+    catalogProviderFactories,
+    detailProviderFactories,
+    sessionProviderFactories
+}) {
+    const detailProviders = new Set(Object.keys(detailProviderFactories));
+    const sessionProviders = new Set(Object.keys(sessionProviderFactories));
+
+    return Object.keys(catalogProviderFactories)
+        .filter((providerName) => detailProviders.has(providerName) && sessionProviders.has(providerName))
+        .sort();
 }
 
 function createInitialSubmissionDraftState() {

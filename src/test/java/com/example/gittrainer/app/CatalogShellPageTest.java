@@ -55,6 +55,12 @@ class CatalogShellPageTest {
                 "#/catalog",
                 "#/exercise/",
                 "[data-scenario-toggle]",
+                "[data-catalog-controls-form]",
+                "data-reset-catalog-controls",
+                "name=\"providerName\"",
+                "name=\"difficulty\"",
+                "name=\"sort\"",
+                "name=\"tags\"",
                 "[data-submission-draft-form]",
                 "data-session-request-retry",
                 "app-shell--exercise",
@@ -74,6 +80,9 @@ class CatalogShellPageTest {
                 ".lesson-layout__lane--navigation",
                 ".lesson-layout__lane--lesson",
                 ".lesson-layout__lane--practice",
+                ".catalog-controls__form",
+                ".catalog-controls__grid",
+                ".catalog-controls__tag-list",
                 ".practice-stack",
                 ".branch-graph"
         );
