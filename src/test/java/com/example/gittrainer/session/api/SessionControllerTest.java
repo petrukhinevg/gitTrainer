@@ -221,7 +221,9 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.answer.type").value("file_patch"))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("unsupported"))
-                .andExpect(jsonPath("$.outcome.code").value("unsupported-answer-type"));
+                .andExpect(jsonPath("$.outcome.code").value("unsupported-answer-type"))
+                .andExpect(jsonPath("$.failureDisposition").doesNotExist())
+                .andExpect(jsonPath("$.retryable").doesNotExist());
     }
 
     @Test

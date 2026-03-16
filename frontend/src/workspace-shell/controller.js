@@ -879,8 +879,6 @@ function normalizeTransportFailure(error, fallbackMessage) {
             failureDisposition: error.failureDisposition ?? failureKind,
             retryable: typeof error.retryable === "boolean" ? error.retryable : failureKind === "retryable",
             code: error.code,
-            requestedAnswerType: error.requestedAnswerType,
-            supportedAnswerTypes: error.supportedAnswerTypes,
             message: error.message || fallbackMessage,
             status: error.status
         };
@@ -892,8 +890,6 @@ function normalizeTransportFailure(error, fallbackMessage) {
             failureDisposition: "retryable",
             retryable: true,
             code: null,
-            requestedAnswerType: null,
-            supportedAnswerTypes: [],
             message: error.message || fallbackMessage,
             status: null
         };
@@ -904,8 +900,6 @@ function normalizeTransportFailure(error, fallbackMessage) {
         failureDisposition: "retryable",
         retryable: true,
         code: null,
-        requestedAnswerType: null,
-        supportedAnswerTypes: [],
         message: fallbackMessage,
         status: null
     };

@@ -4,7 +4,6 @@ import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundExcepti
 import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
-import com.example.gittrainer.session.application.UnsupportedSubmissionAnswerTypeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
@@ -22,20 +21,6 @@ final class SessionFailureProblemFactory {
                 "terminal",
                 false
         );
-    }
-
-    static ProblemDetail unsupportedAnswer(UnsupportedSubmissionAnswerTypeException exception) {
-        ProblemDetail problem = createProblem(
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                "Unsupported answer type",
-                exception.getMessage(),
-                exception.errorCode(),
-                "terminal",
-                false
-        );
-        problem.setProperty("requestedAnswerType", exception.requestedAnswerType());
-        problem.setProperty("supportedAnswerTypes", exception.supportedAnswerTypes());
-        return problem;
     }
 
     static ProblemDetail missingSession(SessionNotFoundException exception) {
