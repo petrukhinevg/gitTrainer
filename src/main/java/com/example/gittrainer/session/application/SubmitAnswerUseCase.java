@@ -40,8 +40,8 @@ public class SubmitAnswerUseCase {
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(command.answerType(), command.answer());
         SubmissionOutcome outcome = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
-        TrainingSession updatedSession = session.recordSubmission(submissionId);
-        sessionRepository.save(updatedSession);
+        TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId)
+                .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
 
         return new SubmitAnswerResult(
                 submissionId,
