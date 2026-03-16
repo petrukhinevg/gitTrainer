@@ -2,8 +2,8 @@ package com.example.gittrainer.session.api;
 
 import com.example.gittrainer.session.application.StartSessionResult;
 import com.example.gittrainer.session.application.SubmitAnswerResult;
-import com.example.gittrainer.session.domain.SubmissionPlaceholderOutcome;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
@@ -48,7 +48,7 @@ public class SessionResponseMapper {
         );
     }
 
-    private SubmissionOutcomeResponse toOutcomeResponse(SubmissionPlaceholderOutcome outcome) {
+    private SubmissionOutcomeResponse toOutcomeResponse(SubmissionOutcome outcome) {
         return new SubmissionOutcomeResponse(
                 outcome.status(),
                 outcome.correctness(),

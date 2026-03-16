@@ -1,14 +1,14 @@
 package com.example.gittrainer.session.application;
 
-import com.example.gittrainer.session.domain.SubmissionPlaceholderOutcome;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.validation.domain.SubmissionOutcome;
 
 import java.util.List;
 
 public record StartSessionResult(
         TrainingSession session,
         List<String> supportedAnswerTypes,
-        SubmissionPlaceholderOutcome placeholderOutcome
+        SubmissionOutcome placeholderOutcome
 ) {
 
     public StartSessionResult {

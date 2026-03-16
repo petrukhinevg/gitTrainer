@@ -4,8 +4,8 @@ import com.example.gittrainer.scenario.application.LoadScenarioDetailUseCase;
 import com.example.gittrainer.scenario.application.ScenarioDetailResult;
 import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
 import com.example.gittrainer.session.domain.SessionState;
-import com.example.gittrainer.session.domain.SubmissionPlaceholderOutcome;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -49,7 +49,7 @@ public class StartSessionUseCase {
         return new StartSessionResult(
                 session,
                 SessionSubmissionAnswerTypes.supportedAnswerTypes(),
-                SubmissionPlaceholderOutcome.boundaryReady()
+                SubmissionOutcome.boundaryReady()
         );
     }
 }

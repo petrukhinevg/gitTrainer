@@ -98,7 +98,7 @@ class SessionControllerTest {
     }
 
     @Test
-    void acceptsSubmissionAgainstActiveSessionWithPlaceholderOutcome() throws Exception {
+    void acceptsCorrectSubmissionAgainstActiveSession() throws Exception {
         String sessionId = startSessionAndExtractId();
 
         mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
@@ -120,9 +120,30 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.lifecycle.lastSubmissionId").isNotEmpty())
                 .andExpect(jsonPath("$.answer.type").value("command_text"))
                 .andExpect(jsonPath("$.answer.value").value("git status"))
-                .andExpect(jsonPath("$.outcome.status").value("placeholder"))
-                .andExpect(jsonPath("$.outcome.correctness").value("not-evaluated"))
-                .andExpect(jsonPath("$.outcome.code").value("validation-pending"));
+                .andExpect(jsonPath("$.outcome.status").value("evaluated"))
+                .andExpect(jsonPath("$.outcome.correctness").value("correct"))
+                .andExpect(jsonPath("$.outcome.code").value("expected-command"));
+    }
+
+    @Test
+    void returnsIncorrectOutcomeForUnexpectedCommand() throws Exception {
+        String sessionId = startSessionAndExtractId();
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git checkout main"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value(sessionId))
+                .andExpect(jsonPath("$.attemptNumber").value(1))
+                .andExpect(jsonPath("$.outcome.status").value("evaluated"))
+                .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"));
     }
 
     @Test
@@ -143,7 +164,7 @@ class SessionControllerTest {
     }
 
     @Test
-    void rejectsUnsupportedSubmissionAnswerType() throws Exception {
+    void returnsUnsupportedOutcomeForUnsupportedSubmissionAnswerType() throws Exception {
         String sessionId = startSessionAndExtractId();
 
         mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
@@ -155,8 +176,13 @@ class SessionControllerTest {
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Answer type is unsupported for this session boundary: file_patch"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value(sessionId))
+                .andExpect(jsonPath("$.attemptNumber").value(1))
+                .andExpect(jsonPath("$.answer.type").value("file_patch"))
+                .andExpect(jsonPath("$.outcome.status").value("evaluated"))
+                .andExpect(jsonPath("$.outcome.correctness").value("unsupported"))
+                .andExpect(jsonPath("$.outcome.code").value("unsupported-answer-type"));
     }
 
     @Test
