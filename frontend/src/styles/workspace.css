@@ -2,19 +2,20 @@
     height: 100%;
     min-height: 0;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(300px, 1.18fr) minmax(240px, 0.92fr);
     gap: 0;
     overflow: hidden;
 }
 
 .practice-pane {
     min-height: 0;
-    padding: 14px 0;
+    padding: 0;
 }
 
 .practice-pane--viewer {
     display: flex;
     overflow: hidden;
+    padding: 18px 0 14px;
 }
 
 .practice-pane--viewer .workspace-card--viewer {
@@ -22,8 +23,9 @@
     min-height: 0;
 }
 
-.practice-pane--composer {
+.practice-pane--surface {
     border-top: 1px solid var(--border);
+    padding: 14px 0 18px;
 }
 
 .workspace-card,
@@ -42,14 +44,14 @@
 
 .workspace-card {
     min-height: 0;
-    padding: 14px 16px;
-    border: 1px solid rgba(31, 23, 32, 0.1);
-    border-radius: 16px;
-    background: rgba(255, 250, 241, 0.68);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .workspace-card--focus {
-    background: rgba(255, 250, 241, 0.72);
+    background: transparent;
 }
 
 .workspace-card--viewer {
@@ -59,10 +61,11 @@
 
 .workspace-card--composer {
     overflow: hidden;
+    align-content: start;
 }
 
 .workspace-card--error {
-    background: rgba(255, 250, 241, 0.72);
+    background: transparent;
 }
 
 .workspace-card__header {
@@ -90,10 +93,25 @@
     gap: 14px;
 }
 
+.practice-shell__viewer-body,
+.practice-composer__results {
+    display: grid;
+    gap: 12px;
+}
+
+.practice-shell__viewer-body {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
 .practice-shell__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+.practice-shell__meta--compact {
+    justify-content: flex-start;
 }
 
 .practice-shell__chip {
@@ -114,11 +132,32 @@
     gap: 8px;
 }
 
+.practice-summary {
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.58);
+}
+
+.practice-summary__header,
+.practice-summary__heading {
+    display: grid;
+    gap: 10px;
+}
+
+.practice-summary__title {
+    margin: 0;
+    font-size: 1rem;
+}
+
 .practice-editor {
     min-height: 0;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
     gap: 12px;
+    padding: 0 16px;
 }
 
 .practice-editor__prompt,
@@ -154,6 +193,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
+    padding: 0 16px;
 }
 
 .practice-action {
@@ -179,8 +219,10 @@
 .practice-output {
     display: grid;
     gap: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 250, 241, 0.5);
     color: var(--ink-soft);
 }
 
@@ -204,6 +246,10 @@
     gap: 10px;
 }
 
+.practice-composer__controls {
+    padding: 0 16px;
+}
+
 .practice-select {
     display: grid;
     gap: 8px;
@@ -225,17 +271,17 @@
 
 .practice-output--correct {
     color: #24573d;
-    background: linear-gradient(180deg, rgba(87, 146, 113, 0.12), rgba(255, 250, 241, 0.86));
+    background: linear-gradient(180deg, rgba(87, 146, 113, 0.12), rgba(255, 250, 241, 0.82));
 }
 
 .practice-output--incorrect {
     color: #7a2f35;
-    background: linear-gradient(180deg, rgba(183, 88, 94, 0.12), rgba(255, 250, 241, 0.86));
+    background: linear-gradient(180deg, rgba(183, 88, 94, 0.12), rgba(255, 250, 241, 0.82));
 }
 
 .practice-output--unsupported {
     color: #8a4b11;
-    background: linear-gradient(180deg, rgba(215, 153, 88, 0.14), rgba(255, 250, 241, 0.86));
+    background: linear-gradient(180deg, rgba(215, 153, 88, 0.14), rgba(255, 250, 241, 0.82));
 }
 
 .practice-output--pending,
@@ -311,9 +357,9 @@
 
 .branch-graph {
     min-height: 0;
-    padding: 8px 10px 0;
+    padding: 12px 14px;
     border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
+    border-radius: 16px;
     background: rgba(255, 250, 241, 0.5);
     overflow-x: hidden;
     overflow-y: auto;
@@ -413,6 +459,25 @@
         grid-template-rows: auto;
         overflow: visible;
     }
+
+    .practice-pane--viewer,
+    .practice-pane--surface {
+        padding: 0;
+        border-top: 0;
+    }
+
+    .workspace-card {
+        padding: 14px 16px;
+        border: 1px solid rgba(31, 23, 32, 0.1);
+        border-radius: 18px;
+        background: rgba(255, 250, 241, 0.68);
+    }
+
+    .practice-editor,
+    .practice-composer__actions,
+    .practice-composer__controls {
+        padding: 0;
+    }
 }
 
 @media (max-width: 720px) {
@@ -421,6 +486,10 @@
     .practice-composer__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .practice-summary {
+        padding: 12px 14px;
     }
 
     .branch-graph__row {

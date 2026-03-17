@@ -8,7 +8,7 @@ export function renderWorkspacePanel(state) {
                 "Git-ветки",
                 "Откройте задание слева, чтобы загрузить представление веток."
             ),
-            composer: renderPlaceholderComposer(
+            surface: renderPlaceholderComposer(
                 "Команда",
                 "Ввод разблокируется после открытия задания."
             )
@@ -21,7 +21,7 @@ export function renderWorkspacePanel(state) {
                 "Git-ветки",
                 `Загружаем представление веток для ${escapeHtml(state.selectedScenarioSlug ?? "выбранного задания")}.`
             ),
-            composer: renderPlaceholderComposer(
+            surface: renderPlaceholderComposer(
                 "Команда",
                 "Поле ввода остаётся на месте, пока загружаются детали задания."
             )
@@ -33,7 +33,7 @@ export function renderWorkspacePanel(state) {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Git-ветки</span>
+                        <span class="control-label">Git-viewer</span>
                         <span class="workspace-card__badge">ошибка</span>
                     </div>
                     <div class="practice-inline-note">
@@ -41,10 +41,10 @@ export function renderWorkspacePanel(state) {
                     </div>
                 </section>
             `,
-            composer: `
+            surface: `
                 <section class="workspace-card workspace-card--composer workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Команда</span>
+                        <span class="control-label">Practice surface</span>
                         <span class="workspace-card__badge">заблокировано</span>
                     </div>
                     <div class="workspace-card__actions">
@@ -69,30 +69,28 @@ export function renderWorkspacePanel(state) {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Git-ветки</span>
+                    <span class="control-label">Git-viewer</span>
                     <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
                 <div class="practice-shell__meta">
+                    <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
                     <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
                     <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
-                    <span class="practice-shell__chip">Статус: ${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                     <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
-                ${renderBranchGraph(repositoryContext.branches)}
-                ${renderSessionTransportOutput(bootstrapState, lifecycle)}
+                <div class="practice-shell__viewer-body">
+                    ${renderBranchGraph(repositoryContext.branches)}
+                    ${renderSessionTransportOutput(bootstrapState, lifecycle)}
+                </div>
             </section>
         `,
-        composer: `
+        surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
                     <span class="control-label">Ввод ответа</span>
                     <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveDraftBadge(state.submissionDraft, submissionState)))}</span>
                 </div>
-                <div class="practice-shell__meta">
-                    <span class="practice-shell__chip">Тип ответа: ${escapeHtml(resolveActiveAnswerType(state.submissionDraft))}</span>
-                    <span class="practice-shell__chip">Сценарий: ${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</span>
-                    <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
-                </div>
+                ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
                 ${renderBootstrapNotice(bootstrapState)}
                 <form class="practice-composer__form" data-submission-draft-form>
                     <div class="practice-composer__controls">
@@ -118,28 +116,30 @@ export function renderWorkspacePanel(state) {
                         <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                ${renderSubmissionTransportOutput(
-                    state.submissionDraft.preparedSubmission,
-                    submissionState,
-                    bootstrapState.response?.submission?.supportedAnswerTypes ?? []
-                )}
-                ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
+                <div class="practice-composer__results">
+                    ${renderSubmissionTransportOutput(
+                        state.submissionDraft.preparedSubmission,
+                        submissionState,
+                        bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                    )}
+                    ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
+                </div>
             </section>
         `
     });
 }
 
-function renderPracticeShell({ viewer, composer }) {
+function renderPracticeShell({ viewer, surface }) {
     return renderLessonLane({
         lane: "practice",
         label: "Практика",
-        title: "Git-ветки и ввод команды",
-        description: "Правая колонка остаётся разделённой на две устойчивые поверхности.",
+        title: "Git-viewer и ввод команды",
+        description: "Правая колонка держит viewer наверху и компактную practice-surface внизу.",
         showHeader: false,
         body: `
             <div class="practice-stack">
-                <div class="practice-pane practice-pane--composer">${composer}</div>
                 <div class="practice-pane practice-pane--viewer">${viewer}</div>
+                <div class="practice-pane practice-pane--surface">${surface}</div>
             </div>
         `
     });
@@ -176,7 +176,7 @@ function renderPlaceholderComposer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">ожидание</span>
             </div>
-            <div class="practice-inline-note">
+            <div class="practice-summary">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
             </div>
             <label class="practice-editor">
@@ -188,6 +188,42 @@ function renderPlaceholderComposer(title, copy) {
                 <p class="panel-copy">Подготовленный payload и транспортная обратная связь появятся здесь после открытия сценария.</p>
             </div>
         </section>
+    `;
+}
+
+function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionDraft, lifecycle) {
+    const title = typeof detail?.title === "string" && detail.title.trim() !== ""
+        ? detail.title
+        : selectedScenarioSlug ?? "Активное упражнение";
+    const summary = typeof detail?.summary === "string" && detail.summary.trim() !== ""
+        ? detail.summary
+        : "Сценарное summary появится после загрузки authored detail payload.";
+    const goal = typeof detail?.workspace?.task?.goal === "string" && detail.workspace.task.goal.trim() !== ""
+        ? detail.workspace.task.goal
+        : null;
+    const difficulty = typeof detail?.difficulty === "string" && detail.difficulty.trim() !== ""
+        ? detail.difficulty
+        : "mvp";
+
+    return `
+        <div class="practice-summary">
+            <div class="practice-summary__header">
+                <div class="practice-summary__heading">
+                    <h3 class="practice-summary__title">${escapeHtml(title)}</h3>
+                    <p class="panel-copy">${escapeHtml(summary)}</p>
+                </div>
+                <div class="practice-shell__meta practice-shell__meta--compact">
+                    <span class="practice-shell__chip">Тип: ${escapeHtml(resolveActiveAnswerType(submissionDraft))}</span>
+                    <span class="practice-shell__chip">Уровень: ${escapeHtml(difficulty)}</span>
+                    <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
+                </div>
+            </div>
+            ${goal ? `
+                <div class="practice-inline-note">
+                    <p class="panel-copy">${escapeHtml(goal)}</p>
+                </div>
+            ` : ""}
+        </div>
     `;
 }
 
@@ -621,6 +657,16 @@ function normalizeRepositoryContext(repositoryContext) {
         branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
         files: Array.isArray(safeContext.files) ? safeContext.files : []
     };
+}
+
+function resolveCurrentBranchName(branches) {
+    const currentBranch = Array.isArray(branches)
+        ? branches.find((branch) => branch?.current)
+        : null;
+
+    return typeof currentBranch?.name === "string" && currentBranch.name.trim() !== ""
+        ? currentBranch.name
+        : "неизвестно";
 }
 
 function normalizeBootstrapState(bootstrapState) {
