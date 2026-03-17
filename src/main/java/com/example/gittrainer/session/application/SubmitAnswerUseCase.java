@@ -2,6 +2,10 @@ package com.example.gittrainer.session.application;
 
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.session.domain.RetryGuidance;
+import com.example.gittrainer.session.domain.RetryGuidancePolicy;
+import com.example.gittrainer.session.domain.RetryState;
+import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
@@ -39,9 +43,16 @@ public class SubmitAnswerUseCase {
 
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(command.answerType(), command.answer());
         SubmissionOutcome outcome = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
+        boolean failedAttempt = outcome.requiresRetry();
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
-        TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId)
+        TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId, failedAttempt)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
+        RetryState retryState = RetryStatePolicy.afterSubmission(updatedSession, failedAttempt);
+        RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance(
+                session.scenarioSlug(),
+                outcome,
+                retryState
+        );
 
         return new SubmitAnswerResult(
                 submissionId,
@@ -49,7 +60,9 @@ public class SubmitAnswerUseCase {
                 Instant.now(),
                 updatedSession,
                 submittedAnswer,
-                outcome
+                outcome,
+                retryState,
+                retryGuidance
         );
     }
 

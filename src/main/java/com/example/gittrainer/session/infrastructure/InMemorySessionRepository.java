@@ -25,10 +25,10 @@ public class InMemorySessionRepository implements SessionRepository {
     }
 
     @Override
-    public Optional<TrainingSession> recordSubmission(String sessionId, String submissionId) {
+    public Optional<TrainingSession> recordSubmission(String sessionId, String submissionId, boolean failedAttempt) {
         return Optional.ofNullable(sessions.computeIfPresent(
                 sessionId,
-                (ignored, existingSession) -> existingSession.recordSubmission(submissionId)
+                (ignored, existingSession) -> existingSession.recordSubmission(submissionId, failedAttempt)
         ));
     }
 }

@@ -52,7 +52,16 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.submission.placeholderOutcome.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.correctness").value("not-evaluated"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("awaiting-first-submission"))
-                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."));
+                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.status").value("placeholder"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.status").value("idle"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.attemptNumber").value(0))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.eligibility").value("not-needed"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.explanation.status").value("placeholder"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.explanation.tone").value("neutral"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.explanation.details").isEmpty())
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.hint.level").value("baseline"))
+                .andExpect(jsonPath("$.submission.placeholderRetryFeedback.hint.reveals").isEmpty());
     }
 
     @Test
@@ -136,7 +145,16 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.answer.value").value("git status"))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("correct"))
-                .andExpect(jsonPath("$.outcome.code").value("expected-command"));
+                .andExpect(jsonPath("$.outcome.code").value("expected-command"))
+                .andExpect(jsonPath("$.retryFeedback.status").value("resolved"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("complete"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.attemptNumber").value(1))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("not-needed"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.status").value("resolved"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("success"))
+                .andExpect(jsonPath("$.retryFeedback.hint.status").value("resolved"))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("none"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals").isEmpty());
     }
 
     @Test
@@ -157,7 +175,18 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.attemptNumber").value(1))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
-                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"));
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"))
+                .andExpect(jsonPath("$.retryFeedback.status").value("guided"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.status").value("guided"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Inspect the working tree before changing it"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("incorrect"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("This exercise is about reading the current state before acting, not about choosing a destination branch or altering files."))
+                .andExpect(jsonPath("$.retryFeedback.hint.status").value("guided"))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Start with a working tree inspection"));
     }
 
     @Test
@@ -222,8 +251,51 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("unsupported"))
                 .andExpect(jsonPath("$.outcome.code").value("unsupported-answer-type"))
+                .andExpect(jsonPath("$.retryFeedback.status").value("guided"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Return to supported command input"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("unsupported"))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
                 .andExpect(jsonPath("$.failureDisposition").doesNotExist())
                 .andExpect(jsonPath("$.retryable").doesNotExist());
+    }
+
+    @Test
+    void unlocksStrongerHintAfterSecondFailedSubmission() throws Exception {
+        String sessionId = startSessionAndExtractId("branch-safety");
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"));
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.attemptNumber").value(2))
+                .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
+                .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Check which branch actually matches the task"))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("strong"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].id").value("strong"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].title").value("Prefer the branch move that changes the least state"));
     }
 
     @Test
@@ -277,13 +349,17 @@ class SessionControllerTest {
     }
 
     private String startSessionAndExtractId() throws Exception {
+        return startSessionAndExtractId("status-basics");
+    }
+
+    private String startSessionAndExtractId(String scenarioSlug) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/sessions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "scenarioSlug": "status-basics"
+                                  "scenarioSlug": "%s"
                                 }
-                                """)
+                                """.formatted(scenarioSlug))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn();

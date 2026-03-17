@@ -10,10 +10,11 @@ public record TrainingSession(
         Instant startedAt,
         SessionState state,
         int submissionCount,
+        int consecutiveFailureCount,
         String lastSubmissionId
 ) {
 
-    public TrainingSession recordSubmission(String submissionId) {
+    public TrainingSession recordSubmission(String submissionId, boolean failedAttempt) {
         return new TrainingSession(
                 sessionId,
                 scenarioSlug,
@@ -22,6 +23,7 @@ public record TrainingSession(
                 startedAt,
                 state,
                 submissionCount + 1,
+                failedAttempt ? consecutiveFailureCount + 1 : 0,
                 submissionId
         );
     }

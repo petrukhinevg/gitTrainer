@@ -65,7 +65,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
 
             sessions.set(session.sessionId, session);
 
-            return {
+            return normalizeStartSessionResponse({
                 sessionId: session.sessionId,
                 scenario: {
                     slug: session.scenarioSlug,
@@ -80,9 +80,15 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         correctness: "not-evaluated",
                         code: "awaiting-first-submission",
                         message: "Session transport is ready. Submit the first answer to receive an evaluated result immediately."
-                    }
+                    },
+                    placeholderRetryFeedback: createPlaceholderRetryFeedback({
+                        scenarioSlug: session.scenarioSlug,
+                        attemptNumber: 0,
+                        outcome: null,
+                        answer: null
+                    })
                 }
-            };
+            });
         },
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
@@ -108,8 +114,9 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
 
             session.submissionCount += 1;
             session.lastSubmissionId = submissionId;
+            const outcome = evaluateFixtureSubmission(session.scenarioSlug, answerType, answer);
 
-            return {
+            return normalizeSubmissionResponse({
                 submissionId,
                 sessionId: session.sessionId,
                 attemptNumber: session.submissionCount,
@@ -119,8 +126,14 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     type: answerType,
                     value: answer
                 },
-                outcome: evaluateFixtureSubmission(session.scenarioSlug, answerType, answer)
-            };
+                outcome,
+                retryFeedback: createPlaceholderRetryFeedback({
+                    scenarioSlug: session.scenarioSlug,
+                    attemptNumber: session.submissionCount,
+                    outcome,
+                    answer
+                })
+            });
         }
     };
 }
@@ -151,17 +164,18 @@ export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(wi
                 scenarioSlug,
                 source
             });
-            return response;
+            return normalizeStartSessionResponse(response);
         },
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
                 sessionId,
                 "Session id is required before an answer can be submitted."
             );
-            return postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
+            const response = await postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
                 answerType: normalizeOptionalValue(submission?.answerType) ?? "command_text",
                 answer: submission?.answer
             });
+            return normalizeSubmissionResponse(response);
         }
     };
 }
@@ -267,6 +281,35 @@ function resolveFailurePolicy(status, problem) {
     };
 }
 
+function createPlaceholderRetryFeedback({ scenarioSlug = null, attemptNumber = 0, outcome = null, answer = null } = {}) {
+    const correctness = normalizeOptionalValue(outcome?.correctness);
+    const retryStateStatus = correctness === null
+        ? "idle"
+        : correctness === "correct"
+            ? "complete"
+            : "retry-available";
+    const eligibility = correctness === null || correctness === "correct"
+        ? "not-needed"
+        : "eligible";
+    const guidedPresentation = createFixtureRetryPresentation({
+        scenarioSlug,
+        attemptNumber,
+        outcome,
+        answer
+    });
+
+    return {
+        status: guidedPresentation.status,
+        retryState: {
+            status: retryStateStatus,
+            attemptNumber,
+            eligibility
+        },
+        explanation: guidedPresentation.explanation,
+        hint: guidedPresentation.hint
+    };
+}
+
 function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
     if (answerType !== "command_text") {
         return {
@@ -297,11 +340,86 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         };
     }
 
+    if (isPartialFixtureMatch(scenarioSlug, normalizedAnswer)) {
+        return {
+            status: "evaluated",
+            correctness: "partial",
+            code: "partial-command-match",
+            message: "Submitted command points toward the right inspection area, but it still needs refinement."
+        };
+    }
+
     return {
         status: "evaluated",
         correctness: "incorrect",
         code: "unexpected-command",
         message: "Submitted command does not match the expected safe next action for this scenario."
+    };
+}
+
+function normalizeStartSessionResponse(response) {
+    const safeResponse = response ?? {};
+    const submission = safeResponse.submission ?? {};
+
+    return {
+        ...safeResponse,
+        submission: {
+            ...submission,
+            supportedAnswerTypes: Array.isArray(submission.supportedAnswerTypes)
+                ? submission.supportedAnswerTypes.filter((answerType) => typeof answerType === "string" && answerType.trim() !== "")
+                : [...SUPPORTED_ANSWER_TYPES],
+            placeholderRetryFeedback: normalizeRetryFeedbackBoundary(submission.placeholderRetryFeedback)
+        }
+    };
+}
+
+function normalizeSubmissionResponse(response) {
+    const safeResponse = response ?? {};
+    return {
+        ...safeResponse,
+        retryFeedback: normalizeRetryFeedbackBoundary(safeResponse.retryFeedback)
+    };
+}
+
+function normalizeRetryFeedbackBoundary(retryFeedback) {
+    const safeFeedback = retryFeedback ?? {};
+    const retryState = safeFeedback.retryState ?? {};
+    const explanation = safeFeedback.explanation ?? {};
+    const hint = safeFeedback.hint ?? {};
+
+    return {
+        status: normalizeOptionalValue(safeFeedback.status) ?? "placeholder",
+        retryState: {
+            status: normalizeOptionalValue(retryState.status) ?? "idle",
+            attemptNumber: typeof retryState.attemptNumber === "number" ? retryState.attemptNumber : 0,
+            eligibility: normalizeOptionalValue(retryState.eligibility) ?? "not-needed"
+        },
+        explanation: {
+            status: normalizeOptionalValue(explanation.status) ?? "placeholder",
+            title: normalizeOptionalValue(explanation.title) ?? "Retry guidance",
+            tone: normalizeOptionalValue(explanation.tone) ?? "neutral",
+            message: normalizeOptionalValue(explanation.message)
+                ?? "Retry guidance will mount here after the first evaluated submission.",
+            details: Array.isArray(explanation.details)
+                ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
+                : []
+        },
+        hint: {
+            status: normalizeOptionalValue(hint.status) ?? "placeholder",
+            level: normalizeOptionalValue(hint.level) ?? "baseline",
+            message: normalizeOptionalValue(hint.message)
+                ?? "Hint progression is idle until the learner receives evaluated feedback.",
+            reveals: Array.isArray(hint.reveals)
+                ? hint.reveals
+                    .filter((item) => item && typeof item === "object")
+                    .map((item, index) => ({
+                        id: normalizeOptionalValue(item.id) ?? `hint-${index + 1}`,
+                        label: normalizeOptionalValue(item.label) ?? "Reveal hint",
+                        title: normalizeOptionalValue(item.title) ?? "Hint",
+                        message: normalizeOptionalValue(item.message) ?? "Additional hint content is unavailable."
+                    }))
+                : []
+        }
     };
 }
 
@@ -333,6 +451,185 @@ function normalizeCommand(command) {
         .trim()
         .replace(/\s+/g, " ")
         .toLowerCase();
+}
+
+function isPartialFixtureMatch(scenarioSlug, normalizedAnswer) {
+    if (!normalizedAnswer) {
+        return false;
+    }
+
+    switch (scenarioSlug) {
+        case "status-basics":
+        case "branch-safety":
+            return normalizedAnswer.startsWith("git status")
+                || normalizedAnswer.startsWith("git branch");
+        case "history-cleanup-preview":
+            return normalizedAnswer.startsWith("git log")
+                || normalizedAnswer.startsWith("git show");
+        default:
+            return false;
+    }
+}
+
+function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, answer }) {
+    const correctness = normalizeOptionalValue(outcome?.correctness);
+    if (!correctness) {
+        return {
+            status: "placeholder",
+            explanation: {
+                status: "placeholder",
+                title: "Retry guidance",
+                tone: "neutral",
+                message: "Retry guidance will mount here after the first evaluated submission.",
+                details: []
+            },
+            hint: {
+                status: "placeholder",
+                level: "baseline",
+                message: "Hint progression is idle until the learner receives evaluated feedback.",
+                reveals: []
+            }
+        };
+    }
+
+    if (correctness === "correct") {
+        return {
+            status: "resolved",
+            explanation: {
+                status: "resolved",
+                title: "No retry explanation needed",
+                tone: "success",
+                message: "This attempt already landed on the safe next action, so the retry panel stays quiet.",
+                details: []
+            },
+            hint: {
+                status: "resolved",
+                level: "none",
+                message: "No extra hint is needed after a correct answer.",
+                reveals: []
+            }
+        };
+    }
+
+    const strongHintUnlocked = attemptNumber >= 2;
+    const narrative = scenarioGuidanceNarrative(scenarioSlug, correctness, answer);
+
+    return {
+        status: "guided",
+        explanation: {
+            status: "guided",
+            title: narrative.title,
+            tone: correctness,
+            message: narrative.message,
+            details: narrative.details
+        },
+        hint: {
+            status: "guided",
+            level: strongHintUnlocked ? "strong" : "nudge",
+            message: strongHintUnlocked
+                ? "A stronger hint is now available because the learner has already missed at least one attempt."
+                : "Start with a lighter nudge before revealing the stronger guidance.",
+            reveals: strongHintUnlocked
+                ? [
+                    {
+                        id: "nudge",
+                        label: "Reveal first hint",
+                        title: narrative.nudgeTitle,
+                        message: narrative.nudgeMessage
+                    },
+                    {
+                        id: "strong",
+                        label: "Reveal stronger hint",
+                        title: narrative.strongTitle,
+                        message: narrative.strongMessage
+                    }
+                ]
+                : [
+                    {
+                        id: "nudge",
+                        label: "Reveal first hint",
+                        title: narrative.nudgeTitle,
+                        message: narrative.nudgeMessage
+                    }
+                ]
+        }
+    };
+}
+
+function scenarioGuidanceNarrative(scenarioSlug, correctness, answer) {
+    const trimmedAnswer = normalizeOptionalValue(answer) ?? "the submitted command";
+
+    if (correctness === "unsupported") {
+        return {
+            title: "Return to supported command input",
+            message: "This MVP slice still evaluates only command-style answers, so the next attempt should switch back to a supported command entry.",
+            details: [
+                "The current transport accepts the request, but the correctness model still marks the answer type as unsupported.",
+                "Keep the retry panel focused on getting back to a supported command flow before exploring richer answer formats."
+            ],
+            nudgeTitle: "Use the command text mode",
+            nudgeMessage: "Switch the answer type back to command text and keep the next attempt in a simple inspection command shape.",
+            strongTitle: "Mirror the supported answer examples",
+            strongMessage: "Look at the supported answer type badge above the composer and mirror that mode before changing the command itself."
+        };
+    }
+
+    if (correctness === "partial") {
+        return {
+            title: "You are inspecting the right area, but the command still needs tightening",
+            message: `\`${trimmedAnswer}\` points toward the right repository signal, but the task still needs a more precise inspection command before the answer is considered correct.`,
+            details: [
+                "The learner has started from the correct inspection family, so the retry message should reward that direction instead of treating it as a total miss.",
+                "The follow-up hint can narrow the command shape without redesigning the feedback panel."
+            ],
+            nudgeTitle: "Keep the same inspection family",
+            nudgeMessage: "Stay in the same inspection area, but remove extra scope or switch to the canonical safe command for the scenario.",
+            strongTitle: "Compare against the exact safe next action",
+            strongMessage: "The next safe action is still an inspection-first command. Tighten it until it matches the scenario's expected command text."
+        };
+    }
+
+    switch (scenarioSlug) {
+        case "branch-safety":
+            return {
+                title: "The branch choice still is not grounded in the task context",
+                message: "The retry explanation should steer the learner back to comparing the active branch with the requested task before switching or editing anything.",
+                details: [
+                    "The current branch already carries intent. The next attempt should explain that intent rather than jumping straight to a branch change.",
+                    "A good retry hint here keeps branch purpose and task purpose in the same line of sight."
+                ],
+                nudgeTitle: "Read the branch purpose first",
+                nudgeMessage: "Use the current branch and repository cues to justify whether staying or switching is safer before you submit another command.",
+                strongTitle: "Anchor the answer in the active branch indicator",
+                strongMessage: "The safest next command is still one that confirms where you are. Use the active branch cue before proposing any move."
+            };
+        case "history-cleanup-preview":
+            return {
+                title: "The retry explanation should keep the learner in planning mode",
+                message: "This scenario is still about reading the stack and planning a cleanup, so the next attempt should avoid jumping into a rewrite action too early.",
+                details: [
+                    "The explanation should remind the learner that this task stops at inspection and planning rather than execution.",
+                    "Hints can progressively move from general planning language to a stronger reminder about log-style inspection commands."
+                ],
+                nudgeTitle: "Stay with a history inspection command",
+                nudgeMessage: "Use a log-style command that keeps the commit stack visible before choosing any rewrite strategy.",
+                strongTitle: "Prefer a decorated one-line history view",
+                strongMessage: "The safe next action is still a compact history inspection command that shows branch decoration before any cleanup step."
+            };
+        default:
+            return {
+                title: "Inspect before acting",
+                message: "The retry explanation should pull the learner back toward repository inspection before any mutating Git action.",
+                details: [
+                    "This feedback block is intentionally instructional: it highlights why the answer is off without changing the panel shell.",
+                    "Hints should escalate from a small nudge to a stronger reminder only after repeated misses."
+                ],
+                nudgeTitle: "Look at the working tree evidence first",
+                nudgeMessage: "Stay with a command that reads the current repository state before you propose cleanup or navigation.",
+                strongTitle: "Use the canonical inspection command",
+                strongMessage: "The next safe action is still the canonical inspection command for this scenario. Choose the command that reveals state without changing it."
+            };
+    }
 }
 
 function normalizeFailureDisposition(value) {

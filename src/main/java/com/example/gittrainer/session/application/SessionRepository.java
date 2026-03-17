@@ -10,5 +10,5 @@ public interface SessionRepository {
 
     Optional<TrainingSession> findById(String sessionId);
 
-    Optional<TrainingSession> recordSubmission(String sessionId, String submissionId);
+    Optional<TrainingSession> recordSubmission(String sessionId, String submissionId, boolean failedAttempt);
 }
