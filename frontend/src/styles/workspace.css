@@ -331,6 +331,19 @@
     grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
 }
 
+.practice-feedback__meta--dense {
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+}
+
+.practice-feedback__context {
+    display: grid;
+    gap: 6px;
+}
+
+.practice-feedback__context-copy {
+    margin: 0;
+}
+
 .practice-feedback__detail-list {
     margin: 0;
     padding-left: 18px;
