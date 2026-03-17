@@ -65,7 +65,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
 
             sessions.set(session.sessionId, session);
 
-            return {
+            return normalizeStartSessionResponse({
                 sessionId: session.sessionId,
                 scenario: {
                     slug: session.scenarioSlug,
@@ -88,7 +88,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         answer: null
                     })
                 }
-            };
+            });
         },
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
@@ -116,7 +116,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
             session.lastSubmissionId = submissionId;
             const outcome = evaluateFixtureSubmission(session.scenarioSlug, answerType, answer);
 
-            return {
+            return normalizeSubmissionResponse({
                 submissionId,
                 sessionId: session.sessionId,
                 attemptNumber: session.submissionCount,
@@ -133,7 +133,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     outcome,
                     answer
                 })
-            };
+            });
         }
     };
 }
@@ -164,17 +164,18 @@ export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(wi
                 scenarioSlug,
                 source
             });
-            return response;
+            return normalizeStartSessionResponse(response);
         },
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
                 sessionId,
                 "Session id is required before an answer can be submitted."
             );
-            return postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
+            const response = await postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
                 answerType: normalizeOptionalValue(submission?.answerType) ?? "command_text",
                 answer: submission?.answer
             });
+            return normalizeSubmissionResponse(response);
         }
     };
 }
@@ -286,10 +287,10 @@ function createPlaceholderRetryFeedback({ scenarioSlug = null, attemptNumber = 0
         ? "idle"
         : correctness === "correct"
             ? "complete"
-            : "awaiting-policy";
+            : "retry-available";
     const eligibility = correctness === null || correctness === "correct"
         ? "not-needed"
-        : "pending";
+        : "eligible";
     const guidedPresentation = createFixtureRetryPresentation({
         scenarioSlug,
         attemptNumber,
@@ -353,6 +354,72 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         correctness: "incorrect",
         code: "unexpected-command",
         message: "Submitted command does not match the expected safe next action for this scenario."
+    };
+}
+
+function normalizeStartSessionResponse(response) {
+    const safeResponse = response ?? {};
+    const submission = safeResponse.submission ?? {};
+
+    return {
+        ...safeResponse,
+        submission: {
+            ...submission,
+            supportedAnswerTypes: Array.isArray(submission.supportedAnswerTypes)
+                ? submission.supportedAnswerTypes.filter((answerType) => typeof answerType === "string" && answerType.trim() !== "")
+                : [...SUPPORTED_ANSWER_TYPES],
+            placeholderRetryFeedback: normalizeRetryFeedbackBoundary(submission.placeholderRetryFeedback)
+        }
+    };
+}
+
+function normalizeSubmissionResponse(response) {
+    const safeResponse = response ?? {};
+    return {
+        ...safeResponse,
+        retryFeedback: normalizeRetryFeedbackBoundary(safeResponse.retryFeedback)
+    };
+}
+
+function normalizeRetryFeedbackBoundary(retryFeedback) {
+    const safeFeedback = retryFeedback ?? {};
+    const retryState = safeFeedback.retryState ?? {};
+    const explanation = safeFeedback.explanation ?? {};
+    const hint = safeFeedback.hint ?? {};
+
+    return {
+        status: normalizeOptionalValue(safeFeedback.status) ?? "placeholder",
+        retryState: {
+            status: normalizeOptionalValue(retryState.status) ?? "idle",
+            attemptNumber: typeof retryState.attemptNumber === "number" ? retryState.attemptNumber : 0,
+            eligibility: normalizeOptionalValue(retryState.eligibility) ?? "not-needed"
+        },
+        explanation: {
+            status: normalizeOptionalValue(explanation.status) ?? "placeholder",
+            title: normalizeOptionalValue(explanation.title) ?? "Retry guidance",
+            tone: normalizeOptionalValue(explanation.tone) ?? "neutral",
+            message: normalizeOptionalValue(explanation.message)
+                ?? "Retry guidance will mount here after the first evaluated submission.",
+            details: Array.isArray(explanation.details)
+                ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
+                : []
+        },
+        hint: {
+            status: normalizeOptionalValue(hint.status) ?? "placeholder",
+            level: normalizeOptionalValue(hint.level) ?? "baseline",
+            message: normalizeOptionalValue(hint.message)
+                ?? "Hint progression is idle until the learner receives evaluated feedback.",
+            reveals: Array.isArray(hint.reveals)
+                ? hint.reveals
+                    .filter((item) => item && typeof item === "object")
+                    .map((item, index) => ({
+                        id: normalizeOptionalValue(item.id) ?? `hint-${index + 1}`,
+                        label: normalizeOptionalValue(item.label) ?? "Reveal hint",
+                        title: normalizeOptionalValue(item.title) ?? "Hint",
+                        message: normalizeOptionalValue(item.message) ?? "Additional hint content is unavailable."
+                    }))
+                : []
+        }
     };
 }
 

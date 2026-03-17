@@ -518,7 +518,8 @@ export function createCatalogWorkspaceController({
             preparedSubmission,
             status: "submitting",
             attemptNumber: (state.session.bootstrap.response?.lifecycle?.submissionCount ?? 0) + 1,
-            transportDisposition: "pending"
+            transportDisposition: "pending",
+            preserveHintReveals: true
         });
         render();
 
@@ -543,11 +544,12 @@ export function createCatalogWorkspaceController({
                 detail: state.detail.data,
                 scenarioSlug: state.selectedScenarioSlug,
                 preparedSubmission,
-                status: response.outcome?.correctness === "correct" ? "resolved" : "retry-ready",
+                status: resolveFeedbackPanelStatus(response),
                 attemptNumber: response.attemptNumber,
                 transportDisposition: "evaluated",
                 correctness: response.outcome?.correctness ?? null,
-                outcomeCode: response.outcome?.code ?? null
+                outcomeCode: response.outcome?.code ?? null,
+                retryFeedback: response.retryFeedback ?? null
             });
 
             if (state.session.bootstrap.response) {
@@ -576,7 +578,8 @@ export function createCatalogWorkspaceController({
                 status: "request-failure",
                 attemptNumber: state.session.feedbackPanel?.contextSnapshot?.attemptNumber ?? 0,
                 transportDisposition: normalizedFailure.failureKind,
-                errorMessage: normalizedFailure.message
+                errorMessage: normalizedFailure.message,
+                preserveHintReveals: true
             });
         }
 
@@ -609,7 +612,13 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        const nextRevealCount = Math.min((feedbackPanel.revealedHintCount ?? 0) + 1, 2);
+        const availableRevealCount = Array.isArray(feedbackPanel.retryFeedback?.hint?.reveals)
+            ? feedbackPanel.retryFeedback.hint.reveals.length
+            : 0;
+        const nextRevealCount = Math.min(
+            (feedbackPanel.revealedHintCount ?? 0) + 1,
+            availableRevealCount
+        );
         state.session.feedbackPanel = {
             ...feedbackPanel,
             revealedHintCount: nextRevealCount
@@ -1038,6 +1047,7 @@ function createInitialFeedbackPanelState() {
     return {
         status: "idle",
         contextSnapshot: null,
+        retryFeedback: null,
         revealedHintCount: 0,
         updatedAt: null
     };
@@ -1053,9 +1063,12 @@ function createFeedbackPanelState({
     transportDisposition = "idle",
     correctness = null,
     outcomeCode = null,
-    errorMessage = null
+    errorMessage = null,
+    retryFeedback = null,
+    preserveHintReveals = false
 }) {
     const previousContext = previousFeedbackPanel?.contextSnapshot ?? null;
+    const previousRetryFeedback = previousFeedbackPanel?.retryFeedback ?? null;
     const repositoryContext = detail?.workspace?.repositoryContext ?? null;
     const branches = Array.isArray(repositoryContext?.branches) ? repositoryContext.branches : [];
     const files = Array.isArray(repositoryContext?.files) ? repositoryContext.files : [];
@@ -1083,9 +1096,19 @@ function createFeedbackPanelState({
             outcomeCode: outcomeCode ?? previousContext?.outcomeCode ?? null,
             errorMessage: errorMessage ?? null
         },
-        revealedHintCount: 0,
+        retryFeedback: retryFeedback ?? previousRetryFeedback,
+        revealedHintCount: preserveHintReveals ? previousFeedbackPanel?.revealedHintCount ?? 0 : 0,
         updatedAt: new Date().toISOString()
     };
+}
+
+function resolveFeedbackPanelStatus(submissionResponse) {
+    const retryFeedbackStatus = submissionResponse?.retryFeedback?.status;
+    if (typeof retryFeedbackStatus === "string" && retryFeedbackStatus.trim() !== "") {
+        return retryFeedbackStatus;
+    }
+
+    return submissionResponse?.outcome?.correctness === "correct" ? "resolved" : "guided";
 }
 
 function normalizeTransportFailure(error, fallbackMessage) {

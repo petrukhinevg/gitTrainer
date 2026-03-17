@@ -61,7 +61,7 @@ export function renderWorkspacePanel(state) {
     const submissionState = normalizeSubmissionState(state.session?.submission);
     const feedbackPanelState = normalizeFeedbackPanelState(state.session?.feedbackPanel);
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
-    const retryFeedback = resolveRetryFeedback(bootstrapState, submissionState);
+    const retryFeedback = resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
     const resetDisabled = bootstrapState.status === "pending" || submissionState.status === "pending";
 
@@ -436,12 +436,12 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     const normalizedFeedback = normalizeRetryFeedback(retryFeedback);
     const preservedContext = normalizeFeedbackContextSnapshot(feedbackPanelState.contextSnapshot);
     const copy = resolveFeedbackPanelCopy(feedbackPanelState.status, normalizedFeedback, submissionState);
-    const tone = resolveFeedbackPanelTone(feedbackPanelState.status, submissionState);
+    const tone = resolveFeedbackPanelTone(feedbackPanelState.status, normalizedFeedback, submissionState);
     const revealedHints = normalizedFeedback.hint.reveals.slice(0, feedbackPanelState.revealedHintCount);
     const nextHint = normalizedFeedback.hint.reveals[feedbackPanelState.revealedHintCount] ?? null;
 
     return `
-        <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel>
+        <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel data-retry-feedback-status="${escapeHtml(normalizedFeedback.status)}">
             <div class="practice-output__header">
                 <span class="control-label">Retry feedback</span>
                 <span class="workspace-card__badge">${escapeHtml(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState))}</span>
@@ -507,14 +507,14 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     ` : ""}
                 </div>
                 <div class="practice-feedback__meta">
-                    <span class="practice-feedback__pill">Attempt: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
-                    <span class="practice-feedback__pill">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
-                    <span class="practice-feedback__pill">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
+                    <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Attempt: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
+                    <span class="practice-feedback__pill" data-retry-eligibility="${escapeHtml(normalizedFeedback.retryState.eligibility)}">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
+                    <span class="practice-feedback__pill" data-retry-hint-level="${escapeHtml(normalizedFeedback.hint.level)}">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
                     <span class="practice-feedback__pill">Explanation: ${escapeHtml(normalizedFeedback.explanation.status)}</span>
                     <span class="practice-feedback__pill">Tone: ${escapeHtml(normalizedFeedback.explanation.tone)}</span>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
-                    <p class="panel-copy">Eligibility UI stays mounted here so later retry policy can swap placeholder text for real availability rules.</p>
+                    <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="hint">
                     <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
@@ -649,14 +649,16 @@ function normalizeFeedbackPanelState(feedbackPanelState) {
             ? safeState.status
             : "idle",
         contextSnapshot: safeState.contextSnapshot ?? null,
+        retryFeedback: safeState.retryFeedback ?? null,
         revealedHintCount: typeof safeState.revealedHintCount === "number"
             ? safeState.revealedHintCount
             : 0
     };
 }
 
-function resolveRetryFeedback(bootstrapState, submissionState) {
+function resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState) {
     return submissionState.response?.retryFeedback
+        ?? feedbackPanelState.retryFeedback
         ?? bootstrapState.response?.submission?.placeholderRetryFeedback
         ?? null;
 }
@@ -680,7 +682,7 @@ function normalizeRetryFeedback(retryFeedback) {
                 : 0,
             eligibility: typeof retryState.eligibility === "string" && retryState.eligibility.trim() !== ""
                 ? retryState.eligibility
-                : "pending"
+                : "not-needed"
         },
         explanation: {
             status: typeof explanation.status === "string" && explanation.status.trim() !== ""
@@ -694,7 +696,7 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "neutral",
             message: typeof explanation.message === "string" && explanation.message.trim() !== ""
                 ? explanation.message
-                : "Retry explanation content will appear here when the guided-retry policy is connected.",
+                : "Retry guidance will mount here after the first evaluated submission.",
             details: Array.isArray(explanation.details)
                 ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
                 : []
@@ -708,7 +710,7 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "baseline",
             message: typeof hint.message === "string" && hint.message.trim() !== ""
                 ? hint.message
-                : "Hint progression remains placeholder data until retry policy is connected.",
+                : "Hint progression is idle until the learner receives evaluated feedback.",
             reveals: Array.isArray(hint.reveals)
                 ? hint.reveals
                     .filter((item) => item && typeof item === "object")
@@ -762,13 +764,17 @@ function normalizeFeedbackContextSnapshot(contextSnapshot) {
 function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submissionState) {
     switch (feedbackPanelStatus) {
         case "submitting":
-            return "The retry panel is already reserving exercise context for the in-flight submission so the learner does not lose place if the attempt fails.";
-        case "retry-ready":
-            return "The current exercise context stays pinned after a failed evaluation while explanation and hint content remain placeholder slots.";
+            return normalizedFeedback.status === "guided"
+                ? "The retry panel keeps the last evaluated guidance visible while the next attempt is in flight."
+                : "The retry panel is already reserving exercise context for the in-flight submission so the learner does not lose place if the attempt fails.";
+        case "guided":
+            return "The current exercise context stays pinned after a failed evaluation while retry eligibility and hint level stay synchronized with the latest boundary payload.";
         case "request-failure":
-            return "The request failed, but the active exercise context and last attempted answer stay visible for recovery.";
+            return normalizedFeedback.status === "guided"
+                ? "The request failed, but the last evaluated retry guidance stays visible so the learner can recover without losing place."
+                : "The request failed, but the active exercise context and last attempted answer stay visible for recovery.";
         case "resolved":
-            return "The retry shell stays mounted even after a successful answer so later tasks can layer richer guidance without changing layout.";
+            return "The retry shell stays mounted after a successful answer and now reflects that no further retry is needed.";
         default:
             return submissionState.status === "ready"
                 ? normalizedFeedback.explanation.message
@@ -776,13 +782,23 @@ function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submi
     }
 }
 
-function resolveFeedbackPanelTone(feedbackPanelStatus, submissionState) {
+function resolveFeedbackPanelTone(feedbackPanelStatus, normalizedFeedback, submissionState) {
     if (feedbackPanelStatus === "request-failure" || submissionState.status === "retryable-error") {
         return "retryable";
     }
 
     if (submissionState.status === "terminal-error") {
         return "terminal";
+    }
+
+    if (feedbackPanelStatus === "guided") {
+        if (normalizedFeedback.explanation.tone === "unsupported") {
+            return "unsupported";
+        }
+
+        if (normalizedFeedback.explanation.tone === "incorrect") {
+            return "incorrect";
+        }
     }
 
     return "ready";
@@ -797,15 +813,26 @@ function resolveFeedbackPanelBadge(feedbackPanelStatus, normalizedFeedback, subm
         return "holding-context";
     }
 
-    if (feedbackPanelStatus === "retry-ready") {
-        return "retry-ready";
-    }
-
     if (feedbackPanelStatus === "resolved") {
         return "resolved";
     }
 
     return normalizedFeedback.retryState.status;
+}
+
+function resolveRetryEligibilityCopy(normalizedFeedback) {
+    switch (normalizedFeedback.retryState.eligibility) {
+        case "eligible":
+            return normalizedFeedback.hint.level === "strong"
+                ? "Retry is available now, and the stronger hint tier is already unlocked for the next attempt."
+                : "Retry is available now, and the panel is holding the lighter hint tier until another failed attempt unlocks stronger guidance.";
+        case "not-needed":
+            return normalizedFeedback.status === "resolved"
+                ? "No retry is needed because the latest evaluated attempt already completed the exercise."
+                : "Retry is idle until the learner receives evaluated feedback.";
+        default:
+            return "Retry guidance is mounted, but eligibility details are temporarily unavailable.";
+    }
 }
 
 function isSubmitDisabled(bootstrapState, submissionState) {
