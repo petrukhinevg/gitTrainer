@@ -50,9 +50,9 @@ function renderTrainingFlow(state, tagOptions) {
             <div class="scenario-legend__header">
                 <span class="control-label">Карта тегов</span>
                 <details class="scenario-legend__details">
-                    <summary class="scenario-legend__button" aria-label="Показать legend цветовых линий">i</summary>
+                    <summary class="scenario-legend__button" aria-label="Показать пояснение к цветным линиям">i</summary>
                     <div class="scenario-legend__popover">
-                        <strong>Legend цветовых линий</strong>
+                        <strong>Пояснение к цветным линиям</strong>
                         <p class="panel-copy">Наведите на тег, чтобы подсветить связанные сценарии в левой колонке. Цветовые линии показывают, какие сценарии сходятся по смысловым тегам.</p>
                     </div>
                 </details>

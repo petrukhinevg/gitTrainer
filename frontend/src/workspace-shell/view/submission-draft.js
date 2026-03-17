@@ -12,7 +12,7 @@ export function renderSubmissionDraftSection(state) {
                 <h4 class="lesson-block__title">Подготовить черновик ответа</h4>
             </div>
             <p class="panel-copy">
-                Этот локальный черновик держит на виду ввод ответа и форму отправки ещё до подключения реального транспорта сессии и рендера корректности.
+                Здесь можно заранее собрать ответ и проверить форму отправки ещё до подключения полной серверной проверки.
             </p>
             <form class="submission-draft__form" data-submission-draft-form>
                 <div class="submission-draft__fields">
@@ -48,8 +48,8 @@ export function renderSubmissionDraftSection(state) {
             </form>
             ${preparedSubmission ? renderPreparedSubmission(preparedSubmission) : `
                 <div class="submission-draft__notice">
-                    <span class="control-label">Подготовленный payload</span>
-                    <p class="panel-copy">Форма уже умеет собирать локальный payload отправки, но запуск сессии и реальный POST-запрос будут подключены следующим шагом.</p>
+                    <span class="control-label">Подготовленный ответ</span>
+                    <p class="panel-copy">Форма уже собирает данные для отправки, но запуск сессии и настоящий запрос к серверу подключаются следующим шагом.</p>
                 </div>
             `}
         </section>
@@ -59,7 +59,7 @@ export function renderSubmissionDraftSection(state) {
 function renderPreparedSubmission(preparedSubmission) {
     return `
         <div class="submission-draft__notice submission-draft__notice--ready">
-            <span class="control-label">Подготовленный payload</span>
+            <span class="control-label">Подготовленный ответ</span>
             <dl class="result-summary">
                 <div>
                     <dt>Сценарий</dt>
