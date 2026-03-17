@@ -199,6 +199,87 @@
         rgba(255, 250, 241, 0.78);
 }
 
+.progress-summary-grid,
+.progress-activity-list,
+.progress-guidance-groups,
+.progress-guidance-list {
+    display: grid;
+    gap: 14px;
+}
+
+.progress-card,
+.progress-activity,
+.progress-guidance-shell,
+.progress-guidance-shell__hero,
+.progress-guidance-group,
+.progress-recommendation-card {
+    display: grid;
+    gap: 10px;
+}
+
+.progress-card,
+.progress-activity,
+.progress-guidance-shell {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.progress-guidance-shell__hero,
+.progress-guidance-group,
+.progress-recommendation-card {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255, 250, 241, 0.78);
+}
+
+.progress-card__header,
+.progress-activity__header,
+.progress-guidance-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.progress-status-marker {
+    display: inline-flex;
+    align-items: center;
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.progress-status-marker--completed {
+    color: #285d3b;
+}
+
+.progress-status-marker--in_progress,
+.progress-status-marker--in-progress {
+    color: #8b5d21;
+}
+
+.progress-status-marker--not_started,
+.progress-status-marker--not-started,
+.progress-status-marker--planned {
+    color: var(--ink-soft);
+}
+
+.progress-guidance-group .lesson-block__title {
+    font-size: 1rem;
+}
+
+.scenario-action--secondary {
+    opacity: 0.86;
+}
+
 .submission-draft__actions button {
     cursor: pointer;
     border-width: 1px;
@@ -208,6 +289,13 @@
     .task-sequence__item {
         grid-template-columns: 1fr;
         align-items: stretch;
+    }
+
+    .progress-card__header,
+    .progress-activity__header,
+    .progress-guidance-actions {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .submission-draft__hint,

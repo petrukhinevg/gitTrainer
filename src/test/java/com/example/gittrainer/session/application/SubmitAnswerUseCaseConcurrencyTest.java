@@ -1,9 +1,12 @@
 package com.example.gittrainer.session.application;
 
+import com.example.gittrainer.progress.application.ProgressRepository;
+import com.example.gittrainer.progress.domain.ScenarioProgressRecord;
 import com.example.gittrainer.session.domain.TrainingSession;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +22,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class SubmitAnswerUseCaseConcurrencyTest {
 
     @Autowired
@@ -29,6 +33,9 @@ class SubmitAnswerUseCaseConcurrencyTest {
 
     @Autowired
     private SessionRepository sessionRepository;
+
+    @Autowired
+    private ProgressRepository progressRepository;
 
     @Test
     void recordsConcurrentSubmissionsWithoutLosingAttemptIncrements() throws Exception {
@@ -72,6 +79,11 @@ class SubmitAnswerUseCaseConcurrencyTest {
             TrainingSession persistedSession = sessionRepository.findById(sessionId).orElseThrow();
             assertThat(persistedSession.submissionCount()).isEqualTo(concurrentSubmissions);
             assertThat(submissionIds).contains(persistedSession.lastSubmissionId());
+
+            ScenarioProgressRecord progressRecord = progressRepository.findByScenarioSlug(startedSession.session().scenarioSlug())
+                    .orElseThrow();
+            assertThat(progressRecord.attemptCount()).isEqualTo(concurrentSubmissions);
+            assertThat(progressRecord.lastSubmissionId()).isIn(submissionIds);
         } finally {
             executor.shutdownNow();
         }

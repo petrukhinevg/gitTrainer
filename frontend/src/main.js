@@ -19,6 +19,11 @@ import {
     createLocalFixtureSessionProvider,
     createUnavailableFixtureSessionProvider
 } from "./session/session-provider.js";
+import {
+    createBackendApiProgressProvider,
+    createLocalFixtureProgressProvider,
+    createUnavailableFixtureProgressProvider
+} from "./progress/progress-provider.js";
 import { CATALOG_TAG_OPTIONS } from "./catalog/catalog-fixtures.js";
 import { createCatalogWorkspaceController } from "./workspace-shell/controller.js";
 
@@ -40,6 +45,12 @@ const sessionProviderFactories = Object.freeze({
     "fixture-unavailable": () => createUnavailableFixtureSessionProvider()
 });
 
+const progressProviderFactories = Object.freeze({
+    "local-fixture": () => createLocalFixtureProgressProvider(),
+    "backend-api": () => createBackendApiProgressProvider(),
+    "fixture-unavailable": () => createUnavailableFixtureProgressProvider()
+});
+
 const appRoot = document.querySelector("#app");
 
 createCatalogWorkspaceController({
@@ -47,5 +58,6 @@ createCatalogWorkspaceController({
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,
+    progressProviderFactories,
     tagOptions: CATALOG_TAG_OPTIONS
 }).bootstrap();

@@ -7,7 +7,7 @@ export function renderRouteNotFound() {
         <section class="workspace-intro panel">
             <p class="panel-label">Route shell</p>
             <h2>Unknown route</h2>
-            <p>The standalone frontend keeps learner navigation inside one shell, but only <code>#/catalog</code> and <code>#/exercise/&lt;slug&gt;</code> are wired right now.</p>
+            <p>The standalone frontend keeps learner navigation inside one shell, but only <code>#/catalog</code>, <code>#/progress</code>, and <code>#/exercise/&lt;slug&gt;</code> are wired right now.</p>
         </section>
     `;
 }
@@ -31,6 +31,10 @@ export function renderWorkspaceIntro(state) {
 }
 
 function resolveIntroTitle(state) {
+    if (state.route === "progress") {
+        return "Progress route keeps a stable shell placeholder";
+    }
+
     if (state.route !== "exercise") {
         return "Catalog browsing and route handoff now share one shell";
     }
@@ -47,6 +51,10 @@ function resolveIntroTitle(state) {
 }
 
 function resolveIntroDescription(state) {
+    if (state.route === "progress") {
+        return "The progress view is mounted as a dedicated route so later summary and recommendation work can attach to one stable screen.";
+    }
+
     if (state.route !== "exercise") {
         return "The catalog still owns selection and provider state, but the shell is now locked into the same three-lane lesson frame that exercise routes will use.";
     }

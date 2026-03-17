@@ -53,7 +53,12 @@ class CatalogShellPageTest {
         assertAssetContains(
                 "/app.js",
                 "#/catalog",
+                "#/progress",
                 "#/exercise/",
+                "/api/progress",
+                "data-progress-guidance-shell",
+                "data-progress-guidance-primary",
+                "data-progress-recommendation-list",
                 "[data-scenario-toggle]",
                 "[data-catalog-controls-form]",
                 "data-reset-catalog-controls",
@@ -72,6 +77,9 @@ class CatalogShellPageTest {
                 "data-retry-hint-level",
                 "data-retry-hint-reveal",
                 "data-session-request-retry",
+                "data-progress-surface",
+                "data-progress-status-marker",
+                "data-progress-activity",
                 "app-shell--exercise",
                 "Try again in a moment."
         );
@@ -92,6 +100,9 @@ class CatalogShellPageTest {
                 ".catalog-controls__form",
                 ".catalog-controls__grid",
                 ".catalog-controls__tag-list",
+                ".progress-summary-grid",
+                ".progress-status-marker",
+                ".progress-activity-list",
                 ".practice-stack",
                 ".branch-graph"
         );
