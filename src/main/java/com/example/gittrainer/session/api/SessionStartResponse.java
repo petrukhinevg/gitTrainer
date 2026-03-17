@@ -77,13 +77,24 @@ record RetryStateResponse(
 record RetryExplanationResponse(
         String status,
         String title,
-        String message
+        String tone,
+        String message,
+        List<String> details
 ) {
 }
 
 record RetryHintResponse(
         String status,
         String level,
+        String message,
+        List<RetryHintRevealResponse> reveals
+) {
+}
+
+record RetryHintRevealResponse(
+        String id,
+        String label,
+        String title,
         String message
 ) {
 }
