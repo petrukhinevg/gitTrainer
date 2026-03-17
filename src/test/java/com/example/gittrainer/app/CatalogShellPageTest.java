@@ -73,6 +73,9 @@ class CatalogShellPageTest {
                 "data-retry-hint-level",
                 "data-retry-hint-reveal",
                 "data-session-request-retry",
+                "data-progress-surface",
+                "data-progress-status-marker",
+                "data-progress-activity",
                 "app-shell--exercise",
                 "Try again in a moment."
         );
@@ -93,6 +96,9 @@ class CatalogShellPageTest {
                 ".catalog-controls__form",
                 ".catalog-controls__grid",
                 ".catalog-controls__tag-list",
+                ".progress-summary-grid",
+                ".progress-status-marker",
+                ".progress-activity-list",
                 ".practice-stack",
                 ".branch-graph"
         );

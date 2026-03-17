@@ -204,6 +204,57 @@
     border-width: 1px;
 }
 
+.progress-summary-grid,
+.progress-activity-list {
+    display: grid;
+    gap: 14px;
+}
+
+.progress-card,
+.progress-activity,
+.progress-guidance-shell {
+    display: grid;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.progress-card__header,
+.progress-activity__header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.progress-status-marker {
+    display: inline-flex;
+    align-items: center;
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.progress-status-marker--completed {
+    color: #285d3b;
+}
+
+.progress-status-marker--in_progress,
+.progress-status-marker--in-progress {
+    color: #8b5d21;
+}
+
+.progress-status-marker--not_started,
+.progress-status-marker--not-started,
+.progress-status-marker--planned {
+    color: var(--ink-soft);
+}
+
 @media (max-width: 720px) {
     .task-sequence__item {
         grid-template-columns: 1fr;
@@ -214,5 +265,11 @@
     .submission-draft__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .progress-card__header,
+    .progress-activity__header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
