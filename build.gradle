@@ -55,7 +55,9 @@ tasks.register('frontendInstall', Exec) {
             frontendDir.file("package-lock.json")
     )
     outputs.dir(frontendDir.dir("node_modules"))
-    commandLine npmCommand, "ci"
+    // `npm install` is less aggressive than `npm ci` about tearing down native modules,
+    // which avoids repeated Windows file-lock failures during `gradlew check`.
+    commandLine npmCommand, "install", "--no-fund", "--no-audit"
 }
 
 tasks.register('frontendBuild', Exec) {
