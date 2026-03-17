@@ -2,7 +2,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
     items: [
         {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Choose the right branch before editing",
+            scenarioTitle: "Выбери правильную ветку перед правками",
             status: "in_progress",
             attemptCount: 1,
             completionCount: 0,
@@ -10,7 +10,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "status-basics",
-            scenarioTitle: "Read the working tree before acting",
+            scenarioTitle: "Сначала проверь рабочее дерево",
             status: "completed",
             attemptCount: 2,
             completionCount: 1,
@@ -18,7 +18,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "history-cleanup-preview",
-            scenarioTitle: "Preview a history cleanup plan",
+            scenarioTitle: "Просмотри план очистки истории",
             status: "not_started",
             attemptCount: 0,
             completionCount: 0,
@@ -28,14 +28,14 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
     recentActivity: [
         {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Choose the right branch before editing",
+            scenarioTitle: "Выбери правильную ветку перед правками",
             status: "in_progress",
             eventType: "attempted",
             happenedAt: "2026-03-17T00:00:00.000Z"
         },
         {
             scenarioSlug: "status-basics",
-            scenarioTitle: "Read the working tree before acting",
+            scenarioTitle: "Сначала проверь рабочее дерево",
             status: "completed",
             eventType: "completed",
             happenedAt: "2026-03-16T20:30:00.000Z"
@@ -45,20 +45,20 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         solved: [
             {
                 scenarioSlug: "status-basics",
-                scenarioTitle: "Read the working tree before acting"
+                scenarioTitle: "Сначала проверь рабочее дерево"
             }
         ],
         attempted: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Choose the right branch before editing"
+                scenarioTitle: "Выбери правильную ветку перед правками"
             }
         ],
         next: {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Choose the right branch before editing"
+            scenarioTitle: "Выбери правильную ветку перед правками"
         },
-        rationale: "Continue the scenario that already has unresolved progress."
+        rationale: "Продолжайте сценарий, в котором уже есть незавершённый прогресс."
     },
     meta: {
         source: "local-fixture"

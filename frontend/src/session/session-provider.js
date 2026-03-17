@@ -42,12 +42,12 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
         async startSession({ scenarioSlug }) {
             const normalizedSlug = normalizeRequiredValue(
                 scenarioSlug,
-                "Scenario slug is required to start a session."
+                "Для запуска сессии нужен slug сценария."
             );
             const detail = FIXTURE_SCENARIO_DETAILS[normalizedSlug];
             if (!detail) {
                 throw new SessionTransportError(
-                    `Scenario detail is unavailable for slug: ${normalizedSlug}`,
+                    `Детали сценария недоступны для slug: ${normalizedSlug}`,
                     { failureKind: "terminal", status: 404 }
                 );
             }
@@ -79,7 +79,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         status: "placeholder",
                         correctness: "not-evaluated",
                         code: "awaiting-first-submission",
-                        message: "Session transport is ready. Submit the first answer to receive an evaluated result immediately."
+                        message: "Транспорт сессии готов. Отправьте первый ответ, чтобы сразу получить результат проверки."
                     },
                     placeholderRetryFeedback: createPlaceholderRetryFeedback({
                         scenarioSlug: session.scenarioSlug,
@@ -93,12 +93,12 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
                 sessionId,
-                "Session id is required before an answer can be submitted."
+                "Перед отправкой ответа нужен id сессии."
             );
             const session = sessions.get(normalizedSessionId);
             if (!session) {
                 throw new SessionTransportError(
-                    `Session is unavailable for id: ${normalizedSessionId}`,
+                    `Сессия недоступна для id: ${normalizedSessionId}`,
                     { failureKind: "terminal", status: 404 }
                 );
             }
@@ -106,7 +106,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
             const answerType = normalizeOptionalValue(submission?.answerType) ?? "command_text";
             const answer = normalizeRequiredValue(
                 submission?.answer,
-                "Answer text is required to submit a session attempt."
+                "Для отправки попытки нужен текст ответа."
             );
 
             const submissionId = `fixture-submission-${nextSubmissionNumber++}`;
@@ -143,13 +143,13 @@ export function createUnavailableFixtureSessionProvider() {
         name: "fixture-unavailable",
         async startSession() {
             throw new SessionTransportError(
-                "Session transport is unavailable right now. Try again in a moment.",
+                "Транспорт сессии сейчас недоступен. Повторите чуть позже.",
                 { failureKind: "retryable", status: 503 }
             );
         },
         async submitAnswer() {
             throw new SessionTransportError(
-                "Session transport is unavailable right now. Try again in a moment.",
+                "Транспорт сессии сейчас недоступен. Повторите чуть позже.",
                 { failureKind: "retryable", status: 503 }
             );
         }
@@ -169,7 +169,7 @@ export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(wi
         async submitAnswer(sessionId, submission) {
             const normalizedSessionId = normalizeRequiredValue(
                 sessionId,
-                "Session id is required before an answer can be submitted."
+                "Перед отправкой ответа нужен id сессии."
             );
             const response = await postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
                 answerType: normalizeOptionalValue(submission?.answerType) ?? "command_text",
@@ -198,7 +198,7 @@ async function postJson(fetchImpl, path, payload) {
         }
 
         throw new SessionTransportError(
-            "Session request could not reach the server. Check the backend and try again.",
+            "Запрос сессии не смог дойти до сервера. Проверьте backend и попробуйте снова.",
             { failureKind: "retryable" }
         );
     }
@@ -245,7 +245,7 @@ function resolveTransportErrorMessage(status, problem) {
         return problem.message;
     }
 
-    return `Session request failed with status ${status}`;
+    return `Запрос сессии завершился статусом ${status}`;
 }
 
 function resolveFailurePolicy(status, problem) {
@@ -316,7 +316,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "unsupported",
             code: "unsupported-answer-type",
-            message: "This MVP validation slice only evaluates command_text answers."
+            message: "Этот MVP-срез пока проверяет только ответы типа command_text."
         };
     }
 
@@ -326,7 +326,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "incorrect",
             code: "validation-rule-missing",
-            message: "No validation rule is available for the active scenario yet."
+            message: "Для активного сценария пока нет правила валидации."
         };
     }
 
@@ -336,7 +336,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "correct",
             code: "expected-command",
-            message: "Submitted command matches the expected safe next action for this scenario."
+            message: "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
         };
     }
 
@@ -345,7 +345,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "partial",
             code: "partial-command-match",
-            message: "Submitted command points toward the right inspection area, but it still needs refinement."
+            message: "Отправленная команда указывает в правильную область проверки, но её ещё нужно уточнить."
         };
     }
 
@@ -353,7 +353,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         status: "evaluated",
         correctness: "incorrect",
         code: "unexpected-command",
-        message: "Submitted command does not match the expected safe next action for this scenario."
+        message: "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария."
     };
 }
 
@@ -396,10 +396,10 @@ function normalizeRetryFeedbackBoundary(retryFeedback) {
         },
         explanation: {
             status: normalizeOptionalValue(explanation.status) ?? "placeholder",
-            title: normalizeOptionalValue(explanation.title) ?? "Retry guidance",
+            title: normalizeOptionalValue(explanation.title) ?? "Подсказка для повтора",
             tone: normalizeOptionalValue(explanation.tone) ?? "neutral",
             message: normalizeOptionalValue(explanation.message)
-                ?? "Retry guidance will mount here after the first evaluated submission.",
+                ?? "Подсказка для повтора появится здесь после первой проверенной отправки.",
             details: Array.isArray(explanation.details)
                 ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
                 : []
@@ -408,15 +408,15 @@ function normalizeRetryFeedbackBoundary(retryFeedback) {
             status: normalizeOptionalValue(hint.status) ?? "placeholder",
             level: normalizeOptionalValue(hint.level) ?? "baseline",
             message: normalizeOptionalValue(hint.message)
-                ?? "Hint progression is idle until the learner receives evaluated feedback.",
+                ?? "Прогресс подсказок остаётся в ожидании, пока пользователь не получит проверенную обратную связь.",
             reveals: Array.isArray(hint.reveals)
                 ? hint.reveals
                     .filter((item) => item && typeof item === "object")
                     .map((item, index) => ({
                         id: normalizeOptionalValue(item.id) ?? `hint-${index + 1}`,
-                        label: normalizeOptionalValue(item.label) ?? "Reveal hint",
-                        title: normalizeOptionalValue(item.title) ?? "Hint",
-                        message: normalizeOptionalValue(item.message) ?? "Additional hint content is unavailable."
+                        label: normalizeOptionalValue(item.label) ?? "Показать подсказку",
+                        title: normalizeOptionalValue(item.title) ?? "Подсказка",
+                        message: normalizeOptionalValue(item.message) ?? "Дополнительная подсказка недоступна."
                     }))
                 : []
         }
@@ -478,15 +478,15 @@ function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, 
             status: "placeholder",
             explanation: {
                 status: "placeholder",
-                title: "Retry guidance",
+                title: "Подсказка для повтора",
                 tone: "neutral",
-                message: "Retry guidance will mount here after the first evaluated submission.",
+                message: "Подсказка для повтора появится здесь после первой проверенной отправки.",
                 details: []
             },
             hint: {
                 status: "placeholder",
                 level: "baseline",
-                message: "Hint progression is idle until the learner receives evaluated feedback.",
+                message: "Прогресс подсказок остаётся в ожидании, пока пользователь не получит проверенную обратную связь.",
                 reveals: []
             }
         };
@@ -497,15 +497,15 @@ function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, 
             status: "resolved",
             explanation: {
                 status: "resolved",
-                title: "No retry explanation needed",
+                title: "Повторное объяснение не требуется",
                 tone: "success",
-                message: "This attempt already landed on the safe next action, so the retry panel stays quiet.",
+                message: "Эта попытка уже привела к безопасному следующему шагу, поэтому панель повтора остаётся спокойной.",
                 details: []
             },
             hint: {
                 status: "resolved",
                 level: "none",
-                message: "No extra hint is needed after a correct answer.",
+                message: "После правильного ответа дополнительная подсказка не нужна.",
                 reveals: []
             }
         };
@@ -527,19 +527,19 @@ function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, 
             status: "guided",
             level: strongHintUnlocked ? "strong" : "nudge",
             message: strongHintUnlocked
-                ? "A stronger hint is now available because the learner has already missed at least one attempt."
-                : "Start with a lighter nudge before revealing the stronger guidance.",
+                ? "Теперь доступна усиленная подсказка, потому что пользователь уже промахнулся как минимум один раз."
+                : "Сначала дайте более мягкий намёк, а уже потом открывайте сильную подсказку.",
             reveals: strongHintUnlocked
                 ? [
                     {
                         id: "nudge",
-                        label: "Reveal first hint",
+                        label: "Показать первую подсказку",
                         title: narrative.nudgeTitle,
                         message: narrative.nudgeMessage
                     },
                     {
                         id: "strong",
-                        label: "Reveal stronger hint",
+                        label: "Показать усиленную подсказку",
                         title: narrative.strongTitle,
                         message: narrative.strongMessage
                     }
@@ -547,7 +547,7 @@ function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, 
                 : [
                     {
                         id: "nudge",
-                        label: "Reveal first hint",
+                        label: "Показать первую подсказку",
                         title: narrative.nudgeTitle,
                         message: narrative.nudgeMessage
                     }
@@ -557,77 +557,77 @@ function createFixtureRetryPresentation({ scenarioSlug, attemptNumber, outcome, 
 }
 
 function scenarioGuidanceNarrative(scenarioSlug, correctness, answer) {
-    const trimmedAnswer = normalizeOptionalValue(answer) ?? "the submitted command";
+    const trimmedAnswer = normalizeOptionalValue(answer) ?? "отправленная команда";
 
     if (correctness === "unsupported") {
         return {
-            title: "Return to supported command input",
-            message: "This MVP slice still evaluates only command-style answers, so the next attempt should switch back to a supported command entry.",
+            title: "Вернитесь к поддерживаемому вводу команды",
+            message: "Этот MVP-срез пока проверяет только ответы в формате команды, поэтому следующую попытку нужно вернуть к поддерживаемому типу.",
             details: [
-                "The current transport accepts the request, but the correctness model still marks the answer type as unsupported.",
-                "Keep the retry panel focused on getting back to a supported command flow before exploring richer answer formats."
+                "Текущий транспорт принимает запрос, но модель корректности всё ещё помечает такой тип ответа как неподдерживаемый.",
+                "Панель повтора должна сначала вернуть пользователя к поддерживаемому командному формату, а уже потом пробовать более богатые варианты ответа."
             ],
-            nudgeTitle: "Use the command text mode",
-            nudgeMessage: "Switch the answer type back to command text and keep the next attempt in a simple inspection command shape.",
-            strongTitle: "Mirror the supported answer examples",
-            strongMessage: "Look at the supported answer type badge above the composer and mirror that mode before changing the command itself."
+            nudgeTitle: "Используйте режим текста команды",
+            nudgeMessage: "Переключите тип ответа обратно на текст команды и оставьте следующую попытку в форме простой команды проверки.",
+            strongTitle: "Ориентируйтесь на поддерживаемый пример",
+            strongMessage: "Посмотрите на бейдж поддерживаемого типа ответа над формой и сначала вернитесь к этому режиму."
         };
     }
 
     if (correctness === "partial") {
         return {
-            title: "You are inspecting the right area, but the command still needs tightening",
-            message: `\`${trimmedAnswer}\` points toward the right repository signal, but the task still needs a more precise inspection command before the answer is considered correct.`,
+            title: "Вы смотрите в правильную область, но команду ещё нужно уточнить",
+            message: `\`${trimmedAnswer}\` указывает на правильный сигнал репозитория, но задаче всё ещё нужна более точная команда проверки, прежде чем ответ станет правильным.`,
             details: [
-                "The learner has started from the correct inspection family, so the retry message should reward that direction instead of treating it as a total miss.",
-                "The follow-up hint can narrow the command shape without redesigning the feedback panel."
+                "Пользователь уже стартовал из правильного семейства команд проверки, поэтому сообщение о повторе должно поддержать это направление, а не считать ответ полным промахом.",
+                "Следующая подсказка может сузить форму команды, не меняя саму панель обратной связи."
             ],
-            nudgeTitle: "Keep the same inspection family",
-            nudgeMessage: "Stay in the same inspection area, but remove extra scope or switch to the canonical safe command for the scenario.",
-            strongTitle: "Compare against the exact safe next action",
-            strongMessage: "The next safe action is still an inspection-first command. Tighten it until it matches the scenario's expected command text."
+            nudgeTitle: "Останьтесь в том же семействе проверок",
+            nudgeMessage: "Оставайтесь в той же зоне проверки, но уберите лишний охват или переключитесь на каноничную безопасную команду для сценария.",
+            strongTitle: "Сверьтесь с точным безопасным шагом",
+            strongMessage: "Следующее безопасное действие всё ещё строится на команде проверки. Уточните её, пока она не совпадёт с ожидаемым текстом."
         };
     }
 
     switch (scenarioSlug) {
         case "branch-safety":
             return {
-                title: "The branch choice still is not grounded in the task context",
-                message: "The retry explanation should steer the learner back to comparing the active branch with the requested task before switching or editing anything.",
+                title: "Выбор ветки всё ещё не опирается на контекст задачи",
+                message: "Объяснение для повтора должно вернуть пользователя к сравнению активной ветки с задачей до любого переключения или редактирования.",
                 details: [
-                    "The current branch already carries intent. The next attempt should explain that intent rather than jumping straight to a branch change.",
-                    "A good retry hint here keeps branch purpose and task purpose in the same line of sight."
+                    "Текущая ветка уже несёт свой смысл. Следующая попытка должна объяснить этот смысл, а не сразу прыгать к смене ветки.",
+                    "Хорошая подсказка в этом месте держит назначение ветки и цель задачи в одном фокусе."
                 ],
-                nudgeTitle: "Read the branch purpose first",
-                nudgeMessage: "Use the current branch and repository cues to justify whether staying or switching is safer before you submit another command.",
-                strongTitle: "Anchor the answer in the active branch indicator",
-                strongMessage: "The safest next command is still one that confirms where you are. Use the active branch cue before proposing any move."
+                nudgeTitle: "Сначала прочитайте назначение ветки",
+                nudgeMessage: "Используйте текущую ветку и подсказки репозитория, чтобы обосновать, безопаснее ли остаться или переключиться, прежде чем отправлять новую команду.",
+                strongTitle: "Привяжите ответ к индикатору активной ветки",
+                strongMessage: "Самая безопасная следующая команда всё ещё должна подтверждать, где вы находитесь. Используйте подсказку активной ветки до любого движения."
             };
         case "history-cleanup-preview":
             return {
-                title: "The retry explanation should keep the learner in planning mode",
-                message: "This scenario is still about reading the stack and planning a cleanup, so the next attempt should avoid jumping into a rewrite action too early.",
+                title: "Объяснение для повтора должно удержать пользователя в режиме планирования",
+                message: "Этот сценарий всё ещё про чтение стека коммитов и план очистки, поэтому следующая попытка не должна слишком рано переходить к переписыванию истории.",
                 details: [
-                    "The explanation should remind the learner that this task stops at inspection and planning rather than execution.",
-                    "Hints can progressively move from general planning language to a stronger reminder about log-style inspection commands."
+                    "Объяснение должно напомнить, что эта задача заканчивается на проверке и планировании, а не на выполнении.",
+                    "Подсказки могут постепенно переходить от общего языка планирования к более сильному напоминанию о log-подобных командах проверки."
                 ],
-                nudgeTitle: "Stay with a history inspection command",
-                nudgeMessage: "Use a log-style command that keeps the commit stack visible before choosing any rewrite strategy.",
-                strongTitle: "Prefer a decorated one-line history view",
-                strongMessage: "The safe next action is still a compact history inspection command that shows branch decoration before any cleanup step."
+                nudgeTitle: "Останьтесь на команде проверки истории",
+                nudgeMessage: "Используйте команду в стиле `log`, которая держит стек коммитов на виду до выбора стратегии переписывания.",
+                strongTitle: "Предпочтите украшенный однострочный просмотр истории",
+                strongMessage: "Безопасный следующий шаг всё ещё строится на компактной команде проверки истории, которая показывает декорации веток до любой очистки."
             };
         default:
             return {
-                title: "Inspect before acting",
-                message: "The retry explanation should pull the learner back toward repository inspection before any mutating Git action.",
+                title: "Сначала проверьте, потом действуйте",
+                message: "Объяснение для повтора должно возвращать пользователя к проверке репозитория до любого изменяющего Git-действия.",
                 details: [
-                    "This feedback block is intentionally instructional: it highlights why the answer is off without changing the panel shell.",
-                    "Hints should escalate from a small nudge to a stronger reminder only after repeated misses."
+                    "Этот блок обратной связи специально сделан обучающим: он показывает, почему ответ не подходит, не меняя саму оболочку панели.",
+                    "Подсказки должны усиливаться от лёгкого намёка к более сильному напоминанию только после повторных промахов."
                 ],
-                nudgeTitle: "Look at the working tree evidence first",
-                nudgeMessage: "Stay with a command that reads the current repository state before you propose cleanup or navigation.",
-                strongTitle: "Use the canonical inspection command",
-                strongMessage: "The next safe action is still the canonical inspection command for this scenario. Choose the command that reveals state without changing it."
+                nudgeTitle: "Сначала посмотрите на состояние рабочего дерева",
+                nudgeMessage: "Оставайтесь на команде, которая читает текущее состояние репозитория, прежде чем предлагать очистку или навигацию.",
+                strongTitle: "Используйте каноничную команду проверки",
+                strongMessage: "Следующее безопасное действие всё ещё строится на каноничной команде проверки для этого сценария. Выберите команду, которая раскрывает состояние и ничего не меняет."
             };
     }
 }

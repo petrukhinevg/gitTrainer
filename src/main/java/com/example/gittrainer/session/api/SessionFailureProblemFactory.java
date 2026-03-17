@@ -15,7 +15,7 @@ final class SessionFailureProblemFactory {
     static ProblemDetail invalidRequest(SessionRequestValidationException exception) {
         return createProblem(
                 HttpStatus.BAD_REQUEST,
-                "Invalid session request",
+                "Некорректный запрос сессии",
                 exception.getMessage(),
                 exception.errorCode(),
                 "terminal",
@@ -26,7 +26,7 @@ final class SessionFailureProblemFactory {
     static ProblemDetail missingSession(SessionNotFoundException exception) {
         return createProblem(
                 HttpStatus.NOT_FOUND,
-                "Session not found",
+                "Сессия не найдена",
                 exception.getMessage(),
                 "session-not-found",
                 "terminal",
@@ -37,7 +37,7 @@ final class SessionFailureProblemFactory {
     static ProblemDetail missingScenario(ScenarioDetailNotFoundException exception) {
         return createProblem(
                 HttpStatus.NOT_FOUND,
-                "Scenario not found",
+                "Сценарий не найден",
                 exception.getMessage(),
                 "scenario-not-found",
                 "terminal",
@@ -48,7 +48,7 @@ final class SessionFailureProblemFactory {
     static ProblemDetail unavailableScenarioSource(ScenarioCatalogSourceUnavailableException exception) {
         ProblemDetail problem = createProblem(
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Scenario source unavailable",
+                "Источник сценариев недоступен",
                 exception.getMessage(),
                 "scenario-source-unavailable",
                 "retryable",

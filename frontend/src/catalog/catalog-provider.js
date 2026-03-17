@@ -24,7 +24,7 @@ export function createUnavailableFixtureCatalogProvider() {
     return {
         name: "fixture-unavailable",
         async browseCatalog() {
-            throw new Error("Catalog source is unavailable right now. Try again in a moment.");
+            throw new Error("Источник каталога сейчас недоступен. Повторите чуть позже.");
         }
     };
 }
@@ -46,7 +46,7 @@ export function createBackendApiCatalogProvider(fetchImpl = window.fetch.bind(wi
 
             const response = await fetchImpl(url);
             if (!response.ok) {
-                throw new Error(`Catalog request failed with status ${response.status}`);
+                throw new Error(`Запрос каталога завершился статусом ${response.status}`);
             }
             return response.json();
         }

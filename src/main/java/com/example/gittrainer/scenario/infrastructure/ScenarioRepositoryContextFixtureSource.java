@@ -18,8 +18,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryBranch("docs/review-notes", false)
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("a1c9e31", "docs: add review notes draft"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("f72ab44", "app: keep workspace shell stable")
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("a1c9e31", "docs: добавить черновик заметок по ревью"),
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("f72ab44", "app: удержать оболочку рабочего пространства стабильной")
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("README.md", "modified"),
@@ -27,8 +27,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("src/main.js", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Working tree cue", "Two tracked files changed and one checklist file is still untracked."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Decision cue", "This scenario rewards an inspection command before any staging or cleanup.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка рабочего дерева", "Два отслеживаемых файла изменены, а один файл с чеклистом всё ещё не отслеживается."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка для решения", "В этом сценарии ценится команда проверки до любого `stage` или очистки.")
                     )
             ),
             "branch-safety", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
@@ -39,16 +39,16 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryBranch("main", false)
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("b74e2d0", "hotfix: restore header spacing"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("197a0f4", "release: tag rollout checklist")
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("b74e2d0", "hotfix: восстановить отступы заголовка"),
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("197a0f4", "release: отметить чеклист выкладки")
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("src/ui/header.css", "modified"),
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("docs/release-checklist.md", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Branch purpose", "The current branch is a hotfix branch with release-oriented changes already in progress."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Task tension", "The learner must decide whether the requested work belongs here or on the feature branch.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Назначение ветки", "Текущая ветка предназначена для hotfix и уже содержит изменения, связанные с релизом."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Напряжение задачи", "Нужно решить, относится ли запрошенная работа сюда или должна идти в feature-ветку.")
                     )
             ),
             "history-cleanup-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
@@ -58,17 +58,17 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryBranch("main", false)
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("c102d6b", "fixup! ui: rename shell badge"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("91fe2ad", "ui: rename shell badge"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("43bc8c1", "wip: tweak spacing again")
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("c102d6b", "fixup! ui: переименовать бейдж оболочки"),
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("91fe2ad", "ui: переименовать бейдж оболочки"),
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("43bc8c1", "wip: ещё раз подправить отступы")
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/styles.css", "modified"),
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/workspace-shell/view.js", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("History cue", "Recent commits include a fixup commit and an extra WIP change that suggest later cleanup."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Safety cue", "The learner is still planning and should not rewrite history yet.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по истории", "Среди последних коммитов есть `fixup` и лишнее WIP-изменение, что намекает на будущую очистку."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по безопасности", "Пользователь всё ещё находится в режиме планирования и не должен переписывать историю.")
                     )
             ),
             "remote-sync-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
@@ -78,16 +78,16 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryBranch("origin/main", false)
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("87d20aa", "docs: clarify sync checklist"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("3fd81e5", "feat: prepare remote status banner")
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("87d20aa", "docs: уточнить чеклист синхронизации"),
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("3fd81e5", "feat: подготовить баннер статуса remote")
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("docs/sync-playbook.md", "clean"),
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/banner.js", "clean")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Remote cue", "Local main is one commit ahead while origin/main has unseen remote changes."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Decision cue", "The learner should decide whether to fetch first before choosing any integrating command.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по remote", "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка для решения", "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду.")
                     )
             )
     );

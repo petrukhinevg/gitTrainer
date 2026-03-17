@@ -4,7 +4,7 @@ import {
 
 export function renderLessonLayout({ state, navigationLane, lessonLane, practiceLane }) {
     return `
-        <section class="lesson-layout lesson-layout--${escapeHtml(state.route)}" aria-label="Lesson workspace">
+        <section class="lesson-layout lesson-layout--${escapeHtml(state.route)}" aria-label="Рабочее пространство урока">
             <div class="lesson-layout__lane lesson-layout__lane--navigation">
                 ${navigationLane}
             </div>

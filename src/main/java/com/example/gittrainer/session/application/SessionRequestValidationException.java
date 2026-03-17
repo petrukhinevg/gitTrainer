@@ -16,21 +16,21 @@ public class SessionRequestValidationException extends RuntimeException {
     public static SessionRequestValidationException missingScenarioSlug() {
         return new SessionRequestValidationException(
                 "scenario-slug-required",
-                "Scenario slug is required to start a session."
+                "Для запуска сессии нужен slug сценария."
         );
     }
 
     public static SessionRequestValidationException missingSessionId() {
         return new SessionRequestValidationException(
                 "session-id-required",
-                "Session id is required to submit an answer."
+                "Для отправки ответа нужен id сессии."
         );
     }
 
     public static SessionRequestValidationException missingAnswer() {
         return new SessionRequestValidationException(
                 "answer-required",
-                "Answer text is required to submit a session attempt."
+                "Для отправки попытки нужен текст ответа."
         );
     }
 }

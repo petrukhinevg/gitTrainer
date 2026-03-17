@@ -28,6 +28,6 @@ class ScenarioTaskContentFixtureSourceTest {
     void failsExplicitlyWhenTaskContentWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioTaskContentFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioTaskContentNotAuthoredException.class)
-                .hasMessage("Task content is unavailable for slug: not-authored-yet");
+                .hasMessage("Контент задания недоступен для slug: not-authored-yet");
     }
 }

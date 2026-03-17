@@ -2,8 +2,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
     "status-basics": {
         id: "status-basics",
         slug: "status-basics",
-        title: "Read the working tree before acting",
-        summary: "Inspect a noisy repository and identify the next safe Git command before making changes.",
+        title: "Сначала проверь рабочее дерево",
+        summary: "Посмотри на шумный репозиторий и выбери следующую безопасную Git-команду до любых изменений.",
         difficulty: "beginner",
         tags: ["status", "working-tree", "basics"],
         meta: {
@@ -12,52 +12,52 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
         },
         workspace: {
             shell: {
-                leftPanelTitle: "Scenario map",
-                centerPanelTitle: "Workspace lesson",
-                rightPanelTitle: "Workspace lane"
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
             },
             task: {
                 status: "authored-fixture",
-                goal: "Read the repository state before choosing the first safe Git command.",
+                goal: "Прочитайте состояние репозитория, прежде чем выбирать первую безопасную Git-команду.",
                 instructions: [
                     {
                         id: "check-branch",
-                        text: "Confirm which branch is currently checked out before deciding whether any branch change is needed."
+                        text: "Уточните, какая ветка сейчас активна, прежде чем решать, нужно ли вообще переключение."
                     },
                     {
                         id: "read-short-status",
-                        text: "Read the short status output and note which files are modified versus untracked."
+                        text: "Посмотрите краткий `status` и отметьте, какие файлы изменены, а какие ещё не отслеживаются."
                     },
                     {
                         id: "protect-worktree",
-                        text: "Avoid commands that mutate history or discard work while the tree is still being inspected."
+                        text: "Избегайте команд, которые меняют историю или выбрасывают работу, пока дерево ещё только проверяется."
                     }
                 ],
                 steps: [
                     {
                         position: 1,
-                        title: "Identify the current branch",
-                        detail: "Read the current branch first so the learner stays oriented before proposing any command."
+                        title: "Определите текущую ветку",
+                        detail: "Сначала посмотрите на активную ветку, чтобы не терять ориентацию до предложения любой команды."
                     },
                     {
                         position: 2,
-                        title: "List the working tree signals",
-                        detail: "Capture which paths are modified, untracked, or already staged so the next command is justified by evidence."
+                        title: "Соберите сигналы рабочего дерева",
+                        detail: "Зафиксируйте, какие пути изменены, не отслеживаются или уже проиндексированы, чтобы следующий шаг опирался на факты."
                     },
                     {
                         position: 3,
-                        title: "Choose the safest first command",
-                        detail: "Select the first Git command that gathers information without changing repository history."
+                        title: "Выберите самый безопасный первый шаг",
+                        detail: "Подберите первую Git-команду, которая собирает информацию и не меняет историю репозитория."
                     }
                 ],
                 annotations: [
                     {
-                        label: "Target outcome",
-                        message: "The learner should justify a safe first command rather than execute cleanup immediately."
+                        label: "Целевой результат",
+                        message: "Нужно обосновать безопасную первую команду, а не сразу переходить к очистке."
                     },
                     {
-                        label: "Safety cue",
-                        message: "Inspection comes before mutation in this scenario."
+                        label: "Подсказка по безопасности",
+                        message: "В этом сценарии проверка идёт раньше любых изменений."
                     }
                 ]
             },
@@ -68,8 +68,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                     { name: "docs/review-notes", current: false }
                 ],
                 commits: [
-                    { id: "a1c9e31", summary: "docs: add review notes draft" },
-                    { id: "f72ab44", summary: "app: keep workspace shell stable" }
+                    { id: "a1c9e31", summary: "docs: добавить черновик заметок по ревью" },
+                    { id: "f72ab44", summary: "app: удержать оболочку рабочего пространства стабильной" }
                 ],
                 files: [
                     { path: "README.md", status: "modified" },
@@ -77,8 +77,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                     { path: "src/main.js", status: "modified" }
                 ],
                 annotations: [
-                    { label: "Working tree cue", message: "Two tracked files changed and one checklist file is still untracked." },
-                    { label: "Decision cue", message: "This scenario rewards an inspection command before any staging or cleanup." }
+                    { label: "Подсказка рабочего дерева", message: "Два отслеживаемых файла изменены, а один файл с чеклистом всё ещё не отслеживается." },
+                    { label: "Подсказка для решения", message: "В этом сценарии ценится команда проверки до любого `stage` или очистки." }
                 ]
             }
         }
@@ -86,8 +86,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
     "branch-safety": {
         id: "branch-safety",
         slug: "branch-safety",
-        title: "Choose the right branch before editing",
-        summary: "Spot the active branch, compare task intent, and decide whether to stay put or switch first.",
+        title: "Выбери правильную ветку перед правками",
+        summary: "Определи активную ветку, сопоставь её с задачей и реши, оставаться ли на месте или сначала переключиться.",
         difficulty: "beginner",
         tags: ["branching", "navigation", "basics"],
         meta: {
@@ -96,48 +96,48 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
         },
         workspace: {
             shell: {
-                leftPanelTitle: "Scenario map",
-                centerPanelTitle: "Workspace lesson",
-                rightPanelTitle: "Workspace lane"
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
             },
             task: {
                 status: "authored-fixture",
-                goal: "Decide whether the task should continue on the current branch or after switching.",
+                goal: "Решите, продолжать ли задачу на текущей ветке или после переключения.",
                 instructions: [
                     {
                         id: "read-current-branch",
-                        text: "Inspect the current branch before editing any files or staging any work."
+                        text: "Посмотрите на текущую ветку до любых правок файлов или индексации."
                     },
                     {
                         id: "compare-task-intent",
-                        text: "Compare branch purpose with the requested task so the learner can justify staying or switching."
+                        text: "Сопоставьте назначение ветки с задачей, чтобы обосновать, оставаться ли на месте или переключаться."
                     },
                     {
                         id: "avoid-implicit-switch",
-                        text: "Do not assume a branch switch is correct until the repository state and task goal agree."
+                        text: "Не считайте переключение ветки правильным, пока состояние репозитория и цель задачи не совпадут."
                     }
                 ],
                 steps: [
                     {
                         position: 1,
-                        title: "Inspect where you are",
-                        detail: "Start by identifying the active branch and any signals that the working tree is already in use."
+                        title: "Поймите, где вы находитесь",
+                        detail: "Начните с активной ветки и сигналов того, что рабочее дерево уже используется."
                     },
                     {
                         position: 2,
-                        title: "Match branch to task",
-                        detail: "Relate the current branch name to the task description before proposing a checkout."
+                        title: "Сопоставьте ветку и задачу",
+                        detail: "Свяжите имя текущей ветки с описанием задачи, прежде чем предлагать `checkout`."
                     },
                     {
                         position: 3,
-                        title: "State the branch decision",
-                        detail: "Summarize whether to stay on the branch or switch, and why that choice is safer."
+                        title: "Сформулируйте решение по ветке",
+                        detail: "Кратко объясните, нужно ли остаться на ветке или переключиться и почему это безопаснее."
                     }
                 ],
                 annotations: [
                     {
-                        label: "Decision boundary",
-                        message: "Branch navigation should be intentional and explained, not automatic."
+                        label: "Граница решения",
+                        message: "Навигация по веткам должна быть осознанной и объяснённой, а не автоматической."
                     }
                 ]
             },
@@ -149,16 +149,16 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                     { name: "main", current: false }
                 ],
                 commits: [
-                    { id: "b74e2d0", summary: "hotfix: restore header spacing" },
-                    { id: "197a0f4", summary: "release: tag rollout checklist" }
+                    { id: "b74e2d0", summary: "hotfix: восстановить отступы заголовка" },
+                    { id: "197a0f4", summary: "release: отметить чеклист выкладки" }
                 ],
                 files: [
                     { path: "src/ui/header.css", status: "modified" },
                     { path: "docs/release-checklist.md", status: "modified" }
                 ],
                 annotations: [
-                    { label: "Branch purpose", message: "The current branch is a hotfix branch with release-oriented changes already in progress." },
-                    { label: "Task tension", message: "The learner must decide whether the requested work belongs here or on the feature branch." }
+                    { label: "Назначение ветки", message: "Текущая ветка предназначена для hotfix и уже содержит изменения, связанные с релизом." },
+                    { label: "Напряжение задачи", message: "Нужно решить, относится ли запрошенная работа сюда или должна идти в feature-ветку." }
                 ]
             }
         }
@@ -166,8 +166,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
     "history-cleanup-preview": {
         id: "history-cleanup-preview",
         slug: "history-cleanup-preview",
-        title: "Preview a history cleanup plan",
-        summary: "Read a messy commit stack and prepare for a later cleanup exercise without changing history yet.",
+        title: "Просмотри план очистки истории",
+        summary: "Разбери запутанный стек коммитов и подготовься к дальнейшей очистке, пока ещё не меняя историю.",
         difficulty: "intermediate",
         tags: ["history", "cleanup", "planning"],
         meta: {
@@ -176,48 +176,48 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
         },
         workspace: {
             shell: {
-                leftPanelTitle: "Scenario map",
-                centerPanelTitle: "Workspace lesson",
-                rightPanelTitle: "Workspace lane"
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
             },
             task: {
                 status: "authored-fixture",
-                goal: "Prepare an ordered cleanup plan without rewriting history yet.",
+                goal: "Подготовьте последовательный план очистки, пока ещё не переписывая историю.",
                 instructions: [
                     {
                         id: "inspect-commit-stack",
-                        text: "Read the recent commit stack and identify repeated or messy changes."
+                        text: "Посмотрите на недавний стек коммитов и найдите повторяющиеся или неаккуратные изменения."
                     },
                     {
                         id: "plan-before-rewrite",
-                        text: "Describe the cleanup sequence before choosing any history-rewriting command."
+                        text: "Опишите последовательность очистки до выбора любой команды переписывания истории."
                     },
                     {
                         id: "keep-remote-risk-visible",
-                        text: "Account for whether rewritten commits may already be shared with others."
+                        text: "Учитывайте, могли ли переписываемые коммиты уже быть опубликованы другим."
                     }
                 ],
                 steps: [
                     {
                         position: 1,
-                        title: "Read the stack top to bottom",
-                        detail: "Inspect the current history in order before proposing a cleanup plan."
+                        title: "Прочитайте стек сверху вниз",
+                        detail: "Сначала пройдитесь по текущей истории по порядку и только потом предлагайте план очистки."
                     },
                     {
                         position: 2,
-                        title: "Group the cleanup targets",
-                        detail: "Separate fixup candidates, reorder candidates, and commits that should remain untouched."
+                        title: "Сгруппируйте цели очистки",
+                        detail: "Разделите кандидатов на `fixup`, кандидатов на перестановку и коммиты, которые трогать не нужно."
                     },
                     {
                         position: 3,
-                        title: "Name the next safe action",
-                        detail: "Choose the planning or inspection command that should come before any rewrite."
+                        title: "Назовите безопасный следующий шаг",
+                        detail: "Выберите команду планирования или проверки, которая должна идти до любого переписывания."
                     }
                 ],
                 annotations: [
                     {
-                        label: "Planning mode",
-                        message: "This task stops at plan quality; it does not execute the rewrite."
+                        label: "Режим планирования",
+                        message: "Эта задача заканчивается на качестве плана и не выполняет переписывание."
                     }
                 ]
             },
@@ -228,17 +228,17 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                     { name: "main", current: false }
                 ],
                 commits: [
-                    { id: "c102d6b", summary: "fixup! ui: rename shell badge" },
-                    { id: "91fe2ad", summary: "ui: rename shell badge" },
-                    { id: "43bc8c1", summary: "wip: tweak spacing again" }
+                    { id: "c102d6b", summary: "fixup! ui: переименовать бейдж оболочки" },
+                    { id: "91fe2ad", summary: "ui: переименовать бейдж оболочки" },
+                    { id: "43bc8c1", summary: "wip: ещё раз подправить отступы" }
                 ],
                 files: [
                     { path: "frontend/src/styles.css", status: "modified" },
                     { path: "frontend/src/workspace-shell/view.js", status: "modified" }
                 ],
                 annotations: [
-                    { label: "History cue", message: "Recent commits include a fixup commit and an extra WIP change that suggest later cleanup." },
-                    { label: "Safety cue", message: "The learner is still planning and should not rewrite history yet." }
+                    { label: "Подсказка по истории", message: "Среди последних коммитов есть `fixup` и лишнее WIP-изменение, что намекает на будущую очистку." },
+                    { label: "Подсказка по безопасности", message: "Пользователь всё ещё находится в режиме планирования и не должен переписывать историю." }
                 ]
             }
         }
@@ -246,8 +246,8 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
     "remote-sync-preview": {
         id: "remote-sync-preview",
         slug: "remote-sync-preview",
-        title: "Read remote tracking state before you pull",
-        summary: "Compare ahead-behind cues and choose whether a fetch or pull makes sense before syncing.",
+        title: "Проверь удалённое состояние перед pull",
+        summary: "Сравни сигналы ahead/behind и реши, что уместнее перед синхронизацией: fetch или pull.",
         difficulty: "intermediate",
         tags: ["remote", "inspection", "planning"],
         meta: {
@@ -256,48 +256,48 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
         },
         workspace: {
             shell: {
-                leftPanelTitle: "Scenario map",
-                centerPanelTitle: "Workspace lesson",
-                rightPanelTitle: "Workspace lane"
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
             },
             task: {
                 status: "authored-fixture",
-                goal: "Explain the next sync-oriented command after reading ahead-behind cues.",
+                goal: "Объясните следующую команду для синхронизации после чтения сигналов ahead/behind.",
                 instructions: [
                     {
                         id: "check-tracking",
-                        text: "Inspect how the local branch relates to its tracked remote branch."
+                        text: "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."
                     },
                     {
                         id: "read-divergence",
-                        text: "Determine whether the branch is ahead, behind, or diverged before choosing a sync command."
+                        text: "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации."
                     },
                     {
                         id: "separate-fetch-from-merge",
-                        text: "Keep fetch and merge decisions distinct until the repository state is understood."
+                        text: "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."
                     }
                 ],
                 steps: [
                     {
                         position: 1,
-                        title: "Inspect tracking relationship",
-                        detail: "Read the tracked remote branch before proposing pull or fetch."
+                        title: "Проверьте связь с remote-tracking веткой",
+                        detail: "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."
                     },
                     {
                         position: 2,
-                        title: "Interpret ahead-behind state",
-                        detail: "Use the ahead-behind cues to justify whether integration should happen now or later."
+                        title: "Интерпретируйте состояние ahead/behind",
+                        detail: "Используйте сигналы ahead/behind, чтобы объяснить, нужна ли интеграция прямо сейчас."
                     },
                     {
                         position: 3,
-                        title: "Choose the sync command",
-                        detail: "Name the safest next command based on whether new remote information is needed first."
+                        title: "Выберите команду синхронизации",
+                        detail: "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с remote."
                     }
                 ],
                 annotations: [
                     {
-                        label: "Remote discipline",
-                        message: "Fetching information and integrating changes are separate decisions in this exercise."
+                        label: "Дисциплина работы с remote",
+                        message: "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения."
                     }
                 ]
             },
@@ -308,16 +308,16 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                     { name: "origin/main", current: false }
                 ],
                 commits: [
-                    { id: "87d20aa", summary: "docs: clarify sync checklist" },
-                    { id: "3fd81e5", summary: "feat: prepare remote status banner" }
+                    { id: "87d20aa", summary: "docs: уточнить чеклист синхронизации" },
+                    { id: "3fd81e5", summary: "feat: подготовить баннер статуса remote" }
                 ],
                 files: [
                     { path: "docs/sync-playbook.md", status: "clean" },
                     { path: "frontend/src/banner.js", status: "clean" }
                 ],
                 annotations: [
-                    { label: "Remote cue", message: "Local main is one commit ahead while origin/main has unseen remote changes." },
-                    { label: "Decision cue", message: "The learner should decide whether to fetch first before choosing any integrating command." }
+                    { label: "Подсказка по remote", message: "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения." },
+                    { label: "Подсказка для решения", message: "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду." }
                 ]
             }
         }

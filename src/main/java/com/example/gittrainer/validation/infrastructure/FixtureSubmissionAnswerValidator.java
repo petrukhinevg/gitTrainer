@@ -24,7 +24,7 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
         if (!"command_text".equals(answer.type())) {
             return SubmissionOutcome.unsupported(
                     "unsupported-answer-type",
-                    "This MVP validation slice only evaluates command_text answers."
+                    "Этот MVP-срез пока проверяет только ответы типа command_text."
             );
         }
 
@@ -32,7 +32,7 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
         if (acceptedCommands == null) {
             return SubmissionOutcome.incorrect(
                     "validation-rule-missing",
-                    "No validation rule is available for the active scenario yet."
+                    "Для активного сценария пока нет правила валидации."
             );
         }
 
@@ -40,13 +40,13 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
         if (acceptedCommands.contains(normalizedAnswer)) {
             return SubmissionOutcome.correct(
                     "expected-command",
-                    "Submitted command matches the expected safe next action for this scenario."
+                    "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
             );
         }
 
         return SubmissionOutcome.incorrect(
                 "unexpected-command",
-                "Submitted command does not match the expected safe next action for this scenario."
+                "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария."
         );
     }
 
@@ -70,7 +70,7 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
                                     .collect(Collectors.toUnmodifiableSet())
                     ));
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to load shared fixture submission rules.", exception);
+            throw new IllegalStateException("Не удалось загрузить общие fixture-правила для отправки ответа.", exception);
         }
     }
 

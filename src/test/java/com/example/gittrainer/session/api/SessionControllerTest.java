@@ -43,7 +43,7 @@ class SessionControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.sessionId").isNotEmpty())
                 .andExpect(jsonPath("$.scenario.slug").value("status-basics"))
-                .andExpect(jsonPath("$.scenario.title").value("Read the working tree before acting"))
+                .andExpect(jsonPath("$.scenario.title").value("Сначала проверь рабочее дерево"))
                 .andExpect(jsonPath("$.scenario.source").value("mvp-fixture"))
                 .andExpect(jsonPath("$.lifecycle.status").value("active"))
                 .andExpect(jsonPath("$.lifecycle.startedAt").isNotEmpty())
@@ -52,7 +52,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.submission.placeholderOutcome.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.correctness").value("not-evaluated"))
                 .andExpect(jsonPath("$.submission.placeholderOutcome.code").value("awaiting-first-submission"))
-                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Session transport is ready. Submit the first answer to receive an evaluated result immediately."))
+                .andExpect(jsonPath("$.submission.placeholderOutcome.message").value("Транспорт сессии готов. Отправьте первый ответ, чтобы сразу получить результат проверки."))
                 .andExpect(jsonPath("$.submission.placeholderRetryFeedback.status").value("placeholder"))
                 .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.status").value("idle"))
                 .andExpect(jsonPath("$.submission.placeholderRetryFeedback.retryState.attemptNumber").value(0))
@@ -75,8 +75,8 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid session request"))
-                .andExpect(jsonPath("$.detail").value("Scenario slug is required to start a session."))
+                .andExpect(jsonPath("$.title").value("Некорректный запрос сессии"))
+                .andExpect(jsonPath("$.detail").value("Для запуска сессии нужен slug сценария."))
                 .andExpect(jsonPath("$.code").value("scenario-slug-required"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
@@ -93,8 +93,8 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value("Scenario not found"))
-                .andExpect(jsonPath("$.detail").value("Scenario detail is unavailable for slug: not-a-real-scenario"))
+                .andExpect(jsonPath("$.title").value("Сценарий не найден"))
+                .andExpect(jsonPath("$.detail").value("Детали сценария недоступны для slug: not-a-real-scenario"))
                 .andExpect(jsonPath("$.code").value("scenario-not-found"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
@@ -112,8 +112,8 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.title").value("Scenario source unavailable"))
-                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."))
+                .andExpect(jsonPath("$.title").value("Источник сценариев недоступен"))
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."))
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))
@@ -180,13 +180,13 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
                 .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
                 .andExpect(jsonPath("$.retryFeedback.explanation.status").value("guided"))
-                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Inspect the working tree before changing it"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Проверьте рабочее дерево до любых изменений"))
                 .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("incorrect"))
-                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("This exercise is about reading the current state before acting, not about choosing a destination branch or altering files."))
+                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("Это упражнение про чтение текущего состояния до действия, а не про выбор целевой ветки или изменение файлов."))
                 .andExpect(jsonPath("$.retryFeedback.hint.status").value("guided"))
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
-                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Start with a working tree inspection"));
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Начните с проверки рабочего дерева"));
     }
 
     @Test
@@ -224,8 +224,8 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid session request"))
-                .andExpect(jsonPath("$.detail").value("Answer text is required to submit a session attempt."))
+                .andExpect(jsonPath("$.title").value("Некорректный запрос сессии"))
+                .andExpect(jsonPath("$.detail").value("Для отправки попытки нужен текст ответа."))
                 .andExpect(jsonPath("$.code").value("answer-required"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
@@ -254,7 +254,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.retryFeedback.status").value("guided"))
                 .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
                 .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
-                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Return to supported command input"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Вернитесь к поддерживаемому вводу команды"))
                 .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("unsupported"))
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
@@ -291,11 +291,11 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.attemptNumber").value(2))
                 .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
                 .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
-                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Check which branch actually matches the task"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Проверьте, какая ветка действительно соответствует задаче"))
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("strong"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].id").value("strong"))
-                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].title").value("Prefer the branch move that changes the least state"));
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].title").value("Предпочтите шаг по веткам с минимальным изменением состояния"));
     }
 
     @Test
@@ -309,8 +309,8 @@ class SessionControllerTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value("Session not found"))
-                .andExpect(jsonPath("$.detail").value("Session is unavailable for id: session_missing"))
+                .andExpect(jsonPath("$.title").value("Сессия не найдена"))
+                .andExpect(jsonPath("$.detail").value("Сессия недоступна для id: session_missing"))
                 .andExpect(jsonPath("$.code").value("session-not-found"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));

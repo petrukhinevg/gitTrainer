@@ -117,7 +117,7 @@ export function createCatalogWorkspaceController({
         try {
             const providerFactory = catalogProviderFactories[providerName];
             if (!providerFactory) {
-                throw new Error(`Unknown catalog provider: ${providerName}`);
+                throw new Error(`Неизвестный provider каталога: ${providerName}`);
             }
 
             const provider = providerFactory();
@@ -138,7 +138,7 @@ export function createCatalogWorkspaceController({
             state.catalog.meta = null;
             state.catalog.error = toUserFacingRecoveryMessage(
                 error instanceof Error ? error.message : null,
-                "Catalog source is unavailable right now. Try again in a moment."
+                "Источник каталога сейчас недоступен. Повторите чуть позже."
             );
             state.catalog.status = "error";
         }
@@ -154,7 +154,7 @@ export function createCatalogWorkspaceController({
         if (!slug) {
             state.detail.status = "missing";
             state.detail.data = null;
-            state.detail.error = "Scenario slug is missing from the exercise route.";
+            state.detail.error = "В маршруте упражнения отсутствует slug сценария.";
             render();
             return;
         }
@@ -196,7 +196,7 @@ export function createCatalogWorkspaceController({
             const detailLoadTask = (async () => {
                 const providerFactory = detailProviderFactories[providerName];
                 if (!providerFactory) {
-                    throw new Error(`Unknown scenario detail provider: ${providerName}`);
+                    throw new Error(`Неизвестный provider деталей сценария: ${providerName}`);
                 }
 
                 const provider = providerFactory();
@@ -216,7 +216,7 @@ export function createCatalogWorkspaceController({
                 data: null,
                 error: toUserFacingRecoveryMessage(
                     error instanceof Error ? error.message : null,
-                    "Scenario detail source is unavailable right now. Try again in a moment."
+                    "Источник деталей сценария сейчас недоступен. Повторите чуть позже."
                 )
             };
         } finally {
@@ -255,7 +255,7 @@ export function createCatalogWorkspaceController({
             state.progress.summary = null;
             state.progress.error = toUserFacingRecoveryMessage(
                 error instanceof Error ? error.message : null,
-                "Progress summary is unavailable right now. Try again in a moment."
+                "Сводка прогресса сейчас недоступна. Повторите чуть позже."
             );
             state.progress.status = "error";
         }
@@ -428,7 +428,7 @@ export function createCatalogWorkspaceController({
         const answer = String(formData.get("answer") ?? "").trim();
 
         if (!answer) {
-            state.submissionDraft.validationError = "Enter the Git command or action you want to submit.";
+            state.submissionDraft.validationError = "Введите Git-команду или действие, которое хотите отправить.";
             render();
             return;
         }
@@ -514,7 +514,7 @@ export function createCatalogWorkspaceController({
                 return;
             }
 
-            const normalizedFailure = normalizeTransportFailure(error, "Session bootstrap failed.");
+            const normalizedFailure = normalizeTransportFailure(error, "Не удалось запустить сессию.");
             state.session.bootstrap = {
                 status: `${normalizedFailure.failureKind}-error`,
                 response: null,
@@ -542,7 +542,7 @@ export function createCatalogWorkspaceController({
                 response: null,
                 error: {
                     failureKind: "terminal",
-                    message: "Session transport is missing an active session id.",
+                    message: "В транспорте сессии нет активного id сессии.",
                     status: null
                 },
                 lastPayload: preparedSubmission
@@ -610,7 +610,7 @@ export function createCatalogWorkspaceController({
                 return;
             }
 
-            const normalizedFailure = normalizeTransportFailure(error, "Answer submission failed.");
+            const normalizedFailure = normalizeTransportFailure(error, "Не удалось отправить ответ.");
             state.session.submission = {
                 status: `${normalizedFailure.failureKind}-error`,
                 response: null,
@@ -794,7 +794,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = sessionProviderFactories[providerName];
         if (!providerFactory) {
-            throw new SessionTransportError(`Unknown session provider: ${providerName}`, {
+            throw new SessionTransportError(`Неизвестный provider сессии: ${providerName}`, {
                 failureKind: "terminal"
             });
         }
@@ -811,7 +811,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = progressProviderFactories[providerName];
         if (!providerFactory) {
-            throw new Error(`Unknown progress provider: ${providerName}`);
+            throw new Error(`Неизвестный provider прогресса: ${providerName}`);
         }
 
         const provider = providerFactory();
@@ -871,7 +871,7 @@ export function createCatalogWorkspaceController({
         if (!cachedDetail) {
             state.detail.status = "error";
             state.detail.data = null;
-            state.detail.error = "Unknown scenario detail error";
+            state.detail.error = "Неизвестная ошибка деталей сценария";
             render();
             return;
         }
@@ -1170,16 +1170,16 @@ function createFeedbackPanelState({
     const currentBranch = branches.find((branch) => branch?.current)?.name
         ?? branches[0]?.name
         ?? previousContext?.currentBranch
-        ?? "unknown";
+        ?? "неизвестно";
 
     return {
         status,
         contextSnapshot: {
             scenarioSlug: scenarioSlug ?? previousContext?.scenarioSlug ?? null,
-            scenarioTitle: detail?.title ?? previousContext?.scenarioTitle ?? scenarioSlug ?? "unknown",
+            scenarioTitle: detail?.title ?? previousContext?.scenarioTitle ?? scenarioSlug ?? "неизвестно",
             goal: detail?.workspace?.task?.goal
                 ?? previousContext?.goal
-                ?? "Task goal is unavailable for this exercise.",
+                ?? "Цель задания недоступна для этого упражнения.",
             currentBranch,
             branchCount: branches.length || previousContext?.branchCount || 0,
             fileCount: files.length || previousContext?.fileCount || 0,
@@ -1267,7 +1267,7 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
 
 function toUserFacingRecoveryMessage(message, fallbackMessage) {
     const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
-    return resolvedMessage.replace(/Try\s+\w+\s+provider\.?$/i, "Try again in a moment.");
+    return resolvedMessage.replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.");
 }
 
 function measureNaturalNavigationWidth(navigationLane) {

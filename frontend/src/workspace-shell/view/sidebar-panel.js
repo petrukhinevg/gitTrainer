@@ -8,8 +8,8 @@ export function renderSidebarPanel(state) {
     return renderLessonLane({
         lane: "navigation",
         label: resolveLeftPanelTitle(state),
-        title: "Training flow",
-        description: "The left lane is now the single navigator: greeting first, then tasks, then sub-tasks for the active scenario.",
+        title: "Маршрут тренировки",
+        description: "Левая колонка теперь ведёт весь поток: старт, сценарии и подзадачи активного упражнения.",
         showHeader: false,
         body: renderTrainingFlow(state)
     });
@@ -20,16 +20,16 @@ function resolveLeftPanelTitle(state) {
         return state.detail.data.workspace.shell.leftPanelTitle;
     }
 
-    return "Navigation lane";
+    return "Навигация";
 }
 
 function renderTrainingFlow(state) {
     if (state.catalog.status === "loading" || state.catalog.status === "idle") {
         return `
             <section class="lesson-rail__summary">
-                <span class="control-label">Loading flow</span>
-                <strong>Preparing task blocks</strong>
-                <p class="panel-copy">The left lane is waiting for the scenario list before it can render the training flow.</p>
+                <span class="control-label">Загрузка</span>
+                <strong>Подготавливаем блоки заданий</strong>
+                <p class="panel-copy">Левая колонка ждёт список сценариев, чтобы построить маршрут тренировки.</p>
             </section>
         `;
     }
@@ -37,9 +37,9 @@ function renderTrainingFlow(state) {
     if (state.catalog.status === "error") {
         return `
             <section class="lesson-rail__summary">
-                <span class="control-label">Flow error</span>
-                <strong>Task blocks are unavailable</strong>
-                <p class="panel-copy">${escapeHtml(state.catalog.error ?? "Unknown catalog error")}</p>
+                <span class="control-label">Ошибка</span>
+                <strong>Блоки заданий недоступны</strong>
+                <p class="panel-copy">${escapeHtml(state.catalog.error ?? "Неизвестная ошибка каталога")}</p>
             </section>
         `;
     }
@@ -63,8 +63,8 @@ function renderWelcomeFlowBlock(state) {
     const isActive = state.route === "catalog";
     return `
         <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/catalog">
-            <span class="flow-block__eyebrow">Welcome</span>
-            <strong class="flow-block__title">Start here</strong>
+            <span class="flow-block__eyebrow">Старт</span>
+            <strong class="flow-block__title">Начать здесь</strong>
         </a>
     `;
 }
@@ -73,8 +73,8 @@ function renderProgressFlowBlock(state) {
     const isActive = state.route === "progress";
     return `
         <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/progress">
-            <span class="flow-block__eyebrow">Progress</span>
-            <strong class="flow-block__title">Review practice status</strong>
+            <span class="flow-block__eyebrow">Прогресс</span>
+            <strong class="flow-block__title">Посмотреть статус практики</strong>
         </a>
     `;
 }
@@ -104,7 +104,7 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
                 <span class="flow-block__heading">
-                    <span class="flow-block__eyebrow">Task ${index + 1}</span>
+                    <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
                 </span>
                 <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
@@ -119,8 +119,8 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
         return `
             <div class="flow-subtask-group">
                 <div class="flow-subtask-placeholder">
-                    <span class="flow-block__eyebrow">Loading</span>
-                    <strong class="flow-block__title">Preparing sub-tasks</strong>
+                    <span class="flow-block__eyebrow">Загрузка</span>
+                    <strong class="flow-block__title">Подготавливаем подзадачи</strong>
                 </div>
             </div>
         `;
@@ -130,8 +130,8 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
         return `
             <div class="flow-subtask-group">
                 <div class="flow-subtask-placeholder flow-subtask-placeholder--error">
-                    <span class="flow-block__eyebrow">Unavailable</span>
-                    <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Sub-tasks are unavailable")}</strong>
+                    <span class="flow-block__eyebrow">Недоступно</span>
+                    <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Подзадачи недоступны")}</strong>
                 </div>
             </div>
         `;
@@ -170,8 +170,8 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario) {
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
         >
-            <span class="flow-block__eyebrow">Task page</span>
-            <strong class="flow-block__title">Overview</strong>
+            <span class="flow-block__eyebrow">Страница задания</span>
+            <strong class="flow-block__title">Обзор</strong>
         </a>
     `;
 }
@@ -183,7 +183,7 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
         >
-            <span class="flow-block__eyebrow">Sub-task ${step.position}</span>
+            <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
         </a>
     `;

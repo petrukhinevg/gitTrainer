@@ -81,7 +81,7 @@ class CatalogShellPageTest {
                 "data-progress-status-marker",
                 "data-progress-activity",
                 "app-shell--exercise",
-                "Try again in a moment."
+                "fixture-unavailable"
         );
 
         mockMvc.perform(get("/app.js"))

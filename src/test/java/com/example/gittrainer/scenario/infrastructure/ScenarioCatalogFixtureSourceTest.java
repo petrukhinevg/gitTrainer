@@ -40,6 +40,6 @@ class ScenarioCatalogFixtureSourceTest {
     void providesUnavailableSourceFixtureAsDomainSpecificFailure() {
         assertThatThrownBy(() -> scenarioCatalogFixtureSource.unavailableCatalog())
                 .isInstanceOf(ScenarioCatalogSourceUnavailableException.class)
-                .hasMessage("Catalog source is unavailable right now. Try another provider.");
+                .hasMessage("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже.");
     }
 }

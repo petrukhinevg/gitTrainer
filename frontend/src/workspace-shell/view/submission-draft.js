@@ -8,48 +8,48 @@ export function renderSubmissionDraftSection(state) {
     return `
         <section class="lesson-block lesson-block--supporting">
             <div class="lesson-section__header">
-                <span class="control-label">Submission seam</span>
-                <h4 class="lesson-block__title">Prepare answer draft</h4>
+                <span class="control-label">Контур отправки</span>
+                <h4 class="lesson-block__title">Подготовить черновик ответа</h4>
             </div>
             <p class="panel-copy">
-                This local draft flow keeps answer entry and submission shape visible before live session transport and correctness rendering are wired.
+                Этот локальный черновик держит на виду ввод ответа и форму отправки ещё до подключения реального транспорта сессии и рендера корректности.
             </p>
             <form class="submission-draft__form" data-submission-draft-form>
                 <div class="submission-draft__fields">
                     <label class="submission-draft__field">
-                        <span class="control-label">Answer type</span>
+                        <span class="control-label">Тип ответа</span>
                         <select name="answerType">
-                            <option value="command_text"${draft.answerType === "command_text" ? " selected" : ""}>Command text</option>
+                            <option value="command_text"${draft.answerType === "command_text" ? " selected" : ""}>Текст команды</option>
                         </select>
                     </label>
                     <label class="submission-draft__field">
-                        <span class="control-label">Draft answer</span>
+                        <span class="control-label">Черновик ответа</span>
                         <textarea
                             name="answer"
                             rows="4"
-                            placeholder="Example: git status"
+                            placeholder="Например: git status"
                         >${escapeHtml(draft.answer)}</textarea>
                     </label>
                 </div>
                 <div class="submission-draft__hint">
-                    <span class="lesson-spotlight__pill">Local draft state: ${escapeHtml(draftStatus)}</span>
-                    <span class="lesson-spotlight__pill">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</span>
+                    <span class="lesson-spotlight__pill">Состояние черновика: ${escapeHtml(draftStatus)}</span>
+                    <span class="lesson-spotlight__pill">Сценарий: ${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</span>
                 </div>
                 ${draft.validationError ? `
                     <div class="submission-draft__notice">
-                        <span class="control-label">Draft validation</span>
+                        <span class="control-label">Проверка черновика</span>
                         <p class="panel-copy">${escapeHtml(draft.validationError)}</p>
                     </div>
                 ` : ""}
                 <div class="submission-draft__actions">
-                    <button class="scenario-action" type="submit">Prepare submission</button>
-                    <button class="scenario-action scenario-action--muted" type="button" data-reset-draft>Reset draft</button>
+                    <button class="scenario-action" type="submit">Подготовить отправку</button>
+                    <button class="scenario-action scenario-action--muted" type="button" data-reset-draft>Сбросить черновик</button>
                 </div>
             </form>
             ${preparedSubmission ? renderPreparedSubmission(preparedSubmission) : `
                 <div class="submission-draft__notice">
-                    <span class="control-label">Prepared payload</span>
-                    <p class="panel-copy">The form can already assemble a local submission payload, but the actual session start and POST request land in the next transport task.</p>
+                    <span class="control-label">Подготовленный payload</span>
+                    <p class="panel-copy">Форма уже умеет собирать локальный payload отправки, но запуск сессии и реальный POST-запрос будут подключены следующим шагом.</p>
                 </div>
             `}
         </section>
@@ -59,22 +59,22 @@ export function renderSubmissionDraftSection(state) {
 function renderPreparedSubmission(preparedSubmission) {
     return `
         <div class="submission-draft__notice submission-draft__notice--ready">
-            <span class="control-label">Prepared payload</span>
+            <span class="control-label">Подготовленный payload</span>
             <dl class="result-summary">
                 <div>
-                    <dt>Scenario</dt>
-                    <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "unknown")}</dd>
+                    <dt>Сценарий</dt>
+                    <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "неизвестно")}</dd>
                 </div>
                 <div>
-                    <dt>Answer type</dt>
+                    <dt>Тип ответа</dt>
                     <dd>${escapeHtml(preparedSubmission.answerType)}</dd>
                 </div>
                 <div>
-                    <dt>Draft answer</dt>
+                    <dt>Черновик ответа</dt>
                     <dd>${escapeHtml(preparedSubmission.answer)}</dd>
                 </div>
                 <div>
-                    <dt>Prepared at</dt>
+                    <dt>Подготовлено</dt>
                     <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
                 </div>
             </dl>
@@ -98,12 +98,12 @@ function normalizeSubmissionDraft(draft) {
 
 function resolveDraftStatus(draft) {
     if (draft.preparedSubmission) {
-        return "prepared";
+        return "подготовлен";
     }
 
     if (draft.answer.trim()) {
-        return "ready";
+        return "готов";
     }
 
-    return "empty";
+    return "пусто";
 }

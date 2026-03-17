@@ -1,7 +1,8 @@
 import {
     encodeHashSegment,
     escapeHtml,
-    formatDifficulty
+    formatDifficulty,
+    formatTag
 } from "./render-helpers.js";
 
 export function renderCatalogOverviewState(state) {
@@ -25,23 +26,23 @@ export function renderCatalogOverviewState(state) {
         case "error":
             return `
                 <section class="catalog-state catalog-state-error">
-                    <strong>Provider unavailable</strong>
-                    <p>${escapeHtml(state.catalog.error ?? "The selected catalog source failed before returning items.")}</p>
+                    <strong>Источник недоступен</strong>
+                    <p>${escapeHtml(state.catalog.error ?? "Выбранный источник каталога не вернул данные.")}</p>
                 </section>
             `;
         case "empty":
             return `
                 <section class="catalog-state catalog-state-empty">
-                    <strong>No scenarios in this slice</strong>
-                    <p>Relax the active filters to repopulate the scenario map.</p>
+                    <strong>В этом срезе нет сценариев</strong>
+                    <p>Ослабьте фильтры, чтобы снова заполнить карту сценариев.</p>
                 </section>
             `;
         default:
             return `
                 <div class="scenario-preview">
-                    <p class="control-label">Current preview</p>
-                    <h4>No scenario selected yet</h4>
-                    <p class="panel-copy">Choose a scenario from the map or card list to drive the workspace handoff intentionally.</p>
+                    <p class="control-label">Текущий предварительный просмотр</p>
+                    <h4>Сценарий ещё не выбран</h4>
+                    <p class="panel-copy">Выберите сценарий в карте или списке карточек, чтобы осознанно перейти в рабочее пространство.</p>
                 </div>
                 <div class="scenario-list">
                     ${state.catalog.items.map(renderScenarioCard).join("")}
@@ -53,11 +54,11 @@ export function renderCatalogOverviewState(state) {
 export function renderScenarioRail(state, selectedCatalogScenario) {
     switch (state.catalog.status) {
         case "loading":
-            return `<p class="panel-copy">Loading scenario links for the shared workspace shell.</p>`;
+            return `<p class="panel-copy">Загружаем ссылки на сценарии для общей оболочки рабочего пространства.</p>`;
         case "error":
-            return `<p class="panel-copy">${escapeHtml(state.catalog.error ?? "Catalog source is unavailable.")}</p>`;
+            return `<p class="panel-copy">${escapeHtml(state.catalog.error ?? "Источник каталога недоступен.")}</p>`;
         case "empty":
-            return `<p class="panel-copy">No scenarios match the current query.</p>`;
+            return `<p class="panel-copy">Нет сценариев, подходящих под текущий запрос.</p>`;
         default:
             return `
                 <div class="scenario-rail__list">
@@ -87,11 +88,11 @@ function renderScenarioCard(item) {
             <h4>${escapeHtml(item.title)}</h4>
             <p class="panel-copy">${escapeHtml(item.summary)}</p>
             <div class="scenario-tags">
-                ${item.tags.map((tag) => `<span class="scenario-tag">${escapeHtml(tag)}</span>`).join("")}
+                ${item.tags.map((tag) => `<span class="scenario-tag">${escapeHtml(formatTag(tag))}</span>`).join("")}
             </div>
             <div class="scenario-card-footer">
-                <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Open scenario</a>
-                <span class="entry-note">Route handoff now resolves detail through a dedicated provider seam.</span>
+                <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Открыть сценарий</a>
+                <span class="entry-note">Переход по маршруту теперь получает детали через отдельный provider seam.</span>
             </div>
         </article>
     `;

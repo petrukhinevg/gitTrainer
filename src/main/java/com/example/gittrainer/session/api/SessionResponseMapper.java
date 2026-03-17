@@ -102,15 +102,15 @@ public class SessionResponseMapper {
                 ),
                 new RetryExplanationResponse(
                         "placeholder",
-                        "Retry guidance",
+                        "Подсказка для повтора",
                         "neutral",
-                        "Retry guidance will mount here after the first evaluated submission.",
+                        "Подсказка для повтора появится здесь после первой проверенной отправки.",
                         List.of()
                 ),
                 new RetryHintResponse(
                         "placeholder",
                         "baseline",
-                        "Hint progression is idle until the learner receives evaluated feedback.",
+                        "Прогресс подсказок остаётся в ожидании, пока пользователь не получит проверенную обратную связь.",
                         List.of()
                 )
         );
@@ -126,15 +126,15 @@ public class SessionResponseMapper {
                 ),
                 new RetryExplanationResponse(
                         "resolved",
-                        "No retry explanation needed",
+                        "Повторное объяснение не требуется",
                         "success",
-                        "This attempt already landed on the safe next action, so the retry panel stays quiet.",
+                        "Эта попытка уже привела к безопасному следующему шагу, поэтому панель повтора остаётся спокойной.",
                         List.of()
                 ),
                 new RetryHintResponse(
                         "resolved",
                         "none",
-                        "No extra hint is needed after a correct answer.",
+                        "После правильного ответа дополнительная подсказка не нужна.",
                         List.of()
                 )
         );
@@ -192,58 +192,58 @@ public class SessionResponseMapper {
 
         return switch (code) {
             case "partial-answer-needs-refinement" -> new RetryExplanationNarrative(
-                    "You are inspecting the right area, but the command still needs tightening",
+                    "Вы смотрите в правильную область, но команду ещё нужно уточнить",
                     "partial",
-                    "`%s` points toward the right repository signal, but the task still needs a more precise inspection command before the answer is considered correct."
+                    "`%s` указывает на правильный сигнал репозитория, но задаче всё ещё нужна более точная команда проверки, прежде чем ответ станет правильным."
                             .formatted(normalizedAnswer),
                     List.of(
-                            "The learner has started from the correct inspection family, so the retry message should reward that direction instead of treating it as a total miss.",
-                            "The follow-up hint can narrow the command shape without redesigning the feedback panel."
+                            "Пользователь уже стартовал из правильного семейства команд проверки, поэтому сообщение о повторе должно поддержать это направление, а не считать ответ полным промахом.",
+                            "Следующая подсказка может сузить форму команды, не меняя саму панель обратной связи."
                     )
             );
             case "unsupported-answer-type" -> new RetryExplanationNarrative(
-                    "Return to supported command input",
+                    "Вернитесь к поддерживаемому вводу команды",
                     "unsupported",
-                    "This MVP slice still evaluates only command-style answers, so the next attempt should switch back to a supported command entry.",
+                    "Этот MVP-срез пока проверяет только ответы в формате команды, поэтому следующую попытку нужно вернуть к поддерживаемому типу.",
                     List.of(
-                            "The current transport accepts the request, but the correctness model still marks the answer type as unsupported.",
-                            "Keep the retry panel focused on getting back to a supported command flow before exploring richer answer formats."
+                            "Текущий транспорт принимает запрос, но модель корректности всё ещё помечает такой тип ответа как неподдерживаемый.",
+                            "Панель повтора должна сначала вернуть пользователя к поддерживаемому командному формату, а уже потом пробовать более богатые варианты ответа."
                     )
             );
             case "branch-choice-needs-task-alignment" -> new RetryExplanationNarrative(
-                    "Check which branch actually matches the task",
+                    "Проверьте, какая ветка действительно соответствует задаче",
                     "incorrect",
-                    "The next retry should compare the task goal with each branch's purpose before switching, so the answer stays aligned with the scenario instead of making an arbitrary branch move.",
+                    "Следующая попытка должна сравнить цель задачи с назначением каждой ветки до переключения, чтобы ответ оставался в логике сценария, а не превращался в случайное движение по веткам.",
                     List.of(
-                            "This scenario is not asking for a generic branch command. It wants the learner to choose the branch that serves the task safely.",
-                            "The retry explanation should keep attention on branch intent first, then narrow toward the exact command."
+                            "Этот сценарий не просит назвать абстрактную команду для веток. Он требует выбрать ветку, которая безопасно соответствует задаче.",
+                            "Объяснение для повтора должно сначала удерживать внимание на назначении ветки, а затем сужать путь к точной команде."
                     )
             );
             case "history-cleanup-requires-plan-first" -> new RetryExplanationNarrative(
-                    "Plan the history cleanup before changing commits",
+                    "Спланируйте очистку истории до изменения коммитов",
                     "incorrect",
-                    "The scenario expects a preview or planning step before any history rewrite, so the next retry should confirm the cleanup strategy before touching commits.",
+                    "Сценарий ожидает шаг предпросмотра или планирования до любого переписывания истории, поэтому следующая попытка должна подтвердить стратегию очистки до изменения коммитов.",
                     List.of(
-                            "History-editing commands are powerful, so the learning loop should reinforce inspection before rewrite.",
-                            "A stronger hint can safely narrow the learner toward the exact preview command once the retry policy unlocks it."
+                            "Команды редактирования истории очень мощные, поэтому учебный цикл должен закреплять проверку до переписывания.",
+                            "Когда политика повтора откроет усиленную подсказку, она сможет безопасно сузить выбор до точной команды предпросмотра."
                     )
             );
             case "inspection-command-should-come-before-mutation" -> new RetryExplanationNarrative(
-                    "Inspect the working tree before changing it",
+                    "Проверьте рабочее дерево до любых изменений",
                     "incorrect",
-                    "The safe next action in this scenario is to inspect repository state first, rather than jumping straight to a mutating command.",
+                    "Безопасное следующее действие в этом сценарии — сначала проверить состояние репозитория, а не сразу переходить к изменяющей команде.",
                     List.of(
-                            "This exercise is about reading the current state before acting, not about choosing a destination branch or altering files.",
-                            "The retry panel should keep the learner in the inspection loop until the correct command shape is clear."
+                            "Это упражнение про чтение текущего состояния до действия, а не про выбор целевой ветки или изменение файлов.",
+                            "Панель повтора должна удерживать пользователя в цикле проверки, пока форма правильной команды не станет очевидной."
                     )
             );
             default -> new RetryExplanationNarrative(
-                    "Revisit the scenario goal before the next attempt",
+                    "Вернитесь к цели сценария перед следующей попыткой",
                     "incorrect",
-                    "The retry loop should return to the scenario goal, then narrow the next attempt with the smallest safe hint available.",
+                    "Цикл повтора должен вернуть пользователя к цели сценария, а затем сузить следующую попытку самым маленьким доступным безопасным намёком.",
                     List.of(
-                            "When scenario-specific guidance is unavailable, keep the explanation focused on the task goal instead of inventing new rules.",
-                            "The next hint can still tighten the retry path without redesigning the policy layer."
+                            "Когда сценарно-специфичная подсказка недоступна, объяснение должно оставаться сфокусированным на цели задачи, а не изобретать новые правила.",
+                            "Следующая подсказка всё ещё может сузить путь повтора, не затрагивая слой policy."
                     )
             );
         };
@@ -251,25 +251,25 @@ public class SessionResponseMapper {
 
     private RetryHintNarrative hintNarrative(RetryHintSelection hintSelection) {
         if (hintSelection == null || !"selected".equals(hintSelection.status())) {
-            return new RetryHintNarrative("baseline", "Hint guidance is unavailable.", List.of());
+            return new RetryHintNarrative("baseline", "Подсказка сейчас недоступна.", List.of());
         }
 
         HintCopy hintCopy = hintCopy(hintSelection.code());
         boolean strongerHintUnlocked = "strong".equals(hintSelection.level());
         List<RetryHintRevealResponse> reveals = strongerHintUnlocked
                 ? List.of(
-                new RetryHintRevealResponse("nudge", "Reveal first hint", hintCopy.nudgeTitle(), hintCopy.nudgeMessage()),
-                new RetryHintRevealResponse("strong", "Reveal stronger hint", hintCopy.strongTitle(), hintCopy.strongMessage())
+                new RetryHintRevealResponse("nudge", "Показать первую подсказку", hintCopy.nudgeTitle(), hintCopy.nudgeMessage()),
+                new RetryHintRevealResponse("strong", "Показать усиленную подсказку", hintCopy.strongTitle(), hintCopy.strongMessage())
         )
                 : List.of(
-                new RetryHintRevealResponse("nudge", "Reveal first hint", hintCopy.nudgeTitle(), hintCopy.nudgeMessage())
+                new RetryHintRevealResponse("nudge", "Показать первую подсказку", hintCopy.nudgeTitle(), hintCopy.nudgeMessage())
         );
 
         return new RetryHintNarrative(
                 hintSelection.level(),
                 strongerHintUnlocked
-                        ? "A stronger hint is now available because the learner has already missed at least one attempt."
-                        : "Start with a lighter nudge before revealing the stronger guidance.",
+                        ? "Теперь доступна усиленная подсказка, потому что пользователь уже промахнулся как минимум один раз."
+                        : "Сначала дайте более мягкий намёк, а уже потом открывайте сильную подсказку.",
                 reveals
         );
     }
@@ -279,47 +279,47 @@ public class SessionResponseMapper {
 
         return switch (code) {
             case "partial-answer-nudge", "partial-answer-strong" -> new HintCopy(
-                    "Keep the same inspection family",
-                    "Stay in the same inspection area, but remove extra scope or switch to the canonical safe command for the scenario.",
-                    "Compare against the exact safe next action",
-                    "Look for the smallest command that inspects the repository state the task is asking about, without adding extra intent."
+                    "Останьтесь в том же семействе проверок",
+                    "Оставайтесь в той же зоне проверки, но уберите лишний охват или переключитесь на каноничную безопасную команду для сценария.",
+                    "Сверьтесь с точным безопасным шагом",
+                    "Ищите самую маленькую команду, которая проверяет именно то состояние репозитория, о котором спрашивает задача, без лишнего намерения."
             );
             case "unsupported-answer-type-nudge", "unsupported-answer-type-strong" -> new HintCopy(
-                    "Use the command text mode",
-                    "Switch the answer type back to command text and keep the next attempt in a simple inspection command shape.",
-                    "Mirror the supported answer examples",
-                    "Look at the supported answer type badge above the composer and mirror that mode before changing the command itself."
+                    "Используйте режим текста команды",
+                    "Переключите тип ответа обратно на текст команды и оставьте следующую попытку в форме простой команды проверки.",
+                    "Ориентируйтесь на поддерживаемый пример",
+                    "Посмотрите на бейдж поддерживаемого типа ответа над формой и сначала вернитесь к этому режиму."
             );
             case "branch-intent-nudge", "branch-intent-strong" -> new HintCopy(
-                    "Name the branch goal first",
-                    "Before choosing a branch command, ask which branch actually matches the task's purpose.",
-                    "Prefer the branch move that changes the least state",
-                    "Pick the command that only moves the learner to the branch that already fits the goal, instead of mixing inspection with extra history changes."
+                    "Сначала сформулируйте цель ветки",
+                    "Прежде чем выбирать команду для веток, спросите себя, какая ветка действительно соответствует цели задачи.",
+                    "Предпочтите шаг по веткам с минимальным изменением состояния",
+                    "Выберите команду, которая только переносит пользователя в ветку, уже подходящую цели, не смешивая проверку с лишними изменениями истории."
             );
             case "history-plan-nudge", "history-plan-strong" -> new HintCopy(
-                    "Preview the history before editing it",
-                    "Stay in inspection mode and confirm which commits are about to be cleaned up before rewriting anything.",
-                    "Use the exact history preview command",
-                    "Choose the smallest log-style command that shows the commit range you need to reason about before cleanup."
+                    "Сначала посмотрите историю, потом редактируйте",
+                    "Оставайтесь в режиме проверки и подтвердите, какие коммиты будут очищаться, прежде чем что-либо переписывать.",
+                    "Используйте точную команду предпросмотра истории",
+                    "Выберите самую компактную команду в стиле `log`, которая показывает диапазон коммитов, нужный для рассуждения перед очисткой."
             );
             case "working-tree-inspection-nudge", "working-tree-inspection-strong" -> new HintCopy(
-                    "Start with a working tree inspection",
-                    "The scenario is asking for repository state, so keep the next attempt in the inspection family rather than mutating files or branches.",
-                    "Use the canonical working tree check",
-                    "Reach for the standard Git command that reports the current working tree and staging status before any other action."
+                    "Начните с проверки рабочего дерева",
+                    "Сценарий спрашивает о состоянии репозитория, поэтому следующая попытка должна оставаться в семействе команд проверки, а не менять файлы или ветки.",
+                    "Используйте каноничную проверку рабочего дерева",
+                    "Возьмите стандартную Git-команду, которая показывает текущее состояние рабочего дерева и индекса до любых других действий."
             );
             default -> new HintCopy(
-                    "Return to the scenario goal",
-                    "Restate the task in one sentence and keep the next attempt focused on the smallest safe command that answers it.",
-                    "Reveal the smallest safe next action",
-                    "Strip away extra intent and choose the command that gives the learner the missing signal before any bigger move."
+                    "Вернитесь к цели сценария",
+                    "Переформулируйте задачу в одном предложении и держите следующую попытку сфокусированной на самой маленькой безопасной команде, которая на неё отвечает.",
+                    "Покажите самый маленький безопасный следующий шаг",
+                    "Уберите лишнее намерение и выберите команду, которая даёт недостающий сигнал до любого более крупного действия."
             );
         };
     }
 
     private String normalizeSubmittedAnswer(String submittedAnswer) {
         if (submittedAnswer == null || submittedAnswer.isBlank()) {
-            return "the submitted command";
+            return "отправленная команда";
         }
         return submittedAnswer.trim().replaceAll("\\s+", " ");
     }

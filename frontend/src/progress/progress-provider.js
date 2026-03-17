@@ -13,7 +13,7 @@ export function createUnavailableFixtureProgressProvider() {
     return {
         name: "fixture-unavailable",
         async loadProgressSummary() {
-            throw new Error("Progress summary is unavailable right now. Try again in a moment.");
+            throw new Error("Сводка прогресса сейчас недоступна. Повторите чуть позже.");
         }
     };
 }
@@ -52,7 +52,7 @@ function normalizeProgressSummaryResponse(payload) {
 function normalizeSummaryItem(item) {
     return {
         scenarioSlug: normalizeOptionalValue(item?.scenarioSlug) ?? "unknown-scenario",
-        scenarioTitle: normalizeOptionalValue(item?.scenarioTitle) ?? "Unknown scenario",
+        scenarioTitle: normalizeOptionalValue(item?.scenarioTitle) ?? "Неизвестный сценарий",
         status: normalizeOptionalValue(item?.status) ?? "not_started",
         attemptCount: normalizeCount(item?.attemptCount),
         completionCount: normalizeCount(item?.completionCount),
@@ -63,7 +63,7 @@ function normalizeSummaryItem(item) {
 function normalizeRecentActivity(activity) {
     return {
         scenarioSlug: normalizeOptionalValue(activity?.scenarioSlug) ?? "unknown-scenario",
-        scenarioTitle: normalizeOptionalValue(activity?.scenarioTitle) ?? "Unknown scenario",
+        scenarioTitle: normalizeOptionalValue(activity?.scenarioTitle) ?? "Неизвестный сценарий",
         status: normalizeOptionalValue(activity?.status) ?? "not_started",
         eventType: normalizeOptionalValue(activity?.eventType) ?? "started",
         happenedAt: normalizeOptionalValue(activity?.happenedAt) ?? null
@@ -80,14 +80,14 @@ function normalizeRecommendations(recommendations) {
             : [],
         next: recommendations?.next ? normalizeRecommendationScenario(recommendations.next) : null,
         rationale: normalizeOptionalValue(recommendations?.rationale)
-            ?? "Recommendation guidance is unavailable."
+            ?? "Рекомендация сейчас недоступна."
     };
 }
 
 function normalizeRecommendationScenario(scenario) {
     return {
         scenarioSlug: normalizeOptionalValue(scenario?.scenarioSlug) ?? "unknown-scenario",
-        scenarioTitle: normalizeOptionalValue(scenario?.scenarioTitle) ?? "Unknown scenario"
+        scenarioTitle: normalizeOptionalValue(scenario?.scenarioTitle) ?? "Неизвестный сценарий"
     };
 }
 
@@ -113,5 +113,5 @@ async function resolveProgressErrorMessage(response) {
         }
     }
 
-    return `Progress request failed with status ${response.status}`;
+    return `Запрос прогресса завершился статусом ${response.status}`;
 }

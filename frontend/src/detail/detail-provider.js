@@ -6,7 +6,7 @@ export function createLocalFixtureDetailProvider() {
         async loadScenarioDetail(slug) {
             const detail = FIXTURE_SCENARIO_DETAILS[slug];
             if (!detail) {
-                throw new Error(`Scenario detail is unavailable for slug: ${slug}`);
+                throw new Error(`Детали сценария недоступны для slug: ${slug}`);
             }
 
             return structuredClone(detail);
@@ -18,7 +18,7 @@ export function createUnavailableFixtureDetailProvider() {
     return {
         name: "fixture-unavailable",
         async loadScenarioDetail() {
-            throw new Error("Scenario detail source is unavailable right now. Try again in a moment.");
+            throw new Error("Источник деталей сценария сейчас недоступен. Повторите чуть позже.");
         }
     };
 }
@@ -50,5 +50,5 @@ async function resolveDetailErrorMessage(response) {
         }
     }
 
-    return `Scenario detail request failed with status ${response.status}`;
+    return `Запрос деталей сценария завершился статусом ${response.status}`;
 }

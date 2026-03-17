@@ -5,12 +5,12 @@ export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
         return renderPracticeShell({
             viewer: renderPlaceholderViewer(
-                "Git branches",
-                "Open a task on the left to load the branch view."
+                "Git-ветки",
+                "Откройте задание слева, чтобы загрузить представление веток."
             ),
             composer: renderPlaceholderComposer(
-                "Command",
-                "Input unlocks after you open a task."
+                "Команда",
+                "Ввод разблокируется после открытия задания."
             )
         });
     }
@@ -18,12 +18,12 @@ export function renderWorkspacePanel(state) {
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return renderPracticeShell({
             viewer: renderPlaceholderViewer(
-                "Git branches",
-                `Loading branch view for ${escapeHtml(state.selectedScenarioSlug ?? "the selected task")}.`
+                "Git-ветки",
+                `Загружаем представление веток для ${escapeHtml(state.selectedScenarioSlug ?? "выбранного задания")}.`
             ),
             composer: renderPlaceholderComposer(
-                "Command",
-                "Input stays mounted while the task detail loads."
+                "Команда",
+                "Поле ввода остаётся на месте, пока загружаются детали задания."
             )
         });
     }
@@ -33,22 +33,22 @@ export function renderWorkspacePanel(state) {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Git branches</span>
-                        <span class="workspace-card__badge">error</span>
+                        <span class="control-label">Git-ветки</span>
+                        <span class="workspace-card__badge">ошибка</span>
                     </div>
                     <div class="practice-inline-note">
-                        <p class="panel-copy">${escapeHtml(state.detail.error ?? "Unknown scenario detail error")}</p>
+                        <p class="panel-copy">${escapeHtml(state.detail.error ?? "Неизвестная ошибка деталей сценария")}</p>
                     </div>
                 </section>
             `,
             composer: `
                 <section class="workspace-card workspace-card--composer workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Command</span>
-                        <span class="workspace-card__badge">locked</span>
+                        <span class="control-label">Команда</span>
+                        <span class="workspace-card__badge">заблокировано</span>
                     </div>
                     <div class="workspace-card__actions">
-                        <a class="scenario-action scenario-action--muted" href="#/catalog">Back to welcome</a>
+                        <a class="scenario-action scenario-action--muted" href="#/catalog">Назад на старт</a>
                     </div>
                 </section>
             `
@@ -69,14 +69,14 @@ export function renderWorkspacePanel(state) {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Git branches</span>
-                    <span class="workspace-card__badge">${escapeHtml(repositoryContext.status)}</span>
+                    <span class="control-label">Git-ветки</span>
+                    <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
                 <div class="practice-shell__meta">
-                    <span class="practice-shell__chip">Branches: ${repositoryContext.branches.length}</span>
-                    <span class="practice-shell__chip">Files: ${repositoryContext.files.length}</span>
-                    <span class="practice-shell__chip">Status: ${escapeHtml(repositoryContext.status)}</span>
-                    <span class="practice-shell__chip">Session: ${escapeHtml(resolveTransportBadge(bootstrapState, submissionState))}</span>
+                    <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
+                    <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
+                    <span class="practice-shell__chip">Статус: ${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
+                    <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
                 ${renderBranchGraph(repositoryContext.branches)}
                 ${renderSessionTransportOutput(bootstrapState, lifecycle)}
@@ -85,32 +85,32 @@ export function renderWorkspacePanel(state) {
         composer: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Answer input</span>
-                    <span class="workspace-card__badge">${resolveDraftBadge(state.submissionDraft, submissionState)}</span>
+                    <span class="control-label">Ввод ответа</span>
+                    <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveDraftBadge(state.submissionDraft, submissionState)))}</span>
                 </div>
                 <div class="practice-shell__meta">
-                    <span class="practice-shell__chip">Answer type: ${escapeHtml(resolveActiveAnswerType(state.submissionDraft))}</span>
-                    <span class="practice-shell__chip">Scenario: ${escapeHtml(state.selectedScenarioSlug ?? "unknown")}</span>
-                    <span class="practice-shell__chip">Attempts: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
+                    <span class="practice-shell__chip">Тип ответа: ${escapeHtml(resolveActiveAnswerType(state.submissionDraft))}</span>
+                    <span class="practice-shell__chip">Сценарий: ${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</span>
+                    <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
                 </div>
                 ${renderBootstrapNotice(bootstrapState)}
                 <form class="practice-composer__form" data-submission-draft-form>
                     <div class="practice-composer__controls">
                         <label class="practice-select">
-                            <span class="control-label">Answer type</span>
+                            <span class="control-label">Тип ответа</span>
                             <select name="answerType"${submissionState.status === "pending" ? " disabled" : ""}>
-                                <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Command text</option>
-                                <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>File patch preview</option>
+                                <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Текст команды</option>
+                                <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>Предпросмотр патча</option>
                             </select>
                         </label>
                     </div>
                     <label class="practice-editor">
                         <span class="practice-editor__prompt">&gt;</span>
-                        <textarea name="answer" rows="4" placeholder="Example: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
+                        <textarea name="answer" rows="4" placeholder="Например: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
                     </label>
                     <div class="practice-composer__actions">
                         <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
-                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Reset draft</button>
+                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
                     </div>
                 </form>
                 ${state.submissionDraft.validationError ? `
@@ -132,9 +132,9 @@ export function renderWorkspacePanel(state) {
 function renderPracticeShell({ viewer, composer }) {
     return renderLessonLane({
         lane: "practice",
-        label: "Workspace lane",
-        title: "Git branches and command input",
-        description: "The right column stays split into two fixed surfaces.",
+        label: "Практика",
+        title: "Git-ветки и ввод команды",
+        description: "Правая колонка остаётся разделённой на две устойчивые поверхности.",
         showHeader: false,
         body: `
             <div class="practice-stack">
@@ -150,7 +150,7 @@ function renderPlaceholderViewer(title, copy) {
         <section class="workspace-card workspace-card--viewer">
             <div class="workspace-card__header">
                 <span class="control-label">${escapeHtml(title)}</span>
-                <span class="workspace-card__badge">idle</span>
+                <span class="workspace-card__badge">ожидание</span>
             </div>
             <div class="practice-inline-note">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
@@ -161,7 +161,7 @@ function renderPlaceholderViewer(title, copy) {
                     <span class="branch-graph__track"></span>
                     <div class="branch-graph__label">
                         <strong>main</strong>
-                        <span>waiting for task context</span>
+                        <span>ждём контекст задания</span>
                     </div>
                 </div>
             </div>
@@ -174,18 +174,18 @@ function renderPlaceholderComposer(title, copy) {
         <section class="workspace-card workspace-card--composer workspace-card--focus">
             <div class="workspace-card__header">
                 <span class="control-label">${escapeHtml(title)}</span>
-                <span class="workspace-card__badge">idle</span>
+                <span class="workspace-card__badge">ожидание</span>
             </div>
             <div class="practice-inline-note">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
             </div>
             <label class="practice-editor">
                 <span class="practice-editor__prompt">&gt;</span>
-                <textarea rows="4" placeholder="Example: git status" disabled></textarea>
+                <textarea rows="4" placeholder="Например: git status" disabled></textarea>
             </label>
             <div class="practice-output">
-                <span class="control-label">Output scaffold</span>
-                <p class="panel-copy">Prepared payload and transport feedback appear here after a scenario is opened.</p>
+                <span class="control-label">Каркас вывода</span>
+                <p class="panel-copy">Подготовленный payload и транспортная обратная связь появятся здесь после открытия сценария.</p>
             </div>
         </section>
     `;
@@ -194,62 +194,62 @@ function renderPlaceholderComposer(title, copy) {
 function renderSessionTransportOutput(bootstrapState, lifecycle) {
     if (bootstrapState.status === "pending") {
         return renderRequestStateBlock({
-            label: "Session transport",
+            label: "Транспорт сессии",
             status: "pending",
             badge: "pending",
-            copy: "Bootstrapping a session for the active scenario before submissions are sent."
+            copy: "Поднимаем сессию для активного сценария перед отправкой ответа."
         });
     }
 
     if (bootstrapState.status === "retryable-error") {
         return renderRequestStateBlock({
-            label: "Session transport",
+            label: "Транспорт сессии",
             status: "retryable",
             badge: "retryable",
-            copy: bootstrapState.error?.message ?? "Session bootstrap failed.",
+            copy: bootstrapState.error?.message ?? "Не удалось запустить сессию.",
             actions: `
-                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Retry session</button>
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск сессии</button>
             `
         });
     }
 
     if (bootstrapState.status === "terminal-error") {
         return renderRequestStateBlock({
-            label: "Session transport",
+            label: "Транспорт сессии",
             status: "terminal",
             badge: "terminal",
-            copy: bootstrapState.error?.message ?? "Session bootstrap failed in a terminal way."
+            copy: bootstrapState.error?.message ?? "Сессию не удалось запустить."
         });
     }
 
     if (bootstrapState.status !== "ready" || !bootstrapState.response) {
         return renderRequestStateBlock({
-            label: "Session transport",
+            label: "Транспорт сессии",
             status: "idle",
             badge: "idle",
-            copy: "A session starts automatically after the exercise route resolves."
+            copy: "Сессия запускается автоматически после открытия маршрута упражнения."
         });
     }
 
     return `
         <div class="practice-output practice-output--ready">
-            <span class="control-label">Session transport</span>
+            <span class="control-label">Транспорт сессии</span>
             <dl class="result-summary">
                 <div>
-                    <dt>Session id</dt>
+                    <dt>ID сессии</dt>
                     <dd>${escapeHtml(bootstrapState.response.sessionId)}</dd>
                 </div>
                 <div>
-                    <dt>Lifecycle</dt>
-                    <dd>${escapeHtml(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active")}</dd>
+                    <dt>Жизненный цикл</dt>
+                    <dd>${escapeHtml(formatTransportBadge(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active"))}</dd>
                 </div>
                 <div>
-                    <dt>Submissions</dt>
+                    <dt>Отправки</dt>
                     <dd>${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</dd>
                 </div>
                 <div>
-                    <dt>Answer types</dt>
-                    <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).join(", ") || "unknown")}</dd>
+                    <dt>Типы ответов</dt>
+                    <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).map(formatAnswerType).join(", ") || "неизвестно")}</dd>
                 </div>
             </dl>
             <p class="panel-copy">${escapeHtml(resolveSubmissionBoundaryCopy(bootstrapState.response.submission))}</p>
@@ -261,8 +261,8 @@ function renderBootstrapNotice(bootstrapState) {
     if (bootstrapState.status === "pending") {
         return `
             <div class="practice-request practice-request--pending">
-                <span class="control-label">Request state</span>
-                <p class="panel-copy">Starting a session for this scenario. Submission unlocks when the transport is ready.</p>
+                <span class="control-label">Состояние запроса</span>
+                <p class="panel-copy">Запускаем сессию для этого сценария. Отправка откроется, когда транспорт будет готов.</p>
             </div>
         `;
     }
@@ -270,10 +270,10 @@ function renderBootstrapNotice(bootstrapState) {
     if (bootstrapState.status === "retryable-error") {
         return `
             <div class="practice-request practice-request--retryable">
-                <span class="control-label">Request state</span>
-                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Session bootstrap failed.")}</p>
+                <span class="control-label">Состояние запроса</span>
+                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Не удалось запустить сессию.")}</p>
                 <div class="practice-output__actions">
-                    <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Retry session</button>
+                    <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск сессии</button>
                 </div>
             </div>
         `;
@@ -282,8 +282,8 @@ function renderBootstrapNotice(bootstrapState) {
     if (bootstrapState.status === "terminal-error") {
         return `
             <div class="practice-request practice-request--terminal">
-                <span class="control-label">Request state</span>
-                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Session bootstrap failed in a terminal way.")}</p>
+                <span class="control-label">Состояние запроса</span>
+                <p class="panel-copy">${escapeHtml(bootstrapState.error?.message ?? "Сессию не удалось запустить.")}</p>
             </div>
         `;
     }
@@ -294,36 +294,36 @@ function renderBootstrapNotice(bootstrapState) {
 function renderSubmissionTransportOutput(preparedSubmission, submissionState, supportedAnswerTypes) {
     if (submissionState.status === "pending") {
         return renderSubmissionRequestBlock({
-            label: "Submission transport",
+            label: "Транспорт отправки",
             status: "pending",
             badge: "pending",
-            copy: "Sending the prepared answer through the active session.",
+            copy: "Отправляем подготовленный ответ через активную сессию.",
             payload: submissionState.lastPayload
         });
     }
 
     if (submissionState.status === "retryable-error") {
         return renderSubmissionRequestBlock({
-            label: "Submission transport",
+            label: "Транспорт отправки",
             status: "retryable",
             badge: "retryable",
-            copy: submissionState.error?.message ?? "Submission failed and can be retried.",
+            copy: submissionState.error?.message ?? "Отправка не удалась, но её можно повторить.",
             payload: submissionState.lastPayload,
             actions: `
-                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="submission">Retry submit</button>
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="submission">Повторить отправку</button>
             `
         });
     }
 
     if (submissionState.status === "terminal-error") {
         return renderSubmissionRequestBlock({
-            label: "Submission transport",
+            label: "Транспорт отправки",
             status: "terminal",
             badge: "terminal",
-            copy: submissionState.error?.message ?? "Submission failed in a terminal way.",
+            copy: submissionState.error?.message ?? "Отправка завершилась ошибкой.",
             payload: submissionState.lastPayload,
             actions: `
-                <button class="practice-action practice-action--primary" type="button" data-session-request-restart>Start new session</button>
+                <button class="practice-action practice-action--primary" type="button" data-session-request-restart>Начать новую сессию</button>
             `
         });
     }
@@ -334,32 +334,32 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
             ${renderCorrectnessFeedbackBlock(submissionState.response, supportedAnswerTypes)}
             <div class="practice-output practice-output--ready">
                 <div class="practice-output__header">
-                    <span class="control-label">Submission receipt</span>
-                    <span class="workspace-card__badge">${escapeHtml(resolveSubmissionReceiptBadge(outcome))}</span>
+                    <span class="control-label">Квитанция отправки</span>
+                    <span class="workspace-card__badge">${escapeHtml(formatCorrectness(resolveSubmissionReceiptBadge(outcome)))}</span>
                 </div>
                 <dl class="result-summary">
                     <div>
-                        <dt>Submission id</dt>
+                        <dt>ID отправки</dt>
                         <dd>${escapeHtml(submissionState.response.submissionId)}</dd>
                     </div>
                     <div>
-                        <dt>Attempt</dt>
+                        <dt>Попытка</dt>
                         <dd>${escapeHtml(String(submissionState.response.attemptNumber))}</dd>
                     </div>
                     <div>
-                        <dt>Submitted at</dt>
+                        <dt>Отправлено</dt>
                         <dd>${escapeHtml(submissionState.response.submittedAt)}</dd>
                     </div>
                     <div>
-                        <dt>Answer type</dt>
-                        <dd>${escapeHtml(submissionState.response.answer?.type ?? "unknown")}</dd>
+                        <dt>Тип ответа</dt>
+                        <dd>${escapeHtml(formatAnswerType(submissionState.response.answer?.type ?? "unknown"))}</dd>
                     </div>
                     <div>
-                        <dt>Answer value</dt>
+                        <dt>Значение ответа</dt>
                         <dd>${escapeHtml(submissionState.response.answer?.value ?? "")}</dd>
                     </div>
                 </dl>
-                <p class="panel-copy">Submission transport is complete and the evaluated outcome is rendered above.</p>
+                <p class="panel-copy">Транспорт завершён, а результат проверки уже показан выше.</p>
             </div>
         `;
     }
@@ -367,17 +367,17 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
     if (preparedSubmission) {
         return `
             <div class="practice-output practice-output--ready">
-                <span class="control-label">Prepared payload</span>
+                <span class="control-label">Подготовленный payload</span>
                 ${renderPreparedPayloadSummary(preparedSubmission)}
-                <p class="panel-copy">The answer is ready for transport once the active session is available.</p>
+                <p class="panel-copy">Ответ готов к отправке, как только активная сессия станет доступна.</p>
             </div>
         `;
     }
 
     return `
         <div class="practice-output">
-            <span class="control-label">Submission transport</span>
-            <p class="panel-copy">Transport feedback appears here after the active session accepts a submission.</p>
+            <span class="control-label">Транспорт отправки</span>
+            <p class="panel-copy">Транспортная обратная связь появится здесь после принятия ответа активной сессией.</p>
         </div>
     `;
 }
@@ -413,19 +413,19 @@ function renderPreparedPayloadSummary(preparedSubmission) {
     return `
         <dl class="result-summary">
             <div>
-                <dt>Scenario</dt>
-                <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "unknown")}</dd>
+                <dt>Сценарий</dt>
+                <dd>${escapeHtml(preparedSubmission.scenarioSlug ?? "неизвестно")}</dd>
             </div>
             <div>
-                <dt>Answer type</dt>
-                <dd>${escapeHtml(preparedSubmission.answerType)}</dd>
+                <dt>Тип ответа</dt>
+                <dd>${escapeHtml(formatAnswerType(preparedSubmission.answerType))}</dd>
             </div>
             <div>
-                <dt>Draft answer</dt>
+                <dt>Черновик ответа</dt>
                 <dd>${escapeHtml(preparedSubmission.answer)}</dd>
             </div>
             <div>
-                <dt>Prepared at</dt>
+                <dt>Подготовлено</dt>
                 <dd>${escapeHtml(preparedSubmission.preparedAt)}</dd>
             </div>
         </dl>
@@ -443,44 +443,44 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     return `
         <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel data-retry-feedback-status="${escapeHtml(normalizedFeedback.status)}">
             <div class="practice-output__header">
-                <span class="control-label">Retry feedback</span>
-                <span class="workspace-card__badge">${escapeHtml(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState))}</span>
+                <span class="control-label">Обратная связь для повтора</span>
+                <span class="workspace-card__badge">${escapeHtml(formatRetryFeedbackBadge(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState)))}</span>
             </div>
             <p class="panel-copy">${escapeHtml(copy)}</p>
             <div class="practice-output practice-output--ready" data-retry-context-summary>
-                <span class="control-label">Preserved exercise context</span>
+                <span class="control-label">Сохранённый контекст упражнения</span>
                 <dl class="result-summary">
                     <div>
-                        <dt>Scenario</dt>
+                        <dt>Сценарий</dt>
                         <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
                     </div>
                     <div>
-                        <dt>Goal</dt>
+                        <dt>Цель</dt>
                         <dd>${escapeHtml(preservedContext.goal)}</dd>
                     </div>
                     <div>
-                        <dt>Branch</dt>
+                        <dt>Ветка</dt>
                         <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
                     </div>
                     <div>
-                        <dt>Repo cues</dt>
-                        <dd>${escapeHtml(`${preservedContext.branchCount} branches, ${preservedContext.fileCount} files`)}</dd>
+                        <dt>Подсказки репозитория</dt>
+                        <dd>${escapeHtml(`${preservedContext.branchCount} веток, ${preservedContext.fileCount} файлов`)}</dd>
                     </div>
                     <div>
-                        <dt>Last answer type</dt>
-                        <dd>${escapeHtml(preservedContext.answerType)}</dd>
+                        <dt>Последний тип ответа</dt>
+                        <dd>${escapeHtml(formatAnswerType(preservedContext.answerType))}</dd>
                     </div>
                     <div>
-                        <dt>Last answer</dt>
-                        <dd>${escapeHtml(preservedContext.answer || "No answer prepared yet.")}</dd>
+                        <dt>Последний ответ</dt>
+                        <dd>${escapeHtml(preservedContext.answer || "Ответ ещё не подготовлен.")}</dd>
                     </div>
                     <div>
-                        <dt>Attempt</dt>
+                        <dt>Попытка</dt>
                         <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
                     </div>
                     <div>
-                        <dt>Transport</dt>
-                        <dd>${escapeHtml(preservedContext.transportDisposition)}</dd>
+                        <dt>Транспорт</dt>
+                        <dd>${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</dd>
                     </div>
                 </dl>
                 ${preservedContext.errorMessage ? `
@@ -495,7 +495,7 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     <p class="panel-copy" data-retry-explanation>${escapeHtml(normalizedFeedback.explanation.message)}</p>
                     ${normalizedFeedback.explanation.tone === "partial" ? `
                         <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
-                            <p class="panel-copy">The answer is close enough to keep the learner in the same problem space, but it still needs a more exact command.</p>
+                            <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
                         </div>
                     ` : ""}
                     ${normalizedFeedback.explanation.details.length ? `
@@ -507,11 +507,11 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     ` : ""}
                 </div>
                 <div class="practice-feedback__meta">
-                    <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Attempt: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
-                    <span class="practice-feedback__pill" data-retry-eligibility="${escapeHtml(normalizedFeedback.retryState.eligibility)}">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
-                    <span class="practice-feedback__pill" data-retry-hint-level="${escapeHtml(normalizedFeedback.hint.level)}">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
-                    <span class="practice-feedback__pill">Explanation: ${escapeHtml(normalizedFeedback.explanation.status)}</span>
-                    <span class="practice-feedback__pill">Tone: ${escapeHtml(normalizedFeedback.explanation.tone)}</span>
+                    <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Попытка: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
+                    <span class="practice-feedback__pill" data-retry-eligibility="${escapeHtml(normalizedFeedback.retryState.eligibility)}">Допуск: ${escapeHtml(formatRetryEligibility(normalizedFeedback.retryState.eligibility))}</span>
+                    <span class="practice-feedback__pill" data-retry-hint-level="${escapeHtml(normalizedFeedback.hint.level)}">Уровень подсказки: ${escapeHtml(formatHintLevel(normalizedFeedback.hint.level))}</span>
+                    <span class="practice-feedback__pill">Объяснение: ${escapeHtml(formatRetryFeedbackBadge(normalizedFeedback.explanation.status))}</span>
+                    <span class="practice-feedback__pill">Тон: ${escapeHtml(formatExplanationTone(normalizedFeedback.explanation.tone))}</span>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
@@ -544,38 +544,38 @@ function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes
     if (!outcome) {
         return `
             <div class="practice-output practice-output--ready">
-                <span class="control-label">Correctness feedback</span>
-                <p class="panel-copy">Submission completed, but no evaluated outcome is available yet.</p>
+                <span class="control-label">Обратная связь по корректности</span>
+                <p class="panel-copy">Отправка завершена, но результат проверки пока недоступен.</p>
             </div>
         `;
     }
 
     const correctness = normalizeOutcomeCorrectness(outcome.correctness);
     const tone = resolveOutcomeTone(correctness);
-    const supportedTypesCopy = supportedAnswerTypes.length ? supportedAnswerTypes.join(", ") : "command_text";
+    const supportedTypesCopy = supportedAnswerTypes.length ? supportedAnswerTypes.map(formatAnswerType).join(", ") : "Текст команды";
 
     return `
         <div class="practice-output practice-output--${escapeHtml(tone)}">
             <div class="practice-output__header">
-                <span class="control-label">Correctness feedback</span>
-                <span class="workspace-card__badge">${escapeHtml(correctness)}</span>
+                <span class="control-label">Обратная связь по корректности</span>
+                <span class="workspace-card__badge">${escapeHtml(formatCorrectness(correctness))}</span>
             </div>
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(resolveOutcomeTitle(correctness))}</h4>
-                    <p class="panel-copy">${escapeHtml(outcome.message ?? "Outcome message is unavailable.")}</p>
+                    <p class="panel-copy">${escapeHtml(outcome.message ?? "Сообщение о результате недоступно.")}</p>
                 </div>
                 <div class="practice-feedback__meta">
-                    <span class="practice-feedback__pill">Status: ${escapeHtml(outcome.status ?? "unknown")}</span>
-                    <span class="practice-feedback__pill">Code: ${escapeHtml(outcome.code ?? "unknown")}</span>
-                    <span class="practice-feedback__pill">Answer type: ${escapeHtml(submissionResponse.answer?.type ?? "unknown")}</span>
-                    <span class="practice-feedback__pill">Attempt: ${escapeHtml(String(submissionResponse.attemptNumber ?? "?"))}</span>
+                    <span class="practice-feedback__pill">Статус: ${escapeHtml(formatRetryFeedbackBadge(outcome.status ?? "unknown"))}</span>
+                    <span class="practice-feedback__pill">Код: ${escapeHtml(outcome.code ?? "неизвестно")}</span>
+                    <span class="practice-feedback__pill">Тип ответа: ${escapeHtml(formatAnswerType(submissionResponse.answer?.type ?? "unknown"))}</span>
+                    <span class="practice-feedback__pill">Попытка: ${escapeHtml(String(submissionResponse.attemptNumber ?? "?"))}</span>
                 </div>
                 ${correctness === "unsupported" ? `
                     <div class="practice-inline-note practice-inline-note--warning">
                         <p class="panel-copy">
-                            This session currently supports: ${escapeHtml(supportedTypesCopy)}.
-                            Switch the answer type back to a supported value to re-submit.
+                            Сейчас эта сессия поддерживает: ${escapeHtml(supportedTypesCopy)}.
+                            Верните тип ответа к поддерживаемому значению и отправьте снова.
                         </p>
                     </div>
                 ` : ""}
@@ -589,22 +589,22 @@ function renderBranchGraph(branches) {
         return `
             <div class="branch-graph branch-graph--empty">
                 <div class="branch-graph__empty">
-                    <span class="control-label">Empty state</span>
-                    <p class="panel-copy">No branch cues are available from the active detail payload.</p>
+                    <span class="control-label">Пустое состояние</span>
+                    <p class="panel-copy">В активном payload деталей нет подсказок по веткам.</p>
                 </div>
             </div>
         `;
     }
 
     return `
-        <div class="branch-graph" aria-label="Git branch picture">
+        <div class="branch-graph" aria-label="Схема Git-веток">
             ${branches.map((branch, index) => `
                 <article class="branch-graph__row ${branch.current ? "branch-graph__row--current" : ""}">
                     <span class="branch-graph__node"></span>
                     <span class="branch-graph__track ${index === branches.length - 1 ? "branch-graph__track--last" : ""}"></span>
                     <div class="branch-graph__label">
                         <strong>${escapeHtml(branch.name)}</strong>
-                        <span>${branch.current ? "current branch" : "available branch"}</span>
+                        <span>${branch.current ? "текущая ветка" : "доступная ветка"}</span>
                     </div>
                 </article>
             `).join("")}
@@ -690,13 +690,13 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "placeholder",
             title: typeof explanation.title === "string" && explanation.title.trim() !== ""
                 ? explanation.title
-                : "Retry guidance",
+                : "Подсказка для повтора",
             tone: typeof explanation.tone === "string" && explanation.tone.trim() !== ""
                 ? explanation.tone
                 : "neutral",
             message: typeof explanation.message === "string" && explanation.message.trim() !== ""
                 ? explanation.message
-                : "Retry guidance will mount here after the first evaluated submission.",
+                : "Подсказка для повтора появится здесь после первой проверенной отправки.",
             details: Array.isArray(explanation.details)
                 ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
                 : []
@@ -710,7 +710,7 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "baseline",
             message: typeof hint.message === "string" && hint.message.trim() !== ""
                 ? hint.message
-                : "Hint progression is idle until the learner receives evaluated feedback.",
+                : "Прогресс подсказок остаётся в ожидании, пока пользователь не получит проверенную обратную связь.",
             reveals: Array.isArray(hint.reveals)
                 ? hint.reveals
                     .filter((item) => item && typeof item === "object")
@@ -720,13 +720,13 @@ function normalizeRetryFeedback(retryFeedback) {
                             : `hint-${index + 1}`,
                         label: typeof item.label === "string" && item.label.trim() !== ""
                             ? item.label
-                            : "Reveal hint",
+                            : "Показать подсказку",
                         title: typeof item.title === "string" && item.title.trim() !== ""
                             ? item.title
-                            : "Hint",
+                            : "Подсказка",
                         message: typeof item.message === "string" && item.message.trim() !== ""
                             ? item.message
-                            : "Additional hint content is unavailable."
+                            : "Дополнительная подсказка недоступна."
                     }))
                 : []
         }
@@ -738,13 +738,13 @@ function normalizeFeedbackContextSnapshot(contextSnapshot) {
     return {
         scenarioTitle: typeof safeContext.scenarioTitle === "string" && safeContext.scenarioTitle.trim() !== ""
             ? safeContext.scenarioTitle
-            : "Active exercise",
+            : "Активное упражнение",
         goal: typeof safeContext.goal === "string" && safeContext.goal.trim() !== ""
             ? safeContext.goal
-            : "Retry context will stay anchored to the current exercise.",
+            : "Контекст повтора остаётся привязанным к текущему упражнению.",
         currentBranch: typeof safeContext.currentBranch === "string" && safeContext.currentBranch.trim() !== ""
             ? safeContext.currentBranch
-            : "unknown",
+            : "неизвестно",
         branchCount: typeof safeContext.branchCount === "number" ? safeContext.branchCount : 0,
         fileCount: typeof safeContext.fileCount === "number" ? safeContext.fileCount : 0,
         answerType: typeof safeContext.answerType === "string" && safeContext.answerType.trim() !== ""
@@ -765,20 +765,20 @@ function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submi
     switch (feedbackPanelStatus) {
         case "submitting":
             return normalizedFeedback.status === "guided"
-                ? "The retry panel keeps the last evaluated guidance visible while the next attempt is in flight."
-                : "The retry panel is already reserving exercise context for the in-flight submission so the learner does not lose place if the attempt fails.";
+                ? "Панель повтора сохраняет последнюю проверенную подсказку, пока новая попытка отправляется."
+                : "Панель повтора уже держит контекст упражнения, чтобы пользователь не потерял место, если попытка завершится ошибкой.";
         case "guided":
-            return "The current exercise context stays pinned after a failed evaluation while retry eligibility and hint level stay synchronized with the latest boundary payload.";
+            return "Контекст текущего упражнения остаётся закреплён после неудачной проверки, а допуск к повтору и уровень подсказки синхронизируются с последним payload.";
         case "request-failure":
             return normalizedFeedback.status === "guided"
-                ? "The request failed, but the last evaluated retry guidance stays visible so the learner can recover without losing place."
-                : "The request failed, but the active exercise context and last attempted answer stay visible for recovery.";
+                ? "Запрос завершился ошибкой, но последняя проверенная подсказка для повтора остаётся видимой, чтобы можно было восстановиться без потери контекста."
+                : "Запрос завершился ошибкой, но контекст активного упражнения и последний ответ остаются видимыми для восстановления.";
         case "resolved":
-            return "The retry shell stays mounted after a successful answer and now reflects that no further retry is needed.";
+            return "Панель повтора остаётся на месте после успешного ответа и показывает, что новый повтор уже не нужен.";
         default:
             return submissionState.status === "ready"
                 ? normalizedFeedback.explanation.message
-                : "Retry guidance, explanation copy, and hint progression will stay mounted here after an evaluated submission.";
+                : "Подсказки для повтора, объяснение и прогресс подсказок появятся здесь после проверенной отправки.";
     }
 }
 
@@ -824,14 +824,14 @@ function resolveRetryEligibilityCopy(normalizedFeedback) {
     switch (normalizedFeedback.retryState.eligibility) {
         case "eligible":
             return normalizedFeedback.hint.level === "strong"
-                ? "Retry is available now, and the stronger hint tier is already unlocked for the next attempt."
-                : "Retry is available now, and the panel is holding the lighter hint tier until another failed attempt unlocks stronger guidance.";
+                ? "Повтор уже доступен, и усиленный уровень подсказки открыт для следующей попытки."
+                : "Повтор уже доступен, а панель пока держит более мягкую подсказку до следующей неудачной попытки.";
         case "not-needed":
             return normalizedFeedback.status === "resolved"
-                ? "No retry is needed because the latest evaluated attempt already completed the exercise."
-                : "Retry is idle until the learner receives evaluated feedback.";
+                ? "Повтор не нужен, потому что последняя проверенная попытка уже завершила упражнение."
+                : "Повтор остаётся в ожидании, пока пользователь не получит проверенную обратную связь.";
         default:
-            return "Retry guidance is mounted, but eligibility details are temporarily unavailable.";
+            return "Панель повтора уже смонтирована, но детали допуска временно недоступны.";
     }
 }
 
@@ -873,26 +873,26 @@ function resolveDraftBadge(submissionDraft, submissionState) {
 
 function resolvePrimaryActionLabel(bootstrapState, submissionState) {
     if (submissionState.status === "pending") {
-        return "Submitting...";
+        return "Отправка...";
     }
 
     if (bootstrapState.status === "pending") {
-        return "Starting session...";
+        return "Запуск сессии...";
     }
 
     if (bootstrapState.status === "retryable-error") {
-        return "Retry session first";
+        return "Сначала повторите запуск сессии";
     }
 
     if (bootstrapState.status === "terminal-error") {
-        return "Session unavailable";
+        return "Сессия недоступна";
     }
 
     if (bootstrapState.status === "ready") {
-        return "Submit answer";
+        return "Отправить ответ";
     }
 
-    return "Preparing session...";
+    return "Подготовка сессии...";
 }
 
 function resolveTransportBadge(bootstrapState, submissionState) {
@@ -932,7 +932,7 @@ function resolveTransportBadge(bootstrapState, submissionState) {
 }
 
 function resolveActiveAnswerType(submissionDraft) {
-    return submissionDraft?.answerType === "file_patch" ? "file patch preview" : "command text";
+    return submissionDraft?.answerType === "file_patch" ? "предпросмотр патча" : "текст команды";
 }
 
 function resolveSelectedAnswerType(submissionDraft, value) {
@@ -961,13 +961,13 @@ function resolveOutcomeTone(correctness) {
 function resolveOutcomeTitle(correctness) {
     switch (correctness) {
         case "correct":
-            return "Correct next action";
+            return "Верный следующий шаг";
         case "incorrect":
-            return "Not the expected command";
+            return "Это не ожидаемая команда";
         case "unsupported":
-            return "Unsupported answer type";
+            return "Неподдерживаемый тип ответа";
         default:
-            return "Submission accepted";
+            return "Ответ принят";
     }
 }
 
@@ -979,14 +979,158 @@ function resolveSubmissionBoundaryCopy(submissionBoundary) {
     const placeholderOutcome = submissionBoundary?.placeholderOutcome ?? null;
     const boundaryMessage = typeof placeholderOutcome?.message === "string" && placeholderOutcome.message.trim() !== ""
         ? placeholderOutcome.message
-        : "Session transport is ready for the first evaluated submission.";
+        : "Транспорт сессии готов к первой проверяемой отправке.";
     const supportedTypesCopy = Array.isArray(submissionBoundary?.supportedAnswerTypes)
-        ? submissionBoundary.supportedAnswerTypes.join(", ")
+        ? submissionBoundary.supportedAnswerTypes.map(formatAnswerType).join(", ")
         : "";
 
     if (!supportedTypesCopy) {
         return boundaryMessage;
     }
 
-    return `${boundaryMessage} Supported answer types: ${supportedTypesCopy}.`;
+    return `${boundaryMessage} Поддерживаемые типы ответов: ${supportedTypesCopy}.`;
+}
+
+function formatRepositoryStatus(value) {
+    switch (value) {
+        case "authored-fixture":
+            return "фикстура";
+        case "unavailable":
+            return "недоступно";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatTransportBadge(value) {
+    switch (value) {
+        case "idle":
+            return "ожидание";
+        case "pending":
+            return "в процессе";
+        case "retryable":
+            return "можно повторить";
+        case "terminal":
+            return "критическая ошибка";
+        case "submitting":
+            return "отправка";
+        case "correct":
+            return "верно";
+        case "incorrect":
+            return "ошибка";
+        case "unsupported":
+            return "не поддерживается";
+        case "partial":
+            return "частично";
+        case "submitted":
+            return "отправлено";
+        case "active":
+            return "активна";
+        case "booting":
+            return "запуск";
+        case "prepared":
+            return "подготовлено";
+        case "draft":
+            return "черновик";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatRetryFeedbackBadge(value) {
+    switch (value) {
+        case "idle":
+            return "ожидание";
+        case "guided":
+            return "с подсказкой";
+        case "resolved":
+            return "завершено";
+        case "placeholder":
+            return "ожидание";
+        case "request-failure":
+            return "ошибка запроса";
+        case "holding-context":
+            return "контекст сохранён";
+        case "retry-available":
+            return "повтор доступен";
+        case "complete":
+            return "завершено";
+        case "evaluated":
+            return "проверено";
+        default:
+            return formatTransportBadge(value);
+    }
+}
+
+function formatRetryEligibility(value) {
+    switch (value) {
+        case "eligible":
+            return "можно повторить";
+        case "not-needed":
+            return "не требуется";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatHintLevel(value) {
+    switch (value) {
+        case "baseline":
+            return "базовый";
+        case "nudge":
+            return "намёк";
+        case "strong":
+            return "усиленный";
+        case "none":
+            return "не нужен";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatExplanationTone(value) {
+    switch (value) {
+        case "neutral":
+            return "нейтральный";
+        case "success":
+            return "успех";
+        case "unsupported":
+            return "неподдерживаемый";
+        case "incorrect":
+            return "ошибка";
+        case "partial":
+            return "частичное совпадение";
+        case "correct":
+            return "верный";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatAnswerType(value) {
+    switch (value) {
+        case "command_text":
+            return "Текст команды";
+        case "file_patch":
+            return "Предпросмотр патча";
+        default:
+            return value ?? "неизвестно";
+    }
+}
+
+function formatCorrectness(value) {
+    switch (value) {
+        case "correct":
+            return "верно";
+        case "incorrect":
+            return "ошибка";
+        case "unsupported":
+            return "не поддерживается";
+        case "partial":
+            return "частично";
+        case "submitted":
+            return "отправлено";
+        default:
+            return value ?? "неизвестно";
+    }
 }

@@ -26,7 +26,7 @@ class SessionResponseMapperTest {
                 "evaluated",
                 "partial",
                 "partial-command-match",
-                "Submitted command points toward the right inspection area, but it still needs refinement."
+                "Отправленная команда указывает в правильную область проверки, но её ещё нужно уточнить."
         );
         RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance("status-basics", outcome, retryState);
 
@@ -37,7 +37,7 @@ class SessionResponseMapperTest {
                 new TrainingSession(
                         "session_1",
                         "status-basics",
-                        "Read the working tree before acting",
+                        "Сначала проверь рабочее дерево",
                         "mvp-fixture",
                         Instant.parse("2026-03-17T00:00:00Z"),
                         SessionState.ACTIVE,
@@ -57,10 +57,10 @@ class SessionResponseMapperTest {
         assertThat(response.retryFeedback().explanation().status()).isEqualTo("guided");
         assertThat(response.retryFeedback().explanation().tone()).isEqualTo("partial");
         assertThat(response.retryFeedback().explanation().title())
-                .isEqualTo("You are inspecting the right area, but the command still needs tightening");
+                .isEqualTo("Вы смотрите в правильную область, но команду ещё нужно уточнить");
         assertThat(response.retryFeedback().explanation().message())
                 .contains("git branch")
-                .contains("more precise inspection command");
+                .contains("более точная команда проверки");
         assertThat(response.retryFeedback().explanation().details()).hasSize(2);
         assertThat(response.retryFeedback().hint().status()).isEqualTo("guided");
         assertThat(response.retryFeedback().hint().level()).isEqualTo("strong");

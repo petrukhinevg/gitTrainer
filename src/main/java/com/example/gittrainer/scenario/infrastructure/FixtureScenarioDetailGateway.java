@@ -63,9 +63,9 @@ public class FixtureScenarioDetailGateway implements ScenarioDetailGateway {
                 scenarioSummary.difficulty(),
                 scenarioSummary.tags(),
                 new ScenarioWorkspaceDetail.ScenarioWorkspaceShell(
-                        "Scenario map",
-                        "Workspace lesson",
-                        "Workspace lane"
+                        "Карта сценария",
+                        "Урок",
+                        "Практика"
                 ),
                 scenarioTaskContentAssembler.assemble(scenarioSummary.slug()),
                 scenarioRepositoryContextFixtureSource.fixtureFor(scenarioSummary.slug())

@@ -38,8 +38,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
-                .andExpect(jsonPath("$.items[1].slug").value("history-cleanup-preview"))
-                .andExpect(jsonPath("$.items[1].tags[1]").value("cleanup"));
+                .andExpect(jsonPath("$.items[1].slug").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[1].tags[1]").value("inspection"));
     }
 
     @Test
@@ -89,8 +89,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"))
-                .andExpect(jsonPath("$.items[3].id").value("remote-sync-preview"));
+                .andExpect(jsonPath("$.items[2].id").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[3].id").value("history-cleanup-preview"));
     }
 
     @Test
@@ -134,7 +134,7 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."));
     }
 
     @Test
@@ -148,22 +148,22 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.difficulty").value("beginner"))
                 .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
                 .andExpect(jsonPath("$.meta.stub").value(true))
-                .andExpect(jsonPath("$.workspace.shell.leftPanelTitle").value("Scenario map"))
-                .andExpect(jsonPath("$.workspace.shell.centerPanelTitle").value("Workspace lesson"))
-                .andExpect(jsonPath("$.workspace.shell.rightPanelTitle").value("Workspace lane"))
+                .andExpect(jsonPath("$.workspace.shell.leftPanelTitle").value("Карта сценария"))
+                .andExpect(jsonPath("$.workspace.shell.centerPanelTitle").value("Урок"))
+                .andExpect(jsonPath("$.workspace.shell.rightPanelTitle").value("Практика"))
                 .andExpect(jsonPath("$.workspace.task.status").value("authored-fixture"))
-                .andExpect(jsonPath("$.workspace.task.goal").value("Read the repository state before choosing the first safe Git command."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Прочитайте состояние репозитория, прежде чем выбирать первую безопасную Git-команду."))
                 .andExpect(jsonPath("$.workspace.task.instructions.length()").value(3))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("check-branch"))
-                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Confirm which branch is currently checked out before deciding whether any branch change is needed."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Уточните, какая ветка сейчас активна, прежде чем решать, нужно ли вообще переключение."))
                 .andExpect(jsonPath("$.workspace.task.instructions[1].id").value("read-short-status"))
                 .andExpect(jsonPath("$.workspace.task.steps.length()").value(3))
                 .andExpect(jsonPath("$.workspace.task.steps[0].position").value(1))
-                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Identify the current branch"))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Определите текущую ветку"))
                 .andExpect(jsonPath("$.workspace.task.steps[1].position").value(2))
                 .andExpect(jsonPath("$.workspace.task.annotations.length()").value(2))
-                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Target outcome"))
-                .andExpect(jsonPath("$.workspace.task.annotations[1].label").value("Safety cue"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Целевой результат"))
+                .andExpect(jsonPath("$.workspace.task.annotations[1].label").value("Подсказка по безопасности"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.status").value("authored-fixture"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(2))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
@@ -174,8 +174,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].path").value("notes/status-checklist.md"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].status").value("untracked"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(2))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Working tree cue"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Decision cue"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Подсказка рабочего дерева"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Подсказка для решения"));
     }
 
     @Test
@@ -183,7 +183,7 @@ class ScenarioCatalogControllerTest {
         mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Scenario detail is unavailable for slug: not-a-real-scenario"));
+                .andExpect(jsonPath("$.detail").value("Детали сценария недоступны для slug: not-a-real-scenario"));
     }
 
     @Test
@@ -192,6 +192,6 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Catalog source is unavailable right now. Try another provider."));
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."));
     }
 }

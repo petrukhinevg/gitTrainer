@@ -20,14 +20,14 @@ export function normalizeTaskSteps(detail) {
             if (typeof step === "string") {
                 return {
                     position: index + 1,
-                    title: `Step ${index + 1}`,
+                    title: `Шаг ${index + 1}`,
                     detail: step
                 };
             }
 
             return {
                 position: step.position ?? index + 1,
-                title: step.title ?? `Step ${index + 1}`,
+                title: step.title ?? `Шаг ${index + 1}`,
                 detail: step.detail ?? ""
             };
         })
@@ -38,13 +38,13 @@ export function normalizeTaskAnnotations(detail) {
     return (detail.workspace.task.annotations ?? []).map((annotation, index) => {
         if (typeof annotation === "string") {
             return {
-                label: `Note ${index + 1}`,
+                label: `Заметка ${index + 1}`,
                 message: annotation
             };
         }
 
         return {
-            label: annotation.label ?? `Note ${index + 1}`,
+            label: annotation.label ?? `Заметка ${index + 1}`,
             message: annotation.message ?? ""
         };
     });
@@ -57,27 +57,27 @@ export function buildLessonNavigationItems(detail) {
     return [
         {
             state: "current",
-            eyebrow: "Now",
-            title: "Mission brief",
+            eyebrow: "Сейчас",
+            title: "Вводная",
             detail: detail.workspace.task.goal
         },
         {
             state: "ready",
-            eyebrow: "Read next",
-            title: "Instruction flow",
-            detail: `${instructions.length} guidance point${instructions.length === 1 ? "" : "s"}`
+            eyebrow: "Дальше",
+            title: "Поток инструкций",
+            detail: `${instructions.length} ${instructions.length === 1 ? "ориентир" : "ориентира"}`
         },
         ...steps.map((step, index) => ({
             state: index === 0 ? "upcoming" : "queued",
-            eyebrow: `Step ${step.position}`,
+            eyebrow: `Шаг ${step.position}`,
             title: step.title,
             detail: step.detail
         })),
         {
             state: "locked",
-            eyebrow: "Later",
-            title: "Practice lane",
-            detail: "Answer entry and execution feedback stay reserved for the follow-up practice task."
+            eyebrow: "Позже",
+            title: "Практика",
+            detail: "Ввод ответа и обратная связь по выполнению остаются в правой колонке практики."
         }
     ];
 }

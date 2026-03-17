@@ -3,32 +3,32 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
         {
             id: "status-basics",
             slug: "status-basics",
-            title: "Read the working tree before acting",
-            summary: "Inspect a noisy repository and identify the next safe Git command before making changes.",
+            title: "Сначала проверь рабочее дерево",
+            summary: "Посмотри на шумный репозиторий и выбери следующую безопасную Git-команду до любых изменений.",
             difficulty: "beginner",
             tags: ["status", "working-tree", "basics"]
         },
         {
             id: "branch-safety",
             slug: "branch-safety",
-            title: "Choose the right branch before editing",
-            summary: "Spot the active branch, compare task intent, and decide whether to stay put or switch first.",
+            title: "Выбери правильную ветку перед правками",
+            summary: "Определи активную ветку, сопоставь её с задачей и реши, оставаться ли на месте или сначала переключиться.",
             difficulty: "beginner",
             tags: ["branching", "navigation", "basics"]
         },
         {
             id: "history-cleanup-preview",
             slug: "history-cleanup-preview",
-            title: "Preview a history cleanup plan",
-            summary: "Read a messy commit stack and prepare for a later cleanup exercise without changing history yet.",
+            title: "Просмотри план очистки истории",
+            summary: "Разбери запутанный стек коммитов и подготовься к дальнейшей очистке, пока ещё не меняя историю.",
             difficulty: "intermediate",
             tags: ["history", "cleanup", "planning"]
         },
         {
             id: "remote-sync-preview",
             slug: "remote-sync-preview",
-            title: "Read remote tracking state before you pull",
-            summary: "Compare ahead-behind cues and choose whether a fetch or pull makes sense before syncing.",
+            title: "Проверь удалённое состояние перед pull",
+            summary: "Сравни сигналы ahead/behind и реши, что уместнее перед синхронизацией: fetch или pull.",
             difficulty: "intermediate",
             tags: ["remote", "inspection", "planning"]
         }

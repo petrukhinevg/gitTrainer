@@ -31,7 +31,7 @@ public final class ProgressRecommendationPolicy {
                     solvedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     attemptedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     toScenario(nextItem),
-                    "Continue the scenario that already has unresolved progress."
+                    "Продолжайте сценарий, в котором уже есть незавершённый прогресс."
             );
         }
 
@@ -40,7 +40,7 @@ public final class ProgressRecommendationPolicy {
                     solvedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     attemptedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     toScenario(untouchedItems.getFirst()),
-                    "Start the next untouched scenario from the current catalog order."
+                    "Начните следующий нетронутый сценарий в текущем порядке каталога."
             );
         }
 
@@ -53,7 +53,7 @@ public final class ProgressRecommendationPolicy {
                     solvedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     List.of(),
                     toScenario(revisitItem),
-                    "All current scenarios are completed, so revisit the most recently active exercise."
+                    "Все текущие сценарии уже завершены, поэтому вернитесь к самому недавно активному упражнению."
             );
         }
 
@@ -61,7 +61,7 @@ public final class ProgressRecommendationPolicy {
                 List.of(),
                 List.of(),
                 null,
-                "No catalog scenarios are available for recommendation."
+                "В каталоге нет сценариев для рекомендации."
         );
     }
 

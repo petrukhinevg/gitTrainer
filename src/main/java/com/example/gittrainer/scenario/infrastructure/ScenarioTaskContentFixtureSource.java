@@ -11,71 +11,71 @@ public class ScenarioTaskContentFixtureSource {
     private static final Map<String, ScenarioTaskContentFixture> FIXTURES = Map.of(
             "status-basics", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Read the repository state before choosing the first safe Git command.",
+                    "Прочитайте состояние репозитория, прежде чем выбирать первую безопасную Git-команду.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-short-status", "Read the short status output and note which files are modified versus untracked."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-branch", "Confirm which branch is currently checked out before deciding whether any branch change is needed."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "protect-worktree", "Avoid commands that mutate history or discard work while the tree is still being inspected.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-short-status", "Посмотрите краткий `status` и отметьте, какие файлы изменены, а какие ещё не отслеживаются."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-branch", "Уточните, какая ветка сейчас активна, прежде чем решать, нужно ли вообще переключение."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "protect-worktree", "Избегайте команд, которые меняют историю или выбрасывают работу, пока дерево ещё только проверяется.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "List the working tree signals", "Capture which paths are modified, untracked, or already staged so the next command is justified by evidence."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Identify the current branch", "Read the current branch first so the learner stays oriented before proposing any command."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Choose the safest first command", "Select the first Git command that gathers information without changing repository history.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Соберите сигналы рабочего дерева", "Зафиксируйте, какие пути изменены, не отслеживаются или уже проиндексированы, чтобы следующий шаг опирался на факты."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Определите текущую ветку", "Сначала посмотрите на активную ветку, чтобы не терять ориентацию до предложения любой команды."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите самый безопасный первый шаг", "Подберите первую Git-команду, которая собирает информацию и не меняет историю репозитория.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Safety cue", "Inspection comes before mutation in this scenario."),
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Target outcome", "The learner should justify a safe first command rather than execute cleanup immediately.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Подсказка по безопасности", "В этом сценарии проверка идёт раньше любых изменений."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Целевой результат", "Нужно обосновать безопасную первую команду, а не сразу переходить к очистке.")
                     )
             ),
             "branch-safety", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Decide whether the task should continue on the current branch or after switching.",
+                    "Решите, продолжать ли задачу на текущей ветке или после переключения.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "read-current-branch", "Inspect the current branch before editing any files or staging any work."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "compare-task-intent", "Compare branch purpose with the requested task so the learner can justify staying or switching."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "avoid-implicit-switch", "Do not assume a branch switch is correct until the repository state and task goal agree.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "read-current-branch", "Посмотрите на текущую ветку до любых правок файлов или индексации."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "compare-task-intent", "Сопоставьте назначение ветки с задачей, чтобы обосновать, оставаться ли на месте или переключаться."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "avoid-implicit-switch", "Не считайте переключение ветки правильным, пока состояние репозитория и цель задачи не совпадут.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Match branch to task", "Relate the current branch name to the task description before proposing a checkout."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Inspect where you are", "Start by identifying the active branch and any signals that the working tree is already in use."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "State the branch decision", "Summarize whether to stay on the branch or switch, and why that choice is safer.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сопоставьте ветку и задачу", "Свяжите имя текущей ветки с описанием задачи, прежде чем предлагать `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Поймите, где вы находитесь", "Начните с активной ветки и сигналов того, что рабочее дерево уже используется."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Сформулируйте решение по ветке", "Кратко объясните, нужно ли остаться на ветке или переключиться и почему это безопаснее.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Decision boundary", "Branch navigation should be intentional and explained, not automatic.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Граница решения", "Навигация по веткам должна быть осознанной и объяснённой, а не автоматической.")
                     )
             ),
             "history-cleanup-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Prepare an ordered cleanup plan without rewriting history yet.",
+                    "Подготовьте последовательный план очистки, пока ещё не переписывая историю.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "inspect-commit-stack", "Read the recent commit stack and identify repeated or messy changes."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "plan-before-rewrite", "Describe the cleanup sequence before choosing any history-rewriting command."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-remote-risk-visible", "Account for whether rewritten commits may already be shared with others.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "inspect-commit-stack", "Посмотрите на недавний стек коммитов и найдите повторяющиеся или неаккуратные изменения."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "plan-before-rewrite", "Опишите последовательность очистки до выбора любой команды переписывания истории."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-remote-risk-visible", "Учитывайте, могли ли переписываемые коммиты уже быть опубликованы другим.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Group the cleanup targets", "Separate fixup candidates, reorder candidates, and commits that should remain untouched."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Read the stack top to bottom", "Inspect the current history in order before proposing a cleanup plan."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Name the next safe action", "Choose the planning or inspection command that should come before any rewrite.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сгруппируйте цели очистки", "Разделите кандидатов на `fixup`, кандидатов на перестановку и коммиты, которые трогать не нужно."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Прочитайте стек сверху вниз", "Сначала пройдитесь по текущей истории по порядку и только потом предлагайте план очистки."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Назовите безопасный следующий шаг", "Выберите команду планирования или проверки, которая должна идти до любого переписывания.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Planning mode", "This task stops at plan quality; it does not execute the rewrite.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Режим планирования", "Эта задача заканчивается на качестве плана и не выполняет переписывание.")
                     )
             ),
             "remote-sync-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Explain the next sync-oriented command after reading ahead-behind cues.",
+                    "Объясните следующую команду для синхронизации после чтения сигналов ahead/behind.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-tracking", "Inspect how the local branch relates to its tracked remote branch."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "separate-fetch-from-merge", "Keep fetch and merge decisions distinct until the repository state is understood."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-divergence", "Determine whether the branch is ahead, behind, or diverged before choosing a sync command.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-tracking", "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "separate-fetch-from-merge", "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-divergence", "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Choose the sync command", "Name the safest next command based on whether new remote information is needed first."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Inspect tracking relationship", "Read the tracked remote branch before proposing pull or fetch."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Interpret ahead-behind state", "Use the ahead-behind cues to justify whether integration should happen now or later.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите команду синхронизации", "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с remote."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Проверьте связь с remote-tracking веткой", "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Интерпретируйте состояние ahead/behind", "Используйте сигналы ahead/behind, чтобы объяснить, нужна ли интеграция прямо сейчас.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Remote discipline", "Fetching information and integrating changes are separate decisions in this exercise.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Дисциплина работы с remote", "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения.")
                     )
             )
     );
