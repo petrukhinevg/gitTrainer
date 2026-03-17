@@ -1,17 +1,18 @@
 import { renderLessonLane } from "./lesson-layout.js";
 import {
     encodeHashSegment,
-    escapeHtml
+    escapeHtml,
+    formatTag
 } from "./render-helpers.js";
 
-export function renderSidebarPanel(state) {
+export function renderSidebarPanel(state, _selectedCatalogScenario, tagOptions = []) {
     return renderLessonLane({
         lane: "navigation",
         label: resolveLeftPanelTitle(state),
         title: "Маршрут тренировки",
         description: "Левая колонка теперь ведёт весь поток: старт, сценарии и подзадачи активного упражнения.",
         showHeader: false,
-        body: renderTrainingFlow(state)
+        body: renderTrainingFlow(state, tagOptions)
     });
 }
 
@@ -23,7 +24,7 @@ function resolveLeftPanelTitle(state) {
     return "Навигация";
 }
 
-function renderTrainingFlow(state) {
+function renderTrainingFlow(state, tagOptions) {
     if (state.catalog.status === "loading" || state.catalog.status === "idle") {
         return `
             <section class="lesson-rail__summary">
@@ -45,7 +46,22 @@ function renderTrainingFlow(state) {
     }
 
     return `
-        <div class="flow-block-list">
+        <div class="scenario-legend">
+            <div class="scenario-legend__header">
+                <span class="control-label">Карта тегов</span>
+                <details class="scenario-legend__details">
+                    <summary class="scenario-legend__button" aria-label="Показать legend цветовых линий">i</summary>
+                    <div class="scenario-legend__popover">
+                        <strong>Legend цветовых линий</strong>
+                        <p class="panel-copy">Наведите на тег, чтобы подсветить связанные сценарии в левой колонке. Цветовые линии показывают, какие сценарии сходятся по смысловым тегам.</p>
+                    </div>
+                </details>
+            </div>
+            <div class="scenario-legend__tags">
+                ${tagOptions.map((tag) => renderLegendTag(tag)).join("")}
+            </div>
+        </div>
+        <div class="flow-block-list" data-flow-block-list>
             ${renderWelcomeFlowBlock(state)}
             ${renderProgressFlowBlock(state)}
             ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
@@ -82,6 +98,7 @@ function renderProgressFlowBlock(state) {
 function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
+    const tagTokens = item.tags.map(toTagToken);
     const subtaskBlocks = isExpanded
         ? `
             <div
@@ -95,7 +112,7 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
         : "";
 
     return `
-        <section class="flow-node">
+        <section class="flow-node" data-tags="${escapeHtml(tagTokens.join(" "))}">
             <button
                 class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
                 type="button"
@@ -103,11 +120,17 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
+                <span class="flow-tag-lines" aria-hidden="true">
+                    ${item.tags.map((tag) => renderScenarioTagLine(tag)).join("")}
+                </span>
                 <span class="flow-block__heading">
                     <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
                 </span>
                 <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
+                <span class="flow-block__tag-row">
+                    ${item.tags.map((tag) => `<span class="flow-block__tag">${escapeHtml(formatTag(tag))}</span>`).join("")}
+                </span>
             </button>
             ${subtaskBlocks}
         </section>
@@ -187,4 +210,31 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
         </a>
     `;
+}
+
+function renderLegendTag(tag) {
+    const token = toTagToken(tag);
+    return `
+        <button
+            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)}"
+            type="button"
+            data-tag-legend-hover="${escapeHtml(token)}"
+        >
+            <span class="scenario-legend__swatch" aria-hidden="true"></span>
+            <span>${escapeHtml(formatTag(tag))}</span>
+        </button>
+    `;
+}
+
+function renderScenarioTagLine(tag) {
+    const token = toTagToken(tag);
+    return `<span class="flow-tag-line flow-tag-line--${escapeHtml(token)}"></span>`;
+}
+
+function toTagToken(tag) {
+    return String(tag ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]+/g, "-")
+        .replaceAll(/^-+|-+$/g, "");
 }

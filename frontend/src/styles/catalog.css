@@ -7,6 +7,98 @@
     background: rgba(255, 250, 241, 0.18);
 }
 
+.scenario-legend {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 250, 241, 0.28);
+}
+
+.scenario-legend__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.scenario-legend__details {
+    position: relative;
+}
+
+.scenario-legend__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid rgba(31, 23, 32, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.8);
+    color: var(--ink-soft);
+    cursor: pointer;
+    list-style: none;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.82rem;
+}
+
+.scenario-legend__button::-webkit-details-marker {
+    display: none;
+}
+
+.scenario-legend__popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 2;
+    width: min(260px, 72vw);
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid rgba(31, 23, 32, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 250, 241, 0.96);
+    box-shadow: 0 18px 32px rgba(22, 46, 56, 0.14);
+}
+
+.scenario-legend__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scenario-legend__tag {
+    --tag-accent: rgba(57, 89, 121, 0.8);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.68);
+    color: var(--ink-soft);
+    font: inherit;
+    cursor: pointer;
+    transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.scenario-legend__tag:hover,
+.scenario-legend__tag:focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--tag-accent);
+    background: rgba(255, 250, 241, 0.9);
+}
+
+.scenario-legend__swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--tag-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-accent) 18%, transparent);
+}
+
 .flow-block-list {
     display: grid;
     gap: 6px;
@@ -21,6 +113,7 @@
 }
 
 .flow-block {
+    position: relative;
     display: grid;
     gap: 4px;
     width: 100%;
@@ -83,16 +176,63 @@
     display: grid;
     gap: 4px;
     padding-top: 1px;
-    padding-left: 8px;
+    padding-left: 14px;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
+    border-left: 1px solid rgba(31, 23, 32, 0.08);
 }
 
 .flow-subtask-region {
     overflow: hidden;
     padding-right: 4px;
     box-sizing: border-box;
+}
+
+.flow-tag-lines {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: -10px;
+    display: flex;
+    align-items: stretch;
+    gap: 3px;
+    pointer-events: none;
+}
+
+.flow-tag-line {
+    width: 3px;
+    border-radius: 999px;
+    opacity: 0.18;
+    transform: scaleY(0.72);
+    transform-origin: center;
+    transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.flow-node:hover .flow-tag-line,
+.flow-node:focus-within .flow-tag-line {
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.flow-block__tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow-block__tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.42);
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .flow-block__heading {
@@ -140,7 +280,90 @@
     white-space: nowrap;
 }
 
+.lesson-lane--navigation[data-highlight-tag="status"] .flow-node[data-tags~="status"] .flow-tag-line--status,
+.lesson-lane--navigation[data-highlight-tag="working-tree"] .flow-node[data-tags~="working-tree"] .flow-tag-line--working-tree,
+.lesson-lane--navigation[data-highlight-tag="basics"] .flow-node[data-tags~="basics"] .flow-tag-line--basics,
+.lesson-lane--navigation[data-highlight-tag="branching"] .flow-node[data-tags~="branching"] .flow-tag-line--branching,
+.lesson-lane--navigation[data-highlight-tag="navigation"] .flow-node[data-tags~="navigation"] .flow-tag-line--navigation,
+.lesson-lane--navigation[data-highlight-tag="history"] .flow-node[data-tags~="history"] .flow-tag-line--history,
+.lesson-lane--navigation[data-highlight-tag="cleanup"] .flow-node[data-tags~="cleanup"] .flow-tag-line--cleanup,
+.lesson-lane--navigation[data-highlight-tag="planning"] .flow-node[data-tags~="planning"] .flow-tag-line--planning,
+.lesson-lane--navigation[data-highlight-tag="remote"] .flow-node[data-tags~="remote"] .flow-tag-line--remote,
+.lesson-lane--navigation[data-highlight-tag="inspection"] .flow-node[data-tags~="inspection"] .flow-tag-line--inspection {
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.flow-tag-line--status,
+.scenario-legend__tag--status {
+    --tag-accent: #4c7b67;
+}
+
+.flow-tag-line--working-tree,
+.scenario-legend__tag--working-tree {
+    --tag-accent: #6b8f4e;
+}
+
+.flow-tag-line--basics,
+.scenario-legend__tag--basics {
+    --tag-accent: #c48a3a;
+}
+
+.flow-tag-line--branching,
+.scenario-legend__tag--branching {
+    --tag-accent: #456d9a;
+}
+
+.flow-tag-line--navigation,
+.scenario-legend__tag--navigation {
+    --tag-accent: #8e5aa8;
+}
+
+.flow-tag-line--history,
+.scenario-legend__tag--history {
+    --tag-accent: #9a5f45;
+}
+
+.flow-tag-line--cleanup,
+.scenario-legend__tag--cleanup {
+    --tag-accent: #b65b5b;
+}
+
+.flow-tag-line--planning,
+.scenario-legend__tag--planning {
+    --tag-accent: #5179a4;
+}
+
+.flow-tag-line--remote,
+.scenario-legend__tag--remote {
+    --tag-accent: #2d7f8c;
+}
+
+.flow-tag-line--inspection,
+.scenario-legend__tag--inspection {
+    --tag-accent: #7a7d39;
+}
+
+.flow-tag-line--status,
+.flow-tag-line--working-tree,
+.flow-tag-line--basics,
+.flow-tag-line--branching,
+.flow-tag-line--navigation,
+.flow-tag-line--history,
+.flow-tag-line--cleanup,
+.flow-tag-line--planning,
+.flow-tag-line--remote,
+.flow-tag-line--inspection {
+    background: var(--tag-accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--tag-accent) 24%, transparent);
+}
+
 @media (max-width: 900px) {
+    .scenario-legend__popover {
+        left: 0;
+        right: auto;
+    }
+
     .flow-block-list,
     .flow-subtask-group {
         width: 100%;
@@ -156,6 +379,10 @@
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
+    }
+
+    .flow-tag-lines {
+        left: -6px;
     }
 }
 
