@@ -42,8 +42,9 @@ class ProgressControllerTest {
                 .andExpect(jsonPath("$.recentActivity").isArray())
                 .andExpect(jsonPath("$.recommendations.solved").isArray())
                 .andExpect(jsonPath("$.recommendations.attempted").isArray())
-                .andExpect(jsonPath("$.recommendations.next").isEmpty())
-                .andExpect(jsonPath("$.recommendations.rationale").value("Recommendation policy will attach here once the next-step rule set is wired."))
+                .andExpect(jsonPath("$.recommendations.next.scenarioSlug").isNotEmpty())
+                .andExpect(jsonPath("$.recommendations.next.scenarioTitle").isNotEmpty())
+                .andExpect(jsonPath("$.recommendations.rationale").isNotEmpty())
                 .andExpect(jsonPath("$.meta.source").value("mvp-fixture"));
     }
 }
