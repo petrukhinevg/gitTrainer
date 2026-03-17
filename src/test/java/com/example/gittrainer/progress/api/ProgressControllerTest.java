@@ -40,6 +40,11 @@ class ProgressControllerTest {
                 .andExpect(jsonPath("$.items[0].attemptCount").isNumber())
                 .andExpect(jsonPath("$.items[0].completionCount").isNumber())
                 .andExpect(jsonPath("$.recentActivity").isArray())
+                .andExpect(jsonPath("$.recommendations.solved").isArray())
+                .andExpect(jsonPath("$.recommendations.attempted").isArray())
+                .andExpect(jsonPath("$.recommendations.next.scenarioSlug").isNotEmpty())
+                .andExpect(jsonPath("$.recommendations.next.scenarioTitle").isNotEmpty())
+                .andExpect(jsonPath("$.recommendations.rationale").isNotEmpty())
                 .andExpect(jsonPath("$.meta.source").value("mvp-fixture"));
     }
 }

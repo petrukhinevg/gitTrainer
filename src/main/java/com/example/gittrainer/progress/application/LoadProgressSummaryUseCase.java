@@ -46,7 +46,12 @@ public class LoadProgressSummaryUseCase {
                 .sorted(Comparator.comparing(RecentProgressActivity::happenedAt).reversed())
                 .toList();
 
-        return new ProgressSummary(items, recentActivity, catalogBrowseResult.source());
+        return new ProgressSummary(
+                items,
+                recentActivity,
+                ProgressRecommendationPolicy.derive(items),
+                catalogBrowseResult.source()
+        );
     }
 
     private ProgressSummaryItem toSummaryItem(ScenarioSummary scenarioSummary, ScenarioProgressRecord progressRecord) {

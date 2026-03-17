@@ -60,6 +60,16 @@ class LoadProgressSummaryUseCaseTest {
         assertThat(historyCleanup.attemptCount()).isZero();
         assertThat(historyCleanup.completionCount()).isZero();
         assertThat(historyCleanup.lastActivityAt()).isNull();
+
+        assertThat(summary.recommendations().solved())
+                .extracting(RecommendationScenario::scenarioSlug)
+                .containsExactly("status-basics");
+        assertThat(summary.recommendations().attempted())
+                .extracting(RecommendationScenario::scenarioSlug)
+                .containsExactly("branch-safety");
+        assertThat(summary.recommendations().next().scenarioSlug()).isEqualTo("branch-safety");
+        assertThat(summary.recommendations().rationale())
+                .isEqualTo("Continue the scenario that already has unresolved progress.");
     }
 
     @Test
@@ -88,6 +98,17 @@ class LoadProgressSummaryUseCaseTest {
         assertThat(summary.recentActivity())
                 .extracting(RecentProgressActivity::scenarioSlug)
                 .contains("status-basics", "history-cleanup-preview");
+    }
+
+    @Test
+    void recommendsFirstUntouchedScenarioWhenNoProgressIsRecordedYet() {
+        ProgressSummary summary = loadProgressSummaryUseCase.load();
+
+        assertThat(summary.recommendations().solved()).isEmpty();
+        assertThat(summary.recommendations().attempted()).isEmpty();
+        assertThat(summary.recommendations().next().scenarioSlug()).isEqualTo("branch-safety");
+        assertThat(summary.recommendations().rationale())
+                .isEqualTo("Start the next untouched scenario from the current catalog order.");
     }
 
     private ProgressSummaryItem findItem(ProgressSummary summary, String scenarioSlug) {
