@@ -475,6 +475,8 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     const tone = resolveFeedbackPanelTone(feedbackPanelState.status, normalizedFeedback, submissionState);
     const revealedHints = normalizedFeedback.hint.reveals.slice(0, feedbackPanelState.revealedHintCount);
     const nextHint = normalizedFeedback.hint.reveals[feedbackPanelState.revealedHintCount] ?? null;
+    const hasExplanationDetails = normalizedFeedback.explanation.details.length > 0 || normalizedFeedback.explanation.tone === "partial";
+    const hasHintLayer = normalizedFeedback.hint.message || revealedHints.length || nextHint;
 
     return `
         <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel data-retry-feedback-status="${escapeHtml(normalizedFeedback.status)}">
@@ -483,64 +485,10 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <span class="workspace-card__badge">${escapeHtml(formatRetryFeedbackBadge(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState)))}</span>
             </div>
             <p class="panel-copy">${escapeHtml(copy)}</p>
-            <div class="practice-output practice-output--ready" data-retry-context-summary>
-                <span class="control-label">Сохранённый контекст упражнения</span>
-                <dl class="result-summary">
-                    <div>
-                        <dt>Сценарий</dt>
-                        <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
-                    </div>
-                    <div>
-                        <dt>Цель</dt>
-                        <dd>${escapeHtml(preservedContext.goal)}</dd>
-                    </div>
-                    <div>
-                        <dt>Ветка</dt>
-                        <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
-                    </div>
-                    <div>
-                        <dt>Подсказки репозитория</dt>
-                        <dd>${escapeHtml(`${preservedContext.branchCount} веток, ${preservedContext.fileCount} файлов`)}</dd>
-                    </div>
-                    <div>
-                        <dt>Последний тип ответа</dt>
-                        <dd>${escapeHtml(formatAnswerType(preservedContext.answerType))}</dd>
-                    </div>
-                    <div>
-                        <dt>Последний ответ</dt>
-                        <dd>${escapeHtml(preservedContext.answer || "Ответ ещё не подготовлен.")}</dd>
-                    </div>
-                    <div>
-                        <dt>Попытка</dt>
-                        <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
-                    </div>
-                    <div>
-                        <dt>Транспорт</dt>
-                        <dd>${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</dd>
-                    </div>
-                </dl>
-                ${preservedContext.errorMessage ? `
-                    <div class="practice-inline-note practice-inline-note--warning">
-                        <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
-                    </div>
-                ` : ""}
-            </div>
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
                     <p class="panel-copy" data-retry-explanation>${escapeHtml(normalizedFeedback.explanation.message)}</p>
-                    ${normalizedFeedback.explanation.tone === "partial" ? `
-                        <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
-                            <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
-                        </div>
-                    ` : ""}
-                    ${normalizedFeedback.explanation.details.length ? `
-                        <ul class="practice-feedback__detail-list">
-                            ${normalizedFeedback.explanation.details.map((detail) => `
-                                <li>${escapeHtml(detail)}</li>
-                            `).join("")}
-                        </ul>
-                    ` : ""}
                 </div>
                 <div class="practice-feedback__meta">
                     <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Попытка: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
@@ -552,24 +500,96 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
                 </div>
-                <div class="practice-inline-note" data-retry-feedback-slot="hint">
-                    <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
-                    ${revealedHints.length ? `
-                        <div class="practice-feedback__reveal-list">
-                            ${revealedHints.map((hint) => `
-                                <article class="practice-feedback__reveal" data-retry-hint-card="${escapeHtml(hint.id)}">
-                                    <span class="control-label">${escapeHtml(hint.title)}</span>
-                                    <p class="panel-copy">${escapeHtml(hint.message)}</p>
-                                </article>
-                            `).join("")}
+                <details class="practice-feedback__details">
+                    <summary class="practice-feedback__details-summary">Контекст упражнения</summary>
+                    <div class="practice-feedback__details-body">
+                        <div class="practice-output practice-output--ready" data-retry-context-summary>
+                            <dl class="result-summary">
+                                <div>
+                                    <dt>Сценарий</dt>
+                                    <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Цель</dt>
+                                    <dd>${escapeHtml(preservedContext.goal)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Ветка</dt>
+                                    <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Подсказки репозитория</dt>
+                                    <dd>${escapeHtml(`${preservedContext.branchCount} веток, ${preservedContext.fileCount} файлов`)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Последний тип ответа</dt>
+                                    <dd>${escapeHtml(formatAnswerType(preservedContext.answerType))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Последний ответ</dt>
+                                    <dd>${escapeHtml(preservedContext.answer || "Ответ ещё не подготовлен.")}</dd>
+                                </div>
+                                <div>
+                                    <dt>Попытка</dt>
+                                    <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Транспорт</dt>
+                                    <dd>${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</dd>
+                                </div>
+                            </dl>
+                            ${preservedContext.errorMessage ? `
+                                <div class="practice-inline-note practice-inline-note--warning">
+                                    <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
+                                </div>
+                            ` : ""}
                         </div>
-                    ` : ""}
-                    ${nextHint ? `
-                        <div class="practice-output__actions">
-                            <button class="practice-action" type="button" data-retry-hint-reveal>${escapeHtml(nextHint.label)}</button>
+                    </div>
+                </details>
+                ${hasExplanationDetails ? `
+                    <details class="practice-feedback__details">
+                        <summary class="practice-feedback__details-summary">Подробности объяснения</summary>
+                        <div class="practice-feedback__details-body">
+                            ${normalizedFeedback.explanation.tone === "partial" ? `
+                                <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
+                                    <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
+                                </div>
+                            ` : ""}
+                            ${normalizedFeedback.explanation.details.length ? `
+                                <ul class="practice-feedback__detail-list">
+                                    ${normalizedFeedback.explanation.details.map((detail) => `
+                                        <li>${escapeHtml(detail)}</li>
+                                    `).join("")}
+                                </ul>
+                            ` : ""}
                         </div>
-                    ` : ""}
-                </div>
+                    </details>
+                ` : ""}
+                ${hasHintLayer ? `
+                    <details class="practice-feedback__details" data-retry-feedback-slot="hint">
+                        <summary class="practice-feedback__details-summary">Подсказки и reveal</summary>
+                        <div class="practice-feedback__details-body">
+                            <div class="practice-inline-note">
+                                <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
+                            </div>
+                            ${revealedHints.length ? `
+                                <div class="practice-feedback__reveal-list">
+                                    ${revealedHints.map((hint) => `
+                                        <article class="practice-feedback__reveal" data-retry-hint-card="${escapeHtml(hint.id)}">
+                                            <span class="control-label">${escapeHtml(hint.title)}</span>
+                                            <p class="panel-copy">${escapeHtml(hint.message)}</p>
+                                        </article>
+                                    `).join("")}
+                                </div>
+                            ` : ""}
+                            ${nextHint ? `
+                                <div class="practice-output__actions">
+                                    <button class="practice-action" type="button" data-retry-hint-reveal>${escapeHtml(nextHint.label)}</button>
+                                </div>
+                            ` : ""}
+                        </div>
+                    </details>
+                ` : ""}
             </div>
         </div>
     `;
