@@ -297,6 +297,12 @@ export function createCatalogWorkspaceController({
                 void restartExerciseSession();
             });
         });
+
+        document.querySelectorAll("[data-retry-hint-reveal]").forEach((button) => {
+            button.addEventListener("click", () => {
+                revealNextRetryHint();
+            });
+        });
     }
 
     async function applyCatalogControls(form) {
@@ -595,6 +601,20 @@ export function createCatalogWorkspaceController({
         }
 
         await submitPreparedSubmission(lastPayload);
+    }
+
+    function revealNextRetryHint() {
+        const feedbackPanel = state.session.feedbackPanel;
+        if (!feedbackPanel) {
+            return;
+        }
+
+        const nextRevealCount = Math.min((feedbackPanel.revealedHintCount ?? 0) + 1, 2);
+        state.session.feedbackPanel = {
+            ...feedbackPanel,
+            revealedHintCount: nextRevealCount
+        };
+        render();
     }
 
     async function restartExerciseSession() {
@@ -1018,6 +1038,7 @@ function createInitialFeedbackPanelState() {
     return {
         status: "idle",
         contextSnapshot: null,
+        revealedHintCount: 0,
         updatedAt: null
     };
 }
@@ -1062,6 +1083,7 @@ function createFeedbackPanelState({
             outcomeCode: outcomeCode ?? previousContext?.outcomeCode ?? null,
             errorMessage: errorMessage ?? null
         },
+        revealedHintCount: 0,
         updatedAt: new Date().toISOString()
     };
 }

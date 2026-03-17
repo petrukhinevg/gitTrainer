@@ -437,6 +437,8 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     const preservedContext = normalizeFeedbackContextSnapshot(feedbackPanelState.contextSnapshot);
     const copy = resolveFeedbackPanelCopy(feedbackPanelState.status, normalizedFeedback, submissionState);
     const tone = resolveFeedbackPanelTone(feedbackPanelState.status, submissionState);
+    const revealedHints = normalizedFeedback.hint.reveals.slice(0, feedbackPanelState.revealedHintCount);
+    const nextHint = normalizedFeedback.hint.reveals[feedbackPanelState.revealedHintCount] ?? null;
 
     return `
         <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel>
@@ -490,19 +492,47 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
-                    <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
+                    <p class="panel-copy" data-retry-explanation>${escapeHtml(normalizedFeedback.explanation.message)}</p>
+                    ${normalizedFeedback.explanation.tone === "partial" ? `
+                        <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
+                            <p class="panel-copy">The answer is close enough to keep the learner in the same problem space, but it still needs a more exact command.</p>
+                        </div>
+                    ` : ""}
+                    ${normalizedFeedback.explanation.details.length ? `
+                        <ul class="practice-feedback__detail-list">
+                            ${normalizedFeedback.explanation.details.map((detail) => `
+                                <li>${escapeHtml(detail)}</li>
+                            `).join("")}
+                        </ul>
+                    ` : ""}
                 </div>
                 <div class="practice-feedback__meta">
                     <span class="practice-feedback__pill">Attempt: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
                     <span class="practice-feedback__pill">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
                     <span class="practice-feedback__pill">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
                     <span class="practice-feedback__pill">Explanation: ${escapeHtml(normalizedFeedback.explanation.status)}</span>
+                    <span class="practice-feedback__pill">Tone: ${escapeHtml(normalizedFeedback.explanation.tone)}</span>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">Eligibility UI stays mounted here so later retry policy can swap placeholder text for real availability rules.</p>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="hint">
-                    <p class="panel-copy">Hint progression remains a placeholder slot until the guided hint policy lands.</p>
+                    <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
+                    ${revealedHints.length ? `
+                        <div class="practice-feedback__reveal-list">
+                            ${revealedHints.map((hint) => `
+                                <article class="practice-feedback__reveal" data-retry-hint-card="${escapeHtml(hint.id)}">
+                                    <span class="control-label">${escapeHtml(hint.title)}</span>
+                                    <p class="panel-copy">${escapeHtml(hint.message)}</p>
+                                </article>
+                            `).join("")}
+                        </div>
+                    ` : ""}
+                    ${nextHint ? `
+                        <div class="practice-output__actions">
+                            <button class="practice-action" type="button" data-retry-hint-reveal>${escapeHtml(nextHint.label)}</button>
+                        </div>
+                    ` : ""}
                 </div>
             </div>
         </div>
@@ -618,7 +648,10 @@ function normalizeFeedbackPanelState(feedbackPanelState) {
         status: typeof safeState.status === "string" && safeState.status.trim() !== ""
             ? safeState.status
             : "idle",
-        contextSnapshot: safeState.contextSnapshot ?? null
+        contextSnapshot: safeState.contextSnapshot ?? null,
+        revealedHintCount: typeof safeState.revealedHintCount === "number"
+            ? safeState.revealedHintCount
+            : 0
     };
 }
 
@@ -656,9 +689,15 @@ function normalizeRetryFeedback(retryFeedback) {
             title: typeof explanation.title === "string" && explanation.title.trim() !== ""
                 ? explanation.title
                 : "Retry guidance",
+            tone: typeof explanation.tone === "string" && explanation.tone.trim() !== ""
+                ? explanation.tone
+                : "neutral",
             message: typeof explanation.message === "string" && explanation.message.trim() !== ""
                 ? explanation.message
-                : "Retry explanation content will appear here when the guided-retry policy is connected."
+                : "Retry explanation content will appear here when the guided-retry policy is connected.",
+            details: Array.isArray(explanation.details)
+                ? explanation.details.filter((detail) => typeof detail === "string" && detail.trim() !== "")
+                : []
         },
         hint: {
             status: typeof hint.status === "string" && hint.status.trim() !== ""
@@ -669,7 +708,25 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "baseline",
             message: typeof hint.message === "string" && hint.message.trim() !== ""
                 ? hint.message
-                : "Hint progression remains placeholder data until retry policy is connected."
+                : "Hint progression remains placeholder data until retry policy is connected.",
+            reveals: Array.isArray(hint.reveals)
+                ? hint.reveals
+                    .filter((item) => item && typeof item === "object")
+                    .map((item, index) => ({
+                        id: typeof item.id === "string" && item.id.trim() !== ""
+                            ? item.id
+                            : `hint-${index + 1}`,
+                        label: typeof item.label === "string" && item.label.trim() !== ""
+                            ? item.label
+                            : "Reveal hint",
+                        title: typeof item.title === "string" && item.title.trim() !== ""
+                            ? item.title
+                            : "Hint",
+                        message: typeof item.message === "string" && item.message.trim() !== ""
+                            ? item.message
+                            : "Additional hint content is unavailable."
+                    }))
+                : []
         }
     };
 }

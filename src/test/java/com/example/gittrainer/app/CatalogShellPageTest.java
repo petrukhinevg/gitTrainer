@@ -65,6 +65,8 @@ class CatalogShellPageTest {
                 "data-retry-feedback-panel",
                 "data-retry-context-summary",
                 "data-retry-feedback-slot",
+                "data-retry-explanation",
+                "data-retry-hint-reveal",
                 "data-session-request-retry",
                 "app-shell--exercise",
                 "Try again in a moment."
