@@ -209,7 +209,7 @@ function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionD
             <div class="practice-summary__header">
                 <div class="practice-summary__heading">
                     <h3 class="practice-summary__title">${escapeHtml(title)}</h3>
-                    <p class="panel-copy">${escapeHtml(summary)}</p>
+                    <p class="panel-copy practice-summary__lead">${escapeHtml(goal ?? summary)}</p>
                 </div>
                 <div class="practice-shell__meta practice-shell__meta--compact">
                     <span class="practice-shell__chip">Тип: ${escapeHtml(resolveActiveAnswerType(submissionDraft))}</span>
@@ -217,9 +217,9 @@ function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionD
                     <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
                 </div>
             </div>
-            ${goal ? `
+            ${goal && goal !== summary ? `
                 <div class="practice-inline-note">
-                    <p class="panel-copy">${escapeHtml(goal)}</p>
+                    <p class="panel-copy">${escapeHtml(summary)}</p>
                 </div>
             ` : ""}
         </div>

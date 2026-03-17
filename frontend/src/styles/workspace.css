@@ -144,22 +144,26 @@
 
 .practice-summary {
     display: grid;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 10px;
+    padding: 12px 14px;
     border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 18px;
+    border-radius: 16px;
     background: rgba(255, 250, 241, 0.58);
 }
 
 .practice-summary__header,
 .practice-summary__heading {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .practice-summary__title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.96rem;
+}
+
+.practice-summary__lead {
+    line-height: 1.4;
 }
 
 .practice-editor {
@@ -182,7 +186,7 @@
 
 .practice-editor textarea {
     width: 100%;
-    min-height: 116px;
+    min-height: 88px;
     padding: 4px 0 0;
     border: 0;
     background: transparent;
@@ -202,7 +206,8 @@
 .practice-composer__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px;
+    align-items: center;
     padding: 0 16px;
 }
 
@@ -224,14 +229,15 @@
 
 .practice-action--primary {
     color: var(--accent);
+    font-weight: 700;
 }
 
 .practice-output {
     display: grid;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 8px;
+    padding: 10px 12px;
     border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 16px;
+    border-radius: 14px;
     background: rgba(255, 250, 241, 0.5);
     color: var(--ink-soft);
 }
@@ -245,7 +251,7 @@
 .practice-output__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px;
 }
 
 .practice-composer__controls,
@@ -253,7 +259,7 @@
 .practice-feedback__summary,
 .practice-feedback__meta {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .practice-composer__controls {
@@ -268,10 +274,10 @@
 .practice-select select {
     width: 100%;
     border: 1px solid rgba(31, 23, 32, 0.12);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(255, 250, 241, 0.92);
     color: var(--ink-strong);
-    padding: 11px 14px;
+    padding: 9px 12px;
     font: inherit;
 }
 
@@ -310,7 +316,7 @@
 }
 
 .practice-request {
-    padding: 12px 14px;
+    padding: 10px 12px;
     border: 1px solid rgba(31, 23, 32, 0.08);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.5);
@@ -318,11 +324,11 @@
 
 .practice-feedback__title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.94rem;
 }
 
 .practice-feedback__meta {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
 }
 
 .practice-feedback__detail-list {
@@ -340,7 +346,7 @@
 }
 
 .practice-feedback__reveal {
-    padding: 12px 14px;
+    padding: 10px 12px;
     border: 1px solid rgba(31, 23, 32, 0.08);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.7);
@@ -349,13 +355,13 @@
 .practice-feedback__pill {
     display: inline-flex;
     align-items: center;
-    min-height: 36px;
-    padding: 8px 12px;
+    min-height: 30px;
+    padding: 6px 10px;
     border: 1px solid rgba(31, 23, 32, 0.1);
     border-radius: 999px;
     background: rgba(255, 250, 241, 0.72);
     color: inherit;
-    font-size: 0.84rem;
+    font-size: 0.74rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
