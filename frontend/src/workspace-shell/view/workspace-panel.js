@@ -72,15 +72,14 @@ export function renderWorkspacePanel(state) {
                     <span class="control-label">Git-viewer</span>
                     <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
-                <div class="practice-shell__meta">
+                <div class="practice-shell__meta practice-shell__meta--viewer">
                     <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
                     <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
-                    <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
                     <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
                 <div class="practice-shell__viewer-body">
                     ${renderBranchGraph(repositoryContext.branches)}
-                    ${renderSessionTransportOutput(bootstrapState, lifecycle)}
+                    ${renderViewerStatusStrip(bootstrapState, lifecycle)}
                 </div>
             </section>
         `,
@@ -152,7 +151,7 @@ function renderPlaceholderViewer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">ожидание</span>
             </div>
-            <div class="practice-inline-note">
+            <div class="practice-inline-note practice-inline-note--viewer">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
             </div>
             <div class="branch-graph branch-graph--placeholder" aria-hidden="true">
@@ -227,31 +226,31 @@ function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionD
     `;
 }
 
-function renderSessionTransportOutput(bootstrapState, lifecycle) {
+function renderViewerStatusStrip(bootstrapState, lifecycle) {
     if (bootstrapState.status === "pending") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия запускается",
             status: "pending",
             badge: "pending",
-            copy: "Поднимаем сессию для активного сценария перед отправкой ответа."
+            copy: "Поднимаем transport для первой отправки."
         });
     }
 
     if (bootstrapState.status === "retryable-error") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессию можно перезапустить",
             status: "retryable",
             badge: "retryable",
             copy: bootstrapState.error?.message ?? "Не удалось запустить сессию.",
             actions: `
-                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск сессии</button>
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск</button>
             `
         });
     }
 
     if (bootstrapState.status === "terminal-error") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия недоступна",
             status: "terminal",
             badge: "terminal",
             copy: bootstrapState.error?.message ?? "Сессию не удалось запустить."
@@ -259,36 +258,37 @@ function renderSessionTransportOutput(bootstrapState, lifecycle) {
     }
 
     if (bootstrapState.status !== "ready" || !bootstrapState.response) {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия ожидает запуск",
             status: "idle",
             badge: "idle",
-            copy: "Сессия запускается автоматически после открытия маршрута упражнения."
+            copy: "Transport поднимется автоматически после открытия упражнения."
         });
     }
 
     return `
-        <div class="practice-output practice-output--ready">
-            <span class="control-label">Транспорт сессии</span>
-            <dl class="result-summary">
-                <div>
-                    <dt>ID сессии</dt>
-                    <dd>${escapeHtml(bootstrapState.response.sessionId)}</dd>
-                </div>
-                <div>
-                    <dt>Жизненный цикл</dt>
-                    <dd>${escapeHtml(formatTransportBadge(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active"))}</dd>
-                </div>
-                <div>
-                    <dt>Отправки</dt>
-                    <dd>${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</dd>
-                </div>
-                <div>
-                    <dt>Типы ответов</dt>
-                    <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).map(formatAnswerType).join(", ") || "неизвестно")}</dd>
-                </div>
-            </dl>
-            <p class="panel-copy">${escapeHtml(resolveSubmissionBoundaryCopy(bootstrapState.response.submission))}</p>
+        <div class="viewer-status-strip viewer-status-strip--ready">
+            <div class="viewer-status-strip__header">
+                <span class="control-label">Сессия активна</span>
+                <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active"))}</span>
+            </div>
+            <div class="viewer-status-strip__meta">
+                <span class="viewer-status-strip__item">Отправки: ${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</span>
+                <span class="viewer-status-strip__item">Типы: ${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).map(formatAnswerType).join(", ") || "неизвестно")}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderViewerStateBlock({ label, status, badge, copy, actions = "" }) {
+    return `
+        <div class="viewer-status-strip viewer-status-strip--${escapeHtml(status)}">
+            <div class="viewer-status-strip__header">
+                <span class="control-label">${escapeHtml(label)}</span>
+                <span class="workspace-card__badge">${escapeHtml(badge)}</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            ${actions ? `<div class="viewer-status-strip__actions">${actions}</div>` : ""}
         </div>
     `;
 }
