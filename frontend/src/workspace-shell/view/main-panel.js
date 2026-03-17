@@ -4,7 +4,7 @@ import {
     normalizeTaskInstructions,
     normalizeTaskSteps
 } from "./lesson-task.js";
-import { escapeHtml } from "./render-helpers.js";
+import { encodeHashSegment, escapeHtml } from "./render-helpers.js";
 
 export function renderMainPanel(state, { tagOptions = [], providerOptions = [] } = {}) {
     if (state.route === "exercise") {
@@ -153,13 +153,10 @@ function renderProgressMainPanel(state) {
             </section>
             <section class="lesson-block lesson-block--reading">
                 <div class="lesson-section__header">
-                    <span class="control-label">Reserved follow-up</span>
-                    <h4 class="lesson-block__title">Next-step guidance shell</h4>
+                    <span class="control-label">Next-step guidance</span>
+                    <h4 class="lesson-block__title">Recommendation surface is now mounted</h4>
                 </div>
-                <div class="progress-guidance-shell">
-                    <span class="progress-status-marker progress-status-marker--planned">planned</span>
-                    <p class="panel-copy">Recommendation presentation will mount here in a later task without changing the overall progress surface.</p>
-                </div>
+                ${renderProgressGuidanceShell(summary.recommendations)}
             </section>
         `
     });
@@ -217,6 +214,109 @@ function formatActivityType(eventType) {
 
 function describeRecentActivity(activity) {
     return `${activity.scenarioTitle} last reported a ${formatActivityType(activity.eventType)} event at ${activity.happenedAt}.`;
+}
+
+function renderProgressGuidanceShell(recommendations) {
+    const solvedItems = recommendations?.solved ?? [];
+    const attemptedItems = recommendations?.attempted ?? [];
+    const solvedCount = recommendations?.solved?.length ?? 0;
+    const attemptedCount = recommendations?.attempted?.length ?? 0;
+    const nextScenario = recommendations?.next ?? null;
+    const hasNextAttempt = nextScenario && attemptedItems.some(
+        (scenario) => scenario.scenarioSlug === nextScenario.scenarioSlug
+    );
+    const primaryMarker = hasNextAttempt ? "in_progress" : "planned";
+    const primaryLabel = hasNextAttempt ? "Resume next scenario" : "Start recommended scenario";
+    const primaryHref = nextScenario
+        ? `#/exercise/${encodeHashSegment(nextScenario.scenarioSlug)}`
+        : "#/progress";
+    const secondaryAttempt = attemptedItems.find(
+        (scenario) => scenario.scenarioSlug !== nextScenario?.scenarioSlug
+    ) ?? null;
+
+    return `
+        <div class="progress-guidance-shell" data-progress-guidance-shell>
+            <div class="progress-guidance-shell__hero" data-progress-guidance-primary>
+                <span class="progress-status-marker progress-status-marker--${escapeHtml(primaryMarker)}">guided</span>
+                <strong>${escapeHtml(nextScenario?.scenarioTitle ?? "Recommendation is still resolving")}</strong>
+                <p class="panel-copy">${escapeHtml(recommendations?.rationale ?? "Recommendation guidance is unavailable.")}</p>
+                <div class="lesson-spotlight__meta">
+                    <span class="lesson-spotlight__pill">Primary: ${escapeHtml(primaryLabel)}</span>
+                    <span class="lesson-spotlight__pill">Solved: ${solvedCount}</span>
+                    <span class="lesson-spotlight__pill">Attempted: ${attemptedCount}</span>
+                </div>
+                <div class="progress-guidance-actions">
+                    <a class="scenario-action" href="${escapeHtml(primaryHref)}">${escapeHtml(primaryLabel)}</a>
+                    ${secondaryAttempt ? `
+                        <a class="scenario-action scenario-action--secondary" href="#/exercise/${encodeHashSegment(secondaryAttempt.scenarioSlug)}">Continue attempted scenario</a>
+                    ` : ""}
+                </div>
+            </div>
+            <div class="progress-guidance-groups">
+                ${renderProgressRecommendationList({
+                    label: "Attempted and still active",
+                    title: "Keep momentum on work already in progress",
+                    items: attemptedItems,
+                    emptyCopy: "No partially completed scenarios need follow-up right now.",
+                    marker: "in_progress",
+                    actionLabel: "Continue"
+                })}
+                ${renderProgressRecommendationList({
+                    label: "Solved and available",
+                    title: "Revisit solved scenarios when you need reinforcement",
+                    items: solvedItems,
+                    emptyCopy: "No solved scenarios are available for review yet.",
+                    marker: "completed",
+                    actionLabel: "Review"
+                })}
+            </div>
+            <div class="lesson-spotlight__meta">
+                <span class="lesson-spotlight__pill">Solved: ${solvedCount}</span>
+                <span class="lesson-spotlight__pill">Attempted: ${attemptedCount}</span>
+                <span class="lesson-spotlight__pill">Next: ${nextScenario ? "ready" : "pending"}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderProgressRecommendationList({
+    label,
+    title,
+    items,
+    emptyCopy,
+    marker,
+    actionLabel
+}) {
+    return `
+        <section class="progress-guidance-group" data-progress-recommendation-list="${escapeHtml(label)}">
+            <div class="lesson-section__header">
+                <span class="control-label">${escapeHtml(label)}</span>
+                <h5 class="lesson-block__title">${escapeHtml(title)}</h5>
+            </div>
+            ${items.length > 0 ? `
+                <div class="progress-guidance-list">
+                    ${items.map((item) => renderProgressRecommendationCard(item, { marker, actionLabel })).join("")}
+                </div>
+            ` : `
+                <p class="panel-copy">${escapeHtml(emptyCopy)}</p>
+            `}
+        </section>
+    `;
+}
+
+function renderProgressRecommendationCard(item, { marker, actionLabel }) {
+    return `
+        <article class="progress-recommendation-card">
+            <div class="progress-card__header">
+                <span class="progress-status-marker progress-status-marker--${escapeHtml(marker)}">${escapeHtml(formatProgressStatus(marker))}</span>
+                <span class="lesson-spotlight__pill">${escapeHtml(item.scenarioSlug)}</span>
+            </div>
+            <strong>${escapeHtml(item.scenarioTitle)}</strong>
+            <div class="progress-guidance-actions">
+                <a class="scenario-action scenario-action--secondary" href="#/exercise/${encodeHashSegment(item.scenarioSlug)}">${escapeHtml(actionLabel)}</a>
+            </div>
+        </article>
+    `;
 }
 
 function renderExerciseMainPanel(state) {
