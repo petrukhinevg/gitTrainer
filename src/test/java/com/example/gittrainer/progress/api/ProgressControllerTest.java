@@ -40,6 +40,10 @@ class ProgressControllerTest {
                 .andExpect(jsonPath("$.items[0].attemptCount").isNumber())
                 .andExpect(jsonPath("$.items[0].completionCount").isNumber())
                 .andExpect(jsonPath("$.recentActivity").isArray())
+                .andExpect(jsonPath("$.recommendations.solved").isArray())
+                .andExpect(jsonPath("$.recommendations.attempted").isArray())
+                .andExpect(jsonPath("$.recommendations.next").isEmpty())
+                .andExpect(jsonPath("$.recommendations.rationale").value("Recommendation policy will attach here once the next-step rule set is wired."))
                 .andExpect(jsonPath("$.meta.source").value("mvp-fixture"));
     }
 }
