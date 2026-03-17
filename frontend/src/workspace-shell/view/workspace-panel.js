@@ -59,6 +59,7 @@ export function renderWorkspacePanel(state) {
     const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
     const bootstrapState = normalizeBootstrapState(state.session?.bootstrap);
     const submissionState = normalizeSubmissionState(state.session?.submission);
+    const feedbackPanelState = normalizeFeedbackPanelState(state.session?.feedbackPanel);
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
     const retryFeedback = resolveRetryFeedback(bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
@@ -122,7 +123,7 @@ export function renderWorkspacePanel(state) {
                     submissionState,
                     bootstrapState.response?.submission?.supportedAnswerTypes ?? []
                 )}
-                ${renderRetryFeedbackPanel(retryFeedback, submissionState)}
+                ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
             </section>
         `
     });
@@ -431,20 +432,61 @@ function renderPreparedPayloadSummary(preparedSubmission) {
     `;
 }
 
-function renderRetryFeedbackPanel(retryFeedback, submissionState) {
+function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState) {
     const normalizedFeedback = normalizeRetryFeedback(retryFeedback);
-    const awaitingSubmission = submissionState.status !== "ready";
-    const copy = awaitingSubmission
-        ? "Retry guidance, explanation copy, and hint progression will stay mounted here after an evaluated submission."
-        : normalizedFeedback.explanation.message;
+    const preservedContext = normalizeFeedbackContextSnapshot(feedbackPanelState.contextSnapshot);
+    const copy = resolveFeedbackPanelCopy(feedbackPanelState.status, normalizedFeedback, submissionState);
+    const tone = resolveFeedbackPanelTone(feedbackPanelState.status, submissionState);
 
     return `
-        <div class="practice-output practice-output--ready" data-retry-feedback-panel>
+        <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel>
             <div class="practice-output__header">
                 <span class="control-label">Retry feedback</span>
-                <span class="workspace-card__badge">${escapeHtml(normalizedFeedback.retryState.status)}</span>
+                <span class="workspace-card__badge">${escapeHtml(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState))}</span>
             </div>
             <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="practice-output practice-output--ready" data-retry-context-summary>
+                <span class="control-label">Preserved exercise context</span>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Scenario</dt>
+                        <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
+                    </div>
+                    <div>
+                        <dt>Goal</dt>
+                        <dd>${escapeHtml(preservedContext.goal)}</dd>
+                    </div>
+                    <div>
+                        <dt>Branch</dt>
+                        <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
+                    </div>
+                    <div>
+                        <dt>Repo cues</dt>
+                        <dd>${escapeHtml(`${preservedContext.branchCount} branches, ${preservedContext.fileCount} files`)}</dd>
+                    </div>
+                    <div>
+                        <dt>Last answer type</dt>
+                        <dd>${escapeHtml(preservedContext.answerType)}</dd>
+                    </div>
+                    <div>
+                        <dt>Last answer</dt>
+                        <dd>${escapeHtml(preservedContext.answer || "No answer prepared yet.")}</dd>
+                    </div>
+                    <div>
+                        <dt>Attempt</dt>
+                        <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
+                    </div>
+                    <div>
+                        <dt>Transport</dt>
+                        <dd>${escapeHtml(preservedContext.transportDisposition)}</dd>
+                    </div>
+                </dl>
+                ${preservedContext.errorMessage ? `
+                    <div class="practice-inline-note practice-inline-note--warning">
+                        <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
+                    </div>
+                ` : ""}
+            </div>
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
@@ -455,6 +497,12 @@ function renderRetryFeedbackPanel(retryFeedback, submissionState) {
                     <span class="practice-feedback__pill">Eligibility: ${escapeHtml(normalizedFeedback.retryState.eligibility)}</span>
                     <span class="practice-feedback__pill">Hint level: ${escapeHtml(normalizedFeedback.hint.level)}</span>
                     <span class="practice-feedback__pill">Explanation: ${escapeHtml(normalizedFeedback.explanation.status)}</span>
+                </div>
+                <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
+                    <p class="panel-copy">Eligibility UI stays mounted here so later retry policy can swap placeholder text for real availability rules.</p>
+                </div>
+                <div class="practice-inline-note" data-retry-feedback-slot="hint">
+                    <p class="panel-copy">Hint progression remains a placeholder slot until the guided hint policy lands.</p>
                 </div>
             </div>
         </div>
@@ -564,6 +612,16 @@ function normalizeSubmissionState(submissionState) {
     };
 }
 
+function normalizeFeedbackPanelState(feedbackPanelState) {
+    const safeState = feedbackPanelState ?? {};
+    return {
+        status: typeof safeState.status === "string" && safeState.status.trim() !== ""
+            ? safeState.status
+            : "idle",
+        contextSnapshot: safeState.contextSnapshot ?? null
+    };
+}
+
 function resolveRetryFeedback(bootstrapState, submissionState) {
     return submissionState.response?.retryFeedback
         ?? bootstrapState.response?.submission?.placeholderRetryFeedback
@@ -614,6 +672,83 @@ function normalizeRetryFeedback(retryFeedback) {
                 : "Hint progression remains placeholder data until retry policy is connected."
         }
     };
+}
+
+function normalizeFeedbackContextSnapshot(contextSnapshot) {
+    const safeContext = contextSnapshot ?? {};
+    return {
+        scenarioTitle: typeof safeContext.scenarioTitle === "string" && safeContext.scenarioTitle.trim() !== ""
+            ? safeContext.scenarioTitle
+            : "Active exercise",
+        goal: typeof safeContext.goal === "string" && safeContext.goal.trim() !== ""
+            ? safeContext.goal
+            : "Retry context will stay anchored to the current exercise.",
+        currentBranch: typeof safeContext.currentBranch === "string" && safeContext.currentBranch.trim() !== ""
+            ? safeContext.currentBranch
+            : "unknown",
+        branchCount: typeof safeContext.branchCount === "number" ? safeContext.branchCount : 0,
+        fileCount: typeof safeContext.fileCount === "number" ? safeContext.fileCount : 0,
+        answerType: typeof safeContext.answerType === "string" && safeContext.answerType.trim() !== ""
+            ? safeContext.answerType
+            : "command_text",
+        answer: typeof safeContext.answer === "string" ? safeContext.answer : "",
+        attemptNumber: typeof safeContext.attemptNumber === "number" ? safeContext.attemptNumber : 0,
+        transportDisposition: typeof safeContext.transportDisposition === "string" && safeContext.transportDisposition.trim() !== ""
+            ? safeContext.transportDisposition
+            : "idle",
+        errorMessage: typeof safeContext.errorMessage === "string" && safeContext.errorMessage.trim() !== ""
+            ? safeContext.errorMessage
+            : null
+    };
+}
+
+function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submissionState) {
+    switch (feedbackPanelStatus) {
+        case "submitting":
+            return "The retry panel is already reserving exercise context for the in-flight submission so the learner does not lose place if the attempt fails.";
+        case "retry-ready":
+            return "The current exercise context stays pinned after a failed evaluation while explanation and hint content remain placeholder slots.";
+        case "request-failure":
+            return "The request failed, but the active exercise context and last attempted answer stay visible for recovery.";
+        case "resolved":
+            return "The retry shell stays mounted even after a successful answer so later tasks can layer richer guidance without changing layout.";
+        default:
+            return submissionState.status === "ready"
+                ? normalizedFeedback.explanation.message
+                : "Retry guidance, explanation copy, and hint progression will stay mounted here after an evaluated submission.";
+    }
+}
+
+function resolveFeedbackPanelTone(feedbackPanelStatus, submissionState) {
+    if (feedbackPanelStatus === "request-failure" || submissionState.status === "retryable-error") {
+        return "retryable";
+    }
+
+    if (submissionState.status === "terminal-error") {
+        return "terminal";
+    }
+
+    return "ready";
+}
+
+function resolveFeedbackPanelBadge(feedbackPanelStatus, normalizedFeedback, submissionState) {
+    if (feedbackPanelStatus === "request-failure") {
+        return submissionState.status === "terminal-error" ? "terminal" : "retryable";
+    }
+
+    if (feedbackPanelStatus === "submitting") {
+        return "holding-context";
+    }
+
+    if (feedbackPanelStatus === "retry-ready") {
+        return "retry-ready";
+    }
+
+    if (feedbackPanelStatus === "resolved") {
+        return "resolved";
+    }
+
+    return normalizedFeedback.retryState.status;
 }
 
 function isSubmitDisabled(bootstrapState, submissionState) {
