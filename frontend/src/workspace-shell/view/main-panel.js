@@ -153,13 +153,10 @@ function renderProgressMainPanel(state) {
             </section>
             <section class="lesson-block lesson-block--reading">
                 <div class="lesson-section__header">
-                    <span class="control-label">Reserved follow-up</span>
-                    <h4 class="lesson-block__title">Next-step guidance shell</h4>
+                    <span class="control-label">Next-step guidance</span>
+                    <h4 class="lesson-block__title">Recommendation surface is now mounted</h4>
                 </div>
-                <div class="progress-guidance-shell">
-                    <span class="progress-status-marker progress-status-marker--planned">planned</span>
-                    <p class="panel-copy">Recommendation presentation will mount here in a later task without changing the overall progress surface.</p>
-                </div>
+                ${renderProgressGuidanceShell(summary.recommendations)}
             </section>
         `
     });
@@ -217,6 +214,25 @@ function formatActivityType(eventType) {
 
 function describeRecentActivity(activity) {
     return `${activity.scenarioTitle} last reported a ${formatActivityType(activity.eventType)} event at ${activity.happenedAt}.`;
+}
+
+function renderProgressGuidanceShell(recommendations) {
+    const solvedCount = recommendations?.solved?.length ?? 0;
+    const attemptedCount = recommendations?.attempted?.length ?? 0;
+    const nextTitle = recommendations?.next?.scenarioTitle ?? "Recommendation is still resolving";
+
+    return `
+        <div class="progress-guidance-shell" data-progress-guidance-shell>
+            <span class="progress-status-marker progress-status-marker--planned">guided</span>
+            <strong>${escapeHtml(nextTitle)}</strong>
+            <p class="panel-copy">${escapeHtml(recommendations?.rationale ?? "Recommendation guidance is unavailable.")}</p>
+            <div class="lesson-spotlight__meta">
+                <span class="lesson-spotlight__pill">Solved: ${solvedCount}</span>
+                <span class="lesson-spotlight__pill">Attempted: ${attemptedCount}</span>
+                <span class="lesson-spotlight__pill">Next: ${recommendations?.next ? "ready" : "pending"}</span>
+            </div>
+        </div>
+    `;
 }
 
 function renderExerciseMainPanel(state) {
