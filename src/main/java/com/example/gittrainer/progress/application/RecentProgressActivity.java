@@ -4,12 +4,11 @@ import com.example.gittrainer.progress.domain.ProgressStatus;
 
 import java.time.Instant;
 
-public record ProgressSummaryItem(
+public record RecentProgressActivity(
         String scenarioSlug,
         String scenarioTitle,
         ProgressStatus status,
-        int attemptCount,
-        int completionCount,
-        Instant lastActivityAt
+        String eventType,
+        Instant happenedAt
 ) {
 }
