@@ -53,6 +53,7 @@ class CatalogShellPageTest {
         assertAssetContains(
                 "/app.js",
                 "#/catalog",
+                "#/progress",
                 "#/exercise/",
                 "[data-scenario-toggle]",
                 "[data-catalog-controls-form]",

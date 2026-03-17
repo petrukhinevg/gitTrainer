@@ -47,6 +47,7 @@ function renderTrainingFlow(state) {
     return `
         <div class="flow-block-list">
             ${renderWelcomeFlowBlock(state)}
+            ${renderProgressFlowBlock(state)}
             ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
                 state,
                 item,
@@ -64,6 +65,16 @@ function renderWelcomeFlowBlock(state) {
         <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/catalog">
             <span class="flow-block__eyebrow">Welcome</span>
             <strong class="flow-block__title">Start here</strong>
+        </a>
+    `;
+}
+
+function renderProgressFlowBlock(state) {
+    const isActive = state.route === "progress";
+    return `
+        <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/progress">
+            <span class="flow-block__eyebrow">Progress</span>
+            <strong class="flow-block__title">Review practice status</strong>
         </a>
     `;
 }

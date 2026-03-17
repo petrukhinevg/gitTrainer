@@ -11,6 +11,10 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
         return renderExerciseMainPanel(state);
     }
 
+    if (state.route === "progress") {
+        return renderProgressMainPanel(state);
+    }
+
     return renderLessonLane({
         lane: "lesson",
         showHeader: false,
@@ -25,6 +29,55 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
                 ]
             })}
             ${renderWelcomePage(state, { tagOptions, providerOptions })}
+        `
+    });
+}
+
+function renderProgressMainPanel(state) {
+    return renderLessonLane({
+        lane: "lesson",
+        showHeader: false,
+        body: `
+            ${renderMainLead({
+                label: "Progress route",
+                title: "Progress and next-step shell is reserved",
+                description: "This route is the shared seam for the upcoming progress summary and recommendation slices.",
+                meta: [
+                    `Route: ${state.route}`,
+                    `Status: ${state.progress.status}`
+                ]
+            })}
+            <section class="lesson-spotlight">
+                <span class="control-label">Epic 102 baseline</span>
+                <h4 class="lesson-block__title">Progress surface will mount here</h4>
+                <p class="panel-copy">The screen is intentionally sparse: child tasks can now branch from a stable route and replace this placeholder with status markers, recent activity, summary integration, and next-step guidance.</p>
+                <div class="lesson-spotlight__meta">
+                    <span class="lesson-spotlight__pill">Summary: pending</span>
+                    <span class="lesson-spotlight__pill">Recommendations: pending</span>
+                </div>
+            </section>
+            <section class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Scope</span>
+                    <h4 class="lesson-block__title">What this seam locks in</h4>
+                </div>
+                <ol class="task-sequence">
+                    <li class="task-sequence__item">
+                        <span class="task-sequence__index">1</span>
+                        <div class="task-sequence__copy">
+                            <strong>Dedicated progress route</strong>
+                            <p>The SPA now reserves a stable location for learner progress without overloading catalog or exercise pages.</p>
+                        </div>
+                    </li>
+                    <li class="task-sequence__item">
+                        <span class="task-sequence__index">2</span>
+                        <div class="task-sequence__copy">
+                            <strong>Shared progress state slot</strong>
+                            <p>Future summary and recommendation providers can attach to <code>state.progress</code> without changing route parsing again.</p>
+                        </div>
+                    </li>
+                </ol>
+            </section>
         `
     });
 }

@@ -24,6 +24,7 @@ export function createCatalogWorkspaceController({
         providerName: DEFAULT_PROVIDER_NAME,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
+        progress: createInitialProgressState(),
         query: cloneQuery(DEFAULT_QUERY),
         catalog: {
             status: "idle",
@@ -942,6 +943,14 @@ function parseRoute(hash) {
         };
     }
 
+    if (hash === "#/progress") {
+        return {
+            name: "progress",
+            scenarioSlug: null,
+            focus: null
+        };
+    }
+
     const exerciseMatch = hash.match(/^#\/exercise\/([^?#]+)(?:\?([^#]+))?$/);
     if (exerciseMatch) {
         const query = new URLSearchParams(exerciseMatch[2] ?? "");
@@ -1040,6 +1049,14 @@ function createInitialSubmissionRequestState() {
         response: null,
         error: null,
         lastPayload: null
+    };
+}
+
+function createInitialProgressState() {
+    return {
+        status: "placeholder",
+        summary: null,
+        recommendations: null
     };
 }
 
