@@ -28,7 +28,24 @@ def frontendDir = layout.projectDirectory.dir("frontend")
 def frontendDistDir = frontendDir.dir("dist")
 def frontendTestStaticDir = layout.buildDirectory.dir("resources/main/static")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
-def npmCommand = isWindows ? "npm.cmd" : "npm"
+def npmCommand = resolveNpmCommand(isWindows)
+
+static def resolveNpmCommand(boolean isWindows) {
+    if (isWindows) {
+        return "npm.cmd"
+    }
+
+    def configuredNpm = System.getenv("NPM_BIN")
+    if (configuredNpm && new File(configuredNpm).exists()) {
+        return configuredNpm
+    }
+
+    return [
+            "/opt/homebrew/bin/npm",
+            "/usr/local/bin/npm",
+            "/usr/bin/npm"
+    ].find { new File(it).exists() } ?: "npm"
+}
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
