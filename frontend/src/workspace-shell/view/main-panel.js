@@ -34,52 +34,189 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
 }
 
 function renderProgressMainPanel(state) {
+    if (state.progress.status === "loading" || state.progress.status === "idle") {
+        return renderLessonLane({
+            lane: "lesson",
+            showHeader: false,
+            body: `
+                ${renderMainLead({
+                    label: "Progress route",
+                    title: "Loading progress surface",
+                    description: "The shell is mounted and waiting for progress summary data.",
+                    meta: [
+                        `Route: ${state.route}`,
+                        `Status: ${state.progress.status}`
+                    ]
+                })}
+                <section class="lesson-spotlight lesson-spotlight--loading" data-progress-surface>
+                    <span class="control-label">Progress state</span>
+                    <h4 class="lesson-block__title">Preparing progress markers</h4>
+                    <p class="panel-copy">Status markers and recent activity will mount here once the summary is ready.</p>
+                </section>
+            `
+        });
+    }
+
+    if (state.progress.status === "error") {
+        return renderLessonLane({
+            lane: "lesson",
+            showHeader: false,
+            body: `
+                ${renderMainLead({
+                    label: "Progress route",
+                    title: "Progress surface is unavailable",
+                    description: "The shell stays mounted even when progress data cannot be loaded.",
+                    meta: [
+                        `Route: ${state.route}`,
+                        `Status: ${state.progress.status}`
+                    ]
+                })}
+                <section class="lesson-block lesson-block--reading" data-progress-surface>
+                    <div class="lesson-section__header">
+                        <span class="control-label">Recovery</span>
+                        <h4 class="lesson-block__title">Progress summary unavailable</h4>
+                    </div>
+                    <p class="panel-copy">${escapeHtml(state.progress.error ?? "Progress summary is unavailable right now.")}</p>
+                </section>
+            `
+        });
+    }
+
+    if (state.progress.status === "empty") {
+        return renderLessonLane({
+            lane: "lesson",
+            showHeader: false,
+            body: `
+                ${renderMainLead({
+                    label: "Progress route",
+                    title: "No recorded progress yet",
+                    description: "The shell is ready, but no scenario activity has been recorded.",
+                    meta: [
+                        `Route: ${state.route}`,
+                        `Status: ${state.progress.status}`
+                    ]
+                })}
+                <section class="lesson-spotlight" data-progress-surface>
+                    <span class="control-label">Empty state</span>
+                    <h4 class="lesson-block__title">Start a scenario to populate this surface</h4>
+                    <p class="panel-copy">Once the learner starts or completes scenarios, status markers and recent activity will appear here.</p>
+                </section>
+            `
+        });
+    }
+
+    const summary = state.progress.summary;
+    const totalScenarios = summary?.items?.length ?? 0;
+    const completedCount = summary?.items?.filter((item) => item.status === "completed").length ?? 0;
+    const inProgressCount = summary?.items?.filter((item) => item.status === "in_progress").length ?? 0;
     return renderLessonLane({
         lane: "lesson",
         showHeader: false,
         body: `
             ${renderMainLead({
                 label: "Progress route",
-                title: "Progress and next-step shell is reserved",
-                description: "This route is the shared seam for the upcoming progress summary and recommendation slices.",
+                title: "Track learner progress without leaving the shell",
+                description: "The progress route now shows stable status markers and recent activity surfaces on top of local summary props.",
                 meta: [
                     `Route: ${state.route}`,
-                    `Status: ${state.progress.status}`
+                    `Status: ${state.progress.status}`,
+                    `Source: ${summary?.meta?.source ?? "unknown"}`
                 ]
             })}
-            <section class="lesson-spotlight">
-                <span class="control-label">Epic 102 baseline</span>
-                <h4 class="lesson-block__title">Progress surface will mount here</h4>
-                <p class="panel-copy">The screen is intentionally sparse: child tasks can now branch from a stable route and replace this placeholder with status markers, recent activity, summary integration, and next-step guidance.</p>
+            <section class="lesson-spotlight" data-progress-surface>
+                <span class="control-label">Progress overview</span>
+                <h4 class="lesson-block__title">Status markers are visible before live integration</h4>
+                <p class="panel-copy">This shell keeps completion, in-progress, and untouched scenarios readable in one place so later provider integration can focus on transport states instead of reworking the layout.</p>
                 <div class="lesson-spotlight__meta">
-                    <span class="lesson-spotlight__pill">Summary: pending</span>
-                    <span class="lesson-spotlight__pill">Recommendations: pending</span>
+                    <span class="lesson-spotlight__pill">Scenarios: ${totalScenarios}</span>
+                    <span class="lesson-spotlight__pill">Completed: ${completedCount}</span>
+                    <span class="lesson-spotlight__pill">In progress: ${inProgressCount}</span>
                 </div>
             </section>
             <section class="lesson-block lesson-block--reading">
                 <div class="lesson-section__header">
-                    <span class="control-label">Scope</span>
-                    <h4 class="lesson-block__title">What this seam locks in</h4>
+                    <span class="control-label">Scenario markers</span>
+                    <h4 class="lesson-block__title">Current progress at a glance</h4>
                 </div>
-                <ol class="task-sequence">
-                    <li class="task-sequence__item">
-                        <span class="task-sequence__index">1</span>
-                        <div class="task-sequence__copy">
-                            <strong>Dedicated progress route</strong>
-                            <p>The SPA now reserves a stable location for learner progress without overloading catalog or exercise pages.</p>
-                        </div>
-                    </li>
-                    <li class="task-sequence__item">
-                        <span class="task-sequence__index">2</span>
-                        <div class="task-sequence__copy">
-                            <strong>Shared progress state slot</strong>
-                            <p>Future summary and recommendation providers can attach to <code>state.progress</code> without changing route parsing again.</p>
-                        </div>
-                    </li>
-                </ol>
+                <div class="progress-summary-grid">
+                    ${summary.items.map((item) => renderProgressItemCard(item)).join("")}
+                </div>
+            </section>
+            <section class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Recent activity</span>
+                    <h4 class="lesson-block__title">Latest learner movement</h4>
+                </div>
+                <div class="progress-activity-list" data-progress-activity-list>
+                    ${summary.recentActivity.map((activity) => renderRecentProgressActivity(activity)).join("")}
+                </div>
+            </section>
+            <section class="lesson-block lesson-block--reading">
+                <div class="lesson-section__header">
+                    <span class="control-label">Reserved follow-up</span>
+                    <h4 class="lesson-block__title">Next-step guidance shell</h4>
+                </div>
+                <div class="progress-guidance-shell">
+                    <span class="progress-status-marker progress-status-marker--planned">planned</span>
+                    <p class="panel-copy">Recommendation presentation will mount here in a later task without changing the overall progress surface.</p>
+                </div>
             </section>
         `
     });
+}
+
+function renderProgressItemCard(item) {
+    return `
+        <article class="progress-card" data-progress-status-marker="${escapeHtml(item.status)}">
+            <div class="progress-card__header">
+                <span class="progress-status-marker progress-status-marker--${escapeHtml(item.status)}">${escapeHtml(formatProgressStatus(item.status))}</span>
+                <span class="lesson-spotlight__pill">${escapeHtml(describeProgressCounts(item))}</span>
+            </div>
+            <strong>${escapeHtml(item.scenarioTitle)}</strong>
+            <p class="panel-copy">${escapeHtml(describeProgressActivity(item))}</p>
+        </article>
+    `;
+}
+
+function renderRecentProgressActivity(activity) {
+    return `
+        <article class="progress-activity" data-progress-activity="${escapeHtml(activity.eventType)}">
+            <div class="progress-activity__header">
+                <span class="progress-status-marker progress-status-marker--${escapeHtml(activity.status)}">${escapeHtml(formatProgressStatus(activity.status))}</span>
+                <span class="lesson-spotlight__pill">${escapeHtml(formatActivityType(activity.eventType))}</span>
+            </div>
+            <strong>${escapeHtml(activity.scenarioTitle)}</strong>
+            <p class="panel-copy">${escapeHtml(describeRecentActivity(activity))}</p>
+        </article>
+    `;
+}
+
+function formatProgressStatus(status) {
+    return String(status ?? "unknown").replaceAll("_", " ");
+}
+
+function describeProgressCounts(item) {
+    return `${item.attemptCount} attempt${item.attemptCount === 1 ? "" : "s"} | ${item.completionCount} complete`;
+}
+
+function describeProgressActivity(item) {
+    if (item.lastActivityAt) {
+        return `Latest activity was recorded at ${item.lastActivityAt}.`;
+    }
+
+    return "This scenario has not been touched yet.";
+}
+
+function formatActivityType(eventType) {
+    return eventType === "completed"
+        ? "completion"
+        : eventType === "attempted"
+            ? "attempt"
+            : "start";
+}
+
+function describeRecentActivity(activity) {
+    return `${activity.scenarioTitle} last reported a ${formatActivityType(activity.eventType)} event at ${activity.happenedAt}.`;
 }
 
 function renderExerciseMainPanel(state) {

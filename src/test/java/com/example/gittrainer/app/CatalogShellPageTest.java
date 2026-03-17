@@ -55,6 +55,7 @@ class CatalogShellPageTest {
                 "#/catalog",
                 "#/progress",
                 "#/exercise/",
+                "/api/progress",
                 "[data-scenario-toggle]",
                 "[data-catalog-controls-form]",
                 "data-reset-catalog-controls",

@@ -14,6 +14,7 @@ export function createCatalogWorkspaceController({
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,
+    progressProviderFactories,
     tagOptions
 }) {
     const state = {
@@ -45,13 +46,16 @@ export function createCatalogWorkspaceController({
     let latestDetailRequestId = 0;
     let latestSessionBootstrapRequestId = 0;
     let latestSubmissionRequestId = 0;
+    let latestProgressRequestId = 0;
     const detailLoadTasks = new Map();
     const sessionProviders = new Map();
+    const progressProviders = new Map();
     let navigationAnimationInProgress = false;
     const providerOptions = resolveSharedProviderOptions({
         catalogProviderFactories,
         detailProviderFactories,
-        sessionProviderFactories
+        sessionProviderFactories,
+        progressProviderFactories
     });
 
     async function bootstrap() {
@@ -93,6 +97,7 @@ export function createCatalogWorkspaceController({
 
         await Promise.all([
             loadCatalog(),
+            state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
             state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve(),
             state.route === "exercise" ? ensureExerciseSession() : Promise.resolve()
         ]);
@@ -219,6 +224,47 @@ export function createCatalogWorkspaceController({
         }
 
         syncSelectedDetailFromCache(slug, requestId, syncSelected);
+    }
+
+    async function loadProgressSummary() {
+        if (state.route !== "progress") {
+            return;
+        }
+
+        const requestId = ++latestProgressRequestId;
+        state.progress.status = "loading";
+        state.progress.summary = null;
+        state.progress.error = null;
+        render();
+
+        try {
+            const provider = resolveProgressProvider(state.providerName);
+            const summary = await provider.loadProgressSummary();
+            if (requestId !== latestProgressRequestId || state.route !== "progress") {
+                return;
+            }
+
+            state.progress.summary = summary;
+            state.progress.error = null;
+            state.progress.status = isEmptyProgressSummary(summary) ? "empty" : "ready";
+        } catch (error) {
+            if (requestId !== latestProgressRequestId || state.route !== "progress") {
+                return;
+            }
+
+            state.progress.summary = null;
+            state.progress.error = toUserFacingRecoveryMessage(
+                error instanceof Error ? error.message : null,
+                "Progress summary is unavailable right now. Try again in a moment."
+            );
+            state.progress.status = "error";
+        }
+
+        if (requestId !== latestProgressRequestId || state.route !== "progress") {
+            return;
+        }
+
+        render();
     }
 
     function render() {
@@ -637,6 +683,7 @@ export function createCatalogWorkspaceController({
     async function reloadActiveRouteData() {
         await Promise.all([
             loadCatalog(),
+            state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
             state.route === "exercise" ? loadScenarioDetail() : Promise.resolve(),
             state.route === "exercise" ? ensureExerciseSession({ force: true }) : Promise.resolve()
         ]);
@@ -653,6 +700,10 @@ export function createCatalogWorkspaceController({
             state.session = createInitialSessionState();
             ++latestSessionBootstrapRequestId;
             ++latestSubmissionRequestId;
+        }
+
+        if (state.route !== "progress") {
+            state.progress = createInitialProgressState();
         }
 
         if (state.route !== "exercise") {
@@ -674,10 +725,13 @@ export function createCatalogWorkspaceController({
         state.detailCache = {};
         state.submissionDraft = createInitialSubmissionDraftState();
         state.session = createInitialSessionState();
+        state.progress = createInitialProgressState();
         sessionProviders.clear();
+        progressProviders.clear();
         ++latestDetailRequestId;
         ++latestSessionBootstrapRequestId;
         ++latestSubmissionRequestId;
+        ++latestProgressRequestId;
     }
 
     function captureDraftFieldSnapshot(field) {
@@ -747,6 +801,21 @@ export function createCatalogWorkspaceController({
 
         const provider = providerFactory();
         sessionProviders.set(providerName, provider);
+        return provider;
+    }
+
+    function resolveProgressProvider(providerName) {
+        if (progressProviders.has(providerName)) {
+            return progressProviders.get(providerName);
+        }
+
+        const providerFactory = progressProviderFactories[providerName];
+        if (!providerFactory) {
+            throw new Error(`Unknown progress provider: ${providerName}`);
+        }
+
+        const provider = providerFactory();
+        progressProviders.set(providerName, provider);
         return provider;
     }
 
@@ -1011,13 +1080,17 @@ function readCatalogControls(form) {
 function resolveSharedProviderOptions({
     catalogProviderFactories,
     detailProviderFactories,
-    sessionProviderFactories
+    sessionProviderFactories,
+    progressProviderFactories
 }) {
     const detailProviders = new Set(Object.keys(detailProviderFactories));
     const sessionProviders = new Set(Object.keys(sessionProviderFactories));
+    const progressProviders = new Set(Object.keys(progressProviderFactories));
 
     return Object.keys(catalogProviderFactories)
-        .filter((providerName) => detailProviders.has(providerName) && sessionProviders.has(providerName))
+        .filter((providerName) => detailProviders.has(providerName)
+            && sessionProviders.has(providerName)
+            && progressProviders.has(providerName))
         .sort();
 }
 
@@ -1054,10 +1127,15 @@ function createInitialSubmissionRequestState() {
 
 function createInitialProgressState() {
     return {
-        status: "placeholder",
+        status: "idle",
         summary: null,
-        recommendations: null
+        error: null
     };
+}
+
+function isEmptyProgressSummary(summary) {
+    return (summary?.recentActivity?.length ?? 0) === 0
+        && (summary?.items ?? []).every((item) => item.status === "not_started");
 }
 
 function createInitialFeedbackPanelState() {
