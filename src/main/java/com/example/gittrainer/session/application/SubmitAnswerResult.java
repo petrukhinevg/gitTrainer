@@ -2,6 +2,7 @@ package com.example.gittrainer.session.application;
 
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.session.domain.RetryGuidance;
 import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 
@@ -14,6 +15,7 @@ public record SubmitAnswerResult(
         TrainingSession session,
         SubmittedAnswer answer,
         SubmissionOutcome outcome,
-        RetryState retryState
+        RetryState retryState,
+        RetryGuidance retryGuidance
 ) {
 }

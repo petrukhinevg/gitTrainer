@@ -2,6 +2,8 @@ package com.example.gittrainer.session.application;
 
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.session.domain.RetryGuidance;
+import com.example.gittrainer.session.domain.RetryGuidancePolicy;
 import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
@@ -46,6 +48,11 @@ public class SubmitAnswerUseCase {
         TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId, failedAttempt)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
         RetryState retryState = RetryStatePolicy.afterSubmission(updatedSession, failedAttempt);
+        RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance(
+                session.scenarioSlug(),
+                outcome,
+                retryState
+        );
 
         return new SubmitAnswerResult(
                 submissionId,
@@ -54,7 +61,8 @@ public class SubmitAnswerUseCase {
                 updatedSession,
                 submittedAnswer,
                 outcome,
-                retryState
+                retryState,
+                retryGuidance
         );
     }
 
