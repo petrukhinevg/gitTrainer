@@ -3,6 +3,8 @@ package com.example.gittrainer.session.application;
 import com.example.gittrainer.scenario.application.LoadScenarioDetailUseCase;
 import com.example.gittrainer.scenario.application.ScenarioDetailResult;
 import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
+import com.example.gittrainer.progress.application.ProgressRepository;
+import com.example.gittrainer.progress.domain.ScenarioAttemptStart;
 import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.TrainingSession;
@@ -16,15 +18,18 @@ public class StartSessionUseCase {
     private final SessionRepository sessionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final LoadScenarioDetailUseCase loadScenarioDetailUseCase;
+    private final ProgressRepository progressRepository;
 
     public StartSessionUseCase(
             SessionRepository sessionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
-            LoadScenarioDetailUseCase loadScenarioDetailUseCase
+            LoadScenarioDetailUseCase loadScenarioDetailUseCase,
+            ProgressRepository progressRepository
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.loadScenarioDetailUseCase = loadScenarioDetailUseCase;
+        this.progressRepository = progressRepository;
     }
 
     public StartSessionResult start(StartSessionCommand command) {
@@ -46,6 +51,13 @@ public class StartSessionUseCase {
                 0,
                 0,
                 null
+        ));
+        progressRepository.recordAttemptStart(new ScenarioAttemptStart(
+                session.scenarioSlug(),
+                session.scenarioTitle(),
+                session.scenarioSource(),
+                session.sessionId(),
+                session.startedAt()
         ));
 
         return new StartSessionResult(

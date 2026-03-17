@@ -1,5 +1,7 @@
 package com.example.gittrainer.session.application;
 
+import com.example.gittrainer.progress.application.ProgressRepository;
+import com.example.gittrainer.progress.domain.ScenarioAttemptOutcome;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.session.domain.RetryGuidance;
@@ -18,15 +20,18 @@ public class SubmitAnswerUseCase {
     private final SessionRepository sessionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final SubmissionAnswerValidator submissionAnswerValidator;
+    private final ProgressRepository progressRepository;
 
     public SubmitAnswerUseCase(
             SessionRepository sessionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
-            SubmissionAnswerValidator submissionAnswerValidator
+            SubmissionAnswerValidator submissionAnswerValidator,
+            ProgressRepository progressRepository
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.submissionAnswerValidator = submissionAnswerValidator;
+        this.progressRepository = progressRepository;
     }
 
     public SubmitAnswerResult submit(String sessionId, SubmitAnswerCommand command) {
@@ -45,8 +50,18 @@ public class SubmitAnswerUseCase {
         SubmissionOutcome outcome = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
         boolean failedAttempt = outcome.requiresRetry();
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
+        Instant submittedAt = Instant.now();
         TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId, failedAttempt)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
+        progressRepository.recordAttemptOutcome(new ScenarioAttemptOutcome(
+                updatedSession.scenarioSlug(),
+                updatedSession.scenarioTitle(),
+                updatedSession.scenarioSource(),
+                updatedSession.sessionId(),
+                submissionId,
+                outcome.correctness(),
+                submittedAt
+        ));
         RetryState retryState = RetryStatePolicy.afterSubmission(updatedSession, failedAttempt);
         RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance(
                 session.scenarioSlug(),
@@ -57,7 +72,7 @@ public class SubmitAnswerUseCase {
         return new SubmitAnswerResult(
                 submissionId,
                 updatedSession.submissionCount(),
-                Instant.now(),
+                submittedAt,
                 updatedSession,
                 submittedAnswer,
                 outcome,
