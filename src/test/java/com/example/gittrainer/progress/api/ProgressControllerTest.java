@@ -29,11 +29,17 @@ class ProgressControllerTest {
     }
 
     @Test
-    void returnsPlaceholderProgressSummaryBoundary() throws Exception {
+    void returnsProgressSummaryBoundaryWithDerivedStatuses() throws Exception {
         mockMvc.perform(get("/api/progress").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items").isEmpty());
+                .andExpect(jsonPath("$.items[0].scenarioSlug").isNotEmpty())
+                .andExpect(jsonPath("$.items[0].scenarioTitle").isNotEmpty())
+                .andExpect(jsonPath("$.items[0].status").isNotEmpty())
+                .andExpect(jsonPath("$.items[0].attemptCount").isNumber())
+                .andExpect(jsonPath("$.items[0].completionCount").isNumber())
+                .andExpect(jsonPath("$.recentActivity").isArray())
+                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"));
     }
 }

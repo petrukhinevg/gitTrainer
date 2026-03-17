@@ -2,12 +2,11 @@ package com.example.gittrainer.progress.api;
 
 import java.time.Instant;
 
-public record ProgressSummaryItemResponse(
+public record RecentProgressActivityResponse(
         String scenarioSlug,
         String scenarioTitle,
         String status,
-        int attemptCount,
-        int completionCount,
-        Instant lastActivityAt
+        String eventType,
+        Instant happenedAt
 ) {
 }
