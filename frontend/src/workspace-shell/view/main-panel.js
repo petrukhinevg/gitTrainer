@@ -34,7 +34,7 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
 }
 
 function renderProgressMainPanel(state) {
-    if (state.progress.status === "loading") {
+    if (state.progress.status === "loading" || state.progress.status === "idle") {
         return renderLessonLane({
             lane: "lesson",
             showHeader: false,
@@ -109,7 +109,6 @@ function renderProgressMainPanel(state) {
     const totalScenarios = summary?.items?.length ?? 0;
     const completedCount = summary?.items?.filter((item) => item.status === "completed").length ?? 0;
     const inProgressCount = summary?.items?.filter((item) => item.status === "in_progress").length ?? 0;
-
     return renderLessonLane({
         lane: "lesson",
         showHeader: false,
@@ -204,6 +203,7 @@ function describeProgressActivity(item) {
     if (item.lastActivityAt) {
         return `Latest activity was recorded at ${item.lastActivityAt}.`;
     }
+
     return "This scenario has not been touched yet.";
 }
 
