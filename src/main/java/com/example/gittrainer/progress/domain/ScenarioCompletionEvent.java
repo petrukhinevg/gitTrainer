@@ -10,4 +10,15 @@ public record ScenarioCompletionEvent(
         String submissionId,
         Instant completedAt
 ) {
+
+    public static ScenarioCompletionEvent from(ScenarioAttemptOutcome attemptOutcome) {
+        return new ScenarioCompletionEvent(
+                attemptOutcome.scenarioSlug(),
+                attemptOutcome.scenarioTitle(),
+                attemptOutcome.scenarioSource(),
+                attemptOutcome.sessionId(),
+                attemptOutcome.submissionId(),
+                attemptOutcome.submittedAt()
+        );
+    }
 }
