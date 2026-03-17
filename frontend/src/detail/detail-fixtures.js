@@ -247,7 +247,7 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
         id: "remote-sync-preview",
         slug: "remote-sync-preview",
         title: "Проверь удалённое состояние перед pull",
-        summary: "Сравни сигналы ahead/behind и реши, что уместнее перед синхронизацией: fetch или pull.",
+        summary: "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
         difficulty: "intermediate",
         tags: ["remote", "inspection", "planning"],
         meta: {
@@ -262,7 +262,7 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
             },
             task: {
                 status: "authored-fixture",
-                goal: "Объясните следующую команду для синхронизации после чтения сигналов ahead/behind.",
+                goal: "Объясните следующую команду для синхронизации после чтения признаков опережения или отставания.",
                 instructions: [
                     {
                         id: "check-tracking",
@@ -280,23 +280,23 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                 steps: [
                     {
                         position: 1,
-                        title: "Проверьте связь с remote-tracking веткой",
+                        title: "Проверьте связь с отслеживаемой удалённой веткой",
                         detail: "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."
                     },
                     {
                         position: 2,
-                        title: "Интерпретируйте состояние ahead/behind",
-                        detail: "Используйте сигналы ahead/behind, чтобы объяснить, нужна ли интеграция прямо сейчас."
+                        title: "Интерпретируйте опережение и отставание",
+                        detail: "Используйте признаки опережения или отставания, чтобы объяснить, нужна ли интеграция прямо сейчас."
                     },
                     {
                         position: 3,
                         title: "Выберите команду синхронизации",
-                        detail: "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с remote."
+                        detail: "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с удалённого репозитория."
                     }
                 ],
                 annotations: [
                     {
-                        label: "Дисциплина работы с remote",
+                        label: "Дисциплина работы с удалённым репозиторием",
                         message: "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения."
                     }
                 ]
@@ -309,14 +309,14 @@ export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
                 ],
                 commits: [
                     { id: "87d20aa", summary: "docs: уточнить чеклист синхронизации" },
-                    { id: "3fd81e5", summary: "feat: подготовить баннер статуса remote" }
+                    { id: "3fd81e5", summary: "feat: подготовить баннер статуса удалённого репозитория" }
                 ],
                 files: [
                     { path: "docs/sync-playbook.md", status: "clean" },
                     { path: "frontend/src/banner.js", status: "clean" }
                 ],
                 annotations: [
-                    { label: "Подсказка по remote", message: "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения." },
+                    { label: "Подсказка по удалённому репозиторию", message: "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения." },
                     { label: "Подсказка для решения", message: "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду." }
                 ]
             }

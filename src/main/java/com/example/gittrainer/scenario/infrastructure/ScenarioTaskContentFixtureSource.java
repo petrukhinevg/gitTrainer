@@ -63,19 +63,19 @@ public class ScenarioTaskContentFixtureSource {
             ),
             "remote-sync-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Объясните следующую команду для синхронизации после чтения сигналов ahead/behind.",
+                    "Объясните следующую команду для синхронизации после чтения признаков опережения или отставания.",
                     java.util.List.of(
                             new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-tracking", "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."),
                             new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "separate-fetch-from-merge", "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."),
                             new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-divergence", "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите команду синхронизации", "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с remote."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Проверьте связь с remote-tracking веткой", "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Интерпретируйте состояние ahead/behind", "Используйте сигналы ahead/behind, чтобы объяснить, нужна ли интеграция прямо сейчас.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите команду синхронизации", "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с удалённого репозитория."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Проверьте связь с отслеживаемой удалённой веткой", "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Интерпретируйте опережение и отставание", "Используйте признаки опережения или отставания, чтобы объяснить, нужна ли интеграция прямо сейчас.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Дисциплина работы с remote", "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Дисциплина работы с удалённым репозиторием", "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения.")
                     )
             )
     );

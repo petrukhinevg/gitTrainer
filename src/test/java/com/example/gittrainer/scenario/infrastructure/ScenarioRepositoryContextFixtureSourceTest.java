@@ -31,6 +31,6 @@ class ScenarioRepositoryContextFixtureSourceTest {
     void failsExplicitlyWhenRepositoryContextWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioRepositoryContextNotAuthoredException.class)
-                .hasMessage("Контекст репозитория недоступен для slug: not-authored-yet");
+                .hasMessage("Контекст репозитория не подготовлен для сценария: not-authored-yet");
     }
 }

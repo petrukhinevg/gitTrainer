@@ -1,5 +1,8 @@
 import { renderLessonLane } from "./lesson-layout.js";
-import { escapeHtml } from "./render-helpers.js";
+import {
+    escapeHtml,
+    formatDifficulty
+} from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
@@ -8,7 +11,7 @@ export function renderWorkspacePanel(state) {
                 "Git-ветки",
                 "Откройте задание слева, чтобы загрузить представление веток."
             ),
-            composer: renderPlaceholderComposer(
+            surface: renderPlaceholderComposer(
                 "Команда",
                 "Ввод разблокируется после открытия задания."
             )
@@ -21,7 +24,7 @@ export function renderWorkspacePanel(state) {
                 "Git-ветки",
                 `Загружаем представление веток для ${escapeHtml(state.selectedScenarioSlug ?? "выбранного задания")}.`
             ),
-            composer: renderPlaceholderComposer(
+            surface: renderPlaceholderComposer(
                 "Команда",
                 "Поле ввода остаётся на месте, пока загружаются детали задания."
             )
@@ -33,7 +36,7 @@ export function renderWorkspacePanel(state) {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Git-ветки</span>
+                        <span class="control-label">Состояние репозитория</span>
                         <span class="workspace-card__badge">ошибка</span>
                     </div>
                     <div class="practice-inline-note">
@@ -41,10 +44,10 @@ export function renderWorkspacePanel(state) {
                     </div>
                 </section>
             `,
-            composer: `
+            surface: `
                 <section class="workspace-card workspace-card--composer workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Команда</span>
+                        <span class="control-label">Область практики</span>
                         <span class="workspace-card__badge">заблокировано</span>
                     </div>
                     <div class="workspace-card__actions">
@@ -69,30 +72,27 @@ export function renderWorkspacePanel(state) {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Git-ветки</span>
+                    <span class="control-label">Состояние репозитория</span>
                     <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
-                <div class="practice-shell__meta">
+                <div class="practice-shell__meta practice-shell__meta--viewer">
+                    <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
                     <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
-                    <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
-                    <span class="practice-shell__chip">Статус: ${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                     <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
-                ${renderBranchGraph(repositoryContext.branches)}
-                ${renderSessionTransportOutput(bootstrapState, lifecycle)}
+                <div class="practice-shell__viewer-body">
+                    ${renderBranchGraph(repositoryContext.branches)}
+                    ${renderViewerStatusStrip(bootstrapState, lifecycle)}
+                </div>
             </section>
         `,
-        composer: `
+        surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
                     <span class="control-label">Ввод ответа</span>
                     <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveDraftBadge(state.submissionDraft, submissionState)))}</span>
                 </div>
-                <div class="practice-shell__meta">
-                    <span class="practice-shell__chip">Тип ответа: ${escapeHtml(resolveActiveAnswerType(state.submissionDraft))}</span>
-                    <span class="practice-shell__chip">Сценарий: ${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</span>
-                    <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
-                </div>
+                ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
                 ${renderBootstrapNotice(bootstrapState)}
                 <form class="practice-composer__form" data-submission-draft-form>
                     <div class="practice-composer__controls">
@@ -118,28 +118,30 @@ export function renderWorkspacePanel(state) {
                         <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
                     </div>
                 ` : ""}
-                ${renderSubmissionTransportOutput(
-                    state.submissionDraft.preparedSubmission,
-                    submissionState,
-                    bootstrapState.response?.submission?.supportedAnswerTypes ?? []
-                )}
-                ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
+                <div class="practice-composer__results">
+                    ${renderSubmissionTransportOutput(
+                        state.submissionDraft.preparedSubmission,
+                        submissionState,
+                        bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                    )}
+                    ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
+                </div>
             </section>
         `
     });
 }
 
-function renderPracticeShell({ viewer, composer }) {
+function renderPracticeShell({ viewer, surface }) {
     return renderLessonLane({
         lane: "practice",
         label: "Практика",
-        title: "Git-ветки и ввод команды",
-        description: "Правая колонка остаётся разделённой на две устойчивые поверхности.",
+        title: "Состояние репозитория и ввод команды",
+        description: "Правая колонка показывает состояние репозитория сверху и форму ответа снизу.",
         showHeader: false,
         body: `
             <div class="practice-stack">
-                <div class="practice-pane practice-pane--composer">${composer}</div>
                 <div class="practice-pane practice-pane--viewer">${viewer}</div>
+                <div class="practice-pane practice-pane--surface">${surface}</div>
             </div>
         `
     });
@@ -152,7 +154,7 @@ function renderPlaceholderViewer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">ожидание</span>
             </div>
-            <div class="practice-inline-note">
+            <div class="practice-inline-note practice-inline-note--viewer">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
             </div>
             <div class="branch-graph branch-graph--placeholder" aria-hidden="true">
@@ -176,7 +178,7 @@ function renderPlaceholderComposer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">ожидание</span>
             </div>
-            <div class="practice-inline-note">
+            <div class="practice-summary">
                 <p class="panel-copy">${escapeHtml(copy)}</p>
             </div>
             <label class="practice-editor">
@@ -185,37 +187,73 @@ function renderPlaceholderComposer(title, copy) {
             </label>
             <div class="practice-output">
                 <span class="control-label">Каркас вывода</span>
-                <p class="panel-copy">Подготовленный payload и транспортная обратная связь появятся здесь после открытия сценария.</p>
+                <p class="panel-copy">Подготовленный ответ и результат отправки появятся здесь после открытия сценария.</p>
             </div>
         </section>
     `;
 }
 
-function renderSessionTransportOutput(bootstrapState, lifecycle) {
+function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionDraft, lifecycle) {
+    const title = typeof detail?.title === "string" && detail.title.trim() !== ""
+        ? detail.title
+        : selectedScenarioSlug ?? "Активное упражнение";
+    const summary = typeof detail?.summary === "string" && detail.summary.trim() !== ""
+        ? detail.summary
+        : "Краткое описание сценария появится после загрузки данных задания.";
+    const goal = typeof detail?.workspace?.task?.goal === "string" && detail.workspace.task.goal.trim() !== ""
+        ? detail.workspace.task.goal
+        : null;
+    const difficulty = typeof detail?.difficulty === "string" && detail.difficulty.trim() !== ""
+        ? formatDifficulty(detail.difficulty)
+        : "Неизвестно";
+
+    return `
+        <div class="practice-summary">
+            <div class="practice-summary__header">
+                <div class="practice-summary__heading">
+                    <h3 class="practice-summary__title">${escapeHtml(title)}</h3>
+                    <p class="panel-copy practice-summary__lead">${escapeHtml(goal ?? summary)}</p>
+                </div>
+                <div class="practice-shell__meta practice-shell__meta--compact">
+                    <span class="practice-shell__chip">Тип: ${escapeHtml(resolveActiveAnswerType(submissionDraft))}</span>
+                    <span class="practice-shell__chip">Уровень: ${escapeHtml(difficulty)}</span>
+                    <span class="practice-shell__chip">Попытки: ${escapeHtml(String(lifecycle?.submissionCount ?? 0))}</span>
+                </div>
+            </div>
+            ${goal && goal !== summary ? `
+                <div class="practice-inline-note">
+                    <p class="panel-copy">${escapeHtml(summary)}</p>
+                </div>
+            ` : ""}
+        </div>
+    `;
+}
+
+function renderViewerStatusStrip(bootstrapState, lifecycle) {
     if (bootstrapState.status === "pending") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия запускается",
             status: "pending",
             badge: "pending",
-            copy: "Поднимаем сессию для активного сценария перед отправкой ответа."
+            copy: "Подготавливаем сеанс для первой отправки."
         });
     }
 
     if (bootstrapState.status === "retryable-error") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессию можно перезапустить",
             status: "retryable",
             badge: "retryable",
             copy: bootstrapState.error?.message ?? "Не удалось запустить сессию.",
             actions: `
-                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск сессии</button>
+                <button class="practice-action practice-action--primary" type="button" data-session-request-retry="bootstrap">Повторить запуск</button>
             `
         });
     }
 
     if (bootstrapState.status === "terminal-error") {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия недоступна",
             status: "terminal",
             badge: "terminal",
             copy: bootstrapState.error?.message ?? "Сессию не удалось запустить."
@@ -223,36 +261,37 @@ function renderSessionTransportOutput(bootstrapState, lifecycle) {
     }
 
     if (bootstrapState.status !== "ready" || !bootstrapState.response) {
-        return renderRequestStateBlock({
-            label: "Транспорт сессии",
+        return renderViewerStateBlock({
+            label: "Сессия ожидает запуск",
             status: "idle",
             badge: "idle",
-            copy: "Сессия запускается автоматически после открытия маршрута упражнения."
+            copy: "Сеанс запустится автоматически после открытия упражнения."
         });
     }
 
     return `
-        <div class="practice-output practice-output--ready">
-            <span class="control-label">Транспорт сессии</span>
-            <dl class="result-summary">
-                <div>
-                    <dt>ID сессии</dt>
-                    <dd>${escapeHtml(bootstrapState.response.sessionId)}</dd>
-                </div>
-                <div>
-                    <dt>Жизненный цикл</dt>
-                    <dd>${escapeHtml(formatTransportBadge(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active"))}</dd>
-                </div>
-                <div>
-                    <dt>Отправки</dt>
-                    <dd>${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</dd>
-                </div>
-                <div>
-                    <dt>Типы ответов</dt>
-                    <dd>${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).map(formatAnswerType).join(", ") || "неизвестно")}</dd>
-                </div>
-            </dl>
-            <p class="panel-copy">${escapeHtml(resolveSubmissionBoundaryCopy(bootstrapState.response.submission))}</p>
+        <div class="viewer-status-strip viewer-status-strip--ready">
+            <div class="viewer-status-strip__header">
+                <span class="control-label">Сессия активна</span>
+                <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(lifecycle?.status ?? bootstrapState.response.lifecycle?.status ?? "active"))}</span>
+            </div>
+            <div class="viewer-status-strip__meta">
+                <span class="viewer-status-strip__item">Отправки: ${escapeHtml(String(lifecycle?.submissionCount ?? bootstrapState.response.lifecycle?.submissionCount ?? 0))}</span>
+                <span class="viewer-status-strip__item">Типы: ${escapeHtml((bootstrapState.response.submission?.supportedAnswerTypes ?? []).map(formatAnswerType).join(", ") || "неизвестно")}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderViewerStateBlock({ label, status, badge, copy, actions = "" }) {
+    return `
+        <div class="viewer-status-strip viewer-status-strip--${escapeHtml(status)}">
+            <div class="viewer-status-strip__header">
+                <span class="control-label">${escapeHtml(label)}</span>
+                <span class="workspace-card__badge">${escapeHtml(badge)}</span>
+            </div>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+            ${actions ? `<div class="viewer-status-strip__actions">${actions}</div>` : ""}
         </div>
     `;
 }
@@ -262,7 +301,7 @@ function renderBootstrapNotice(bootstrapState) {
         return `
             <div class="practice-request practice-request--pending">
                 <span class="control-label">Состояние запроса</span>
-                <p class="panel-copy">Запускаем сессию для этого сценария. Отправка откроется, когда транспорт будет готов.</p>
+                <p class="panel-copy">Запускаем сессию для этого сценария. Отправка станет доступна, когда всё будет готово.</p>
             </div>
         `;
     }
@@ -294,17 +333,17 @@ function renderBootstrapNotice(bootstrapState) {
 function renderSubmissionTransportOutput(preparedSubmission, submissionState, supportedAnswerTypes) {
     if (submissionState.status === "pending") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "pending",
             badge: "pending",
-            copy: "Отправляем подготовленный ответ через активную сессию.",
+            copy: "Отправляем ответ через активную сессию.",
             payload: submissionState.lastPayload
         });
     }
 
     if (submissionState.status === "retryable-error") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "retryable",
             badge: "retryable",
             copy: submissionState.error?.message ?? "Отправка не удалась, но её можно повторить.",
@@ -317,7 +356,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
 
     if (submissionState.status === "terminal-error") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "terminal",
             badge: "terminal",
             copy: submissionState.error?.message ?? "Отправка завершилась ошибкой.",
@@ -334,7 +373,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
             ${renderCorrectnessFeedbackBlock(submissionState.response, supportedAnswerTypes)}
             <div class="practice-output practice-output--ready">
                 <div class="practice-output__header">
-                    <span class="control-label">Квитанция отправки</span>
+                    <span class="control-label">Сведения об отправке</span>
                     <span class="workspace-card__badge">${escapeHtml(formatCorrectness(resolveSubmissionReceiptBadge(outcome)))}</span>
                 </div>
                 <dl class="result-summary">
@@ -359,7 +398,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
                         <dd>${escapeHtml(submissionState.response.answer?.value ?? "")}</dd>
                     </div>
                 </dl>
-                <p class="panel-copy">Транспорт завершён, а результат проверки уже показан выше.</p>
+                <p class="panel-copy">Ответ отправлен, а результат проверки уже показан выше.</p>
             </div>
         `;
     }
@@ -367,7 +406,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
     if (preparedSubmission) {
         return `
             <div class="practice-output practice-output--ready">
-                <span class="control-label">Подготовленный payload</span>
+                <span class="control-label">Подготовленный ответ</span>
                 ${renderPreparedPayloadSummary(preparedSubmission)}
                 <p class="panel-copy">Ответ готов к отправке, как только активная сессия станет доступна.</p>
             </div>
@@ -376,8 +415,8 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
 
     return `
         <div class="practice-output">
-            <span class="control-label">Транспорт отправки</span>
-            <p class="panel-copy">Транспортная обратная связь появится здесь после принятия ответа активной сессией.</p>
+            <span class="control-label">Отправка ответа</span>
+            <p class="panel-copy">Здесь появится информация об отправке, как только активная сессия примет ответ.</p>
         </div>
     `;
 }
@@ -421,7 +460,7 @@ function renderPreparedPayloadSummary(preparedSubmission) {
                 <dd>${escapeHtml(formatAnswerType(preparedSubmission.answerType))}</dd>
             </div>
             <div>
-                <dt>Черновик ответа</dt>
+                <dt>Ответ</dt>
                 <dd>${escapeHtml(preparedSubmission.answer)}</dd>
             </div>
             <div>
@@ -439,6 +478,8 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     const tone = resolveFeedbackPanelTone(feedbackPanelState.status, normalizedFeedback, submissionState);
     const revealedHints = normalizedFeedback.hint.reveals.slice(0, feedbackPanelState.revealedHintCount);
     const nextHint = normalizedFeedback.hint.reveals[feedbackPanelState.revealedHintCount] ?? null;
+    const hasExplanationDetails = normalizedFeedback.explanation.details.length > 0 || normalizedFeedback.explanation.tone === "partial";
+    const hasHintLayer = normalizedFeedback.hint.message || revealedHints.length || nextHint;
 
     return `
         <div class="practice-output practice-output--${escapeHtml(tone)}" data-retry-feedback-panel data-retry-feedback-status="${escapeHtml(normalizedFeedback.status)}">
@@ -447,64 +488,10 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <span class="workspace-card__badge">${escapeHtml(formatRetryFeedbackBadge(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState)))}</span>
             </div>
             <p class="panel-copy">${escapeHtml(copy)}</p>
-            <div class="practice-output practice-output--ready" data-retry-context-summary>
-                <span class="control-label">Сохранённый контекст упражнения</span>
-                <dl class="result-summary">
-                    <div>
-                        <dt>Сценарий</dt>
-                        <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
-                    </div>
-                    <div>
-                        <dt>Цель</dt>
-                        <dd>${escapeHtml(preservedContext.goal)}</dd>
-                    </div>
-                    <div>
-                        <dt>Ветка</dt>
-                        <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
-                    </div>
-                    <div>
-                        <dt>Подсказки репозитория</dt>
-                        <dd>${escapeHtml(`${preservedContext.branchCount} веток, ${preservedContext.fileCount} файлов`)}</dd>
-                    </div>
-                    <div>
-                        <dt>Последний тип ответа</dt>
-                        <dd>${escapeHtml(formatAnswerType(preservedContext.answerType))}</dd>
-                    </div>
-                    <div>
-                        <dt>Последний ответ</dt>
-                        <dd>${escapeHtml(preservedContext.answer || "Ответ ещё не подготовлен.")}</dd>
-                    </div>
-                    <div>
-                        <dt>Попытка</dt>
-                        <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
-                    </div>
-                    <div>
-                        <dt>Транспорт</dt>
-                        <dd>${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</dd>
-                    </div>
-                </dl>
-                ${preservedContext.errorMessage ? `
-                    <div class="practice-inline-note practice-inline-note--warning">
-                        <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
-                    </div>
-                ` : ""}
-            </div>
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
                     <p class="panel-copy" data-retry-explanation>${escapeHtml(normalizedFeedback.explanation.message)}</p>
-                    ${normalizedFeedback.explanation.tone === "partial" ? `
-                        <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
-                            <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
-                        </div>
-                    ` : ""}
-                    ${normalizedFeedback.explanation.details.length ? `
-                        <ul class="practice-feedback__detail-list">
-                            ${normalizedFeedback.explanation.details.map((detail) => `
-                                <li>${escapeHtml(detail)}</li>
-                            `).join("")}
-                        </ul>
-                    ` : ""}
                 </div>
                 <div class="practice-feedback__meta">
                     <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Попытка: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
@@ -516,24 +503,96 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
                 </div>
-                <div class="practice-inline-note" data-retry-feedback-slot="hint">
-                    <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
-                    ${revealedHints.length ? `
-                        <div class="practice-feedback__reveal-list">
-                            ${revealedHints.map((hint) => `
-                                <article class="practice-feedback__reveal" data-retry-hint-card="${escapeHtml(hint.id)}">
-                                    <span class="control-label">${escapeHtml(hint.title)}</span>
-                                    <p class="panel-copy">${escapeHtml(hint.message)}</p>
-                                </article>
-                            `).join("")}
+                <details class="practice-feedback__details">
+                    <summary class="practice-feedback__details-summary">Контекст упражнения</summary>
+                    <div class="practice-feedback__details-body">
+                        <div class="practice-output practice-output--ready" data-retry-context-summary>
+                            <dl class="result-summary">
+                                <div>
+                                    <dt>Сценарий</dt>
+                                    <dd>${escapeHtml(preservedContext.scenarioTitle)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Цель</dt>
+                                    <dd>${escapeHtml(preservedContext.goal)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Ветка</dt>
+                                    <dd>${escapeHtml(preservedContext.currentBranch)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Подсказки репозитория</dt>
+                                    <dd>${escapeHtml(`${preservedContext.branchCount} веток, ${preservedContext.fileCount} файлов`)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Последний тип ответа</dt>
+                                    <dd>${escapeHtml(formatAnswerType(preservedContext.answerType))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Последний ответ</dt>
+                                    <dd>${escapeHtml(preservedContext.answer || "Ответ ещё не подготовлен.")}</dd>
+                                </div>
+                                <div>
+                                    <dt>Попытка</dt>
+                                    <dd>${escapeHtml(String(preservedContext.attemptNumber))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Транспорт</dt>
+                                    <dd>${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</dd>
+                                </div>
+                            </dl>
+                            ${preservedContext.errorMessage ? `
+                                <div class="practice-inline-note practice-inline-note--warning">
+                                    <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
+                                </div>
+                            ` : ""}
                         </div>
-                    ` : ""}
-                    ${nextHint ? `
-                        <div class="practice-output__actions">
-                            <button class="practice-action" type="button" data-retry-hint-reveal>${escapeHtml(nextHint.label)}</button>
+                    </div>
+                </details>
+                ${hasExplanationDetails ? `
+                    <details class="practice-feedback__details">
+                        <summary class="practice-feedback__details-summary">Подробности объяснения</summary>
+                        <div class="practice-feedback__details-body">
+                            ${normalizedFeedback.explanation.tone === "partial" ? `
+                                <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
+                                    <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
+                                </div>
+                            ` : ""}
+                            ${normalizedFeedback.explanation.details.length ? `
+                                <ul class="practice-feedback__detail-list">
+                                    ${normalizedFeedback.explanation.details.map((detail) => `
+                                        <li>${escapeHtml(detail)}</li>
+                                    `).join("")}
+                                </ul>
+                            ` : ""}
                         </div>
-                    ` : ""}
-                </div>
+                    </details>
+                ` : ""}
+                ${hasHintLayer ? `
+                    <details class="practice-feedback__details" data-retry-feedback-slot="hint">
+                        <summary class="practice-feedback__details-summary">Подсказки и reveal</summary>
+                        <div class="practice-feedback__details-body">
+                            <div class="practice-inline-note">
+                                <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
+                            </div>
+                            ${revealedHints.length ? `
+                                <div class="practice-feedback__reveal-list">
+                                    ${revealedHints.map((hint) => `
+                                        <article class="practice-feedback__reveal" data-retry-hint-card="${escapeHtml(hint.id)}">
+                                            <span class="control-label">${escapeHtml(hint.title)}</span>
+                                            <p class="panel-copy">${escapeHtml(hint.message)}</p>
+                                        </article>
+                                    `).join("")}
+                                </div>
+                            ` : ""}
+                            ${nextHint ? `
+                                <div class="practice-output__actions">
+                                    <button class="practice-action" type="button" data-retry-hint-reveal>${escapeHtml(nextHint.label)}</button>
+                                </div>
+                            ` : ""}
+                        </div>
+                    </details>
+                ` : ""}
             </div>
         </div>
     `;
@@ -590,7 +649,7 @@ function renderBranchGraph(branches) {
             <div class="branch-graph branch-graph--empty">
                 <div class="branch-graph__empty">
                     <span class="control-label">Пустое состояние</span>
-                    <p class="panel-copy">В активном payload деталей нет подсказок по веткам.</p>
+                    <p class="panel-copy">В текущих данных задания нет подсказок по веткам.</p>
                 </div>
             </div>
         `;
@@ -621,6 +680,16 @@ function normalizeRepositoryContext(repositoryContext) {
         branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
         files: Array.isArray(safeContext.files) ? safeContext.files : []
     };
+}
+
+function resolveCurrentBranchName(branches) {
+    const currentBranch = Array.isArray(branches)
+        ? branches.find((branch) => branch?.current)
+        : null;
+
+    return typeof currentBranch?.name === "string" && currentBranch.name.trim() !== ""
+        ? currentBranch.name
+        : "неизвестно";
 }
 
 function normalizeBootstrapState(bootstrapState) {
@@ -768,7 +837,7 @@ function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submi
                 ? "Панель повтора сохраняет последнюю проверенную подсказку, пока новая попытка отправляется."
                 : "Панель повтора уже держит контекст упражнения, чтобы пользователь не потерял место, если попытка завершится ошибкой.";
         case "guided":
-            return "Контекст текущего упражнения остаётся закреплён после неудачной проверки, а допуск к повтору и уровень подсказки синхронизируются с последним payload.";
+            return "Контекст упражнения остаётся на месте после неудачной проверки, а доступность повтора и уровень подсказки синхронизируются с последним ответом.";
         case "request-failure":
             return normalizedFeedback.status === "guided"
                 ? "Запрос завершился ошибкой, но последняя проверенная подсказка для повтора остаётся видимой, чтобы можно было восстановиться без потери контекста."
@@ -979,7 +1048,7 @@ function resolveSubmissionBoundaryCopy(submissionBoundary) {
     const placeholderOutcome = submissionBoundary?.placeholderOutcome ?? null;
     const boundaryMessage = typeof placeholderOutcome?.message === "string" && placeholderOutcome.message.trim() !== ""
         ? placeholderOutcome.message
-        : "Транспорт сессии готов к первой проверяемой отправке.";
+        : "Сессия готова к первой проверяемой отправке.";
     const supportedTypesCopy = Array.isArray(submissionBoundary?.supportedAnswerTypes)
         ? submissionBoundary.supportedAnswerTypes.map(formatAnswerType).join(", ")
         : "";

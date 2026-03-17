@@ -14,7 +14,7 @@ export function formatProviderName(value) {
         case "local-fixture":
             return "Локальные фикстуры";
         case "backend-api":
-            return "Backend API";
+            return "Сервер";
         case "fixture-unavailable":
             return "Недоступный источник";
         default:

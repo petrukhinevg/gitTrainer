@@ -76,7 +76,7 @@ class SessionControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Некорректный запрос сессии"))
-                .andExpect(jsonPath("$.detail").value("Для запуска сессии нужен slug сценария."))
+                .andExpect(jsonPath("$.detail").value("Для запуска сессии нужен код сценария."))
                 .andExpect(jsonPath("$.code").value("scenario-slug-required"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
@@ -94,7 +94,7 @@ class SessionControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Сценарий не найден"))
-                .andExpect(jsonPath("$.detail").value("Детали сценария недоступны для slug: not-a-real-scenario"))
+                .andExpect(jsonPath("$.detail").value("Сценарий не найден: not-a-real-scenario"))
                 .andExpect(jsonPath("$.code").value("scenario-not-found"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
@@ -113,7 +113,7 @@ class SessionControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.title").value("Источник сценариев недоступен"))
-                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."))
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."))
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))

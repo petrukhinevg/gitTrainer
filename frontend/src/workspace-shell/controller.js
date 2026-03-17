@@ -117,7 +117,7 @@ export function createCatalogWorkspaceController({
         try {
             const providerFactory = catalogProviderFactories[providerName];
             if (!providerFactory) {
-                throw new Error(`Неизвестный provider каталога: ${providerName}`);
+                throw new Error(`Неизвестный источник каталога: ${providerName}`);
             }
 
             const provider = providerFactory();
@@ -154,7 +154,7 @@ export function createCatalogWorkspaceController({
         if (!slug) {
             state.detail.status = "missing";
             state.detail.data = null;
-            state.detail.error = "В маршруте упражнения отсутствует slug сценария.";
+            state.detail.error = "В маршруте упражнения не указан код сценария.";
             render();
             return;
         }
@@ -196,7 +196,7 @@ export function createCatalogWorkspaceController({
             const detailLoadTask = (async () => {
                 const providerFactory = detailProviderFactories[providerName];
                 if (!providerFactory) {
-                    throw new Error(`Неизвестный provider деталей сценария: ${providerName}`);
+                    throw new Error(`Неизвестный источник деталей сценария: ${providerName}`);
                 }
 
                 const provider = providerFactory();
@@ -310,6 +310,31 @@ export function createCatalogWorkspaceController({
                 }
 
                 void toggleScenarioExpansion(slug);
+            });
+        });
+
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        if (!navigationLane) {
+            return;
+        }
+
+        document.querySelectorAll("[data-tag-legend-hover]").forEach((button) => {
+            const tag = button.dataset.tagLegendHover;
+            if (!tag) {
+                return;
+            }
+
+            button.addEventListener("mouseenter", () => {
+                navigationLane.dataset.highlightTag = tag;
+            });
+            button.addEventListener("mouseleave", () => {
+                delete navigationLane.dataset.highlightTag;
+            });
+            button.addEventListener("focus", () => {
+                navigationLane.dataset.highlightTag = tag;
+            });
+            button.addEventListener("blur", () => {
+                delete navigationLane.dataset.highlightTag;
             });
         });
     }
@@ -542,7 +567,7 @@ export function createCatalogWorkspaceController({
                 response: null,
                 error: {
                     failureKind: "terminal",
-                    message: "В транспорте сессии нет активного id сессии.",
+                    message: "У сессии нет активного идентификатора для повторной отправки.",
                     status: null
                 },
                 lastPayload: preparedSubmission
@@ -794,7 +819,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = sessionProviderFactories[providerName];
         if (!providerFactory) {
-            throw new SessionTransportError(`Неизвестный provider сессии: ${providerName}`, {
+            throw new SessionTransportError(`Неизвестный источник для запуска сессии: ${providerName}`, {
                 failureKind: "terminal"
             });
         }
@@ -811,7 +836,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = progressProviderFactories[providerName];
         if (!providerFactory) {
-            throw new Error(`Неизвестный provider прогресса: ${providerName}`);
+            throw new Error(`Неизвестный источник данных прогресса: ${providerName}`);
         }
 
         const provider = providerFactory();
@@ -924,19 +949,42 @@ export function createCatalogWorkspaceController({
         panel.style.height = "0px";
         panel.style.opacity = "0";
         panel.style.overflow = "hidden";
+        panel.style.willChange = "height, opacity";
 
-        const targetHeight = panel.scrollHeight;
-        panel.getBoundingClientRect();
+        return new Promise((resolve) => {
+            let observer = null;
 
-        panel.style.transition = createScenarioPanelTransition();
-        panel.style.height = `${targetHeight}px`;
-        panel.style.opacity = "1";
+            const startAnimation = () => {
+                if (typeof ResizeObserver !== "undefined") {
+                    observer = new ResizeObserver(() => {
+                        if (panel.style.height && panel.style.height !== "auto") {
+                            panel.style.height = `${panel.scrollHeight}px`;
+                        }
+                    });
+                    observer.observe(panel);
+                }
 
-        return waitForScenarioAnimation(panel, () => {
-            panel.style.removeProperty("height");
-            panel.style.removeProperty("opacity");
-            panel.style.removeProperty("overflow");
-            panel.style.removeProperty("transition");
+                panel.style.transition = createScenarioPanelTransition();
+                panel.style.height = `${panel.scrollHeight}px`;
+                panel.style.opacity = "1";
+
+                void waitForScenarioAnimation(panel, () => {
+                    observer?.disconnect();
+                    panel.style.removeProperty("height");
+                    panel.style.removeProperty("opacity");
+                    panel.style.removeProperty("overflow");
+                    panel.style.removeProperty("transition");
+                    panel.style.removeProperty("will-change");
+                    resolve();
+                });
+            };
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    panel.getBoundingClientRect();
+                    startAnimation();
+                });
+            });
         });
     }
 
@@ -1267,7 +1315,9 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
 
 function toUserFacingRecoveryMessage(message, fallbackMessage) {
     const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
-    return resolvedMessage.replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.");
+    return resolvedMessage
+        .replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.")
+        .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
 function measureNaturalNavigationWidth(navigationLane) {

@@ -24,7 +24,7 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
         if (!"command_text".equals(answer.type())) {
             return SubmissionOutcome.unsupported(
                     "unsupported-answer-type",
-                    "Этот MVP-срез пока проверяет только ответы типа command_text."
+                    "Сейчас проверяются только ответы в виде команды."
             );
         }
 

@@ -28,7 +28,7 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             id: "remote-sync-preview",
             slug: "remote-sync-preview",
             title: "Проверь удалённое состояние перед pull",
-            summary: "Сравни сигналы ahead/behind и реши, что уместнее перед синхронизацией: fetch или pull.",
+            summary: "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
             difficulty: "intermediate",
             tags: ["remote", "inspection", "planning"]
         }

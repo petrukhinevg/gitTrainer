@@ -33,7 +33,7 @@ export function renderCatalogOverviewState(state) {
         case "empty":
             return `
                 <section class="catalog-state catalog-state-empty">
-                    <strong>В этом срезе нет сценариев</strong>
+                    <strong>По этим фильтрам сценариев не нашлось</strong>
                     <p>Ослабьте фильтры, чтобы снова заполнить карту сценариев.</p>
                 </section>
             `;
@@ -54,7 +54,7 @@ export function renderCatalogOverviewState(state) {
 export function renderScenarioRail(state, selectedCatalogScenario) {
     switch (state.catalog.status) {
         case "loading":
-            return `<p class="panel-copy">Загружаем ссылки на сценарии для общей оболочки рабочего пространства.</p>`;
+            return `<p class="panel-copy">Загружаем ссылки на сценарии для рабочего пространства.</p>`;
         case "error":
             return `<p class="panel-copy">${escapeHtml(state.catalog.error ?? "Источник каталога недоступен.")}</p>`;
         case "empty":
@@ -92,7 +92,7 @@ function renderScenarioCard(item) {
             </div>
             <div class="scenario-card-footer">
                 <a class="scenario-action" href="#/exercise/${encodeHashSegment(item.slug)}">Открыть сценарий</a>
-                <span class="entry-note">Переход по маршруту теперь получает детали через отдельный provider seam.</span>
+                <span class="entry-note">После перехода подробности сценария загружаются отдельно, без перерисовки всего каталога.</span>
             </div>
         </article>
     `;
