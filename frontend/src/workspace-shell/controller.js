@@ -1,4 +1,5 @@
 import { SessionTransportError } from "../session/session-provider.js";
+import { FIXTURE_PROGRESS_SUMMARY } from "../progress/progress-fixtures.js";
 import { renderCatalogWorkspace } from "./view.js";
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
@@ -1054,9 +1055,9 @@ function createInitialSubmissionRequestState() {
 
 function createInitialProgressState() {
     return {
-        status: "placeholder",
-        summary: null,
-        recommendations: null
+        status: "ready",
+        summary: structuredClone(FIXTURE_PROGRESS_SUMMARY),
+        error: null
     };
 }
 
