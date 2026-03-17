@@ -79,14 +79,14 @@ public class ScenarioRepositoryContextFixtureSource {
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("87d20aa", "docs: уточнить чеклист синхронизации"),
-                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("3fd81e5", "feat: подготовить баннер статуса remote")
+                            new ScenarioWorkspaceDetail.ScenarioRepositoryCommit("3fd81e5", "feat: подготовить баннер статуса удалённого репозитория")
                     ),
                     List.of(
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("docs/sync-playbook.md", "clean"),
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/banner.js", "clean")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по remote", "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по удалённому репозиторию", "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения."),
                             new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка для решения", "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду.")
                     )
             )

@@ -16,7 +16,7 @@ public class SessionRequestValidationException extends RuntimeException {
     public static SessionRequestValidationException missingScenarioSlug() {
         return new SessionRequestValidationException(
                 "scenario-slug-required",
-                "Для запуска сессии нужен slug сценария."
+                "Для запуска сессии нужен код сценария."
         );
     }
 

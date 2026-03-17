@@ -1,5 +1,8 @@
 import { renderLessonLane } from "./lesson-layout.js";
-import { escapeHtml } from "./render-helpers.js";
+import {
+    escapeHtml,
+    formatDifficulty
+} from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
     if (state.route !== "exercise") {
@@ -33,7 +36,7 @@ export function renderWorkspacePanel(state) {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
-                        <span class="control-label">Git-viewer</span>
+                        <span class="control-label">Состояние репозитория</span>
                         <span class="workspace-card__badge">ошибка</span>
                     </div>
                     <div class="practice-inline-note">
@@ -44,7 +47,7 @@ export function renderWorkspacePanel(state) {
             surface: `
                 <section class="workspace-card workspace-card--composer workspace-card--focus">
                     <div class="workspace-card__header">
-                        <span class="control-label">Practice surface</span>
+                        <span class="control-label">Область практики</span>
                         <span class="workspace-card__badge">заблокировано</span>
                     </div>
                     <div class="workspace-card__actions">
@@ -69,7 +72,7 @@ export function renderWorkspacePanel(state) {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Git-viewer</span>
+                    <span class="control-label">Состояние репозитория</span>
                     <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
                 <div class="practice-shell__meta practice-shell__meta--viewer">
@@ -132,8 +135,8 @@ function renderPracticeShell({ viewer, surface }) {
     return renderLessonLane({
         lane: "practice",
         label: "Практика",
-        title: "Git-viewer и ввод команды",
-        description: "Правая колонка держит viewer наверху и компактную practice-surface внизу.",
+        title: "Состояние репозитория и ввод команды",
+        description: "Правая колонка показывает состояние репозитория сверху и форму ответа снизу.",
         showHeader: false,
         body: `
             <div class="practice-stack">
@@ -184,7 +187,7 @@ function renderPlaceholderComposer(title, copy) {
             </label>
             <div class="practice-output">
                 <span class="control-label">Каркас вывода</span>
-                <p class="panel-copy">Подготовленный payload и транспортная обратная связь появятся здесь после открытия сценария.</p>
+                <p class="panel-copy">Подготовленный ответ и результат отправки появятся здесь после открытия сценария.</p>
             </div>
         </section>
     `;
@@ -196,13 +199,13 @@ function renderPracticeScenarioSummary(detail, selectedScenarioSlug, submissionD
         : selectedScenarioSlug ?? "Активное упражнение";
     const summary = typeof detail?.summary === "string" && detail.summary.trim() !== ""
         ? detail.summary
-        : "Сценарное summary появится после загрузки authored detail payload.";
+        : "Краткое описание сценария появится после загрузки данных задания.";
     const goal = typeof detail?.workspace?.task?.goal === "string" && detail.workspace.task.goal.trim() !== ""
         ? detail.workspace.task.goal
         : null;
     const difficulty = typeof detail?.difficulty === "string" && detail.difficulty.trim() !== ""
-        ? detail.difficulty
-        : "mvp";
+        ? formatDifficulty(detail.difficulty)
+        : "Неизвестно";
 
     return `
         <div class="practice-summary">
@@ -232,7 +235,7 @@ function renderViewerStatusStrip(bootstrapState, lifecycle) {
             label: "Сессия запускается",
             status: "pending",
             badge: "pending",
-            copy: "Поднимаем transport для первой отправки."
+            copy: "Подготавливаем сеанс для первой отправки."
         });
     }
 
@@ -262,7 +265,7 @@ function renderViewerStatusStrip(bootstrapState, lifecycle) {
             label: "Сессия ожидает запуск",
             status: "idle",
             badge: "idle",
-            copy: "Transport поднимется автоматически после открытия упражнения."
+            copy: "Сеанс запустится автоматически после открытия упражнения."
         });
     }
 
@@ -298,7 +301,7 @@ function renderBootstrapNotice(bootstrapState) {
         return `
             <div class="practice-request practice-request--pending">
                 <span class="control-label">Состояние запроса</span>
-                <p class="panel-copy">Запускаем сессию для этого сценария. Отправка откроется, когда транспорт будет готов.</p>
+                <p class="panel-copy">Запускаем сессию для этого сценария. Отправка станет доступна, когда всё будет готово.</p>
             </div>
         `;
     }
@@ -330,17 +333,17 @@ function renderBootstrapNotice(bootstrapState) {
 function renderSubmissionTransportOutput(preparedSubmission, submissionState, supportedAnswerTypes) {
     if (submissionState.status === "pending") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "pending",
             badge: "pending",
-            copy: "Отправляем подготовленный ответ через активную сессию.",
+            copy: "Отправляем ответ через активную сессию.",
             payload: submissionState.lastPayload
         });
     }
 
     if (submissionState.status === "retryable-error") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "retryable",
             badge: "retryable",
             copy: submissionState.error?.message ?? "Отправка не удалась, но её можно повторить.",
@@ -353,7 +356,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
 
     if (submissionState.status === "terminal-error") {
         return renderSubmissionRequestBlock({
-            label: "Транспорт отправки",
+            label: "Отправка ответа",
             status: "terminal",
             badge: "terminal",
             copy: submissionState.error?.message ?? "Отправка завершилась ошибкой.",
@@ -370,7 +373,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
             ${renderCorrectnessFeedbackBlock(submissionState.response, supportedAnswerTypes)}
             <div class="practice-output practice-output--ready">
                 <div class="practice-output__header">
-                    <span class="control-label">Квитанция отправки</span>
+                    <span class="control-label">Сведения об отправке</span>
                     <span class="workspace-card__badge">${escapeHtml(formatCorrectness(resolveSubmissionReceiptBadge(outcome)))}</span>
                 </div>
                 <dl class="result-summary">
@@ -395,7 +398,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
                         <dd>${escapeHtml(submissionState.response.answer?.value ?? "")}</dd>
                     </div>
                 </dl>
-                <p class="panel-copy">Транспорт завершён, а результат проверки уже показан выше.</p>
+                <p class="panel-copy">Ответ отправлен, а результат проверки уже показан выше.</p>
             </div>
         `;
     }
@@ -403,7 +406,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
     if (preparedSubmission) {
         return `
             <div class="practice-output practice-output--ready">
-                <span class="control-label">Подготовленный payload</span>
+                <span class="control-label">Подготовленный ответ</span>
                 ${renderPreparedPayloadSummary(preparedSubmission)}
                 <p class="panel-copy">Ответ готов к отправке, как только активная сессия станет доступна.</p>
             </div>
@@ -412,8 +415,8 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
 
     return `
         <div class="practice-output">
-            <span class="control-label">Транспорт отправки</span>
-            <p class="panel-copy">Транспортная обратная связь появится здесь после принятия ответа активной сессией.</p>
+            <span class="control-label">Отправка ответа</span>
+            <p class="panel-copy">Здесь появится информация об отправке, как только активная сессия примет ответ.</p>
         </div>
     `;
 }
@@ -457,7 +460,7 @@ function renderPreparedPayloadSummary(preparedSubmission) {
                 <dd>${escapeHtml(formatAnswerType(preparedSubmission.answerType))}</dd>
             </div>
             <div>
-                <dt>Черновик ответа</dt>
+                <dt>Ответ</dt>
                 <dd>${escapeHtml(preparedSubmission.answer)}</dd>
             </div>
             <div>
@@ -646,7 +649,7 @@ function renderBranchGraph(branches) {
             <div class="branch-graph branch-graph--empty">
                 <div class="branch-graph__empty">
                     <span class="control-label">Пустое состояние</span>
-                    <p class="panel-copy">В активном payload деталей нет подсказок по веткам.</p>
+                    <p class="panel-copy">В текущих данных задания нет подсказок по веткам.</p>
                 </div>
             </div>
         `;
@@ -834,7 +837,7 @@ function resolveFeedbackPanelCopy(feedbackPanelStatus, normalizedFeedback, submi
                 ? "Панель повтора сохраняет последнюю проверенную подсказку, пока новая попытка отправляется."
                 : "Панель повтора уже держит контекст упражнения, чтобы пользователь не потерял место, если попытка завершится ошибкой.";
         case "guided":
-            return "Контекст текущего упражнения остаётся закреплён после неудачной проверки, а допуск к повтору и уровень подсказки синхронизируются с последним payload.";
+            return "Контекст упражнения остаётся на месте после неудачной проверки, а доступность повтора и уровень подсказки синхронизируются с последним ответом.";
         case "request-failure":
             return normalizedFeedback.status === "guided"
                 ? "Запрос завершился ошибкой, но последняя проверенная подсказка для повтора остаётся видимой, чтобы можно было восстановиться без потери контекста."
@@ -1045,7 +1048,7 @@ function resolveSubmissionBoundaryCopy(submissionBoundary) {
     const placeholderOutcome = submissionBoundary?.placeholderOutcome ?? null;
     const boundaryMessage = typeof placeholderOutcome?.message === "string" && placeholderOutcome.message.trim() !== ""
         ? placeholderOutcome.message
-        : "Транспорт сессии готов к первой проверяемой отправке.";
+        : "Сессия готова к первой проверяемой отправке.";
     const supportedTypesCopy = Array.isArray(submissionBoundary?.supportedAnswerTypes)
         ? submissionBoundary.supportedAnswerTypes.map(formatAnswerType).join(", ")
         : "";

@@ -42,12 +42,12 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
         async startSession({ scenarioSlug }) {
             const normalizedSlug = normalizeRequiredValue(
                 scenarioSlug,
-                "Для запуска сессии нужен slug сценария."
+                "Для запуска сессии нужен код сценария."
             );
             const detail = FIXTURE_SCENARIO_DETAILS[normalizedSlug];
             if (!detail) {
                 throw new SessionTransportError(
-                    `Детали сценария недоступны для slug: ${normalizedSlug}`,
+                    `Сценарий не найден: ${normalizedSlug}`,
                     { failureKind: "terminal", status: 404 }
                 );
             }
@@ -79,7 +79,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         status: "placeholder",
                         correctness: "not-evaluated",
                         code: "awaiting-first-submission",
-                        message: "Транспорт сессии готов. Отправьте первый ответ, чтобы сразу получить результат проверки."
+                        message: "Сессия готова. Отправьте первый ответ, чтобы сразу получить результат проверки."
                     },
                     placeholderRetryFeedback: createPlaceholderRetryFeedback({
                         scenarioSlug: session.scenarioSlug,
@@ -143,13 +143,13 @@ export function createUnavailableFixtureSessionProvider() {
         name: "fixture-unavailable",
         async startSession() {
             throw new SessionTransportError(
-                "Транспорт сессии сейчас недоступен. Повторите чуть позже.",
+                "Сервис сессий сейчас недоступен. Повторите чуть позже.",
                 { failureKind: "retryable", status: 503 }
             );
         },
         async submitAnswer() {
             throw new SessionTransportError(
-                "Транспорт сессии сейчас недоступен. Повторите чуть позже.",
+                "Сервис сессий сейчас недоступен. Повторите чуть позже.",
                 { failureKind: "retryable", status: 503 }
             );
         }
@@ -198,7 +198,7 @@ async function postJson(fetchImpl, path, payload) {
         }
 
         throw new SessionTransportError(
-            "Запрос сессии не смог дойти до сервера. Проверьте backend и попробуйте снова.",
+            "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.",
             { failureKind: "retryable" }
         );
     }
@@ -316,7 +316,7 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
             status: "evaluated",
             correctness: "unsupported",
             code: "unsupported-answer-type",
-            message: "Этот MVP-срез пока проверяет только ответы типа command_text."
+            message: "Сейчас проверяются только ответы в виде команды."
         };
     }
 
@@ -562,9 +562,9 @@ function scenarioGuidanceNarrative(scenarioSlug, correctness, answer) {
     if (correctness === "unsupported") {
         return {
             title: "Вернитесь к поддерживаемому вводу команды",
-            message: "Этот MVP-срез пока проверяет только ответы в формате команды, поэтому следующую попытку нужно вернуть к поддерживаемому типу.",
+            message: "Сейчас проверяются только ответы в виде команды, поэтому перед следующей попыткой нужно вернуть поддерживаемый формат.",
             details: [
-                "Текущий транспорт принимает запрос, но модель корректности всё ещё помечает такой тип ответа как неподдерживаемый.",
+                "Запрос принимается, но такой тип ответа всё ещё считается неподдерживаемым.",
                 "Панель повтора должна сначала вернуть пользователя к поддерживаемому командному формату, а уже потом пробовать более богатые варианты ответа."
             ],
             nudgeTitle: "Используйте режим текста команды",
@@ -621,7 +621,7 @@ function scenarioGuidanceNarrative(scenarioSlug, correctness, answer) {
                 title: "Сначала проверьте, потом действуйте",
                 message: "Объяснение для повтора должно возвращать пользователя к проверке репозитория до любого изменяющего Git-действия.",
                 details: [
-                    "Этот блок обратной связи специально сделан обучающим: он показывает, почему ответ не подходит, не меняя саму оболочку панели.",
+                    "Этот блок обратной связи специально сделан обучающим: он показывает, почему ответ не подходит, не ломая структуру экрана.",
                     "Подсказки должны усиливаться от лёгкого намёка к более сильному напоминанию только после повторных промахов."
                 ],
                 nudgeTitle: "Сначала посмотрите на состояние рабочего дерева",

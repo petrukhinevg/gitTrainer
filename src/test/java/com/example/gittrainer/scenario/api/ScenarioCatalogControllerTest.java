@@ -134,7 +134,7 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."));
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."));
     }
 
     @Test
@@ -183,7 +183,7 @@ class ScenarioCatalogControllerTest {
         mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Детали сценария недоступны для slug: not-a-real-scenario"));
+                .andExpect(jsonPath("$.detail").value("Сценарий не найден: not-a-real-scenario"));
     }
 
     @Test
@@ -192,6 +192,6 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."));
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."));
     }
 }

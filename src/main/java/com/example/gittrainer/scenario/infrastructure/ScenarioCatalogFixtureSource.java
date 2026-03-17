@@ -40,7 +40,7 @@ public class ScenarioCatalogFixtureSource {
                             "remote-sync-preview",
                             "remote-sync-preview",
                             "Проверь удалённое состояние перед pull",
-                            "Сравни сигналы ahead/behind и реши, что уместнее перед синхронизацией: fetch или pull.",
+                            "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("remote", "inspection", "planning")
                     )
@@ -63,7 +63,7 @@ public class ScenarioCatalogFixtureSource {
     public ScenarioCatalogFixture unavailableCatalog() {
         throw new ScenarioCatalogSourceUnavailableException(
                 "mvp-fixture-unavailable",
-                "Источник каталога сейчас недоступен. Выберите другой provider или повторите позже."
+                "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
         );
     }
 }
