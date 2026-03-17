@@ -312,6 +312,31 @@ export function createCatalogWorkspaceController({
                 void toggleScenarioExpansion(slug);
             });
         });
+
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        if (!navigationLane) {
+            return;
+        }
+
+        document.querySelectorAll("[data-tag-legend-hover]").forEach((button) => {
+            const tag = button.dataset.tagLegendHover;
+            if (!tag) {
+                return;
+            }
+
+            button.addEventListener("mouseenter", () => {
+                navigationLane.dataset.highlightTag = tag;
+            });
+            button.addEventListener("mouseleave", () => {
+                delete navigationLane.dataset.highlightTag;
+            });
+            button.addEventListener("focus", () => {
+                navigationLane.dataset.highlightTag = tag;
+            });
+            button.addEventListener("blur", () => {
+                delete navigationLane.dataset.highlightTag;
+            });
+        });
     }
 
     function bindPracticeSurfaceControls() {
@@ -924,19 +949,42 @@ export function createCatalogWorkspaceController({
         panel.style.height = "0px";
         panel.style.opacity = "0";
         panel.style.overflow = "hidden";
+        panel.style.willChange = "height, opacity";
 
-        const targetHeight = panel.scrollHeight;
-        panel.getBoundingClientRect();
+        return new Promise((resolve) => {
+            let observer = null;
 
-        panel.style.transition = createScenarioPanelTransition();
-        panel.style.height = `${targetHeight}px`;
-        panel.style.opacity = "1";
+            const startAnimation = () => {
+                if (typeof ResizeObserver !== "undefined") {
+                    observer = new ResizeObserver(() => {
+                        if (panel.style.height && panel.style.height !== "auto") {
+                            panel.style.height = `${panel.scrollHeight}px`;
+                        }
+                    });
+                    observer.observe(panel);
+                }
 
-        return waitForScenarioAnimation(panel, () => {
-            panel.style.removeProperty("height");
-            panel.style.removeProperty("opacity");
-            panel.style.removeProperty("overflow");
-            panel.style.removeProperty("transition");
+                panel.style.transition = createScenarioPanelTransition();
+                panel.style.height = `${panel.scrollHeight}px`;
+                panel.style.opacity = "1";
+
+                void waitForScenarioAnimation(panel, () => {
+                    observer?.disconnect();
+                    panel.style.removeProperty("height");
+                    panel.style.removeProperty("opacity");
+                    panel.style.removeProperty("overflow");
+                    panel.style.removeProperty("transition");
+                    panel.style.removeProperty("will-change");
+                    resolve();
+                });
+            };
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    panel.getBoundingClientRect();
+                    startAnimation();
+                });
+            });
         });
     }
 
