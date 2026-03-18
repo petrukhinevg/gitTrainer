@@ -45,7 +45,7 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
-    const tagLaneMap = createTagLaneMap(tagOptions);
+    const tagLaneMap = createTagLaneMap(tagOptions, state.catalog.items);
     const tagSpanMap = createTagSpanMap(state.catalog.items);
 
     const laneCount = Math.max(1, tagLaneMap.size);
@@ -277,7 +277,7 @@ function toTagToken(tag) {
         .replaceAll(/^-+|-+$/g, "");
 }
 
-function createTagLaneMap(tagOptions) {
+function createTagLaneMap(tagOptions, items = []) {
     const laneMap = new Map();
     let nextLane = 0;
 
@@ -289,6 +289,18 @@ function createTagLaneMap(tagOptions) {
 
         laneMap.set(token, nextLane);
         nextLane += 1;
+    });
+
+    items.forEach((item) => {
+        item.tags.forEach((tag) => {
+            const token = toTagToken(tag);
+            if (!token || laneMap.has(token)) {
+                return;
+            }
+
+            laneMap.set(token, nextLane);
+            nextLane += 1;
+        });
     });
 
     return laneMap;
