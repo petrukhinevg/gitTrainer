@@ -22,6 +22,7 @@ export function createCatalogWorkspaceController({
         selectedScenarioSlug: null,
         selectedFocus: null,
         expandedScenarioSlugs: [],
+        pinnedNavigationTag: null,
         providerName: DEFAULT_PROVIDER_NAME,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
@@ -318,23 +319,40 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        document.querySelectorAll("[data-tag-legend-hover]").forEach((button) => {
-            const tag = button.dataset.tagLegendHover;
+        const applyNavigationHighlight = (hoveredTag = null) => {
+            const activeTag = hoveredTag ?? state.pinnedNavigationTag;
+            if (activeTag) {
+                navigationLane.dataset.highlightTag = activeTag;
+                return;
+            }
+
+            delete navigationLane.dataset.highlightTag;
+        };
+
+        applyNavigationHighlight();
+
+        document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
+            const tag = button.dataset.tagLegendControl;
             if (!tag) {
                 return;
             }
 
             button.addEventListener("mouseenter", () => {
-                navigationLane.dataset.highlightTag = tag;
+                applyNavigationHighlight(tag);
             });
             button.addEventListener("mouseleave", () => {
-                delete navigationLane.dataset.highlightTag;
+                applyNavigationHighlight();
             });
             button.addEventListener("focus", () => {
-                navigationLane.dataset.highlightTag = tag;
+                applyNavigationHighlight(tag);
             });
             button.addEventListener("blur", () => {
-                delete navigationLane.dataset.highlightTag;
+                applyNavigationHighlight();
+            });
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
+                render();
             });
         });
     }

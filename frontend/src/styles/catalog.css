@@ -38,7 +38,7 @@
     height: 24px;
     border: 1px solid rgba(31, 23, 32, 0.12);
     border-radius: 999px;
-    background: rgba(255, 250, 241, 0.8);
+    background: rgba(255, 250, 241, 0.5);
     color: var(--ink-soft);
     cursor: pointer;
     list-style: none;
@@ -92,6 +92,12 @@
     transform: translateY(-1px);
     border-color: var(--tag-accent);
     background: rgba(255, 250, 241, 0.9);
+}
+
+.scenario-legend__tag--active {
+    border-color: var(--tag-accent);
+    background: color-mix(in srgb, var(--tag-accent) 14%, rgba(255, 250, 241, 0.92));
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--tag-accent) 16%, transparent);
 }
 
 .scenario-legend__swatch {
@@ -216,12 +222,6 @@
     transform: translateX(-2px);
     transform-origin: center;
     transition: opacity 180ms ease, transform 220ms ease;
-}
-
-.flow-node:hover .flow-tag-line,
-.flow-node:focus-within .flow-tag-line {
-    opacity: 1;
-    transform: translateX(0);
 }
 
 .flow-tag-line__stem,
