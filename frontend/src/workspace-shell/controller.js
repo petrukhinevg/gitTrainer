@@ -856,16 +856,16 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        const flowBlocks = [...navigationLane.querySelectorAll(".flow-block")];
-        if (!flowBlocks.length) {
+        const flowBlockList = navigationLane.querySelector("[data-flow-block-list]");
+        if (!flowBlockList) {
             lessonLayout.style.removeProperty("--navigation-pane-width");
             return;
         }
 
-        const maxContentWidth = measureNaturalNavigationWidth(navigationLane);
-        const maxWidth = Math.ceil(maxContentWidth + 36);
+        const maxContentWidth = measureNaturalNavigationWidth(flowBlockList);
+        const maxWidth = Math.ceil(maxContentWidth + 44);
         const minWidth = Math.ceil(maxWidth / 2);
-        const preferredWidth = Math.round(window.innerWidth * 0.24);
+        const preferredWidth = Math.round(window.innerWidth * 0.18);
         const targetWidth = Math.min(maxWidth, Math.max(minWidth, preferredWidth));
 
         lessonLayout.style.setProperty("--navigation-pane-width", `${targetWidth}px`);
@@ -1320,10 +1320,9 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
-function measureNaturalNavigationWidth(navigationLane) {
-    const scrollContent = navigationLane.querySelector(".lesson-lane__scroll-content");
-    if (!scrollContent) {
-        return navigationLane.scrollWidth;
+function measureNaturalNavigationWidth(targetContent) {
+    if (!targetContent) {
+        return 0;
     }
 
     const measureRoot = document.createElement("div");
@@ -1336,12 +1335,10 @@ function measureNaturalNavigationWidth(navigationLane) {
     measureRoot.style.maxWidth = "none";
     measureRoot.style.minWidth = "0";
 
-    const clone = scrollContent.cloneNode(true);
+    const clone = targetContent.cloneNode(true);
     clone.style.width = "max-content";
     clone.style.minWidth = "max-content";
     clone.style.maxWidth = "none";
-    clone.style.paddingLeft = "18px";
-    clone.style.paddingRight = "18px";
 
     measureRoot.append(clone);
     document.body.append(measureRoot);

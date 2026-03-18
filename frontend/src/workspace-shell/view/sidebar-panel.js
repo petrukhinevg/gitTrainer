@@ -45,6 +45,9 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
+    const tagLaneMap = createTagLaneMap(tagOptions);
+    const tagSpanMap = createTagSpanMap(state.catalog.items);
+
     return `
         <div class="scenario-legend">
             <div class="scenario-legend__header">
@@ -68,6 +71,8 @@ function renderTrainingFlow(state, tagOptions) {
                 state,
                 item,
                 index,
+                tagLaneMap,
+                tagSpanMap,
                 isActive: item.slug === state.selectedScenarioSlug,
                 selectedFocus: state.selectedFocus
             })).join("")}
@@ -95,7 +100,7 @@ function renderProgressFlowBlock(state) {
     `;
 }
 
-function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
+function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
@@ -113,6 +118,9 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
 
     return `
         <section class="flow-node" data-tags="${escapeHtml(tagTokens.join(" "))}">
+            <span class="flow-node__graph" aria-hidden="true">
+                ${item.tags.map((tag) => renderScenarioTagLine(tag, item.slug, tagLaneMap, tagSpanMap)).join("")}
+            </span>
             <button
                 class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
                 type="button"
@@ -120,17 +128,11 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
-                <span class="flow-tag-lines" aria-hidden="true">
-                    ${item.tags.map((tag) => renderScenarioTagLine(tag)).join("")}
-                </span>
                 <span class="flow-block__heading">
                     <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
                 </span>
                 <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
-                <span class="flow-block__tag-row">
-                    ${item.tags.map((tag) => `<span class="flow-block__tag">${escapeHtml(formatTag(tag))}</span>`).join("")}
-                </span>
             </button>
             ${subtaskBlocks}
         </section>
@@ -226,9 +228,27 @@ function renderLegendTag(tag) {
     `;
 }
 
-function renderScenarioTagLine(tag) {
+function renderScenarioTagLine(tag, slug, tagLaneMap, tagSpanMap) {
     const token = toTagToken(tag);
-    return `<span class="flow-tag-line flow-tag-line--${escapeHtml(token)}"></span>`;
+    const span = tagSpanMap.get(token) ?? {
+        firstSlug: slug,
+        lastSlug: slug
+    };
+    const laneIndex = tagLaneMap.get(token) ?? 0;
+    const classes = [
+        "flow-tag-line",
+        `flow-tag-line--${token}`,
+        span.firstSlug === slug ? "flow-tag-line--first" : "",
+        span.lastSlug === slug ? "flow-tag-line--last" : ""
+    ].filter(Boolean).join(" ");
+    return `
+        <span class="${escapeHtml(classes)}" style="--flow-tag-lane:${laneIndex}">
+            <span class="flow-tag-line__stem flow-tag-line__stem--top"></span>
+            <span class="flow-tag-line__stem flow-tag-line__stem--bottom"></span>
+            <span class="flow-tag-line__node"></span>
+            <span class="flow-tag-line__branch"></span>
+        </span>
+    `;
 }
 
 function toTagToken(tag) {
@@ -237,4 +257,32 @@ function toTagToken(tag) {
         .toLowerCase()
         .replaceAll(/[^a-z0-9]+/g, "-")
         .replaceAll(/^-+|-+$/g, "");
+}
+
+function createTagLaneMap(tagOptions) {
+    return new Map(
+        tagOptions.map((tag, index) => [toTagToken(tag), index])
+    );
+}
+
+function createTagSpanMap(items) {
+    const tagSpanMap = new Map();
+
+    items.forEach((item) => {
+        item.tags.forEach((tag) => {
+            const token = toTagToken(tag);
+            const existing = tagSpanMap.get(token);
+            if (!existing) {
+                tagSpanMap.set(token, {
+                    firstSlug: item.slug,
+                    lastSlug: item.slug
+                });
+                return;
+            }
+
+            existing.lastSlug = item.slug;
+        });
+    });
+
+    return tagSpanMap;
 }
