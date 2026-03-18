@@ -278,6 +278,7 @@ export function createCatalogWorkspaceController({
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         const isExerciseRoute = state.route === "exercise";
+        const laneScrollPositions = captureLaneScrollPositions();
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
@@ -286,6 +287,7 @@ export function createCatalogWorkspaceController({
             providerOptions
         });
 
+        restoreLaneScrollPositions(laneScrollPositions);
         syncNavigationPaneWidth();
         bindCatalogControls();
         bindNavigationControls();
@@ -1383,6 +1385,39 @@ function measureNaturalNavigationWidth(targetContent) {
     measureRoot.remove();
 
     return width;
+}
+
+function captureLaneScrollPositions() {
+    return Array.from(document.querySelectorAll(".lesson-lane__body"))
+        .map((laneBody) => {
+            const laneRoot = laneBody.closest(".lesson-lane");
+            const laneName = Array.from(laneRoot?.classList ?? [])
+                .find((className) => className.startsWith("lesson-lane--"))
+                ?.replace("lesson-lane--", "");
+
+            if (!laneName) {
+                return null;
+            }
+
+            return {
+                laneName,
+                scrollTop: laneBody.scrollTop,
+                scrollLeft: laneBody.scrollLeft
+            };
+        })
+        .filter(Boolean);
+}
+
+function restoreLaneScrollPositions(positions) {
+    positions.forEach((position) => {
+        const laneBody = document.querySelector(`.lesson-lane--${position.laneName} .lesson-lane__body`);
+        if (!laneBody) {
+            return;
+        }
+
+        laneBody.scrollTop = position.scrollTop;
+        laneBody.scrollLeft = position.scrollLeft;
+    });
 }
 
 function escapeSelectorValue(value) {
