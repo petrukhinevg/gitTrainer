@@ -69,7 +69,7 @@ class LoadProgressSummaryUseCaseTest {
                 .containsExactly("branch-safety");
         assertThat(summary.recommendations().next().scenarioSlug()).isEqualTo("branch-safety");
         assertThat(summary.recommendations().rationale())
-                .isEqualTo("Продолжайте сценарий, в котором уже есть незавершённый прогресс.");
+                .isEqualTo("Продолжайте сценарий, который уже начали, чтобы не терять контекст.");
     }
 
     @Test
@@ -108,7 +108,7 @@ class LoadProgressSummaryUseCaseTest {
         assertThat(summary.recommendations().attempted()).isEmpty();
         assertThat(summary.recommendations().next().scenarioSlug()).isEqualTo("branch-safety");
         assertThat(summary.recommendations().rationale())
-                .isEqualTo("Начните следующий нетронутый сценарий в текущем порядке каталога.");
+                .isEqualTo("Начните следующий ещё не пройденный сценарий по порядку каталога.");
     }
 
     private ProgressSummaryItem findItem(ProgressSummary summary, String scenarioSlug) {

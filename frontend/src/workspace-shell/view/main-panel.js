@@ -25,13 +25,13 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
         lane: "lesson",
         showHeader: false,
         body: `
-            ${renderMainLead({
-                label: "Стартовая страница",
-                title: "Выберите блок задания слева",
-                description: "Каталог теперь встроен в общую оболочку: слева идёт весь поток, а по центру открывается выбранная страница.",
-                meta: [
-                    `Сценарии: ${state.catalog.items.length}`,
-                    `Каталог: ${formatCatalogStatus(state.catalog.status)}`
+                ${renderMainLead({
+                    label: "Стартовая страница",
+                    title: "Выберите блок задания слева",
+                    description: "Слева находятся сценарии и шаги, по центру открывается описание, справа остаётся практика.",
+                    meta: [
+                        `Сценарии: ${state.catalog.items.length}`,
+                        `Каталог: ${formatCatalogStatus(state.catalog.status)}`
                 ]
             })}
             ${renderWelcomePage(state, { tagOptions, providerOptions })}
@@ -46,9 +46,9 @@ function renderProgressMainPanel(state) {
             showHeader: false,
             body: `
                 ${renderMainLead({
-                    label: "Маршрут прогресса",
+                    label: "Экран прогресса",
                     title: "Загружаем экран прогресса",
-                    description: "Оболочка уже на месте и ждёт данные сводки прогресса.",
+                    description: "Экран уже открыт и ждёт данные о прогрессе.",
                     meta: [
                         `Маршрут: ${formatRoute(state.route)}`,
                         `Статус: ${formatCatalogStatus(state.progress.status)}`
@@ -69,9 +69,9 @@ function renderProgressMainPanel(state) {
             showHeader: false,
             body: `
                 ${renderMainLead({
-                    label: "Маршрут прогресса",
+                    label: "Экран прогресса",
                     title: "Экран прогресса недоступен",
-                    description: "Оболочка остаётся на месте даже при ошибке загрузки данных прогресса.",
+                    description: "Даже при ошибке загрузки структура экрана остаётся на месте.",
                     meta: [
                         `Маршрут: ${formatRoute(state.route)}`,
                         `Статус: ${formatCatalogStatus(state.progress.status)}`
@@ -94,9 +94,9 @@ function renderProgressMainPanel(state) {
             showHeader: false,
             body: `
                 ${renderMainLead({
-                    label: "Маршрут прогресса",
+                    label: "Экран прогресса",
                     title: "Прогресс пока не записан",
-                    description: "Оболочка готова, но активность по сценариям ещё не зафиксирована.",
+                    description: "Активность по сценариям ещё не появилась, но экран уже готов.",
                     meta: [
                         `Маршрут: ${formatRoute(state.route)}`,
                         `Статус: ${formatCatalogStatus(state.progress.status)}`
@@ -119,20 +119,20 @@ function renderProgressMainPanel(state) {
         lane: "lesson",
         showHeader: false,
         body: `
-            ${renderMainLead({
-                label: "Маршрут прогресса",
-                title: "Следите за прогрессом, не выходя из оболочки",
-                description: "Маршрут прогресса теперь показывает устойчивые маркеры статуса и поверхность недавней активности на базе локальной сводки.",
+                ${renderMainLead({
+                    label: "Экран прогресса",
+                    title: "Следите за прогрессом в одном месте",
+                    description: "Здесь собраны статусы сценариев, недавняя активность и рекомендации по следующему шагу.",
                 meta: [
                     `Маршрут: ${formatRoute(state.route)}`,
                     `Статус: ${formatCatalogStatus(state.progress.status)}`,
                     `Источник: ${formatProviderName(summary?.meta?.source ?? "unknown")}`
                 ]
             })}
-            <section class="lesson-spotlight" data-progress-surface>
-                <span class="control-label">Обзор прогресса</span>
-                <h4 class="lesson-block__title">Маркеры статуса видны ещё до live-интеграции</h4>
-                <p class="panel-copy">Этот экран держит завершённые, начатые и нетронутые сценарии в одном месте, чтобы дальнейшая интеграция фокусировалась на транспорте, а не на переделке layout.</p>
+                <section class="lesson-spotlight" data-progress-surface>
+                    <span class="control-label">Обзор прогресса</span>
+                    <h4 class="lesson-block__title">Все сценарии видны одним взглядом</h4>
+                    <p class="panel-copy">На этом экране собраны завершённые, начатые и ещё не тронутые сценарии, чтобы быстро понять общую картину.</p>
                 <div class="lesson-spotlight__meta">
                     <span class="lesson-spotlight__pill">Сценарии: ${totalScenarios}</span>
                     <span class="lesson-spotlight__pill">Завершено: ${completedCount}</span>
@@ -160,7 +160,7 @@ function renderProgressMainPanel(state) {
             <section class="lesson-block lesson-block--reading">
                 <div class="lesson-section__header">
                     <span class="control-label">Следующий шаг</span>
-                    <h4 class="lesson-block__title">Поверхность рекомендаций уже подключена</h4>
+                    <h4 class="lesson-block__title">Рекомендации уже на месте</h4>
                 </div>
                 ${renderProgressGuidanceShell(summary.recommendations)}
             </section>
@@ -346,8 +346,8 @@ function renderExerciseMainPanel(state) {
             body: `
                 ${renderMainLead({
                     label: "Сфокусированный урок",
-                    title: "Загружаем центральную поверхность урока",
-                    description: "Центральная колонка открывает страницу, выбранную в левом навигационном потоке.",
+                    title: "Загружаем описание задания",
+                    description: "Центральная колонка показывает страницу, выбранную в левой навигации.",
                     meta: [
                         `Маршрут: ${formatRoute(state.route)}`,
                         `Детали: ${formatCatalogStatus(state.detail.status)}`
@@ -370,7 +370,7 @@ function renderExerciseMainPanel(state) {
                 ${renderMainLead({
                     label: "Сфокусированный урок",
                     title: "Детали упражнения недоступны",
-                    description: "Не удалось загрузить выбранную страницу задания для этого маршрута.",
+                    description: "Не удалось загрузить выбранную страницу задания.",
                     meta: [
                         `Источник: ${formatProviderName(state.providerName)}`,
                         "Детали: ошибка"
@@ -380,7 +380,7 @@ function renderExerciseMainPanel(state) {
                     <h4 class="lesson-block__title">Запрошенный маршрут</h4>
                     <dl class="result-summary">
                         <div>
-                            <dt>Slug сценария</dt>
+                            <dt>Код сценария</dt>
                             <dd>${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</dd>
                         </div>
                         <div>
@@ -422,8 +422,8 @@ function renderWelcomePage(state, { tagOptions, providerOptions }) {
     return `
         <section class="lesson-spotlight">
             <span class="control-label">Приветствие</span>
-            <h4 class="lesson-block__title">Практикуйте Git в одной оболочке</h4>
-            <p class="panel-copy">Левая колонка теперь управляет навигацией. Выберите там блок задания, чтобы открыть его здесь и не выходить из SPA.</p>
+            <h4 class="lesson-block__title">Практикуйте Git на одном экране</h4>
+            <p class="panel-copy">Левая колонка управляет навигацией. Выберите там блок задания, чтобы открыть его здесь и не уходить с этого экрана.</p>
             <div class="lesson-spotlight__meta">
                 <span class="lesson-spotlight__pill">Задания: ${state.catalog.items.length}</span>
                 <span class="lesson-spotlight__pill">Маршрут: ${formatRoute(state.route)}</span>
@@ -447,14 +447,14 @@ function renderWelcomePage(state, { tagOptions, providerOptions }) {
                     <span class="task-sequence__index">2</span>
                     <div class="task-sequence__copy">
                         <strong>Читайте выбранную страницу по центру</strong>
-                        <p>Обзор задания и содержимое сфокусированной подзадачи теперь открываются здесь, а не на отдельной странице каталога.</p>
+                        <p>Обзор задания и выбранный шаг открываются здесь, а не на отдельной странице.</p>
                     </div>
                 </li>
                 <li class="task-sequence__item">
                     <span class="task-sequence__index">3</span>
                     <div class="task-sequence__copy">
                         <strong>Продолжайте практику справа</strong>
-                        <p>Правая колонка остаётся видимой для просмотра Git-контекста и подготовки ответа.</p>
+                        <p>Правая колонка остаётся открытой для просмотра состояния репозитория и подготовки ответа.</p>
                     </div>
                 </li>
             </ol>
@@ -467,7 +467,7 @@ function renderCatalogControlPanel(state, { tagOptions, providerOptions }) {
         <section class="lesson-block lesson-block--reading catalog-controls">
             <div class="lesson-section__header">
                 <span class="control-label">Управление каталогом</span>
-                <h4 class="lesson-block__title">Фильтруйте и выбирайте источник текущего среза сценариев</h4>
+                <h4 class="lesson-block__title">Фильтруйте сценарии и выбирайте источник данных</h4>
             </div>
             <form class="catalog-controls__form" data-catalog-controls-form>
                 <div class="catalog-controls__grid">

@@ -117,7 +117,7 @@ export function createCatalogWorkspaceController({
         try {
             const providerFactory = catalogProviderFactories[providerName];
             if (!providerFactory) {
-                throw new Error(`Неизвестный provider каталога: ${providerName}`);
+                throw new Error(`Неизвестный источник каталога: ${providerName}`);
             }
 
             const provider = providerFactory();
@@ -154,7 +154,7 @@ export function createCatalogWorkspaceController({
         if (!slug) {
             state.detail.status = "missing";
             state.detail.data = null;
-            state.detail.error = "В маршруте упражнения отсутствует slug сценария.";
+            state.detail.error = "В маршруте упражнения не указан код сценария.";
             render();
             return;
         }
@@ -196,7 +196,7 @@ export function createCatalogWorkspaceController({
             const detailLoadTask = (async () => {
                 const providerFactory = detailProviderFactories[providerName];
                 if (!providerFactory) {
-                    throw new Error(`Неизвестный provider деталей сценария: ${providerName}`);
+                    throw new Error(`Неизвестный источник деталей сценария: ${providerName}`);
                 }
 
                 const provider = providerFactory();
@@ -567,7 +567,7 @@ export function createCatalogWorkspaceController({
                 response: null,
                 error: {
                     failureKind: "terminal",
-                    message: "В транспорте сессии нет активного id сессии.",
+                    message: "У сессии нет активного идентификатора для повторной отправки.",
                     status: null
                 },
                 lastPayload: preparedSubmission
@@ -819,7 +819,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = sessionProviderFactories[providerName];
         if (!providerFactory) {
-            throw new SessionTransportError(`Неизвестный provider сессии: ${providerName}`, {
+            throw new SessionTransportError(`Неизвестный источник для запуска сессии: ${providerName}`, {
                 failureKind: "terminal"
             });
         }
@@ -836,7 +836,7 @@ export function createCatalogWorkspaceController({
 
         const providerFactory = progressProviderFactories[providerName];
         if (!providerFactory) {
-            throw new Error(`Неизвестный provider прогресса: ${providerName}`);
+            throw new Error(`Неизвестный источник данных прогресса: ${providerName}`);
         }
 
         const provider = providerFactory();
@@ -1315,7 +1315,9 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
 
 function toUserFacingRecoveryMessage(message, fallbackMessage) {
     const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
-    return resolvedMessage.replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.");
+    return resolvedMessage
+        .replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.")
+        .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
 function measureNaturalNavigationWidth(navigationLane) {

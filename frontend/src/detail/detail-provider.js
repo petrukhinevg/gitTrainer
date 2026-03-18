@@ -6,7 +6,7 @@ export function createLocalFixtureDetailProvider() {
         async loadScenarioDetail(slug) {
             const detail = FIXTURE_SCENARIO_DETAILS[slug];
             if (!detail) {
-                throw new Error(`Детали сценария недоступны для slug: ${slug}`);
+                throw new Error(`Сценарий не найден: ${slug}`);
             }
 
             return structuredClone(detail);
@@ -46,7 +46,7 @@ async function resolveDetailErrorMessage(response) {
                 return payload.detail;
             }
         } catch {
-            // Fall back to a generic transport message when the body is not valid JSON.
+            // Если тело ответа не удалось разобрать, показываем общее сообщение по статусу.
         }
     }
 
