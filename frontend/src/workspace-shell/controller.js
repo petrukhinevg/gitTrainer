@@ -184,7 +184,14 @@ export function createCatalogWorkspaceController({
             data: null,
             error: null
         };
-        render();
+
+        // For background preloads from the left rail, the panel already shows the
+        // loading placeholder after the expansion render. Avoid replacing that DOM
+        // subtree here, otherwise the first-open animation gets interrupted before
+        // the height transition can complete.
+        if (syncSelected) {
+            render();
+        }
 
         if (detailLoadTasks.has(slug)) {
             await detailLoadTasks.get(slug);
