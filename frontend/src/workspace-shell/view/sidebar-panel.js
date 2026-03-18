@@ -61,7 +61,7 @@ function renderTrainingFlow(state, tagOptions) {
                 </details>
             </div>
             <div class="scenario-legend__tags">
-                ${tagOptions.map((tag) => renderLegendTag(tag)).join("")}
+                ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
             </div>
         </div>
         <div class="flow-block-list" data-flow-block-list>
@@ -214,13 +214,15 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
     `;
 }
 
-function renderLegendTag(tag) {
+function renderLegendTag(tag, pinnedNavigationTag) {
     const token = toTagToken(tag);
+    const isPinned = pinnedNavigationTag === token;
     return `
         <button
-            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)}"
+            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)} ${isPinned ? "scenario-legend__tag--active" : ""}"
             type="button"
-            data-tag-legend-hover="${escapeHtml(token)}"
+            data-tag-legend-control="${escapeHtml(token)}"
+            aria-pressed="${isPinned ? "true" : "false"}"
         >
             <span class="scenario-legend__swatch" aria-hidden="true"></span>
             <span>${escapeHtml(formatTag(tag))}</span>
