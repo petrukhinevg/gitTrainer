@@ -122,11 +122,11 @@
 .practice-shell__chip {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
-    padding: 0 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    background: rgba(255, 250, 241, 0.58);
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
     color: var(--ink-soft);
     font-family: "Courier New", Courier, monospace;
     font-size: 0.68rem;
@@ -145,10 +145,10 @@
 .practice-summary {
     display: grid;
     gap: 10px;
-    padding: 12px 14px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 250, 241, 0.58);
+    padding: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .practice-summary__header,
@@ -235,10 +235,10 @@
 .practice-output {
     display: grid;
     gap: 8px;
-    padding: 10px 12px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 250, 241, 0.5);
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--ink-soft);
 }
 
@@ -273,11 +273,11 @@
 
 .practice-select select {
     width: 100%;
-    border: 1px solid rgba(31, 23, 32, 0.12);
-    border-radius: 12px;
-    background: rgba(255, 250, 241, 0.92);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--ink-strong);
-    padding: 9px 12px;
+    padding: 9px 0;
     font: inherit;
 }
 
@@ -316,10 +316,10 @@
 }
 
 .practice-request {
-    padding: 10px 12px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 250, 241, 0.5);
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .practice-feedback__title {
@@ -332,19 +332,19 @@
 }
 
 .practice-feedback__details {
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 250, 241, 0.42);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .practice-feedback__details[open] {
-    background: rgba(255, 250, 241, 0.62);
+    background: transparent;
 }
 
 .practice-feedback__details-summary {
     cursor: pointer;
     list-style: none;
-    padding: 10px 12px;
+    padding: 10px 0;
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -359,7 +359,7 @@
 .practice-feedback__details-body {
     display: grid;
     gap: 8px;
-    padding: 0 12px 12px;
+    padding: 0 0 12px;
 }
 
 .practice-feedback__detail-list {
@@ -377,20 +377,20 @@
 }
 
 .practice-feedback__reveal {
-    padding: 10px 12px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 250, 241, 0.7);
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .practice-feedback__pill {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 6px 10px;
-    border: 1px solid rgba(31, 23, 32, 0.1);
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.72);
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: inherit;
     font-size: 0.74rem;
     letter-spacing: 0.04em;
@@ -404,10 +404,10 @@
 
 .branch-graph {
     min-height: 0;
-    padding: 10px 12px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 250, 241, 0.5);
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -498,10 +498,10 @@
 }
 
 .viewer-status-strip {
-    padding: 10px 12px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 250, 241, 0.46);
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .viewer-status-strip__header {
@@ -519,10 +519,10 @@
 .viewer-status-strip__item {
     display: inline-flex;
     align-items: center;
-    min-height: 22px;
-    padding: 0 8px;
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.7);
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--ink-soft);
     font-family: "Courier New", Courier, monospace;
     font-size: 0.66rem;
