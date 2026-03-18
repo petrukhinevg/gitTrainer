@@ -45,6 +45,11 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
+    const tagLaneMap = createTagLaneMap(tagOptions, state.catalog.items);
+    const tagSpanMap = createTagSpanMap(state.catalog.items);
+
+    const laneCount = Math.max(1, tagLaneMap.size);
+
     return `
         <div class="scenario-legend">
             <div class="scenario-legend__header">
@@ -58,16 +63,18 @@ function renderTrainingFlow(state, tagOptions) {
                 </details>
             </div>
             <div class="scenario-legend__tags">
-                ${tagOptions.map((tag) => renderLegendTag(tag)).join("")}
+                ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
             </div>
         </div>
-        <div class="flow-block-list" data-flow-block-list>
+        <div class="flow-block-list" data-flow-block-list style="--flow-tag-lane-count:${laneCount}">
             ${renderWelcomeFlowBlock(state)}
             ${renderProgressFlowBlock(state)}
             ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
                 state,
                 item,
                 index,
+                tagLaneMap,
+                tagSpanMap,
                 isActive: item.slug === state.selectedScenarioSlug,
                 selectedFocus: state.selectedFocus
             })).join("")}
@@ -95,7 +102,7 @@ function renderProgressFlowBlock(state) {
     `;
 }
 
-function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
+function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
@@ -120,17 +127,15 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
-                <span class="flow-tag-lines" aria-hidden="true">
-                    ${item.tags.map((tag) => renderScenarioTagLine(tag)).join("")}
+                <span class="flow-node__graph" aria-hidden="true">
+                    ${item.tags.map((tag) => renderScenarioTagLine(tag, item.slug, tagLaneMap, tagSpanMap)).join("")}
                 </span>
                 <span class="flow-block__heading">
                     <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
                 </span>
                 <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
-                <span class="flow-block__tag-row">
-                    ${item.tags.map((tag) => `<span class="flow-block__tag">${escapeHtml(formatTag(tag))}</span>`).join("")}
-                </span>
+                ${renderScenarioTagAccessibilityText(item.tags)}
             </button>
             ${subtaskBlocks}
         </section>
@@ -212,13 +217,15 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
     `;
 }
 
-function renderLegendTag(tag) {
+function renderLegendTag(tag, pinnedNavigationTag) {
     const token = toTagToken(tag);
+    const isPinned = pinnedNavigationTag === token;
     return `
         <button
-            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)}"
+            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)} ${isPinned ? "scenario-legend__tag--active" : ""}"
             type="button"
-            data-tag-legend-hover="${escapeHtml(token)}"
+            data-tag-legend-control="${escapeHtml(token)}"
+            aria-pressed="${isPinned ? "true" : "false"}"
         >
             <span class="scenario-legend__swatch" aria-hidden="true"></span>
             <span>${escapeHtml(formatTag(tag))}</span>
@@ -226,9 +233,40 @@ function renderLegendTag(tag) {
     `;
 }
 
-function renderScenarioTagLine(tag) {
+function renderScenarioTagLine(tag, slug, tagLaneMap, tagSpanMap) {
     const token = toTagToken(tag);
-    return `<span class="flow-tag-line flow-tag-line--${escapeHtml(token)}"></span>`;
+    const span = tagSpanMap.get(token) ?? {
+        firstSlug: slug,
+        lastSlug: slug
+    };
+    const laneIndex = tagLaneMap.get(token) ?? 0;
+    const classes = [
+        "flow-tag-line",
+        `flow-tag-line--${token}`,
+        span.firstSlug === slug ? "flow-tag-line--first" : "",
+        span.lastSlug === slug ? "flow-tag-line--last" : ""
+    ].filter(Boolean).join(" ");
+    return `
+        <span class="${escapeHtml(classes)}" style="--flow-tag-lane:${laneIndex}">
+            <span class="flow-tag-line__stem flow-tag-line__stem--top"></span>
+            <span class="flow-tag-line__stem flow-tag-line__stem--bottom"></span>
+            <span class="flow-tag-line__node"></span>
+            <span class="flow-tag-line__branch"></span>
+        </span>
+    `;
+}
+
+function renderScenarioTagAccessibilityText(tags) {
+    const formattedTags = tags
+        .map((tag) => formatTag(tag))
+        .filter(Boolean)
+        .join(", ");
+
+    if (!formattedTags) {
+        return "";
+    }
+
+    return `<span class="flow-block__sr-tags">Теги: ${escapeHtml(formattedTags)}</span>`;
 }
 
 function toTagToken(tag) {
@@ -237,4 +275,55 @@ function toTagToken(tag) {
         .toLowerCase()
         .replaceAll(/[^a-z0-9]+/g, "-")
         .replaceAll(/^-+|-+$/g, "");
+}
+
+function createTagLaneMap(tagOptions, items = []) {
+    const laneMap = new Map();
+    let nextLane = 0;
+
+    tagOptions.forEach((tag) => {
+        const token = toTagToken(tag);
+        if (!token || laneMap.has(token)) {
+            return;
+        }
+
+        laneMap.set(token, nextLane);
+        nextLane += 1;
+    });
+
+    items.forEach((item) => {
+        item.tags.forEach((tag) => {
+            const token = toTagToken(tag);
+            if (!token || laneMap.has(token)) {
+                return;
+            }
+
+            laneMap.set(token, nextLane);
+            nextLane += 1;
+        });
+    });
+
+    return laneMap;
+}
+
+function createTagSpanMap(items) {
+    const tagSpanMap = new Map();
+
+    items.forEach((item) => {
+        item.tags.forEach((tag) => {
+            const token = toTagToken(tag);
+            const existing = tagSpanMap.get(token);
+            if (!existing) {
+                tagSpanMap.set(token, {
+                    firstSlug: item.slug,
+                    lastSlug: item.slug
+                });
+                return;
+            }
+
+            existing.lastSlug = item.slug;
+        });
+    });
+
+    return tagSpanMap;
 }

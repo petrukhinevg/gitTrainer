@@ -11,6 +11,9 @@
     display: grid;
     gap: 10px;
     padding: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     border: 1px solid rgba(31, 23, 32, 0.08);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.28);
@@ -35,7 +38,7 @@
     height: 24px;
     border: 1px solid rgba(31, 23, 32, 0.12);
     border-radius: 999px;
-    background: rgba(255, 250, 241, 0.8);
+    background: rgba(255, 250, 241, 0.5);
     color: var(--ink-soft);
     cursor: pointer;
     list-style: none;
@@ -91,6 +94,12 @@
     background: rgba(255, 250, 241, 0.9);
 }
 
+.scenario-legend__tag--active {
+    border-color: var(--tag-accent);
+    background: color-mix(in srgb, var(--tag-accent) 14%, rgba(255, 250, 241, 0.92));
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--tag-accent) 16%, transparent);
+}
+
 .scenario-legend__swatch {
     width: 10px;
     height: 10px;
@@ -100,6 +109,8 @@
 }
 
 .flow-block-list {
+    --flow-tag-lane-gap: 2px;
+    --flow-graph-gutter: calc((var(--flow-tag-lane-count, 1) - 1) * var(--flow-tag-lane-gap) + 12px);
     display: grid;
     gap: 6px;
     width: 100%;
@@ -110,6 +121,11 @@
 .flow-subtask-placeholder {
     display: grid;
     gap: 6px;
+}
+
+.flow-node {
+    position: relative;
+    padding-left: calc(var(--flow-graph-gutter, 12px) + 4px);
 }
 
 .flow-block {
@@ -189,50 +205,88 @@
     box-sizing: border-box;
 }
 
-.flow-tag-lines {
+.flow-node__graph {
     position: absolute;
-    top: 6px;
-    bottom: 6px;
-    left: -10px;
-    display: flex;
-    align-items: stretch;
-    gap: 3px;
+    top: 0;
+    bottom: 0;
+    left: calc((var(--flow-graph-gutter, 12px) + 4px) * -1);
+    width: var(--flow-graph-gutter, 12px);
     pointer-events: none;
 }
 
 .flow-tag-line {
-    width: 3px;
-    border-radius: 999px;
-    opacity: 0.18;
-    transform: scaleY(0.72);
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: calc(var(--flow-tag-lane, 0) * var(--flow-tag-lane-gap, 6px));
+    width: 8px;
+    opacity: 0.12;
+    transform: translateX(-1px);
     transform-origin: center;
     transition: opacity 180ms ease, transform 220ms ease;
 }
 
-.flow-node:hover .flow-tag-line,
-.flow-node:focus-within .flow-tag-line {
-    opacity: 1;
-    transform: scaleY(1);
+.flow-tag-line__stem,
+.flow-tag-line__node,
+.flow-tag-line__branch {
+    position: absolute;
+    background: var(--tag-accent);
 }
 
-.flow-block__tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.flow-block__tag {
-    display: inline-flex;
-    align-items: center;
-    min-height: 20px;
-    padding: 0 6px;
+.flow-tag-line__stem {
+    left: 1px;
+    width: 1.5px;
     border-radius: 999px;
-    background: rgba(255, 250, 241, 0.42);
-    color: var(--ink-soft);
-    font-family: "Courier New", Courier, monospace;
-    font-size: 0.58rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+}
+
+.flow-tag-line__stem--top {
+    top: 0;
+    bottom: calc(50% + 1px);
+}
+
+.flow-tag-line__stem--bottom {
+    top: calc(50% + 3px);
+    bottom: 0;
+}
+
+.flow-tag-line--first .flow-tag-line__stem--top {
+    top: calc(50% - 0.5px);
+}
+
+.flow-tag-line--last .flow-tag-line__stem--bottom {
+    bottom: calc(50% - 2.5px);
+}
+
+.flow-tag-line__node {
+    top: 50%;
+    left: 0;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--tag-accent) 14%, transparent);
+}
+
+.flow-tag-line__branch {
+    top: 50%;
+    left: 3px;
+    width: 9px;
+    height: 1.5px;
+    border-radius: 999px;
+    transform: translateY(-50%);
+    clip-path: polygon(0 0, 100% 0, 68% 50%, 100% 100%, 0 100%, 38% 50%);
+}
+
+.flow-block__sr-tags {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .flow-block__heading {
@@ -291,7 +345,7 @@
 .lesson-lane--navigation[data-highlight-tag="remote"] .flow-node[data-tags~="remote"] .flow-tag-line--remote,
 .lesson-lane--navigation[data-highlight-tag="inspection"] .flow-node[data-tags~="inspection"] .flow-tag-line--inspection {
     opacity: 1;
-    transform: scaleY(1);
+    transform: translateX(0);
 }
 
 .flow-tag-line--status,
@@ -381,8 +435,8 @@
         -webkit-line-clamp: 2;
     }
 
-    .flow-tag-lines {
-        left: -6px;
+    .flow-node__graph {
+        width: var(--flow-graph-gutter, 12px);
     }
 }
 

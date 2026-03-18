@@ -22,6 +22,7 @@ export function createCatalogWorkspaceController({
         selectedScenarioSlug: null,
         selectedFocus: null,
         expandedScenarioSlugs: [],
+        pinnedNavigationTag: null,
         providerName: DEFAULT_PROVIDER_NAME,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
@@ -184,7 +185,14 @@ export function createCatalogWorkspaceController({
             data: null,
             error: null
         };
-        render();
+
+        // For background preloads from the left rail, the panel already shows the
+        // loading placeholder after the expansion render. Avoid replacing that DOM
+        // subtree here, otherwise the first-open animation gets interrupted before
+        // the height transition can complete.
+        if (syncSelected) {
+            render();
+        }
 
         if (detailLoadTasks.has(slug)) {
             await detailLoadTasks.get(slug);
@@ -270,6 +278,7 @@ export function createCatalogWorkspaceController({
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         const isExerciseRoute = state.route === "exercise";
+        const laneScrollPositions = captureLaneScrollPositions();
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
         appRoot.innerHTML = renderCatalogWorkspace({
             state,
@@ -278,6 +287,7 @@ export function createCatalogWorkspaceController({
             providerOptions
         });
 
+        restoreLaneScrollPositions(laneScrollPositions);
         syncNavigationPaneWidth();
         bindCatalogControls();
         bindNavigationControls();
@@ -318,23 +328,51 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        document.querySelectorAll("[data-tag-legend-hover]").forEach((button) => {
-            const tag = button.dataset.tagLegendHover;
+        const applyNavigationHighlight = (hoveredTag = null) => {
+            const activeTag = hoveredTag ?? state.pinnedNavigationTag;
+            if (activeTag) {
+                navigationLane.dataset.highlightTag = activeTag;
+                return;
+            }
+
+            delete navigationLane.dataset.highlightTag;
+        };
+
+        const syncNavigationLegendState = () => {
+            document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
+                const tag = button.dataset.tagLegendControl;
+                const isPinned = Boolean(tag) && state.pinnedNavigationTag === tag;
+                button.classList.toggle("scenario-legend__tag--active", isPinned);
+                button.setAttribute("aria-pressed", isPinned ? "true" : "false");
+            });
+        };
+
+        applyNavigationHighlight();
+        syncNavigationLegendState();
+
+        document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
+            const tag = button.dataset.tagLegendControl;
             if (!tag) {
                 return;
             }
 
             button.addEventListener("mouseenter", () => {
-                navigationLane.dataset.highlightTag = tag;
+                applyNavigationHighlight(tag);
             });
             button.addEventListener("mouseleave", () => {
-                delete navigationLane.dataset.highlightTag;
+                applyNavigationHighlight();
             });
             button.addEventListener("focus", () => {
-                navigationLane.dataset.highlightTag = tag;
+                applyNavigationHighlight(tag);
             });
             button.addEventListener("blur", () => {
-                delete navigationLane.dataset.highlightTag;
+                applyNavigationHighlight();
+            });
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
+                applyNavigationHighlight();
+                syncNavigationLegendState();
             });
         });
     }
@@ -856,16 +894,16 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        const flowBlocks = [...navigationLane.querySelectorAll(".flow-block")];
-        if (!flowBlocks.length) {
+        const flowBlockList = navigationLane.querySelector("[data-flow-block-list]");
+        if (!flowBlockList) {
             lessonLayout.style.removeProperty("--navigation-pane-width");
             return;
         }
 
-        const maxContentWidth = measureNaturalNavigationWidth(navigationLane);
-        const maxWidth = Math.ceil(maxContentWidth + 36);
+        const maxContentWidth = measureNaturalNavigationWidth(flowBlockList);
+        const maxWidth = Math.ceil(maxContentWidth + 44);
         const minWidth = Math.ceil(maxWidth / 2);
-        const preferredWidth = Math.round(window.innerWidth * 0.24);
+        const preferredWidth = Math.round(window.innerWidth * 0.18);
         const targetWidth = Math.min(maxWidth, Math.max(minWidth, preferredWidth));
 
         lessonLayout.style.setProperty("--navigation-pane-width", `${targetWidth}px`);
@@ -1320,10 +1358,9 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
-function measureNaturalNavigationWidth(navigationLane) {
-    const scrollContent = navigationLane.querySelector(".lesson-lane__scroll-content");
-    if (!scrollContent) {
-        return navigationLane.scrollWidth;
+function measureNaturalNavigationWidth(targetContent) {
+    if (!targetContent) {
+        return 0;
     }
 
     const measureRoot = document.createElement("div");
@@ -1336,12 +1373,10 @@ function measureNaturalNavigationWidth(navigationLane) {
     measureRoot.style.maxWidth = "none";
     measureRoot.style.minWidth = "0";
 
-    const clone = scrollContent.cloneNode(true);
+    const clone = targetContent.cloneNode(true);
     clone.style.width = "max-content";
     clone.style.minWidth = "max-content";
     clone.style.maxWidth = "none";
-    clone.style.paddingLeft = "18px";
-    clone.style.paddingRight = "18px";
 
     measureRoot.append(clone);
     document.body.append(measureRoot);
@@ -1350,6 +1385,39 @@ function measureNaturalNavigationWidth(navigationLane) {
     measureRoot.remove();
 
     return width;
+}
+
+function captureLaneScrollPositions() {
+    return Array.from(document.querySelectorAll(".lesson-lane__body"))
+        .map((laneBody) => {
+            const laneRoot = laneBody.closest(".lesson-lane");
+            const laneName = Array.from(laneRoot?.classList ?? [])
+                .find((className) => className.startsWith("lesson-lane--"))
+                ?.replace("lesson-lane--", "");
+
+            if (!laneName) {
+                return null;
+            }
+
+            return {
+                laneName,
+                scrollTop: laneBody.scrollTop,
+                scrollLeft: laneBody.scrollLeft
+            };
+        })
+        .filter(Boolean);
+}
+
+function restoreLaneScrollPositions(positions) {
+    positions.forEach((position) => {
+        const laneBody = document.querySelector(`.lesson-lane--${position.laneName} .lesson-lane__body`);
+        if (!laneBody) {
+            return;
+        }
+
+        laneBody.scrollTop = position.scrollTop;
+        laneBody.scrollLeft = position.scrollLeft;
+    });
 }
 
 function escapeSelectorValue(value) {
