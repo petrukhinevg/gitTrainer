@@ -478,6 +478,8 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
     const tone = resolveFeedbackPanelTone(feedbackPanelState.status, normalizedFeedback, submissionState);
     const revealedHints = normalizedFeedback.hint.reveals.slice(0, feedbackPanelState.revealedHintCount);
     const nextHint = normalizedFeedback.hint.reveals[feedbackPanelState.revealedHintCount] ?? null;
+    const compactGoal = truncateInlineCopy(preservedContext.goal, 120);
+    const compactAnswer = truncateInlineCopy(preservedContext.answer, 72);
     const hasExplanationDetails = normalizedFeedback.explanation.details.length > 0 || normalizedFeedback.explanation.tone === "partial";
     const hasHintLayer = normalizedFeedback.hint.message || revealedHints.length || nextHint;
 
@@ -488,6 +490,23 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <span class="workspace-card__badge">${escapeHtml(formatRetryFeedbackBadge(resolveFeedbackPanelBadge(feedbackPanelState.status, normalizedFeedback, submissionState)))}</span>
             </div>
             <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="practice-feedback__context" data-retry-context-summary>
+                <div class="practice-feedback__meta practice-feedback__meta--dense">
+                    <span class="practice-feedback__pill">Сценарий: ${escapeHtml(preservedContext.scenarioTitle)}</span>
+                    <span class="practice-feedback__pill">Ветка: ${escapeHtml(preservedContext.currentBranch)}</span>
+                    <span class="practice-feedback__pill">Тип: ${escapeHtml(formatAnswerType(preservedContext.answerType))}</span>
+                    <span class="practice-feedback__pill">Транспорт: ${escapeHtml(formatTransportBadge(preservedContext.transportDisposition))}</span>
+                </div>
+                <p class="panel-copy practice-feedback__context-copy">Цель: ${escapeHtml(compactGoal)}</p>
+                ${compactAnswer ? `
+                    <p class="panel-copy practice-feedback__context-copy">Последний ответ: ${escapeHtml(compactAnswer)}</p>
+                ` : ""}
+                ${preservedContext.errorMessage ? `
+                    <div class="practice-inline-note practice-inline-note--warning">
+                        <p class="panel-copy">${escapeHtml(preservedContext.errorMessage)}</p>
+                    </div>
+                ` : ""}
+            </div>
             <div class="practice-feedback">
                 <div class="practice-feedback__summary">
                     <h4 class="practice-feedback__title">${escapeHtml(normalizedFeedback.explanation.title)}</h4>
@@ -497,8 +516,6 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     <span class="practice-feedback__pill" data-retry-state-status="${escapeHtml(normalizedFeedback.retryState.status)}">Попытка: ${escapeHtml(String(normalizedFeedback.retryState.attemptNumber))}</span>
                     <span class="practice-feedback__pill" data-retry-eligibility="${escapeHtml(normalizedFeedback.retryState.eligibility)}">Допуск: ${escapeHtml(formatRetryEligibility(normalizedFeedback.retryState.eligibility))}</span>
                     <span class="practice-feedback__pill" data-retry-hint-level="${escapeHtml(normalizedFeedback.hint.level)}">Уровень подсказки: ${escapeHtml(formatHintLevel(normalizedFeedback.hint.level))}</span>
-                    <span class="practice-feedback__pill">Объяснение: ${escapeHtml(formatRetryFeedbackBadge(normalizedFeedback.explanation.status))}</span>
-                    <span class="practice-feedback__pill">Тон: ${escapeHtml(formatExplanationTone(normalizedFeedback.explanation.tone))}</span>
                 </div>
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
@@ -625,10 +642,9 @@ function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes
                     <p class="panel-copy">${escapeHtml(outcome.message ?? "Сообщение о результате недоступно.")}</p>
                 </div>
                 <div class="practice-feedback__meta">
-                    <span class="practice-feedback__pill">Статус: ${escapeHtml(formatRetryFeedbackBadge(outcome.status ?? "unknown"))}</span>
-                    <span class="practice-feedback__pill">Код: ${escapeHtml(outcome.code ?? "неизвестно")}</span>
-                    <span class="practice-feedback__pill">Тип ответа: ${escapeHtml(formatAnswerType(submissionResponse.answer?.type ?? "unknown"))}</span>
                     <span class="practice-feedback__pill">Попытка: ${escapeHtml(String(submissionResponse.attemptNumber ?? "?"))}</span>
+                    <span class="practice-feedback__pill">Тип: ${escapeHtml(formatAnswerType(submissionResponse.answer?.type ?? "unknown"))}</span>
+                    <span class="practice-feedback__pill">Код: ${escapeHtml(outcome.code ?? "неизвестно")}</span>
                 </div>
                 ${correctness === "unsupported" ? `
                     <div class="practice-inline-note practice-inline-note--warning">
@@ -800,6 +816,23 @@ function normalizeRetryFeedback(retryFeedback) {
                 : []
         }
     };
+}
+
+function truncateInlineCopy(value, limit = 96) {
+    if (typeof value !== "string") {
+        return "";
+    }
+
+    const normalized = value.trim();
+    if (normalized === "") {
+        return "";
+    }
+
+    if (normalized.length <= limit) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, limit - 1).trimEnd()}…`;
 }
 
 function normalizeFeedbackContextSnapshot(contextSnapshot) {
