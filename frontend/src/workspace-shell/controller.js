@@ -336,7 +336,17 @@ export function createCatalogWorkspaceController({
             delete navigationLane.dataset.highlightTag;
         };
 
+        const syncNavigationLegendState = () => {
+            document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
+                const tag = button.dataset.tagLegendControl;
+                const isPinned = Boolean(tag) && state.pinnedNavigationTag === tag;
+                button.classList.toggle("scenario-legend__tag--active", isPinned);
+                button.setAttribute("aria-pressed", isPinned ? "true" : "false");
+            });
+        };
+
         applyNavigationHighlight();
+        syncNavigationLegendState();
 
         document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
             const tag = button.dataset.tagLegendControl;
@@ -359,7 +369,8 @@ export function createCatalogWorkspaceController({
             button.addEventListener("click", (event) => {
                 event.preventDefault();
                 state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
-                render();
+                applyNavigationHighlight();
+                syncNavigationLegendState();
             });
         });
     }

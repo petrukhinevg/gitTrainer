@@ -48,6 +48,8 @@ function renderTrainingFlow(state, tagOptions) {
     const tagLaneMap = createTagLaneMap(tagOptions);
     const tagSpanMap = createTagSpanMap(state.catalog.items);
 
+    const laneCount = Math.max(1, tagLaneMap.size);
+
     return `
         <div class="scenario-legend">
             <div class="scenario-legend__header">
@@ -64,7 +66,7 @@ function renderTrainingFlow(state, tagOptions) {
                 ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
             </div>
         </div>
-        <div class="flow-block-list" data-flow-block-list>
+        <div class="flow-block-list" data-flow-block-list style="--flow-tag-lane-count:${laneCount}">
             ${renderWelcomeFlowBlock(state)}
             ${renderProgressFlowBlock(state)}
             ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
@@ -118,9 +120,6 @@ function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, i
 
     return `
         <section class="flow-node" data-tags="${escapeHtml(tagTokens.join(" "))}">
-            <span class="flow-node__graph" aria-hidden="true">
-                ${item.tags.map((tag) => renderScenarioTagLine(tag, item.slug, tagLaneMap, tagSpanMap)).join("")}
-            </span>
             <button
                 class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
                 type="button"
@@ -128,11 +127,15 @@ function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, i
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
+                <span class="flow-node__graph" aria-hidden="true">
+                    ${item.tags.map((tag) => renderScenarioTagLine(tag, item.slug, tagLaneMap, tagSpanMap)).join("")}
+                </span>
                 <span class="flow-block__heading">
                     <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
                 </span>
                 <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
+                ${renderScenarioTagAccessibilityText(item.tags)}
             </button>
             ${subtaskBlocks}
         </section>
@@ -253,6 +256,19 @@ function renderScenarioTagLine(tag, slug, tagLaneMap, tagSpanMap) {
     `;
 }
 
+function renderScenarioTagAccessibilityText(tags) {
+    const formattedTags = tags
+        .map((tag) => formatTag(tag))
+        .filter(Boolean)
+        .join(", ");
+
+    if (!formattedTags) {
+        return "";
+    }
+
+    return `<span class="flow-block__sr-tags">Теги: ${escapeHtml(formattedTags)}</span>`;
+}
+
 function toTagToken(tag) {
     return String(tag ?? "")
         .trim()
@@ -262,9 +278,20 @@ function toTagToken(tag) {
 }
 
 function createTagLaneMap(tagOptions) {
-    return new Map(
-        tagOptions.map((tag, index) => [toTagToken(tag), index])
-    );
+    const laneMap = new Map();
+    let nextLane = 0;
+
+    tagOptions.forEach((tag) => {
+        const token = toTagToken(tag);
+        if (!token || laneMap.has(token)) {
+            return;
+        }
+
+        laneMap.set(token, nextLane);
+        nextLane += 1;
+    });
+
+    return laneMap;
 }
 
 function createTagSpanMap(items) {
