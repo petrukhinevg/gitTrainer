@@ -5,8 +5,12 @@ import {
 } from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
+    return renderPracticeShell(renderWorkspacePanelSections(state));
+}
+
+export function renderWorkspacePanelSections(state) {
     if (state.route !== "exercise") {
-        return renderPracticeShell({
+        return {
             viewer: renderPlaceholderViewer(
                 "Git-ветки",
                 "Откройте задание слева, чтобы загрузить представление веток."
@@ -15,11 +19,11 @@ export function renderWorkspacePanel(state) {
                 "Команда",
                 "Ввод разблокируется после открытия задания."
             )
-        });
+        };
     }
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return renderPracticeShell({
+        return {
             viewer: renderPlaceholderViewer(
                 "Git-ветки",
                 `Загружаем представление веток для ${escapeHtml(state.selectedScenarioSlug ?? "выбранного задания")}.`
@@ -28,11 +32,11 @@ export function renderWorkspacePanel(state) {
                 "Команда",
                 "Поле ввода остаётся на месте, пока загружаются детали задания."
             )
-        });
+        };
     }
 
     if (state.detail.status === "error") {
-        return renderPracticeShell({
+        return {
             viewer: `
                 <section class="workspace-card workspace-card--viewer workspace-card--error">
                     <div class="workspace-card__header">
@@ -50,12 +54,14 @@ export function renderWorkspacePanel(state) {
                         <span class="control-label">Область практики</span>
                         <span class="workspace-card__badge">заблокировано</span>
                     </div>
-                    <div class="workspace-card__actions">
-                        <a class="scenario-action scenario-action--muted" href="#/catalog">Назад на старт</a>
+                    <div class="practice-composer__scroll" data-practice-surface-scroll>
+                        <div class="workspace-card__actions">
+                            <a class="scenario-action scenario-action--muted" href="#/catalog">Назад на старт</a>
+                        </div>
                     </div>
                 </section>
             `
-        });
+        };
     }
 
     const detail = state.detail.data;
@@ -68,21 +74,17 @@ export function renderWorkspacePanel(state) {
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
     const resetDisabled = bootstrapState.status === "pending" || submissionState.status === "pending";
 
-    return renderPracticeShell({
+    return {
         viewer: `
             <section class="workspace-card workspace-card--viewer">
                 <div class="workspace-card__header">
                     <span class="control-label">Состояние репозитория</span>
                     <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                 </div>
-                <div class="practice-shell__meta practice-shell__meta--viewer">
-                    <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
-                    <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
-                    <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
-                </div>
                 <div class="practice-shell__viewer-body">
-                    ${renderBranchGraph(repositoryContext.branches)}
-                    ${renderViewerStatusStrip(bootstrapState, lifecycle)}
+                    <div class="practice-repository-viewer" data-repository-context>
+                        ${renderRepositoryBranchPanel(repositoryContext)}
+                    </div>
                 </div>
             </section>
         `,
@@ -92,43 +94,48 @@ export function renderWorkspacePanel(state) {
                     <span class="control-label">Ввод ответа</span>
                     <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveDraftBadge(state.submissionDraft, submissionState)))}</span>
                 </div>
-                ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
-                ${renderBootstrapNotice(bootstrapState)}
-                <form class="practice-composer__form" data-submission-draft-form>
-                    <div class="practice-composer__controls">
-                        <label class="practice-select">
-                            <span class="control-label">Тип ответа</span>
-                            <select name="answerType"${submissionState.status === "pending" ? " disabled" : ""}>
-                                <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Текст команды</option>
-                                <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>Предпросмотр патча</option>
-                            </select>
+                <div class="practice-composer__primary">
+                    <form class="practice-composer__form" data-submission-draft-form>
+                        <div class="practice-composer__controls">
+                            <label class="practice-select">
+                                <span class="control-label">Тип ответа</span>
+                                <select name="answerType"${submissionState.status === "pending" ? " disabled" : ""}>
+                                    <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Текст команды</option>
+                                    <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>Предпросмотр патча</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label class="practice-editor">
+                            <span class="practice-editor__prompt">&gt;</span>
+                            <textarea name="answer" rows="4" placeholder="Например: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
                         </label>
+                        <div class="practice-composer__actions">
+                            <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
+                            <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
+                        </div>
+                    </form>
+                    ${state.submissionDraft.validationError ? `
+                        <div class="practice-inline-note">
+                            <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
+                        </div>
+                    ` : ""}
+                </div>
+                <div class="practice-composer__scroll" data-practice-surface-scroll>
+                    ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
+                    ${renderBootstrapNotice(bootstrapState)}
+                    ${renderPracticeRepositorySupplement(repositoryContext, bootstrapState, submissionState, lifecycle)}
+                    <div class="practice-composer__results">
+                        ${renderSubmissionTransportOutput(
+                            state.submissionDraft.preparedSubmission,
+                            submissionState,
+                            bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                        )}
+                        ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
                     </div>
-                    <label class="practice-editor">
-                        <span class="practice-editor__prompt">&gt;</span>
-                        <textarea name="answer" rows="4" placeholder="Например: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
-                    </label>
-                    <div class="practice-composer__actions">
-                        <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
-                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
-                    </div>
-                </form>
-                ${state.submissionDraft.validationError ? `
-                    <div class="practice-inline-note">
-                        <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
-                    </div>
-                ` : ""}
-                <div class="practice-composer__results">
-                    ${renderSubmissionTransportOutput(
-                        state.submissionDraft.preparedSubmission,
-                        submissionState,
-                        bootstrapState.response?.submission?.supportedAnswerTypes ?? []
-                    )}
-                    ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
                 </div>
             </section>
         `
-    });
+    };
 }
 
 function renderPracticeShell({ viewer, surface }) {
@@ -178,16 +185,20 @@ function renderPlaceholderComposer(title, copy) {
                 <span class="control-label">${escapeHtml(title)}</span>
                 <span class="workspace-card__badge">ожидание</span>
             </div>
-            <div class="practice-summary">
-                <p class="panel-copy">${escapeHtml(copy)}</p>
+            <div class="practice-composer__primary">
+                <label class="practice-editor">
+                    <span class="practice-editor__prompt">&gt;</span>
+                    <textarea rows="4" placeholder="Например: git status" disabled></textarea>
+                </label>
             </div>
-            <label class="practice-editor">
-                <span class="practice-editor__prompt">&gt;</span>
-                <textarea rows="4" placeholder="Например: git status" disabled></textarea>
-            </label>
-            <div class="practice-output">
-                <span class="control-label">Каркас вывода</span>
-                <p class="panel-copy">Подготовленный ответ и результат отправки появятся здесь после открытия сценария.</p>
+            <div class="practice-composer__scroll" data-practice-surface-scroll>
+                <div class="practice-summary">
+                    <p class="panel-copy">${escapeHtml(copy)}</p>
+                </div>
+                <div class="practice-output">
+                    <span class="control-label">Каркас вывода</span>
+                    <p class="panel-copy">Подготовленный ответ и результат отправки появятся здесь после открытия сценария.</p>
+                </div>
             </div>
         </section>
     `;
@@ -646,7 +657,7 @@ function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes
 function renderBranchGraph(branches) {
     if (!branches.length) {
         return `
-            <div class="branch-graph branch-graph--empty">
+            <div class="branch-graph branch-graph--empty" data-repository-branch-graph="empty">
                 <div class="branch-graph__empty">
                     <span class="control-label">Пустое состояние</span>
                     <p class="panel-copy">В текущих данных задания нет подсказок по веткам.</p>
@@ -656,7 +667,7 @@ function renderBranchGraph(branches) {
     }
 
     return `
-        <div class="branch-graph" aria-label="Схема Git-веток">
+        <div class="branch-graph" aria-label="Схема Git-веток" data-repository-branch-graph="ready">
             ${branches.map((branch, index) => `
                 <article class="branch-graph__row ${branch.current ? "branch-graph__row--current" : ""}">
                     <span class="branch-graph__node"></span>
@@ -671,6 +682,141 @@ function renderBranchGraph(branches) {
     `;
 }
 
+function renderRepositoryBranchPanel(repositoryContext) {
+    return `
+        <div class="repository-context">
+            <section class="repository-context__section" data-repository-section="branches">
+                <div class="repository-context__section-header">
+                    <span class="control-label">Ветки</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.branches.length))}</span>
+                </div>
+                ${renderBranchGraph(repositoryContext.branches)}
+            </section>
+        </div>
+    `;
+}
+
+function renderPracticeRepositorySupplement(repositoryContext, bootstrapState, submissionState, lifecycle) {
+    return `
+        <div class="practice-context-details">
+            <div class="practice-shell__meta practice-shell__meta--viewer">
+                <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
+                <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
+                <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
+                <span class="practice-shell__chip">Коммиты: ${repositoryContext.commits.length}</span>
+                <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
+            </div>
+            ${renderViewerStatusStrip(bootstrapState, lifecycle)}
+            ${renderRepositorySupplementaryContext(repositoryContext)}
+        </div>
+    `;
+}
+
+function renderRepositorySupplementaryContext(repositoryContext) {
+    return `
+        <div class="repository-context">
+            <section class="repository-context__section" data-repository-section="files">
+                <div class="repository-context__section-header">
+                    <span class="control-label">Файлы и статусы</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.files.length))}</span>
+                </div>
+                ${renderRepositoryFiles(repositoryContext.files)}
+            </section>
+            <section class="repository-context__section" data-repository-section="commits">
+                <div class="repository-context__section-header">
+                    <span class="control-label">Последние коммиты</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.commits.length))}</span>
+                </div>
+                ${renderRepositoryCommits(repositoryContext.commits)}
+            </section>
+            <section class="repository-context__section" data-repository-section="annotations">
+                <div class="repository-context__section-header">
+                    <span class="control-label">Авторские аннотации</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.annotations.length))}</span>
+                </div>
+                ${renderRepositoryAnnotations(repositoryContext.annotations)}
+            </section>
+        </div>
+    `;
+}
+
+function renderRepositoryFiles(files) {
+    if (!files.length) {
+        return renderRepositoryEmptyState(
+            "Файлы не указаны",
+            "В текущем payload нет сигналов по рабочему дереву."
+        );
+    }
+
+    return `
+        <div class="repository-file-list" data-repository-file-list>
+            ${files.map((file) => `
+                <article class="repository-file-card" data-repository-file-status="${escapeHtml(normalizeRepositoryFileStatus(file.status))}">
+                    <div class="repository-file-card__header">
+                        <strong>${escapeHtml(file.path ?? "Неизвестный путь")}</strong>
+                        <span class="repository-status-pill repository-status-pill--${escapeHtml(normalizeRepositoryFileStatus(file.status))}">
+                            ${escapeHtml(formatRepositoryFileStatus(file.status))}
+                        </span>
+                    </div>
+                    <p class="panel-copy">${escapeHtml(describeRepositoryFileStatus(file.status))}</p>
+                </article>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderRepositoryCommits(commits) {
+    if (!commits.length) {
+        return renderRepositoryEmptyState(
+            "Коммиты не указаны",
+            "В текущем payload нет authored-подсказок по истории."
+        );
+    }
+
+    return `
+        <div class="repository-commit-list" data-repository-commit-list>
+            ${commits.map((commit) => `
+                <article class="repository-commit-card">
+                    <div class="repository-commit-card__header">
+                        <strong>${escapeHtml(commit.id ?? "unknown")}</strong>
+                        <span class="repository-status-pill">commit</span>
+                    </div>
+                    <p class="panel-copy">${escapeHtml(commit.summary ?? "Описание коммита не указано.")}</p>
+                </article>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderRepositoryAnnotations(annotations) {
+    if (!annotations.length) {
+        return renderRepositoryEmptyState(
+            "Аннотации не указаны",
+            "Сценарий пока не добавил авторские пояснения к контексту."
+        );
+    }
+
+    return `
+        <div class="repository-annotation-list" data-repository-annotation-list>
+            ${annotations.map((annotation) => `
+                <article class="repository-annotation-card">
+                    <span class="control-label">${escapeHtml(annotation.label ?? "Аннотация")}</span>
+                    <p class="panel-copy">${escapeHtml(annotation.message ?? "Сообщение аннотации недоступно.")}</p>
+                </article>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderRepositoryEmptyState(title, copy) {
+    return `
+        <div class="repository-context__empty">
+            <span class="control-label">${escapeHtml(title)}</span>
+            <p class="panel-copy">${escapeHtml(copy)}</p>
+        </div>
+    `;
+}
+
 function normalizeRepositoryContext(repositoryContext) {
     const safeContext = repositoryContext ?? {};
     return {
@@ -678,8 +824,46 @@ function normalizeRepositoryContext(repositoryContext) {
             ? safeContext.status
             : "unavailable",
         branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
-        files: Array.isArray(safeContext.files) ? safeContext.files : []
+        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
+        files: Array.isArray(safeContext.files) ? safeContext.files : [],
+        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
     };
+}
+
+function normalizeRepositoryFileStatus(status) {
+    return typeof status === "string" && status.trim() !== ""
+        ? status.trim().toLowerCase()
+        : "unknown";
+}
+
+function formatRepositoryFileStatus(status) {
+    switch (normalizeRepositoryFileStatus(status)) {
+        case "modified":
+            return "изменён";
+        case "untracked":
+            return "не отслеживается";
+        case "staged":
+            return "в индексе";
+        case "clean":
+            return "чистый";
+        default:
+            return "неизвестно";
+    }
+}
+
+function describeRepositoryFileStatus(status) {
+    switch (normalizeRepositoryFileStatus(status)) {
+        case "modified":
+            return "Файл уже отслеживается и содержит локальные изменения.";
+        case "untracked":
+            return "Файл пока не добавлен в индекс и не отслеживается Git.";
+        case "staged":
+            return "Изменение уже попало в индекс и готово к коммиту.";
+        case "clean":
+            return "По этому пути нет незакоммиченных изменений.";
+        default:
+            return "Статус файла не удалось интерпретировать из текущего payload.";
+    }
 }
 
 function resolveCurrentBranchName(branches) {
