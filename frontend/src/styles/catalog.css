@@ -69,6 +69,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    min-width: 0;
 }
 
 .scenario-legend__tag {
@@ -76,6 +77,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    max-width: 100%;
     min-height: 30px;
     padding: 0 10px;
     border: 1px solid rgba(31, 23, 32, 0.08);
@@ -83,8 +86,15 @@
     background: rgba(255, 250, 241, 0.68);
     color: var(--ink-soft);
     font: inherit;
+    text-align: left;
+    white-space: normal;
     cursor: pointer;
     transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.scenario-legend__tag span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .scenario-legend__tag:hover,
@@ -121,10 +131,13 @@
 .flow-subtask-placeholder {
     display: grid;
     gap: 6px;
+    min-width: 0;
 }
 
 .flow-node {
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
     padding-left: calc(var(--flow-graph-gutter, 12px) + 4px);
 }
 
@@ -294,6 +307,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    min-width: 0;
 }
 
 .flow-block__indicator {
@@ -330,8 +344,11 @@
     font-size: 0.82rem;
     max-width: 100%;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .lesson-lane--navigation[data-highlight-tag="status"] .flow-node[data-tags~="status"] .flow-tag-line--status,
@@ -412,7 +429,7 @@
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--tag-accent) 24%, transparent);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
     .scenario-legend__popover {
         left: 0;
         right: auto;
@@ -427,14 +444,6 @@
     .flow-block {
         min-width: 0;
     }
-
-    .flow-block__title {
-        white-space: normal;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-    }
-
     .flow-node__graph {
         width: var(--flow-graph-gutter, 12px);
     }
@@ -509,7 +518,7 @@
     line-height: 1.5;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
     .catalog-controls__grid {
         grid-template-columns: 1fr;
     }

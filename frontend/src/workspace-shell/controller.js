@@ -61,7 +61,6 @@ export function createCatalogWorkspaceController({
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
-        window.addEventListener("resize", syncNavigationPaneWidth);
 
         if (!window.location.hash) {
             window.location.hash = "#/catalog";
@@ -288,7 +287,6 @@ export function createCatalogWorkspaceController({
         });
 
         restoreLaneScrollPositions(laneScrollPositions);
-        syncNavigationPaneWidth();
         bindCatalogControls();
         bindNavigationControls();
         bindPracticeSurfaceControls();
@@ -886,29 +884,6 @@ export function createCatalogWorkspaceController({
         bootstrap
     };
 
-    function syncNavigationPaneWidth() {
-        const lessonLayout = appRoot.querySelector(".lesson-layout");
-        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
-        if (!lessonLayout || !navigationLane || window.innerWidth <= 900) {
-            lessonLayout?.style.removeProperty("--navigation-pane-width");
-            return;
-        }
-
-        const flowBlockList = navigationLane.querySelector("[data-flow-block-list]");
-        if (!flowBlockList) {
-            lessonLayout.style.removeProperty("--navigation-pane-width");
-            return;
-        }
-
-        const maxContentWidth = measureNaturalNavigationWidth(flowBlockList);
-        const maxWidth = Math.ceil(maxContentWidth + 44);
-        const minWidth = Math.ceil(maxWidth / 2);
-        const preferredWidth = Math.round(window.innerWidth * 0.18);
-        const targetWidth = Math.min(maxWidth, Math.max(minWidth, preferredWidth));
-
-        lessonLayout.style.setProperty("--navigation-pane-width", `${targetWidth}px`);
-    }
-
     function expandScenario(slug, { loadDetail = true } = {}) {
         if (!slug || state.expandedScenarioSlugs.includes(slug)) {
             return;
@@ -1356,35 +1331,6 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
     return resolvedMessage
         .replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.")
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
-}
-
-function measureNaturalNavigationWidth(targetContent) {
-    if (!targetContent) {
-        return 0;
-    }
-
-    const measureRoot = document.createElement("div");
-    measureRoot.style.position = "fixed";
-    measureRoot.style.left = "-10000px";
-    measureRoot.style.top = "0";
-    measureRoot.style.visibility = "hidden";
-    measureRoot.style.pointerEvents = "none";
-    measureRoot.style.width = "max-content";
-    measureRoot.style.maxWidth = "none";
-    measureRoot.style.minWidth = "0";
-
-    const clone = targetContent.cloneNode(true);
-    clone.style.width = "max-content";
-    clone.style.minWidth = "max-content";
-    clone.style.maxWidth = "none";
-
-    measureRoot.append(clone);
-    document.body.append(measureRoot);
-
-    const width = clone.getBoundingClientRect().width;
-    measureRoot.remove();
-
-    return width;
 }
 
 function captureLaneScrollPositions() {
