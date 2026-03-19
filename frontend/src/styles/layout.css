@@ -30,9 +30,16 @@ body {
 }
 
 .lesson-layout {
+    --navigation-lane-min-width: 272px;
+    --navigation-lane-max-width: 296px;
+    --lesson-lane-min-width: 320px;
+    --practice-lane-min-width: 420px;
     display: grid;
     grid-template-areas: "navigation lesson practice";
-    grid-template-columns: clamp(232px, 18vw, 296px) minmax(320px, 0.92fr) minmax(420px, 1.08fr);
+    grid-template-columns:
+        minmax(var(--navigation-lane-min-width), clamp(var(--navigation-lane-min-width), 18vw, var(--navigation-lane-max-width)))
+        minmax(var(--lesson-lane-min-width), 0.92fr)
+        minmax(var(--practice-lane-min-width), 1.08fr);
     gap: 0;
     width: 100%;
     height: 100%;
@@ -52,6 +59,7 @@ body {
 
 .lesson-layout__lane--navigation {
     grid-area: navigation;
+    min-width: var(--navigation-lane-min-width);
 }
 
 .lesson-layout__lane--lesson {
@@ -81,6 +89,7 @@ body {
 
 .lesson-lane--navigation {
     width: 100%;
+    min-width: var(--navigation-lane-min-width);
     max-width: none;
     padding-left: 0;
 }
@@ -214,16 +223,24 @@ body {
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        grid-template-columns: clamp(220px, 24vw, 280px) minmax(260px, 0.88fr) minmax(360px, 1fr);
+        --navigation-lane-min-width: 252px;
+        --navigation-lane-max-width: 280px;
+        --lesson-lane-min-width: 260px;
+        --practice-lane-min-width: 360px;
+        grid-template-columns:
+            minmax(var(--navigation-lane-min-width), clamp(var(--navigation-lane-min-width), 24vw, var(--navigation-lane-max-width)))
+            minmax(var(--lesson-lane-min-width), 0.88fr)
+            minmax(var(--practice-lane-min-width), 1fr);
     }
 }
 
 @media (max-width: 1280px) {
     .lesson-layout--exercise {
+        --navigation-lane-min-width: 296px;
         grid-template-areas:
             "navigation practice"
             "lesson practice";
-        grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1fr);
+        grid-template-columns: minmax(var(--navigation-lane-min-width), 0.92fr) minmax(360px, 1fr);
         grid-template-rows: auto minmax(0, 1fr);
     }
 
@@ -253,6 +270,7 @@ body {
     }
 
     .lesson-layout {
+        --navigation-lane-min-width: 0;
         grid-template-areas:
             "navigation"
             "lesson"
@@ -280,6 +298,7 @@ body {
     .lesson-lane--navigation,
     .lesson-lane--lesson {
         width: 100%;
+        min-width: 0;
         max-width: none;
         padding-left: 18px;
         padding-right: 18px;
