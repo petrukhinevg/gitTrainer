@@ -62,6 +62,12 @@ class CatalogShellPageTest {
                 "[data-scenario-toggle]",
                 "[data-catalog-controls-form]",
                 "data-reset-catalog-controls",
+                "data-repository-context",
+                "data-repository-branch-graph",
+                "data-repository-file-list",
+                "data-repository-commit-list",
+                "data-repository-annotation-list",
+                "data-practice-surface-scroll",
                 "name=\"providerName\"",
                 "name=\"difficulty\"",
                 "name=\"sort\"",
@@ -104,6 +110,12 @@ class CatalogShellPageTest {
                 ".progress-status-marker",
                 ".progress-activity-list",
                 ".practice-stack",
+                ".practice-repository-viewer",
+                ".practice-composer__scroll",
+                ".repository-context",
+                ".repository-file-list",
+                ".repository-commit-list",
+                ".repository-annotation-list",
                 ".branch-graph"
         );
     }

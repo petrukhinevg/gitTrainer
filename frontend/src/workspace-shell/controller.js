@@ -1,5 +1,9 @@
 import { SessionTransportError } from "../session/session-provider.js";
-import { renderCatalogWorkspace } from "./view.js";
+import {
+    renderCatalogWorkspace,
+    renderCatalogWorkspaceShell,
+    renderCatalogWorkspaceSurfaces
+} from "./view.js";
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
@@ -52,6 +56,14 @@ export function createCatalogWorkspaceController({
     const sessionProviders = new Map();
     const progressProviders = new Map();
     let navigationAnimationInProgress = false;
+    let shellMounted = false;
+    let renderedRouteKind = null;
+    const renderedSurfaceCache = {
+        navigation: null,
+        lesson: null,
+        practiceViewer: null,
+        practiceSurface: null
+    };
     const providerOptions = resolveSharedProviderOptions({
         catalogProviderFactories,
         detailProviderFactories,
@@ -97,11 +109,19 @@ export function createCatalogWorkspaceController({
         }
 
         await Promise.all([
-            loadCatalog(),
+            ensureCatalogLoaded(),
             state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
             state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve(),
             state.route === "exercise" ? ensureExerciseSession() : Promise.resolve()
         ]);
+    }
+
+    function ensureCatalogLoaded() {
+        if (state.catalog.status !== "idle") {
+            return Promise.resolve();
+        }
+
+        return loadCatalog();
     }
 
     async function loadCatalog() {
@@ -278,20 +298,92 @@ export function createCatalogWorkspaceController({
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         const isExerciseRoute = state.route === "exercise";
+        const isNotFoundRoute = state.route === "not-found";
+        const nextRouteKind = isNotFoundRoute ? "not-found" : "workspace";
         const laneScrollPositions = captureLaneScrollPositions();
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
-        appRoot.innerHTML = renderCatalogWorkspace({
-            state,
-            selectedCatalogScenario,
-            tagOptions,
-            providerOptions
-        });
+
+        if (renderedRouteKind !== nextRouteKind) {
+            renderedRouteKind = nextRouteKind;
+            shellMounted = false;
+            resetRenderedSurfaceCache();
+        }
+
+        if (isNotFoundRoute) {
+            appRoot.innerHTML = renderCatalogWorkspace({
+                state,
+                selectedCatalogScenario,
+                tagOptions,
+                providerOptions
+            });
+        } else {
+            ensureWorkspaceShellMounted();
+            renderWorkspaceSurfaces(selectedCatalogScenario);
+        }
 
         restoreLaneScrollPositions(laneScrollPositions);
         syncNavigationPaneWidth();
         bindCatalogControls();
         bindNavigationControls();
         bindPracticeSurfaceControls();
+    }
+
+    function ensureWorkspaceShellMounted() {
+        if (shellMounted) {
+            return;
+        }
+
+        appRoot.innerHTML = renderCatalogWorkspaceShell();
+        shellMounted = true;
+    }
+
+    function renderWorkspaceSurfaces(selectedCatalogScenario) {
+        const surfaces = renderCatalogWorkspaceSurfaces({
+            state,
+            selectedCatalogScenario,
+            tagOptions,
+            providerOptions
+        });
+
+        patchSurface("navigation", surfaces.navigation);
+        patchSurface("lesson", surfaces.lesson);
+        patchSurface("practice-viewer", surfaces.practiceViewer, "practiceViewer");
+        patchSurface("practice-surface", surfaces.practiceSurface, "practiceSurface");
+    }
+
+    function patchSurface(surfaceName, nextMarkup, cacheKey = surfaceName) {
+        if (renderedSurfaceCache[cacheKey] === nextMarkup) {
+            return;
+        }
+
+        const target = appRoot.querySelector(`[data-render-surface="${escapeSelectorValue(surfaceName)}"]`);
+        if (!target) {
+            return;
+        }
+
+        const previousLaneBody = target.querySelector(".lesson-lane__body");
+        const preservedLaneScroll = previousLaneBody
+            ? {
+                scrollTop: previousLaneBody.scrollTop,
+                scrollLeft: previousLaneBody.scrollLeft
+            }
+            : null;
+        const preservedScrollState = captureSurfaceScrollState(target);
+        target.innerHTML = nextMarkup;
+        const nextLaneBody = target.querySelector(".lesson-lane__body");
+        if (nextLaneBody && preservedLaneScroll) {
+            nextLaneBody.scrollTop = preservedLaneScroll.scrollTop;
+            nextLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
+        }
+        restoreSurfaceScrollState(target, preservedScrollState);
+        renderedSurfaceCache[cacheKey] = nextMarkup;
+    }
+
+    function resetRenderedSurfaceCache() {
+        renderedSurfaceCache.navigation = null;
+        renderedSurfaceCache.lesson = null;
+        renderedSurfaceCache.practiceViewer = null;
+        renderedSurfaceCache.practiceSurface = null;
     }
 
     function bindCatalogControls() {
@@ -1418,6 +1510,56 @@ function restoreLaneScrollPositions(positions) {
         laneBody.scrollTop = position.scrollTop;
         laneBody.scrollLeft = position.scrollLeft;
     });
+}
+
+function captureSurfaceScrollState(surfaceRoot) {
+    const scrollTargets = [
+        {
+            key: "surface-root",
+            element: surfaceRoot
+        },
+        {
+            key: "practice-surface-scroll",
+            element: surfaceRoot.querySelector("[data-practice-surface-scroll]")
+        },
+        {
+            key: "practice-repository-viewer",
+            element: surfaceRoot.querySelector("[data-repository-context]")
+        }
+    ];
+
+    return scrollTargets
+        .filter((entry) => entry.element)
+        .map((entry) => ({
+            key: entry.key,
+            scrollTop: entry.element.scrollTop,
+            scrollLeft: entry.element.scrollLeft
+        }));
+}
+
+function restoreSurfaceScrollState(surfaceRoot, scrollState) {
+    scrollState.forEach((entry) => {
+        const element = resolveSurfaceScrollElement(surfaceRoot, entry.key);
+        if (!element) {
+            return;
+        }
+
+        element.scrollTop = entry.scrollTop;
+        element.scrollLeft = entry.scrollLeft;
+    });
+}
+
+function resolveSurfaceScrollElement(surfaceRoot, key) {
+    switch (key) {
+        case "surface-root":
+            return surfaceRoot;
+        case "practice-surface-scroll":
+            return surfaceRoot.querySelector("[data-practice-surface-scroll]");
+        case "practice-repository-viewer":
+            return surfaceRoot.querySelector("[data-repository-context]");
+        default:
+            return null;
+    }
 }
 
 function escapeSelectorValue(value) {
