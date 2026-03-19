@@ -193,6 +193,48 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 - создание linked branch на новом имени удалённой ветки сработало
 - попытка зарегистрировать уже существующее имя удалённой ветки не дала надёжного backfill
 
+### Подзадачи parent issue
+
+Если нужно привязать уже созданную issue как sub-issue к parent issue из CLI, используй GraphQL mutation `addSubIssue`:
+
+```graphql
+mutation($issueId: ID!, $subIssueId: ID!) {
+  addSubIssue(input: {issueId: $issueId, subIssueId: $subIssueId}) {
+    issue {
+      number
+    }
+    subIssue {
+      number
+    }
+  }
+}
+```
+
+Обязательные входные параметры:
+
+- `issueId`: GraphQL ID parent issue
+- `subIssueId`: GraphQL ID дочерней issue
+
+Получить GraphQL ID issue можно через:
+
+```sh
+gh issue view <number> --json id
+```
+
+Пример:
+
+```sh
+gh api graphql \
+  -f query='mutation($issueId: ID!, $subIssueId: ID!) {
+    addSubIssue(input: {issueId: $issueId, subIssueId: $subIssueId}) {
+      issue { number }
+      subIssue { number }
+    }
+  }' \
+  -F issueId='<parent-issue-id>' \
+  -F subIssueId='<child-issue-id>'
+```
+
 ### Pull requests в ветки эпиков
 
 Для дочерних task PR с epic branch как `base` используй `Refs #<issue>` в теле PR, чтобы сохранить ассоциацию с issue без расчёта на поведение автозакрытия только для default branch.
