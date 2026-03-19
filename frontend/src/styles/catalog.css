@@ -123,7 +123,7 @@
 
 .flow-block-list {
     --flow-tag-lane-gap: 2px;
-    --flow-graph-gutter: calc((var(--flow-tag-lane-count, 1) - 1) * var(--flow-tag-lane-gap) + 12px);
+    --flow-graph-gutter: 0px;
     display: grid;
     gap: 6px;
     width: 100%;
@@ -141,7 +141,7 @@
     position: relative;
     width: 100%;
     box-sizing: border-box;
-    padding-left: calc(var(--flow-graph-gutter, 12px) + 4px);
+    padding-left: 0;
 }
 
 .flow-block {
@@ -222,12 +222,7 @@
 }
 
 .flow-node__graph {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc((var(--flow-graph-gutter, 12px) + 4px) * -1);
-    width: var(--flow-graph-gutter, 12px);
-    pointer-events: none;
+    display: none;
 }
 
 .flow-tag-line {
