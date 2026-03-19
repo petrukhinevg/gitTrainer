@@ -31,7 +31,7 @@ body {
 
 .lesson-layout {
     --navigation-lane-min-width: 272px;
-    --navigation-lane-width: 25%;
+    --navigation-lane-width: 12.5%;
     --lesson-lane-min-width: 320px;
     --practice-lane-min-width: 420px;
     display: grid;

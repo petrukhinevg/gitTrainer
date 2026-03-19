@@ -429,7 +429,6 @@ function renderWelcomePage(state, { tagOptions, providerOptions }) {
                 <span class="lesson-spotlight__pill">Маршрут: ${formatRoute(state.route)}</span>
             </div>
         </section>
-        ${renderCatalogControlPanel(state, { tagOptions, providerOptions })}
         <section class="lesson-block lesson-block--reading">
             <div class="lesson-section__header">
                 <span class="control-label">Цикл</span>
