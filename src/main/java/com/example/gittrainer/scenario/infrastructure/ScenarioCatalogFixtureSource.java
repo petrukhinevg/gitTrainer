@@ -31,8 +31,8 @@ public class ScenarioCatalogFixtureSource {
                     new ScenarioSummary(
                             "history-cleanup-preview",
                             "history-cleanup-preview",
-                            "Просмотри план очистки истории",
-                            "Разбери запутанный стек коммитов и подготовься к дальнейшей очистке, пока ещё не меняя историю.",
+                            "Просмотри историю перед очисткой",
+                            "Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("history", "cleanup", "planning")
                     ),

@@ -190,6 +190,28 @@ class SessionControllerTest {
     }
 
     @Test
+    void guidesHistoryCleanupBackToPreviewBeforeAnyRewrite() throws Exception {
+        String sessionId = startSessionAndExtractId("history-cleanup-preview");
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git rebase -i HEAD~3"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Сначала просмотрите историю, потом переписывайте коммиты"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("Правильная следующая попытка остаётся в семействе `git log` и помогает увидеть, какие коммиты вообще войдут в cleanup."))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Сначала покажите компактную историю"));
+    }
+
+    @Test
     void acceptsAlternateCorrectCommandVariantForScenario() throws Exception {
         String sessionId = startSessionAndExtractId();
 

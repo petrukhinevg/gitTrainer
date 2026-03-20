@@ -179,6 +179,26 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
+    void exposesHistoryCleanupScenarioThroughDetailBoundaryWithPreviewFirstCues() throws Exception {
+        mockMvc.perform(get("/api/scenarios/history-cleanup-preview")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.title").value("Просмотри историю перед очисткой"))
+                .andExpect(jsonPath("$.summary").value("Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала просмотрите недавний граф коммитов с `fixup!` и WIP-сигналами, а уже потом формулируйте план очистки без переписывания истории."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("preview-commit-graph-before-rewrite"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с команды чтения истории, а не с `rebase -i`, чтобы сначала увидеть стек проблемных коммитов."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Просмотрите верхушку истории"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("feature/history-cleanup"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал для preview истории"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему rebase ещё рано"));
+    }
+
+    @Test
     void returnsNotFoundWhenRequestedScenarioDetailDoesNotExistInActiveSource() throws Exception {
         mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
                         .accept(MediaType.APPLICATION_JSON))

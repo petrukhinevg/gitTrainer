@@ -46,19 +46,20 @@ public class ScenarioTaskContentFixtureSource {
             ),
             "history-cleanup-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Подготовьте последовательный план очистки, пока ещё не переписывая историю.",
+                    "Сначала просмотрите недавний граф коммитов с `fixup!` и WIP-сигналами, а уже потом формулируйте план очистки без переписывания истории.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "inspect-commit-stack", "Посмотрите на недавний стек коммитов и найдите повторяющиеся или неаккуратные изменения."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "plan-before-rewrite", "Опишите последовательность очистки до выбора любой команды переписывания истории."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-remote-risk-visible", "Учитывайте, могли ли переписываемые коммиты уже быть опубликованы другим.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "preview-commit-graph-before-rewrite", "Начните с команды чтения истории, а не с `rebase -i`, чтобы сначала увидеть стек проблемных коммитов."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "use-fixup-and-wip-as-cues", "Используйте `fixup!` и отдельный WIP-коммит как наблюдаемые сигналы того, какие части истории вообще нужно включить в cleanup."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-in-preview-mode", "Следующий шаг должен показать компактный preview истории, но не менять коммиты.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сгруппируйте цели очистки", "Разделите кандидатов на `fixup`, кандидатов на перестановку и коммиты, которые трогать не нужно."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Прочитайте стек сверху вниз", "Сначала пройдитесь по текущей истории по порядку и только потом предлагайте план очистки."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Назовите безопасный следующий шаг", "Выберите команду планирования или проверки, которая должна идти до любого переписывания.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Просмотрите верхушку истории", "Сначала покажите недавний стек коммитов в компактном виде, чтобы увидеть форму будущей очистки."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Выделите кандидатов на cleanup", "Используйте `fixup!` и WIP как признаки того, какие коммиты стоит обсуждать в плане очистки."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Оставьте переписывание на потом", "Зафиксируйте безопасный preview-шаг, после которого interactive rebase можно будет обосновать, но ещё не выполнять.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Режим планирования", "Эта задача заканчивается на качестве плана и не выполняет переписывание.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "В этом preview-сценарии оценивается компактная команда из семейства `git log`, а не `rebase`, `commit --amend` или `reset`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница сценария", "Задача заканчивается на наблюдаемом preview истории, после которого план cleanup уже можно обсуждать предметно.")
                     )
             ),
             "remote-sync-preview", new ScenarioTaskContentFixture(
