@@ -621,7 +621,7 @@ export function createCatalogWorkspaceController({
     function handleSubmissionDraftInput(event) {
         const draftFieldSnapshot = captureDraftFieldSnapshot(event.target);
         const formData = new FormData(event.currentTarget);
-        const nextAnswerType = normalizeOptionalValue(formData.get("answerType")) ?? "command_text";
+        const nextAnswerType = "command_text";
         const nextAnswer = String(formData.get("answer") ?? "");
         const preparedSubmission = state.submissionDraft.preparedSubmission;
 
@@ -659,7 +659,7 @@ export function createCatalogWorkspaceController({
 
         const preparedSubmission = {
             scenarioSlug: state.selectedScenarioSlug,
-            answerType: normalizeOptionalValue(formData.get("answerType")) ?? "command_text",
+            answerType: "command_text",
             answer,
             preparedAt: new Date().toISOString()
         };
