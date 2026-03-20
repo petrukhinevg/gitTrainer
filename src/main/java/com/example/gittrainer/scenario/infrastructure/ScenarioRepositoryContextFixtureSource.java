@@ -67,8 +67,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/workspace-shell/view.js", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по истории", "Среди последних коммитов есть `fixup` и лишнее WIP-изменение, что намекает на будущую очистку."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по безопасности", "Пользователь всё ещё находится в режиме планирования и не должен переписывать историю.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал для preview истории", "Верхушка истории уже показывает `fixup!` рядом с базовым UI-коммитом и отдельный WIP-коммит, поэтому сначала нужен компактный просмотр стека."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему rebase ещё рано", "Сценарий пока просит только увидеть кандидатов на очистку в читаемом виде. Любой `rebase -i` раньше этого шага скрывает обязательный preview.")
                     )
             ),
             "remote-sync-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(

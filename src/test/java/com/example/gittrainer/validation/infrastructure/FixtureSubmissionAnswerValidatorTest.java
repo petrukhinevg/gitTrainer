@@ -35,6 +35,30 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
+    void marksHistoryPreviewCommandAsCorrect() {
+        SubmissionOutcome outcome = validator.validate(
+                "history-cleanup-preview",
+                new SubmittedAnswer("command_text", "git log --oneline --graph --decorate")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
+    }
+
+    @Test
+    void keepsHistoryRewriteCommandIncorrectInPreviewScenario() {
+        SubmissionOutcome outcome = validator.validate(
+                "history-cleanup-preview",
+                new SubmittedAnswer("command_text", "git rebase -i HEAD~3")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("incorrect", outcome.correctness());
+        assertEquals("unexpected-command", outcome.code());
+    }
+
+    @Test
     void marksUnexpectedCommandAsIncorrect() {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",

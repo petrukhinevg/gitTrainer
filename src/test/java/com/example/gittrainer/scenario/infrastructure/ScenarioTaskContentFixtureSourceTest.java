@@ -25,6 +25,24 @@ class ScenarioTaskContentFixtureSourceTest {
     }
 
     @Test
+    void providesHistoryCleanupTaskContentThatLeadsWithHistoryPreview() {
+        ScenarioTaskContentFixture fixture = scenarioTaskContentFixtureSource.fixtureFor("history-cleanup-preview");
+
+        assertThat(fixture.goal()).contains("граф коммитов");
+        assertThat(fixture.instructions())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskInstructionFixture::id)
+                .containsExactly(
+                        "preview-commit-graph-before-rewrite",
+                        "use-fixup-and-wip-as-cues",
+                        "keep-next-step-in-preview-mode"
+                );
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Просмотрите верхушку истории");
+        assertThat(fixture.annotations())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture::label)
+                .containsExactly("Что считается безопасным шагом", "Граница сценария");
+    }
+
+    @Test
     void failsExplicitlyWhenTaskContentWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioTaskContentFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioTaskContentNotAuthoredException.class)
