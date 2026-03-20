@@ -29,19 +29,20 @@ public class ScenarioTaskContentFixtureSource {
             ),
             "branch-safety", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Решите, продолжать ли задачу на текущей ветке или после переключения.",
+                    "Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "read-current-branch", "Посмотрите на текущую ветку до любых правок файлов или индексации."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "compare-task-intent", "Сопоставьте назначение ветки с задачей, чтобы обосновать, оставаться ли на месте или переключаться."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "avoid-implicit-switch", "Не считайте переключение ветки правильным, пока состояние репозитория и цель задачи не совпадут.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "confirm-active-branch-before-switching", "Сначала подтвердите активную ветку командой чтения, а не пытайтесь сразу выполнить `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "connect-open-edits-to-branch-purpose", "Свяжите имя ветки и уже изменённые файлы с hotfix или release-контекстом, чтобы понять, почему решение о переключении ещё рано."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-observable", "Следующий шаг должен прояснить branch-контекст, но не менять состояние репозитория.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сопоставьте ветку и задачу", "Свяжите имя текущей ветки с описанием задачи, прежде чем предлагать `checkout`."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Поймите, где вы находитесь", "Начните с активной ветки и сигналов того, что рабочее дерево уже используется."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Сформулируйте решение по ветке", "Кратко объясните, нужно ли остаться на ветке или переключиться и почему это безопаснее.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Подтвердите текущую ветку", "Начните с команды чтения branch-контекста, чтобы точно увидеть, где уже открыта работа."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сопоставьте ветку с незавершёнными правками", "Используйте имя ветки и изменённые файлы как подсказку, почему сценарий пока не просит немедленный `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Отложите переключение до подтверждения контекста", "Сначала зафиксируйте безопасный branch-reading шаг, после которого решение о переключении можно будет обосновать.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Граница решения", "Навигация по веткам должна быть осознанной и объяснённой, а не автоматической.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "Пока в hotfix-ветке уже есть незавершённые изменения, сценарий оценивает команду чтения branch-контекста, а не автоматический `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница решения", "Переключение ветки обсуждается только после того, как UI-контекст подтвердил текущую ветку и характер открытых правок.")
                     )
             ),
             "history-cleanup-preview", new ScenarioTaskContentFixture(

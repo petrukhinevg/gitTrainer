@@ -179,6 +179,26 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
+    void exposesBranchSafetyScenarioThroughDetailBoundaryWithInspectionFirstCues() throws Exception {
+        mockMvc.perform(get("/api/scenarios/branch-safety")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("branch-safety"))
+                .andExpect(jsonPath("$.title").value("Подтверди текущую ветку перед правками"))
+                .andExpect(jsonPath("$.summary").value("Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("confirm-active-branch-before-switching"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Сначала подтвердите активную ветку командой чтения, а не пытайтесь сразу выполнить `checkout`."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Подтвердите текущую ветку"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("release/hotfix-7"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал активной ветки"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему нельзя переключаться вслепую"));
+    }
+
+    @Test
     void returnsNotFoundWhenRequestedScenarioDetailDoesNotExistInActiveSource() throws Exception {
         mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
                         .accept(MediaType.APPLICATION_JSON))

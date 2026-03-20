@@ -25,6 +25,24 @@ class ScenarioTaskContentFixtureSourceTest {
     }
 
     @Test
+    void providesBranchSafetyTaskContentThatLeadsWithBranchInspection() {
+        ScenarioTaskContentFixture fixture = scenarioTaskContentFixtureSource.fixtureFor("branch-safety");
+
+        assertThat(fixture.goal()).contains("подтвердите активную ветку");
+        assertThat(fixture.instructions())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskInstructionFixture::id)
+                .containsExactly(
+                        "confirm-active-branch-before-switching",
+                        "connect-open-edits-to-branch-purpose",
+                        "keep-next-step-observable"
+                );
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Подтвердите текущую ветку");
+        assertThat(fixture.annotations())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture::label)
+                .containsExactly("Что считается безопасным шагом", "Граница решения");
+    }
+
+    @Test
     void failsExplicitlyWhenTaskContentWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioTaskContentFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioTaskContentNotAuthoredException.class)

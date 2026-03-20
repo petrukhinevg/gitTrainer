@@ -190,6 +190,28 @@ class SessionControllerTest {
     }
 
     @Test
+    void guidesBranchSafetyBackToInspectionBeforeAnyCheckout() throws Exception {
+        String sessionId = startSessionAndExtractId("branch-safety");
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git checkout feature/menu-refresh"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Подтвердите текущую ветку до решения о переключении"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("Сценарий пока не просит выполнять `checkout`. Сначала он требует собрать минимальный branch cue и подтвердить, где уже открыта работа."))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Сначала подтвердите активную ветку"));
+    }
+
+    @Test
     void acceptsAlternateCorrectCommandVariantForScenario() throws Exception {
         String sessionId = startSessionAndExtractId();
 
@@ -291,11 +313,11 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.attemptNumber").value(2))
                 .andExpect(jsonPath("$.retryFeedback.retryState.status").value("retry-available"))
                 .andExpect(jsonPath("$.retryFeedback.retryState.eligibility").value("eligible"))
-                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Проверьте, какая ветка действительно соответствует задаче"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Подтвердите текущую ветку до решения о переключении"))
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("strong"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].id").value("nudge"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].id").value("strong"))
-                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].title").value("Предпочтите шаг по веткам с минимальным изменением состояния"));
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[1].title").value("Выберите команду чтения branch-контекста"));
     }
 
     @Test
