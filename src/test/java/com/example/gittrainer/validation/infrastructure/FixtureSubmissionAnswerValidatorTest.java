@@ -59,6 +59,18 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
+    void marksBranchReadingCommandAsCorrectForBranchSafety() {
+        SubmissionOutcome outcome = validator.validate(
+                "branch-safety",
+                new SubmittedAnswer("command_text", "git branch --show-current")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
+    }
+
+    @Test
     void keepsHistoryRewriteCommandIncorrectInPreviewScenario() {
         SubmissionOutcome outcome = validator.validate(
                 "history-cleanup-preview",
@@ -75,6 +87,18 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "remote-sync-preview",
                 new SubmittedAnswer("command_text", "git pull")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("incorrect", outcome.correctness());
+        assertEquals("unexpected-command", outcome.code());
+    }
+
+    @Test
+    void keepsCheckoutIncorrectForBranchSafety() {
+        SubmissionOutcome outcome = validator.validate(
+                "branch-safety",
+                new SubmittedAnswer("command_text", "git checkout feature/menu-refresh")
         );
 
         assertEquals("evaluated", outcome.status());

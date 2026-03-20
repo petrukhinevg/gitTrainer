@@ -175,6 +175,53 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
+    void completesBranchSafetyFlowUsingAuthoredBranchCues() throws Exception {
+        Map<String, Object> detailResponse = performJson(get("/api/scenarios/branch-safety"));
+        Map<String, Object> workspace = mapValue(detailResponse, "workspace");
+        Map<String, Object> task = mapValue(workspace, "task");
+        Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
+
+        assertThat(stringValue(task, "goal")).contains("подтвердите активную ветку");
+        assertThat(stringValue(task, "goal")).contains("hotfix");
+        assertThat(listValue(task, "annotations"))
+                .extracting(item -> stringValue(castMap(item), "label"))
+                .contains("Что считается безопасным шагом");
+        assertThat(listValue(repositoryContext, "branches"))
+                .extracting(item -> stringValue(castMap(item), "name"))
+                .contains("release/hotfix-7", "feature/menu-refresh");
+
+        Map<String, Object> startSessionResponse = performJson(
+                post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "branch-safety"
+                                }
+                                """)
+        );
+        String sessionId = stringValue(startSessionResponse, "sessionId");
+
+        Map<String, Object> submissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git branch --show-current"
+                                }
+                                """)
+        );
+
+        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+
+        assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
+        assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
+        assertThat(stringValue(mapValue(retryFeedback, "retryState"), "status")).isEqualTo("complete");
+    }
+
+    @Test
     void completesHistoryCleanupFlowUsingAuthoredHistoryPreviewCues() throws Exception {
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/history-cleanup-preview"));
         Map<String, Object> workspace = mapValue(detailResponse, "workspace");

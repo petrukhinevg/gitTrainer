@@ -47,8 +47,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("docs/release-checklist.md", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Назначение ветки", "Текущая ветка предназначена для hotfix и уже содержит изменения, связанные с релизом."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Напряжение задачи", "Нужно решить, относится ли запрошенная работа сюда или должна идти в feature-ветку.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал активной ветки", "Сейчас активна `release/hotfix-7`, и оба изменённых файла выглядят как незавершённая hotfix или release-работа."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему нельзя переключаться вслепую", "До явной проверки текущей ветки и открытых правок любой `checkout` останется догадкой и может смешать hotfix с feature-задачей.")
                     )
             ),
             "history-cleanup-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(

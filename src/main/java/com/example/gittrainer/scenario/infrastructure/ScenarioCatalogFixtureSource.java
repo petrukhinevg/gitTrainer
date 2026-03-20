@@ -23,8 +23,8 @@ public class ScenarioCatalogFixtureSource {
                     new ScenarioSummary(
                             "branch-safety",
                             "branch-safety",
-                            "Выбери правильную ветку перед правками",
-                            "Определи активную ветку, сопоставь её с задачей и реши, оставаться ли на месте или сначала переключиться.",
+                            "Подтверди текущую ветку перед правками",
+                            "Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение.",
                             ScenarioDifficulty.BEGINNER,
                             List.of("branching", "navigation", "basics")
                     ),

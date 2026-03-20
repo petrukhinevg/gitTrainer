@@ -64,6 +64,23 @@ class ScenarioRepositoryContextFixtureSourceTest {
     }
 
     @Test
+    void providesBranchSafetyRepositoryContextWithHotfixCues() {
+        ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
+                scenarioRepositoryContextFixtureSource.fixtureFor("branch-safety");
+
+        assertThat(fixture.branches())
+                .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
+                .containsExactly("release/hotfix-7", "feature/menu-refresh", "main");
+        assertThat(fixture.branches().getFirst().current()).isTrue();
+        assertThat(fixture.files())
+                .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryFile::path)
+                .containsExactly("src/ui/header.css", "docs/release-checklist.md");
+        assertThat(fixture.annotations())
+                .extracting(ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation::label)
+                .containsExactly("Сигнал активной ветки", "Почему нельзя переключаться вслепую");
+    }
+
+    @Test
     void failsExplicitlyWhenRepositoryContextWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioRepositoryContextNotAuthoredException.class)
