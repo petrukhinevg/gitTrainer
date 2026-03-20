@@ -22,9 +22,16 @@
 - `Review`: реализовано и ожидает review
 - `Done`: принято и завершено
 
-Актуальное состояние доски держи в `docs/BOARD.md` или в удалённой project board.
+Актуальное состояние доски держи в удалённой project board и при необходимости синхронизируй локальные инструкции под её фактическую конфигурацию.
 
-Используй поле проекта `Pairs with`, когда backend-задача и frontend-задача описывают один и тот же пользовательский срез, но при этом могут реализовываться независимо.
+Текущие важные поля project board:
+
+- `Status`
+- `Linked pull requests`
+- `Parent issue`
+- `Sub-issues progress`
+
+Отдельного пользовательского поля `Pairs with` в текущей конфигурации доски нет. Если backend- и frontend-задачи описывают один и тот же пользовательский срез, фиксируй их связь через parent issue, тексты issue и roadmap, а не через несуществующее project field.
 
 ## Правила декомпозиции
 
@@ -74,6 +81,9 @@
 - начинай с минимального набора дочерних задач, у которых уже есть ясные независимые результаты
 - добавляй более мелкие дочерние задачи позже только там, где это улучшает параллельную работу или уменьшает блокировки
 - формируй набор дочерних задач вокруг независимо реализуемых результатов, а не вокруг framework-слоёв
+- не добавляй новые child issues в parent issue со статусом `Done` на GitHub project board
+- новые задачи заводи только в действующие эпики, у которых parent issue остаётся активным, например `Backlog`, `Ready`, `In Progress` или `Review`
+- если подходящего активного parent issue нет, сначала создай новый parent issue и только потом привязывай к нему новые child issues
 
 ## Git-процесс
 
@@ -193,6 +203,48 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 - создание linked branch на новом имени удалённой ветки сработало
 - попытка зарегистрировать уже существующее имя удалённой ветки не дала надёжного backfill
 
+### Подзадачи parent issue
+
+Если нужно привязать уже созданную issue как sub-issue к parent issue из CLI, используй GraphQL mutation `addSubIssue`:
+
+```graphql
+mutation($issueId: ID!, $subIssueId: ID!) {
+  addSubIssue(input: {issueId: $issueId, subIssueId: $subIssueId}) {
+    issue {
+      number
+    }
+    subIssue {
+      number
+    }
+  }
+}
+```
+
+Обязательные входные параметры:
+
+- `issueId`: GraphQL ID parent issue
+- `subIssueId`: GraphQL ID дочерней issue
+
+Получить GraphQL ID issue можно через:
+
+```sh
+gh issue view <number> --json id
+```
+
+Пример:
+
+```sh
+gh api graphql \
+  -f query='mutation($issueId: ID!, $subIssueId: ID!) {
+    addSubIssue(input: {issueId: $issueId, subIssueId: $subIssueId}) {
+      issue { number }
+      subIssue { number }
+    }
+  }' \
+  -F issueId='<parent-issue-id>' \
+  -F subIssueId='<child-issue-id>'
+```
+
 ### Pull requests в ветки эпиков
 
 Для дочерних task PR с epic branch как `base` используй `Refs #<issue>` в теле PR, чтобы сохранить ассоциацию с issue без расчёта на поведение автозакрытия только для default branch.
@@ -252,6 +304,13 @@ gh pr create \
 ```sh
 gh project field-list 4 --owner petrukhinevg
 ```
+
+На текущей доске этот вызов должен показывать как минимум поля:
+
+- `Status`
+- `Linked pull requests`
+- `Parent issue`
+- `Sub-issues progress`
 
 Если вывода `gh project item-list` недостаточно, чтобы определить id карточки элемента в проекте, запроси его напрямую из issue:
 

@@ -1,13 +1,19 @@
 import { SessionTransportError } from "../session/session-provider.js";
-import { renderCatalogWorkspace } from "./view.js";
+import {
+    renderCatalogWorkspace,
+    renderCatalogWorkspaceShell,
+    renderCatalogWorkspaceSurfaces
+} from "./view.js";
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
+const SMOOTH_WHEEL_SCROLL_DURATION_MS = 180;
 const DEFAULT_QUERY = Object.freeze({
     difficulty: null,
     tags: [],
     sort: null
 });
+const smoothWheelScrollState = new WeakMap();
 
 export function createCatalogWorkspaceController({
     appRoot,
@@ -52,6 +58,14 @@ export function createCatalogWorkspaceController({
     const sessionProviders = new Map();
     const progressProviders = new Map();
     let navigationAnimationInProgress = false;
+    let shellMounted = false;
+    let renderedRouteKind = null;
+    const renderedSurfaceCache = {
+        navigation: null,
+        lesson: null,
+        practiceViewer: null,
+        practiceSurface: null
+    };
     const providerOptions = resolveSharedProviderOptions({
         catalogProviderFactories,
         detailProviderFactories,
@@ -61,7 +75,6 @@ export function createCatalogWorkspaceController({
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
-        window.addEventListener("resize", syncNavigationPaneWidth);
 
         if (!window.location.hash) {
             window.location.hash = "#/catalog";
@@ -97,11 +110,19 @@ export function createCatalogWorkspaceController({
         }
 
         await Promise.all([
-            loadCatalog(),
+            ensureCatalogLoaded(),
             state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
             state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve(),
             state.route === "exercise" ? ensureExerciseSession() : Promise.resolve()
         ]);
+    }
+
+    function ensureCatalogLoaded() {
+        if (state.catalog.status !== "idle") {
+            return Promise.resolve();
+        }
+
+        return loadCatalog();
     }
 
     async function loadCatalog() {
@@ -278,28 +299,114 @@ export function createCatalogWorkspaceController({
     function render() {
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         const isExerciseRoute = state.route === "exercise";
+        const isNotFoundRoute = state.route === "not-found";
+        const nextRouteKind = isNotFoundRoute ? "not-found" : "workspace";
         const laneScrollPositions = captureLaneScrollPositions();
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
-        appRoot.innerHTML = renderCatalogWorkspace({
+
+        if (renderedRouteKind !== nextRouteKind) {
+            renderedRouteKind = nextRouteKind;
+            shellMounted = false;
+            resetRenderedSurfaceCache();
+        }
+
+        if (isNotFoundRoute) {
+            appRoot.innerHTML = renderCatalogWorkspace({
+                state,
+                selectedCatalogScenario,
+                tagOptions,
+                providerOptions
+            });
+        } else {
+            ensureWorkspaceShellMounted();
+            renderWorkspaceSurfaces(selectedCatalogScenario);
+        }
+
+        restoreLaneScrollPositions(laneScrollPositions);
+        requestAnimationFrame(() => {
+            restoreLaneScrollPositions(laneScrollPositions);
+        });
+        bindCatalogControls();
+        bindRouteLinks();
+        bindNavigationControls();
+        bindPracticeSurfaceControls();
+        bindSmoothScrollContainers();
+    }
+
+    function ensureWorkspaceShellMounted() {
+        if (shellMounted) {
+            return;
+        }
+
+        appRoot.innerHTML = renderCatalogWorkspaceShell();
+        shellMounted = true;
+    }
+
+    function renderWorkspaceSurfaces(selectedCatalogScenario) {
+        const surfaces = renderCatalogWorkspaceSurfaces({
             state,
             selectedCatalogScenario,
             tagOptions,
             providerOptions
         });
 
-        restoreLaneScrollPositions(laneScrollPositions);
-        syncNavigationPaneWidth();
-        bindCatalogControls();
-        bindNavigationControls();
-        bindPracticeSurfaceControls();
+        patchSurface("navigation", surfaces.navigation);
+        patchSurface("lesson", surfaces.lesson);
+        patchSurface("practice-viewer", surfaces.practiceViewer, "practiceViewer");
+        patchSurface("practice-surface", surfaces.practiceSurface, "practiceSurface");
+    }
+
+    function patchSurface(surfaceName, nextMarkup, cacheKey = surfaceName) {
+        if (renderedSurfaceCache[cacheKey] === nextMarkup) {
+            return;
+        }
+
+        const target = appRoot.querySelector(`[data-render-surface="${escapeSelectorValue(surfaceName)}"]`);
+        if (!target) {
+            return;
+        }
+
+        const previousLaneBody = target.querySelector(".lesson-lane__body");
+        const preservedLaneScroll = previousLaneBody
+            ? {
+                scrollTop: previousLaneBody.scrollTop,
+                scrollLeft: previousLaneBody.scrollLeft
+            }
+            : null;
+        const preservedScrollState = captureSurfaceScrollState(target);
+        target.innerHTML = nextMarkup;
+        const nextLaneBody = target.querySelector(".lesson-lane__body");
+        if (nextLaneBody && preservedLaneScroll) {
+            nextLaneBody.scrollTop = preservedLaneScroll.scrollTop;
+            nextLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
+        }
+        restoreSurfaceScrollState(target, preservedScrollState);
+        requestAnimationFrame(() => {
+            const deferredLaneBody = target.querySelector(".lesson-lane__body");
+            if (deferredLaneBody && preservedLaneScroll) {
+                deferredLaneBody.scrollTop = preservedLaneScroll.scrollTop;
+                deferredLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
+            }
+
+            restoreSurfaceScrollState(target, preservedScrollState);
+        });
+        renderedSurfaceCache[cacheKey] = nextMarkup;
+    }
+
+    function resetRenderedSurfaceCache() {
+        renderedSurfaceCache.navigation = null;
+        renderedSurfaceCache.lesson = null;
+        renderedSurfaceCache.practiceViewer = null;
+        renderedSurfaceCache.practiceSurface = null;
     }
 
     function bindCatalogControls() {
         const form = document.querySelector("[data-catalog-controls-form]");
-        if (!form) {
+        if (!form || form.dataset.controlsBound === "true") {
             return;
         }
 
+        form.dataset.controlsBound = "true";
         form.addEventListener("change", () => {
             void applyCatalogControls(form);
         });
@@ -311,8 +418,45 @@ export function createCatalogWorkspaceController({
         });
     }
 
+    function bindRouteLinks() {
+        document.querySelectorAll('a[href^="#/"]').forEach((link) => {
+            if (link.dataset.routeLinkBound === "true") {
+                return;
+            }
+
+            link.dataset.routeLinkBound = "true";
+            link.addEventListener("click", (event) => {
+                if (
+                    event.defaultPrevented
+                    || event.button !== 0
+                    || event.metaKey
+                    || event.ctrlKey
+                    || event.shiftKey
+                    || event.altKey
+                ) {
+                    return;
+                }
+
+                const nextHash = link.getAttribute("href");
+                if (!nextHash || nextHash === window.location.hash) {
+                    event.preventDefault();
+                    return;
+                }
+
+                event.preventDefault();
+                window.history.pushState(null, "", nextHash);
+                void handleRouteChange();
+            });
+        });
+    }
+
     function bindNavigationControls() {
         document.querySelectorAll("[data-scenario-toggle]").forEach((button) => {
+            if (button.dataset.navigationToggleBound === "true") {
+                return;
+            }
+
+            button.dataset.navigationToggleBound = "true";
             button.addEventListener("click", () => {
                 const slug = button.dataset.scenarioToggle;
                 if (!slug) {
@@ -352,10 +496,11 @@ export function createCatalogWorkspaceController({
 
         document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
             const tag = button.dataset.tagLegendControl;
-            if (!tag) {
+            if (!tag || button.dataset.tagLegendBound === "true") {
                 return;
             }
 
+            button.dataset.tagLegendBound = "true";
             button.addEventListener("mouseenter", () => {
                 applyNavigationHighlight(tag);
             });
@@ -379,7 +524,8 @@ export function createCatalogWorkspaceController({
 
     function bindPracticeSurfaceControls() {
         const form = document.querySelector("[data-submission-draft-form]");
-        if (form) {
+        if (form && form.dataset.practiceDraftBound !== "true") {
+            form.dataset.practiceDraftBound = "true";
             form.addEventListener("input", handleSubmissionDraftInput);
             form.addEventListener("change", handleSubmissionDraftInput);
             form.addEventListener("submit", (event) => {
@@ -389,6 +535,11 @@ export function createCatalogWorkspaceController({
         }
 
         document.querySelectorAll("[data-session-request-retry]").forEach((button) => {
+            if (button.dataset.sessionRetryBound === "true") {
+                return;
+            }
+
+            button.dataset.sessionRetryBound = "true";
             button.addEventListener("click", () => {
                 const target = button.dataset.sessionRequestRetry;
                 if (target === "bootstrap") {
@@ -403,12 +554,22 @@ export function createCatalogWorkspaceController({
         });
 
         document.querySelectorAll("[data-session-request-restart]").forEach((button) => {
+            if (button.dataset.sessionRestartBound === "true") {
+                return;
+            }
+
+            button.dataset.sessionRestartBound = "true";
             button.addEventListener("click", () => {
                 void restartExerciseSession();
             });
         });
 
         document.querySelectorAll("[data-retry-hint-reveal]").forEach((button) => {
+            if (button.dataset.retryHintRevealBound === "true") {
+                return;
+            }
+
+            button.dataset.retryHintRevealBound = "true";
             button.addEventListener("click", () => {
                 revealNextRetryHint();
             });
@@ -886,29 +1047,6 @@ export function createCatalogWorkspaceController({
         bootstrap
     };
 
-    function syncNavigationPaneWidth() {
-        const lessonLayout = appRoot.querySelector(".lesson-layout");
-        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
-        if (!lessonLayout || !navigationLane || window.innerWidth <= 900) {
-            lessonLayout?.style.removeProperty("--navigation-pane-width");
-            return;
-        }
-
-        const flowBlockList = navigationLane.querySelector("[data-flow-block-list]");
-        if (!flowBlockList) {
-            lessonLayout.style.removeProperty("--navigation-pane-width");
-            return;
-        }
-
-        const maxContentWidth = measureNaturalNavigationWidth(flowBlockList);
-        const maxWidth = Math.ceil(maxContentWidth + 44);
-        const minWidth = Math.ceil(maxWidth / 2);
-        const preferredWidth = Math.round(window.innerWidth * 0.18);
-        const targetWidth = Math.min(maxWidth, Math.max(minWidth, preferredWidth));
-
-        lessonLayout.style.setProperty("--navigation-pane-width", `${targetWidth}px`);
-    }
-
     function expandScenario(slug, { loadDetail = true } = {}) {
         if (!slug || state.expandedScenarioSlugs.includes(slug)) {
             return;
@@ -1358,35 +1496,6 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
-function measureNaturalNavigationWidth(targetContent) {
-    if (!targetContent) {
-        return 0;
-    }
-
-    const measureRoot = document.createElement("div");
-    measureRoot.style.position = "fixed";
-    measureRoot.style.left = "-10000px";
-    measureRoot.style.top = "0";
-    measureRoot.style.visibility = "hidden";
-    measureRoot.style.pointerEvents = "none";
-    measureRoot.style.width = "max-content";
-    measureRoot.style.maxWidth = "none";
-    measureRoot.style.minWidth = "0";
-
-    const clone = targetContent.cloneNode(true);
-    clone.style.width = "max-content";
-    clone.style.minWidth = "max-content";
-    clone.style.maxWidth = "none";
-
-    measureRoot.append(clone);
-    document.body.append(measureRoot);
-
-    const width = clone.getBoundingClientRect().width;
-    measureRoot.remove();
-
-    return width;
-}
-
 function captureLaneScrollPositions() {
     return Array.from(document.querySelectorAll(".lesson-lane__body"))
         .map((laneBody) => {
@@ -1418,6 +1527,157 @@ function restoreLaneScrollPositions(positions) {
         laneBody.scrollTop = position.scrollTop;
         laneBody.scrollLeft = position.scrollLeft;
     });
+}
+
+function captureSurfaceScrollState(surfaceRoot) {
+    const scrollTargets = [
+        {
+            key: "surface-root",
+            element: surfaceRoot
+        },
+        {
+            key: "practice-surface-scroll",
+            element: surfaceRoot.querySelector("[data-practice-surface-scroll]")
+        },
+        {
+            key: "practice-repository-viewer",
+            element: surfaceRoot.querySelector("[data-repository-context]")
+        }
+    ];
+
+    return scrollTargets
+        .filter((entry) => entry.element)
+        .map((entry) => ({
+            key: entry.key,
+            scrollTop: entry.element.scrollTop,
+            scrollLeft: entry.element.scrollLeft
+        }));
+}
+
+function restoreSurfaceScrollState(surfaceRoot, scrollState) {
+    scrollState.forEach((entry) => {
+        const element = resolveSurfaceScrollElement(surfaceRoot, entry.key);
+        if (!element) {
+            return;
+        }
+
+        element.scrollTop = entry.scrollTop;
+        element.scrollLeft = entry.scrollLeft;
+    });
+}
+
+function bindSmoothScrollContainers() {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        return;
+    }
+
+    document
+        .querySelectorAll(".lesson-lane__body, [data-practice-surface-scroll]")
+        .forEach((element) => {
+            if (element.dataset.smoothWheelBound === "true") {
+                return;
+            }
+
+            element.dataset.smoothWheelBound = "true";
+            element.addEventListener("wheel", (event) => {
+                handleSmoothWheelScroll(event, element);
+            }, { passive: false });
+        });
+}
+
+function handleSmoothWheelScroll(event, element) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey) {
+        return;
+    }
+
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) {
+        return;
+    }
+
+    const maxScrollTop = element.scrollHeight - element.clientHeight;
+    if (maxScrollTop <= 0) {
+        return;
+    }
+
+    const currentTarget = smoothWheelScrollState.get(element)?.targetScrollTop ?? element.scrollTop;
+    const nextTarget = clampNumber(
+        currentTarget + normalizeWheelDelta(event, element),
+        0,
+        maxScrollTop
+    );
+
+    if (nextTarget === currentTarget) {
+        return;
+    }
+
+    event.preventDefault();
+    animateSmoothWheelScroll(element, nextTarget);
+}
+
+function animateSmoothWheelScroll(element, targetScrollTop) {
+    const existingState = smoothWheelScrollState.get(element);
+    const nextState = existingState ?? {};
+    nextState.startScrollTop = element.scrollTop;
+    nextState.targetScrollTop = targetScrollTop;
+    nextState.startTime = performance.now();
+
+    if (!existingState) {
+        nextState.rafId = requestAnimationFrame((timestamp) => {
+            stepSmoothWheelScroll(element, timestamp);
+        });
+    }
+
+    smoothWheelScrollState.set(element, nextState);
+}
+
+function stepSmoothWheelScroll(element, timestamp) {
+    const state = smoothWheelScrollState.get(element);
+    if (!state) {
+        return;
+    }
+
+    const progress = Math.min((timestamp - state.startTime) / SMOOTH_WHEEL_SCROLL_DURATION_MS, 1);
+    const easedProgress = 1 - ((1 - progress) ** 3);
+    const nextScrollTop = state.startScrollTop + ((state.targetScrollTop - state.startScrollTop) * easedProgress);
+    element.scrollTop = nextScrollTop;
+
+    if (progress < 1 && Math.abs(state.targetScrollTop - nextScrollTop) > 0.5) {
+        state.rafId = requestAnimationFrame((nextTimestamp) => {
+            stepSmoothWheelScroll(element, nextTimestamp);
+        });
+        return;
+    }
+
+    element.scrollTop = state.targetScrollTop;
+    smoothWheelScrollState.delete(element);
+}
+
+function normalizeWheelDelta(event, element) {
+    switch (event.deltaMode) {
+        case WheelEvent.DOM_DELTA_LINE:
+            return event.deltaY * 16;
+        case WheelEvent.DOM_DELTA_PAGE:
+            return event.deltaY * element.clientHeight * 0.9;
+        default:
+            return event.deltaY;
+    }
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function resolveSurfaceScrollElement(surfaceRoot, key) {
+    switch (key) {
+        case "surface-root":
+            return surfaceRoot;
+        case "practice-surface-scroll":
+            return surfaceRoot.querySelector("[data-practice-surface-scroll]");
+        case "practice-repository-viewer":
+            return surfaceRoot.querySelector("[data-repository-context]");
+        default:
+            return null;
+    }
 }
 
 function escapeSelectorValue(value) {

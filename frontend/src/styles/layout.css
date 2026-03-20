@@ -30,9 +30,18 @@ body {
 }
 
 .lesson-layout {
+    --navigation-lane-min-width: 272px;
+    --navigation-lane-width: 12.5%;
+    --lesson-lane-width: 37.5%;
+    --lesson-lane-min-width: 320px;
+    --practice-lane-width: 50%;
+    --practice-lane-min-width: 420px;
     display: grid;
     grid-template-areas: "navigation lesson practice";
-    grid-template-columns: var(--navigation-pane-width, max-content) minmax(280px, 1fr) minmax(460px, 50%);
+    grid-template-columns:
+        minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
+        minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
+        minmax(var(--practice-lane-min-width), var(--practice-lane-width));
     gap: 0;
     width: 100%;
     height: 100%;
@@ -52,6 +61,7 @@ body {
 
 .lesson-layout__lane--navigation {
     grid-area: navigation;
+    min-width: var(--navigation-lane-min-width);
 }
 
 .lesson-layout__lane--lesson {
@@ -80,8 +90,9 @@ body {
 }
 
 .lesson-lane--navigation {
-    width: var(--navigation-pane-width, max-content);
-    max-width: 100%;
+    width: 100%;
+    min-width: var(--navigation-lane-min-width);
+    max-width: none;
     padding-left: 0;
 }
 
@@ -141,6 +152,7 @@ body {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    scroll-behavior: smooth;
     overscroll-behavior: contain;
     padding-bottom: 16px;
     align-content: start;
@@ -214,11 +226,44 @@ body {
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        grid-template-columns: var(--navigation-pane-width, max-content) minmax(240px, 1fr) minmax(360px, 50%);
+        --navigation-lane-min-width: 252px;
+        --lesson-lane-width: 34%;
+        --lesson-lane-min-width: 260px;
+        --practice-lane-width: 50%;
+        --practice-lane-min-width: 360px;
+        grid-template-columns:
+            minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
+            minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
+            minmax(var(--practice-lane-min-width), var(--practice-lane-width));
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
+    .lesson-layout--exercise {
+        --navigation-lane-min-width: 296px;
+        grid-template-areas:
+            "navigation practice"
+            "lesson practice";
+        grid-template-columns: minmax(var(--navigation-lane-min-width), var(--navigation-lane-width)) minmax(360px, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .lesson-layout--exercise .lesson-layout__lane--practice {
+        border-left: 1px solid var(--border);
+    }
+
+    .lesson-layout--exercise .lesson-lane--navigation,
+    .lesson-layout--exercise .lesson-lane--lesson {
+        padding-right: 18px;
+    }
+
+    .lesson-layout--exercise .lesson-lane--lesson .lesson-lane__body,
+    .lesson-layout--exercise .lesson-lane--lesson .lesson-lane__scroll-content {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 960px) {
     body {
         overflow: auto;
     }
@@ -229,6 +274,7 @@ body {
     }
 
     .lesson-layout {
+        --navigation-lane-min-width: 0;
         grid-template-areas:
             "navigation"
             "lesson"
@@ -256,6 +302,7 @@ body {
     .lesson-lane--navigation,
     .lesson-lane--lesson {
         width: 100%;
+        min-width: 0;
         max-width: none;
         padding-left: 18px;
         padding-right: 18px;

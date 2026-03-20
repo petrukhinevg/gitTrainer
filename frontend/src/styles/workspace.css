@@ -2,7 +2,7 @@
     height: 100%;
     min-height: 0;
     display: grid;
-    grid-template-rows: minmax(300px, 1.18fr) minmax(240px, 0.92fr);
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 0;
     overflow: hidden;
 }
@@ -24,8 +24,16 @@
 }
 
 .practice-pane--surface {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
     border-top: 1px solid var(--border);
     padding: 14px 0 18px;
+}
+
+.practice-pane--surface .workspace-card--composer {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .workspace-card,
@@ -61,7 +69,8 @@
 
 .workspace-card--composer {
     overflow: hidden;
-    align-content: start;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-content: stretch;
 }
 
 .workspace-card--error {
@@ -94,15 +103,57 @@
 }
 
 .practice-shell__viewer-body,
-.practice-composer__results {
+.practice-composer__primary,
+.practice-composer__scroll,
+.practice-composer__results,
+.practice-context-details {
     display: grid;
     gap: 12px;
 }
 
 .practice-shell__viewer-body {
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr) auto;
-    gap: 10px;
+    align-content: start;
+}
+
+.practice-composer__primary {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(31, 23, 32, 0.08);
+}
+
+.practice-repository-viewer {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.practice-composer__scroll {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(31, 23, 32, 0.16) transparent;
+    scrollbar-gutter: stable;
+}
+
+.practice-composer__scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.practice-composer__scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.practice-composer__scroll::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background: rgba(31, 23, 32, 0.16);
+}
+
+.practice-composer__scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(31, 23, 32, 0.24);
 }
 
 .practice-shell__meta {
@@ -145,7 +196,7 @@
 .practice-summary {
     display: grid;
     gap: 10px;
-    padding: 4px 0;
+    padding: 0;
     border: 0;
     border-radius: 0;
     background: transparent;
@@ -402,38 +453,102 @@
     background: rgba(255, 239, 214, 0.72);
 }
 
-.branch-graph {
-    min-height: 0;
+.repository-context,
+.repository-context__section,
+.repository-context__section-header,
+.repository-file-list,
+.repository-file-card,
+.repository-file-card__header,
+.repository-commit-list,
+.repository-commit-card,
+.repository-commit-card__header,
+.repository-annotation-list,
+.repository-annotation-card,
+.repository-context__empty {
+    display: grid;
+    gap: 10px;
+}
+
+.repository-context {
+    padding: 4px 0 10px;
+}
+
+.repository-context__section {
+    padding: 12px 0;
+    border-top: 1px solid rgba(31, 23, 32, 0.08);
+}
+
+.repository-context__section:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.repository-context__section-header,
+.repository-file-card__header,
+.repository-commit-card__header {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 8px;
+}
+
+.repository-file-list,
+.repository-commit-list,
+.repository-annotation-list {
+    gap: 12px;
+}
+
+.repository-file-card,
+.repository-commit-card,
+.repository-annotation-card,
+.repository-context__empty {
     padding: 10px 0;
     border: 0;
     border-radius: 0;
     background: transparent;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    align-content: start;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(31, 23, 32, 0.16) transparent;
-    scrollbar-gutter: stable;
 }
 
-.branch-graph::-webkit-scrollbar {
-    width: 10px;
+.repository-file-card strong,
+.repository-commit-card strong {
+    font-size: 0.84rem;
+    line-height: 1.4;
 }
 
-.branch-graph::-webkit-scrollbar-track {
+.repository-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
     background: transparent;
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
-.branch-graph::-webkit-scrollbar-thumb {
-    border: 2px solid transparent;
-    border-radius: 999px;
-    background-clip: padding-box;
-    background: rgba(31, 23, 32, 0.16);
+.repository-status-pill--modified {
+    color: #8a4b11;
 }
 
-.branch-graph::-webkit-scrollbar-thumb:hover {
-    background: rgba(31, 23, 32, 0.24);
+.repository-status-pill--untracked {
+    color: var(--accent);
+}
+
+.repository-status-pill--staged {
+    color: #24573d;
+}
+
+.branch-graph {
+    min-height: 0;
+    padding: 2px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+    align-content: start;
 }
 
 .branch-graph--placeholder,
@@ -556,6 +671,11 @@
     padding-bottom: 0;
 }
 
+.lesson-lane--practice .lesson-lane__scroll-content {
+    height: 100%;
+    min-height: 0;
+}
+
 @media (max-width: 900px) {
     .lesson-lane--practice .lesson-lane__body {
         overflow: visible;
@@ -569,6 +689,7 @@
 
     .practice-pane--viewer,
     .practice-pane--surface {
+        display: block;
         padding: 0;
         border-top: 0;
     }
@@ -584,6 +705,15 @@
     .practice-composer__actions,
     .practice-composer__controls {
         padding: 0;
+    }
+
+    .practice-composer__primary {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .practice-composer__scroll {
+        overflow: visible;
     }
 }
 
@@ -601,5 +731,11 @@
 
     .branch-graph__row {
         grid-template-columns: 14px 18px minmax(0, 1fr);
+    }
+
+    .repository-context__section-header,
+    .repository-file-card__header,
+    .repository-commit-card__header {
+        grid-template-columns: 1fr;
     }
 }
