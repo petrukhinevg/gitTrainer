@@ -152,10 +152,13 @@ docker compose -f docker-compose.postgres.yml down -v
 Основные документы проекта:
 
 - `LOCAL_AGENT_START.md`: быстрый старт для каждой новой сессии
-- `AGENTS.md`: правила работы с репозиторием и git-процесс
+- `AGENTS.md`: repo-wide правила, локальные доступы и карта инструкций
 - `docs/ROADMAP.md`: общий roadmap продукта и определение MVP
 - `docs/ARCHITECTURE.md`: границы пакетов и зоны ответственности системы
 - `docs/BACKEND_ROADMAP.md`: план поставки backend-части
 - `docs/FRONTEND_ROADMAP.md`: план поставки frontend-части
-- `docs/TRACKER_WORKFLOW.md`: декомпозиция задач и поток работы с трекером
+- `docs/TRACKER_WORKFLOW.md`: декомпозиция задач, рабочий workflow и гигиена scope
+- `docs/agent/GIT_WORKFLOW.md`: ветки, коммиты, push, PR и проверки перед push
+- `docs/agent/BOARD_WORKFLOW.md`: labels, parent/sub-issue и project board
+- `docs/agent/GITHUB_AUTOMATION.md`: `gh`, GraphQL и GitHub automation notes
 - `docs/BOARD.md`: локальный снимок доски проекта
