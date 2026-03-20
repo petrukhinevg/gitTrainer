@@ -12,8 +12,12 @@ export function renderSidebarPanel(state, _selectedCatalogScenario, tagOptions =
         title: "Маршрут тренировки",
         description: "Левая колонка теперь ведёт весь поток: старт, сценарии и подзадачи активного упражнения.",
         showHeader: false,
-        body: renderTrainingFlow(state, tagOptions)
+        body: renderSidebarPanelContent(state, _selectedCatalogScenario, tagOptions)
     });
+}
+
+export function renderSidebarPanelContent(state, _selectedCatalogScenario, tagOptions = []) {
+    return renderTrainingFlow(state, tagOptions);
 }
 
 function resolveLeftPanelTitle(state) {

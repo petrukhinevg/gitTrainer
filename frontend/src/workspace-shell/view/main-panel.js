@@ -13,159 +13,147 @@ import {
 } from "./render-helpers.js";
 
 export function renderMainPanel(state, { tagOptions = [], providerOptions = [] } = {}) {
-    if (state.route === "exercise") {
-        return renderExerciseMainPanel(state);
-    }
-
-    if (state.route === "progress") {
-        return renderProgressMainPanel(state);
-    }
-
     return renderLessonLane({
         lane: "lesson",
         showHeader: false,
-        body: `
-                ${renderMainLead({
-                    label: "Стартовая страница",
-                    title: "Выберите блок задания слева",
-                    description: "Слева находятся сценарии и шаги, по центру открывается описание, справа остаётся практика.",
-                    meta: [
-                        `Сценарии: ${state.catalog.items.length}`,
-                        `Каталог: ${formatCatalogStatus(state.catalog.status)}`
-                ]
-            })}
-            ${renderWelcomePage(state, { tagOptions, providerOptions })}
-        `
+        body: renderMainPanelContent(state, { tagOptions, providerOptions })
     });
 }
 
-function renderProgressMainPanel(state) {
+export function renderMainPanelContent(state, { tagOptions = [], providerOptions = [] } = {}) {
+    if (state.route === "exercise") {
+        return renderExerciseMainPanelContent(state);
+    }
+
+    if (state.route === "progress") {
+        return renderProgressMainPanelContent(state);
+    }
+
+    return `
+            ${renderMainLead({
+                label: "Стартовая страница",
+                title: "Выберите блок задания слева",
+                description: "Слева находятся сценарии и шаги, по центру открывается описание, справа остаётся практика.",
+                meta: [
+                    `Сценарии: ${state.catalog.items.length}`,
+                    `Каталог: ${formatCatalogStatus(state.catalog.status)}`
+            ]
+        })}
+        ${renderWelcomePage(state, { tagOptions, providerOptions })}
+    `;
+}
+
+function renderProgressMainPanelContent(state) {
     if (state.progress.status === "loading" || state.progress.status === "idle") {
-        return renderLessonLane({
-            lane: "lesson",
-            showHeader: false,
-            body: `
-                ${renderMainLead({
-                    label: "Экран прогресса",
-                    title: "Загружаем экран прогресса",
-                    description: "Экран уже открыт и ждёт данные о прогрессе.",
-                    meta: [
-                        `Маршрут: ${formatRoute(state.route)}`,
-                        `Статус: ${formatCatalogStatus(state.progress.status)}`
-                    ]
-                })}
-                <section class="lesson-spotlight lesson-spotlight--loading" data-progress-surface>
-                    <span class="control-label">Состояние прогресса</span>
-                    <h4 class="lesson-block__title">Подготавливаем маркеры прогресса</h4>
-                    <p class="panel-copy">Маркеры статуса и недавняя активность появятся здесь, когда сводка будет готова.</p>
-                </section>
-            `
-        });
+        return `
+            ${renderMainLead({
+                label: "Экран прогресса",
+                title: "Загружаем экран прогресса",
+                description: "Экран уже открыт и ждёт данные о прогрессе.",
+                meta: [
+                    `Маршрут: ${formatRoute(state.route)}`,
+                    `Статус: ${formatCatalogStatus(state.progress.status)}`
+                ]
+            })}
+            <section class="lesson-spotlight lesson-spotlight--loading" data-progress-surface>
+                <span class="control-label">Состояние прогресса</span>
+                <h4 class="lesson-block__title">Подготавливаем маркеры прогресса</h4>
+                <p class="panel-copy">Маркеры статуса и недавняя активность появятся здесь, когда сводка будет готова.</p>
+            </section>
+        `;
     }
 
     if (state.progress.status === "error") {
-        return renderLessonLane({
-            lane: "lesson",
-            showHeader: false,
-            body: `
-                ${renderMainLead({
-                    label: "Экран прогресса",
-                    title: "Экран прогресса недоступен",
-                    description: "Даже при ошибке загрузки структура экрана остаётся на месте.",
-                    meta: [
-                        `Маршрут: ${formatRoute(state.route)}`,
-                        `Статус: ${formatCatalogStatus(state.progress.status)}`
-                    ]
-                })}
-                <section class="lesson-block lesson-block--reading" data-progress-surface>
-                    <div class="lesson-section__header">
-                        <span class="control-label">Восстановление</span>
-                        <h4 class="lesson-block__title">Сводка прогресса недоступна</h4>
-                    </div>
-                    <p class="panel-copy">${escapeHtml(state.progress.error ?? "Сводка прогресса сейчас недоступна.")}</p>
-                </section>
-            `
-        });
+        return `
+            ${renderMainLead({
+                label: "Экран прогресса",
+                title: "Экран прогресса недоступен",
+                description: "Даже при ошибке загрузки структура экрана остаётся на месте.",
+                meta: [
+                    `Маршрут: ${formatRoute(state.route)}`,
+                    `Статус: ${formatCatalogStatus(state.progress.status)}`
+                ]
+            })}
+            <section class="lesson-block lesson-block--reading" data-progress-surface>
+                <div class="lesson-section__header">
+                    <span class="control-label">Восстановление</span>
+                    <h4 class="lesson-block__title">Сводка прогресса недоступна</h4>
+                </div>
+                <p class="panel-copy">${escapeHtml(state.progress.error ?? "Сводка прогресса сейчас недоступна.")}</p>
+            </section>
+        `;
     }
 
     if (state.progress.status === "empty") {
-        return renderLessonLane({
-            lane: "lesson",
-            showHeader: false,
-            body: `
-                ${renderMainLead({
-                    label: "Экран прогресса",
-                    title: "Прогресс пока не записан",
-                    description: "Активность по сценариям ещё не появилась, но экран уже готов.",
-                    meta: [
-                        `Маршрут: ${formatRoute(state.route)}`,
-                        `Статус: ${formatCatalogStatus(state.progress.status)}`
-                    ]
-                })}
-                <section class="lesson-spotlight" data-progress-surface>
-                    <span class="control-label">Пустое состояние</span>
-                    <h4 class="lesson-block__title">Запустите сценарий, чтобы заполнить этот экран</h4>
-                    <p class="panel-copy">Как только пользователь начнёт или завершит сценарии, здесь появятся маркеры статуса и недавняя активность.</p>
-                </section>
-            `
-        });
+        return `
+            ${renderMainLead({
+                label: "Экран прогресса",
+                title: "Прогресс пока не записан",
+                description: "Активность по сценариям ещё не появилась, но экран уже готов.",
+                meta: [
+                    `Маршрут: ${formatRoute(state.route)}`,
+                    `Статус: ${formatCatalogStatus(state.progress.status)}`
+                ]
+            })}
+            <section class="lesson-spotlight" data-progress-surface>
+                <span class="control-label">Пустое состояние</span>
+                <h4 class="lesson-block__title">Запустите сценарий, чтобы заполнить этот экран</h4>
+                <p class="panel-copy">Как только пользователь начнёт или завершит сценарии, здесь появятся маркеры статуса и недавняя активность.</p>
+            </section>
+        `;
     }
 
     const summary = state.progress.summary;
     const totalScenarios = summary?.items?.length ?? 0;
     const completedCount = summary?.items?.filter((item) => item.status === "completed").length ?? 0;
     const inProgressCount = summary?.items?.filter((item) => item.status === "in_progress").length ?? 0;
-    return renderLessonLane({
-        lane: "lesson",
-        showHeader: false,
-        body: `
-                ${renderMainLead({
-                    label: "Экран прогресса",
-                    title: "Следите за прогрессом в одном месте",
-                    description: "Здесь собраны статусы сценариев, недавняя активность и рекомендации по следующему шагу.",
-                meta: [
-                    `Маршрут: ${formatRoute(state.route)}`,
-                    `Статус: ${formatCatalogStatus(state.progress.status)}`,
-                    `Источник: ${formatProviderName(summary?.meta?.source ?? "unknown")}`
-                ]
-            })}
-                <section class="lesson-spotlight" data-progress-surface>
-                    <span class="control-label">Обзор прогресса</span>
-                    <h4 class="lesson-block__title">Все сценарии видны одним взглядом</h4>
-                    <p class="panel-copy">На этом экране собраны завершённые, начатые и ещё не тронутые сценарии, чтобы быстро понять общую картину.</p>
-                <div class="lesson-spotlight__meta">
-                    <span class="lesson-spotlight__pill">Сценарии: ${totalScenarios}</span>
-                    <span class="lesson-spotlight__pill">Завершено: ${completedCount}</span>
-                    <span class="lesson-spotlight__pill">В процессе: ${inProgressCount}</span>
-                </div>
-            </section>
-            <section class="lesson-block lesson-block--reading">
-                <div class="lesson-section__header">
-                    <span class="control-label">Маркеры сценариев</span>
-                    <h4 class="lesson-block__title">Текущий прогресс одним взглядом</h4>
-                </div>
-                <div class="progress-summary-grid">
-                    ${summary.items.map((item) => renderProgressItemCard(item)).join("")}
-                </div>
-            </section>
-            <section class="lesson-block lesson-block--reading">
-                <div class="lesson-section__header">
-                    <span class="control-label">Недавняя активность</span>
-                    <h4 class="lesson-block__title">Последние действия пользователя</h4>
-                </div>
-                <div class="progress-activity-list" data-progress-activity-list>
-                    ${summary.recentActivity.map((activity) => renderRecentProgressActivity(activity)).join("")}
-                </div>
-            </section>
-            <section class="lesson-block lesson-block--reading">
-                <div class="lesson-section__header">
-                    <span class="control-label">Следующий шаг</span>
-                    <h4 class="lesson-block__title">Рекомендации уже на месте</h4>
-                </div>
-                ${renderProgressGuidanceShell(summary.recommendations)}
-            </section>
-        `
-    });
+    return `
+            ${renderMainLead({
+                label: "Экран прогресса",
+                title: "Следите за прогрессом в одном месте",
+                description: "Здесь собраны статусы сценариев, недавняя активность и рекомендации по следующему шагу.",
+            meta: [
+                `Маршрут: ${formatRoute(state.route)}`,
+                `Статус: ${formatCatalogStatus(state.progress.status)}`,
+                `Источник: ${formatProviderName(summary?.meta?.source ?? "unknown")}`
+            ]
+        })}
+            <section class="lesson-spotlight" data-progress-surface>
+                <span class="control-label">Обзор прогресса</span>
+                <h4 class="lesson-block__title">Все сценарии видны одним взглядом</h4>
+                <p class="panel-copy">На этом экране собраны завершённые, начатые и ещё не тронутые сценарии, чтобы быстро понять общую картину.</p>
+            <div class="lesson-spotlight__meta">
+                <span class="lesson-spotlight__pill">Сценарии: ${totalScenarios}</span>
+                <span class="lesson-spotlight__pill">Завершено: ${completedCount}</span>
+                <span class="lesson-spotlight__pill">В процессе: ${inProgressCount}</span>
+            </div>
+        </section>
+        <section class="lesson-block lesson-block--reading">
+            <div class="lesson-section__header">
+                <span class="control-label">Маркеры сценариев</span>
+                <h4 class="lesson-block__title">Текущий прогресс одним взглядом</h4>
+            </div>
+            <div class="progress-summary-grid">
+                ${summary.items.map((item) => renderProgressItemCard(item)).join("")}
+            </div>
+        </section>
+        <section class="lesson-block lesson-block--reading">
+            <div class="lesson-section__header">
+                <span class="control-label">Недавняя активность</span>
+                <h4 class="lesson-block__title">Последние действия пользователя</h4>
+            </div>
+            <div class="progress-activity-list" data-progress-activity-list>
+                ${summary.recentActivity.map((activity) => renderRecentProgressActivity(activity)).join("")}
+            </div>
+        </section>
+        <section class="lesson-block lesson-block--reading">
+            <div class="lesson-section__header">
+                <span class="control-label">Следующий шаг</span>
+                <h4 class="lesson-block__title">Рекомендации уже на месте</h4>
+            </div>
+            ${renderProgressGuidanceShell(summary.recommendations)}
+        </section>
+    `;
 }
 
 function renderProgressItemCard(item) {
@@ -336,86 +324,74 @@ function renderProgressRecommendationCard(item, { marker, actionLabel }) {
     `;
 }
 
-function renderExerciseMainPanel(state) {
+function renderExerciseMainPanelContent(state) {
     const detail = state.detail.data;
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
-        return renderLessonLane({
-            lane: "lesson",
-            showHeader: false,
-            body: `
-                ${renderMainLead({
-                    label: "Сфокусированный урок",
-                    title: "Загружаем описание задания",
-                    description: "Центральная колонка показывает страницу, выбранную в левой навигации.",
-                    meta: [
-                        `Маршрут: ${formatRoute(state.route)}`,
-                        `Детали: ${formatCatalogStatus(state.detail.status)}`
-                    ]
-                })}
-                <section class="lesson-spotlight lesson-spotlight--loading">
-                    <span class="control-label">Состояние урока</span>
-                    <h4 class="lesson-block__title">Ждём описание задания</h4>
-                    <p class="panel-copy">Оболочка страницы уже на месте. Выбранная страница задания всё ещё загружается.</p>
-                </section>
-            `
-        });
+        return `
+            ${renderMainLead({
+                label: "Сфокусированный урок",
+                title: "Загружаем описание задания",
+                description: "Центральная колонка показывает страницу, выбранную в левой навигации.",
+                meta: [
+                    `Маршрут: ${formatRoute(state.route)}`,
+                    `Детали: ${formatCatalogStatus(state.detail.status)}`
+                ]
+            })}
+            <section class="lesson-spotlight lesson-spotlight--loading">
+                <span class="control-label">Состояние урока</span>
+                <h4 class="lesson-block__title">Ждём описание задания</h4>
+                <p class="panel-copy">Оболочка страницы уже на месте. Выбранная страница задания всё ещё загружается.</p>
+            </section>
+        `;
     }
 
     if (state.detail.status === "error") {
-        return renderLessonLane({
-            lane: "lesson",
-            showHeader: false,
-            body: `
-                ${renderMainLead({
-                    label: "Сфокусированный урок",
-                    title: "Детали упражнения недоступны",
-                    description: "Не удалось загрузить выбранную страницу задания.",
-                    meta: [
-                        `Источник: ${formatProviderName(state.providerName)}`,
-                        "Детали: ошибка"
-                    ]
-                })}
-                <section class="lesson-block">
-                    <h4 class="lesson-block__title">Запрошенный маршрут</h4>
-                    <dl class="result-summary">
-                        <div>
-                            <dt>Код сценария</dt>
-                            <dd>${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</dd>
-                        </div>
-                        <div>
-                            <dt>Источник</dt>
-                            <dd>${escapeHtml(formatProviderName(state.providerName))}</dd>
-                        </div>
-                        <div>
-                            <dt>Ошибка</dt>
-                            <dd>${escapeHtml(state.detail.error ?? "Неизвестная ошибка деталей сценария")}</dd>
-                        </div>
-                    </dl>
-                </section>
-            `
-        });
+        return `
+            ${renderMainLead({
+                label: "Сфокусированный урок",
+                title: "Детали упражнения недоступны",
+                description: "Не удалось загрузить выбранную страницу задания.",
+                meta: [
+                    `Источник: ${formatProviderName(state.providerName)}`,
+                    "Детали: ошибка"
+                ]
+            })}
+            <section class="lesson-block">
+                <h4 class="lesson-block__title">Запрошенный маршрут</h4>
+                <dl class="result-summary">
+                    <div>
+                        <dt>Код сценария</dt>
+                        <dd>${escapeHtml(state.selectedScenarioSlug ?? "неизвестно")}</dd>
+                    </div>
+                    <div>
+                        <dt>Источник</dt>
+                        <dd>${escapeHtml(formatProviderName(state.providerName))}</dd>
+                    </div>
+                    <div>
+                        <dt>Ошибка</dt>
+                        <dd>${escapeHtml(state.detail.error ?? "Неизвестная ошибка деталей сценария")}</dd>
+                    </div>
+                </dl>
+            </section>
+        `;
     }
 
     const focusedContent = resolveFocusedLessonContent(detail, state.selectedFocus);
 
-    return renderLessonLane({
-        lane: "lesson",
-        showHeader: false,
-        body: `
-            ${renderMainLead({
-                label: detail.workspace.shell.centerPanelTitle,
-                title: focusedContent.title,
-                description: focusedContent.description,
-                meta: [
-                    `Задача: ${formatTaskStatus(detail.workspace.task.status)}`,
-                    `Сложность: ${formatDifficulty(detail.difficulty)}`,
-                    `Страница: ${focusedContent.metaLabel}`
-                ]
-            })}
-            ${focusedContent.body}
-        `
-    });
+    return `
+        ${renderMainLead({
+            label: detail.workspace.shell.centerPanelTitle,
+            title: focusedContent.title,
+            description: focusedContent.description,
+            meta: [
+                `Задача: ${formatTaskStatus(detail.workspace.task.status)}`,
+                `Сложность: ${formatDifficulty(detail.difficulty)}`,
+                `Страница: ${focusedContent.metaLabel}`
+            ]
+        })}
+        ${focusedContent.body}
+    `;
 }
 
 function renderWelcomePage(state, { tagOptions, providerOptions }) {

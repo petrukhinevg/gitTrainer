@@ -32,14 +32,16 @@ body {
 .lesson-layout {
     --navigation-lane-min-width: 272px;
     --navigation-lane-width: 12.5%;
+    --lesson-lane-width: 37.5%;
     --lesson-lane-min-width: 320px;
+    --practice-lane-width: 50%;
     --practice-lane-min-width: 420px;
     display: grid;
     grid-template-areas: "navigation lesson practice";
     grid-template-columns:
         minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
-        minmax(var(--lesson-lane-min-width), 0.92fr)
-        minmax(var(--practice-lane-min-width), 1.08fr);
+        minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
+        minmax(var(--practice-lane-min-width), var(--practice-lane-width));
     gap: 0;
     width: 100%;
     height: 100%;
@@ -150,6 +152,7 @@ body {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    scroll-behavior: smooth;
     overscroll-behavior: contain;
     padding-bottom: 16px;
     align-content: start;
@@ -224,12 +227,14 @@ body {
 @media (max-width: 1180px) {
     .lesson-layout {
         --navigation-lane-min-width: 252px;
+        --lesson-lane-width: 34%;
         --lesson-lane-min-width: 260px;
+        --practice-lane-width: 50%;
         --practice-lane-min-width: 360px;
         grid-template-columns:
             minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
-            minmax(var(--lesson-lane-min-width), 0.88fr)
-            minmax(var(--practice-lane-min-width), 1fr);
+            minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
+            minmax(var(--practice-lane-min-width), var(--practice-lane-width));
     }
 }
 

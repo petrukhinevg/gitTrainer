@@ -1,6 +1,6 @@
 import { renderLessonLayout } from "./view/lesson-layout.js";
-import { renderMainPanel } from "./view/main-panel.js";
-import { renderSidebarPanel } from "./view/sidebar-panel.js";
+import { renderMainPanel, renderMainPanelContent } from "./view/main-panel.js";
+import { renderSidebarPanel, renderSidebarPanelContent } from "./view/sidebar-panel.js";
 import { renderRouteNotFound } from "./view/workspace-intro.js";
 import { renderWorkspacePanel, renderWorkspacePanelSections } from "./view/workspace-panel.js";
 
@@ -23,8 +23,8 @@ export function renderCatalogWorkspaceShell() {
     return `
         ${renderLessonLayout({
             state: { route: "catalog" },
-            navigationLane: renderSurfaceSlot("navigation"),
-            lessonLane: renderSurfaceSlot("lesson"),
+            navigationLane: renderSurfaceLaneShell("navigation"),
+            lessonLane: renderSurfaceLaneShell("lesson"),
             practiceLane: renderPracticeLaneShell()
         })}
     `;
@@ -34,8 +34,8 @@ export function renderCatalogWorkspaceSurfaces({ state, selectedCatalogScenario,
     const practiceSections = renderWorkspacePanelSections(state);
 
     return {
-        navigation: renderSidebarPanel(state, selectedCatalogScenario, tagOptions),
-        lesson: renderMainPanel(state, { tagOptions, providerOptions }),
+        navigation: renderSidebarPanelContent(state, selectedCatalogScenario, tagOptions),
+        lesson: renderMainPanelContent(state, { tagOptions, providerOptions }),
         practiceViewer: practiceSections.viewer,
         practiceSurface: practiceSections.surface
     };
@@ -43,6 +43,18 @@ export function renderCatalogWorkspaceSurfaces({ state, selectedCatalogScenario,
 
 function renderSurfaceSlot(name) {
     return `<div data-render-surface="${name}"></div>`;
+}
+
+function renderSurfaceLaneShell(name) {
+    return `
+        <section class="lesson-lane lesson-lane--${name} panel">
+            <div class="lesson-lane__body">
+                <div class="lesson-lane__scroll-content">
+                    ${renderSurfaceSlot(name)}
+                </div>
+            </div>
+        </section>
+    `;
 }
 
 function renderPracticeLaneShell() {

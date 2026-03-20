@@ -342,11 +342,9 @@
     font-size: 0.82rem;
     max-width: 100%;
     overflow: hidden;
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 .lesson-lane--navigation[data-highlight-tag="status"] .flow-node[data-tags~="status"] .flow-tag-line--status,

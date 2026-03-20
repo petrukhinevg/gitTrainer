@@ -7,11 +7,13 @@ import {
 
 const DEFAULT_PROVIDER_NAME = "local-fixture";
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
+const SMOOTH_WHEEL_SCROLL_DURATION_MS = 180;
 const DEFAULT_QUERY = Object.freeze({
     difficulty: null,
     tags: [],
     sort: null
 });
+const smoothWheelScrollState = new WeakMap();
 
 export function createCatalogWorkspaceController({
     appRoot,
@@ -321,9 +323,14 @@ export function createCatalogWorkspaceController({
         }
 
         restoreLaneScrollPositions(laneScrollPositions);
+        requestAnimationFrame(() => {
+            restoreLaneScrollPositions(laneScrollPositions);
+        });
         bindCatalogControls();
+        bindRouteLinks();
         bindNavigationControls();
         bindPracticeSurfaceControls();
+        bindSmoothScrollContainers();
     }
 
     function ensureWorkspaceShellMounted() {
@@ -374,6 +381,15 @@ export function createCatalogWorkspaceController({
             nextLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
         }
         restoreSurfaceScrollState(target, preservedScrollState);
+        requestAnimationFrame(() => {
+            const deferredLaneBody = target.querySelector(".lesson-lane__body");
+            if (deferredLaneBody && preservedLaneScroll) {
+                deferredLaneBody.scrollTop = preservedLaneScroll.scrollTop;
+                deferredLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
+            }
+
+            restoreSurfaceScrollState(target, preservedScrollState);
+        });
         renderedSurfaceCache[cacheKey] = nextMarkup;
     }
 
@@ -386,10 +402,11 @@ export function createCatalogWorkspaceController({
 
     function bindCatalogControls() {
         const form = document.querySelector("[data-catalog-controls-form]");
-        if (!form) {
+        if (!form || form.dataset.controlsBound === "true") {
             return;
         }
 
+        form.dataset.controlsBound = "true";
         form.addEventListener("change", () => {
             void applyCatalogControls(form);
         });
@@ -401,8 +418,45 @@ export function createCatalogWorkspaceController({
         });
     }
 
+    function bindRouteLinks() {
+        document.querySelectorAll('a[href^="#/"]').forEach((link) => {
+            if (link.dataset.routeLinkBound === "true") {
+                return;
+            }
+
+            link.dataset.routeLinkBound = "true";
+            link.addEventListener("click", (event) => {
+                if (
+                    event.defaultPrevented
+                    || event.button !== 0
+                    || event.metaKey
+                    || event.ctrlKey
+                    || event.shiftKey
+                    || event.altKey
+                ) {
+                    return;
+                }
+
+                const nextHash = link.getAttribute("href");
+                if (!nextHash || nextHash === window.location.hash) {
+                    event.preventDefault();
+                    return;
+                }
+
+                event.preventDefault();
+                window.history.pushState(null, "", nextHash);
+                void handleRouteChange();
+            });
+        });
+    }
+
     function bindNavigationControls() {
         document.querySelectorAll("[data-scenario-toggle]").forEach((button) => {
+            if (button.dataset.navigationToggleBound === "true") {
+                return;
+            }
+
+            button.dataset.navigationToggleBound = "true";
             button.addEventListener("click", () => {
                 const slug = button.dataset.scenarioToggle;
                 if (!slug) {
@@ -442,10 +496,11 @@ export function createCatalogWorkspaceController({
 
         document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
             const tag = button.dataset.tagLegendControl;
-            if (!tag) {
+            if (!tag || button.dataset.tagLegendBound === "true") {
                 return;
             }
 
+            button.dataset.tagLegendBound = "true";
             button.addEventListener("mouseenter", () => {
                 applyNavigationHighlight(tag);
             });
@@ -469,7 +524,8 @@ export function createCatalogWorkspaceController({
 
     function bindPracticeSurfaceControls() {
         const form = document.querySelector("[data-submission-draft-form]");
-        if (form) {
+        if (form && form.dataset.practiceDraftBound !== "true") {
+            form.dataset.practiceDraftBound = "true";
             form.addEventListener("input", handleSubmissionDraftInput);
             form.addEventListener("change", handleSubmissionDraftInput);
             form.addEventListener("submit", (event) => {
@@ -479,6 +535,11 @@ export function createCatalogWorkspaceController({
         }
 
         document.querySelectorAll("[data-session-request-retry]").forEach((button) => {
+            if (button.dataset.sessionRetryBound === "true") {
+                return;
+            }
+
+            button.dataset.sessionRetryBound = "true";
             button.addEventListener("click", () => {
                 const target = button.dataset.sessionRequestRetry;
                 if (target === "bootstrap") {
@@ -493,12 +554,22 @@ export function createCatalogWorkspaceController({
         });
 
         document.querySelectorAll("[data-session-request-restart]").forEach((button) => {
+            if (button.dataset.sessionRestartBound === "true") {
+                return;
+            }
+
+            button.dataset.sessionRestartBound = "true";
             button.addEventListener("click", () => {
                 void restartExerciseSession();
             });
         });
 
         document.querySelectorAll("[data-retry-hint-reveal]").forEach((button) => {
+            if (button.dataset.retryHintRevealBound === "true") {
+                return;
+            }
+
+            button.dataset.retryHintRevealBound = "true";
             button.addEventListener("click", () => {
                 revealNextRetryHint();
             });
@@ -1493,6 +1564,107 @@ function restoreSurfaceScrollState(surfaceRoot, scrollState) {
         element.scrollTop = entry.scrollTop;
         element.scrollLeft = entry.scrollLeft;
     });
+}
+
+function bindSmoothScrollContainers() {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        return;
+    }
+
+    document
+        .querySelectorAll(".lesson-lane__body, [data-practice-surface-scroll]")
+        .forEach((element) => {
+            if (element.dataset.smoothWheelBound === "true") {
+                return;
+            }
+
+            element.dataset.smoothWheelBound = "true";
+            element.addEventListener("wheel", (event) => {
+                handleSmoothWheelScroll(event, element);
+            }, { passive: false });
+        });
+}
+
+function handleSmoothWheelScroll(event, element) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey) {
+        return;
+    }
+
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) {
+        return;
+    }
+
+    const maxScrollTop = element.scrollHeight - element.clientHeight;
+    if (maxScrollTop <= 0) {
+        return;
+    }
+
+    const currentTarget = smoothWheelScrollState.get(element)?.targetScrollTop ?? element.scrollTop;
+    const nextTarget = clampNumber(
+        currentTarget + normalizeWheelDelta(event, element),
+        0,
+        maxScrollTop
+    );
+
+    if (nextTarget === currentTarget) {
+        return;
+    }
+
+    event.preventDefault();
+    animateSmoothWheelScroll(element, nextTarget);
+}
+
+function animateSmoothWheelScroll(element, targetScrollTop) {
+    const existingState = smoothWheelScrollState.get(element);
+    const nextState = existingState ?? {};
+    nextState.startScrollTop = element.scrollTop;
+    nextState.targetScrollTop = targetScrollTop;
+    nextState.startTime = performance.now();
+
+    if (!existingState) {
+        nextState.rafId = requestAnimationFrame((timestamp) => {
+            stepSmoothWheelScroll(element, timestamp);
+        });
+    }
+
+    smoothWheelScrollState.set(element, nextState);
+}
+
+function stepSmoothWheelScroll(element, timestamp) {
+    const state = smoothWheelScrollState.get(element);
+    if (!state) {
+        return;
+    }
+
+    const progress = Math.min((timestamp - state.startTime) / SMOOTH_WHEEL_SCROLL_DURATION_MS, 1);
+    const easedProgress = 1 - ((1 - progress) ** 3);
+    const nextScrollTop = state.startScrollTop + ((state.targetScrollTop - state.startScrollTop) * easedProgress);
+    element.scrollTop = nextScrollTop;
+
+    if (progress < 1 && Math.abs(state.targetScrollTop - nextScrollTop) > 0.5) {
+        state.rafId = requestAnimationFrame((nextTimestamp) => {
+            stepSmoothWheelScroll(element, nextTimestamp);
+        });
+        return;
+    }
+
+    element.scrollTop = state.targetScrollTop;
+    smoothWheelScrollState.delete(element);
+}
+
+function normalizeWheelDelta(event, element) {
+    switch (event.deltaMode) {
+        case WheelEvent.DOM_DELTA_LINE:
+            return event.deltaY * 16;
+        case WheelEvent.DOM_DELTA_PAGE:
+            return event.deltaY * element.clientHeight * 0.9;
+        default:
+            return event.deltaY;
+    }
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(Math.max(value, min), max);
 }
 
 function resolveSurfaceScrollElement(surfaceRoot, key) {
