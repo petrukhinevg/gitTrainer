@@ -124,6 +124,55 @@ class MvpLifecycleFlowTest {
         );
     }
 
+    @Test
+    void completesStatusBasicsFlowUsingAuthoredWorkspaceCues() throws Exception {
+        Map<String, Object> detailResponse = performJson(get("/api/scenarios/status-basics"));
+        Map<String, Object> workspace = mapValue(detailResponse, "workspace");
+        Map<String, Object> task = mapValue(workspace, "task");
+        Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
+
+        assertThat(stringValue(task, "goal")).contains("рабочего дерева");
+        assertThat(stringValue(task, "goal")).contains("следующий шаг");
+        assertThat(listValue(task, "instructions")).isNotEmpty();
+        assertThat(listValue(task, "steps")).isNotEmpty();
+        assertThat(listValue(task, "annotations")).isNotEmpty();
+        List<String> fileStatuses = listValue(repositoryContext, "files").stream()
+                .map(item -> (Map<?, ?>) item)
+                .map(file -> String.valueOf(file.get("status")))
+                .toList();
+        assertThat(fileStatuses).contains("modified", "untracked");
+
+        Map<String, Object> startSessionResponse = performJson(
+                post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "status-basics"
+                                }
+                                """)
+        );
+        String sessionId = stringValue(startSessionResponse, "sessionId");
+
+        Map<String, Object> submissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status --short"
+                                }
+                                """)
+        );
+
+        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+
+        assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
+        assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
+        assertThat(stringValue(mapValue(retryFeedback, "retryState"), "status")).isEqualTo("complete");
+    }
+
     private Map<String, Object> performJson(MockHttpServletRequestBuilder requestBuilder) throws Exception {
         MvcResult result = mockMvc.perform(requestBuilder.accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is2xxSuccessful())
