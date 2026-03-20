@@ -5,7 +5,7 @@ import {
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
 
-const DEFAULT_PROVIDER_NAME = "local-fixture";
+const DEFAULT_PROVIDER_NAME = "backend-api";
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
 const SMOOTH_WHEEL_SCROLL_DURATION_MS = 180;
 const DEFAULT_QUERY = Object.freeze({
