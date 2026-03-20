@@ -27,19 +27,24 @@
 
 Открывай эти документы только если они нужны для текущей задачи:
 
-3. `AGENTS.md` для repo-wide инвариантов, локальных доступов и правил ревью.
-4. `docs/TRACKER_WORKFLOW.md` для декомпозиции задач, рабочего workflow и гигиены смены scope.
-5. `docs/agent/GIT_WORKFLOW.md` для веток, коммитов, push, PR, review-fix и проверок перед push.
-6. `docs/agent/BOARD_WORKFLOW.md` для статусов issue, parent/sub-issue, labels и project board.
-7. `docs/agent/GITHUB_AUTOMATION.md` для `gh`, GraphQL, linked branches и CLI-операций с GitHub.
-8. `docs/BACKEND_ROADMAP.md` для backend-only задач или изменений API, данных и моделей.
-9. `docs/FRONTEND_ROADMAP.md` для frontend-only задач или изменений UX/UI.
-10. `.env` только если задаче действительно нужны локальные креды или токены.
+3. `AGENTS.md` для жёстких repo-wide инвариантов.
+4. `docs/agent/OPERATING_RULES.md` для локальных доступов, токенов, рабочего каталога и поддержки инструкций.
+5. `docs/agent/REVIEW_GUIDELINES.md` для правил code review.
+6. `docs/TRACKER_WORKFLOW.md` для декомпозиции задач, рабочего workflow и гигиены смены scope.
+7. `docs/agent/GIT_WORKFLOW.md` для веток, коммитов, push, PR, review-fix и проверок перед push.
+8. `docs/agent/BOARD_WORKFLOW.md` для статусов issue, parent/sub-issue, labels и project board.
+9. `docs/agent/GITHUB_AUTOMATION.md` для `gh`, GraphQL, linked branches и CLI-операций с GitHub.
+10. `docs/BACKEND_ROADMAP.md` для backend-only задач или изменений API, данных и моделей.
+11. `docs/FRONTEND_ROADMAP.md` для frontend-only задач или изменений UX/UI.
+12. `.env` только если задаче действительно нужны локальные креды или токены.
 
 ## Маршрутизация по типу действия
 
 - Если задача меняет рамки продукта, границы MVP или требует создания либо уточнения work items, смотри `docs/ROADMAP.md`.
 - Если задача меняет зоны ответственности backend/frontend или размещение пакетов, смотри `docs/ARCHITECTURE.md`.
+- Если задаче нужны жёсткие repo-wide ограничения, смотри `AGENTS.md`.
+- Если задача связана с локальными доступами, токенами, `.env`, рабочим каталогом или обновлением самих инструкций, смотри `docs/agent/OPERATING_RULES.md`.
+- Если задача является code review или требует repo-specific правил ревью, смотри `docs/agent/REVIEW_GUIDELINES.md`.
 - Если задача связана с формулировкой scope, декомпозицией, разбиением на parent/sub-issue или сменой типа работы по ходу реализации, смотри `docs/TRACKER_WORKFLOW.md`.
 - Если задача связана с ветками git, коммитами, push, созданием PR, исправлениями по ревью или проверками перед push, смотри `docs/agent/GIT_WORKFLOW.md`.
 - Если задача связана со статусами issue, labels, структурой parent/sub-issue, статусом review или обновлением project board, смотри `docs/agent/BOARD_WORKFLOW.md`.
@@ -50,6 +55,8 @@
 
 ## Заметки
 
-- `AGENTS.md` теперь хранит только минимальные repo-wide инварианты; весь bootstrap и маршрутизация находятся в этом файле.
+- `AGENTS.md` теперь хранит только жёсткие repo-wide инварианты; bootstrap и маршрутизация находятся в этом файле.
+- Локальные доступы и поддержка инструкций вынесены в `docs/agent/OPERATING_RULES.md`.
+- Правила ревью вынесены в `docs/agent/REVIEW_GUIDELINES.md`.
 - Локальные секреты храни в `.env`.
 - Отдельного frontend-приложения в репозитории пока нет; не предполагай наличие `frontend/`, если оно не появится в одной из следующих задач.

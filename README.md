@@ -152,7 +152,9 @@ docker compose -f docker-compose.postgres.yml down -v
 Основные документы проекта:
 
 - `LOCAL_AGENT_START.md`: быстрый старт для каждой новой сессии
-- `AGENTS.md`: минимальные repo-wide инварианты, локальные доступы и правила ревью
+- `AGENTS.md`: жёсткие repo-wide инварианты
+- `docs/agent/OPERATING_RULES.md`: локальные доступы, токены и поддержка инструкций
+- `docs/agent/REVIEW_GUIDELINES.md`: правила code review
 - `docs/ROADMAP.md`: общий roadmap продукта и определение MVP
 - `docs/ARCHITECTURE.md`: границы пакетов и зоны ответственности системы
 - `docs/BACKEND_ROADMAP.md`: план поставки backend-части
