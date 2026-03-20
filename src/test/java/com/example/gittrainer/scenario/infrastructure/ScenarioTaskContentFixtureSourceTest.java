@@ -43,6 +43,24 @@ class ScenarioTaskContentFixtureSourceTest {
     }
 
     @Test
+    void providesRemoteSyncTaskContentThatLeadsWithFetch() {
+        ScenarioTaskContentFixture fixture = scenarioTaskContentFixtureSource.fixtureFor("remote-sync-preview");
+
+        assertThat(fixture.goal()).contains("remote-tracking");
+        assertThat(fixture.instructions())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskInstructionFixture::id)
+                .containsExactly(
+                        "refresh-remote-state-before-integration",
+                        "treat-local-ahead-and-remote-behind-as-incomplete-view",
+                        "keep-next-step-in-preview-mode"
+                );
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Обновите удалённые refs");
+        assertThat(fixture.annotations())
+                .extracting(ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture::label)
+                .containsExactly("Что считается безопасным шагом", "Граница сценария");
+    }
+
+    @Test
     void failsExplicitlyWhenTaskContentWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioTaskContentFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioTaskContentNotAuthoredException.class)

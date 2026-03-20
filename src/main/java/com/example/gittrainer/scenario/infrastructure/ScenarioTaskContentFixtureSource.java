@@ -64,19 +64,20 @@ public class ScenarioTaskContentFixtureSource {
             ),
             "remote-sync-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Объясните следующую команду для синхронизации после чтения признаков опережения или отставания.",
+                    "Сначала обновите remote-tracking состояние отдельным `fetch`, а уже потом решайте, нужен ли `pull` или другая интеграция.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-tracking", "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "separate-fetch-from-merge", "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-divergence", "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "refresh-remote-state-before-integration", "Начните с отдельного получения новых remote refs, а не с `pull`, чтобы сначала обновить наблюдаемое состояние."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "treat-local-ahead-and-remote-behind-as-incomplete-view", "Считайте текущие признаки опережения и отставания неполными, пока `origin/main` не обновлён через `fetch`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-in-preview-mode", "Следующий шаг должен принести новые данные с удалённого репозитория, но ещё не выполнять merge или rebase.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите команду синхронизации", "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с удалённого репозитория."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Проверьте связь с отслеживаемой удалённой веткой", "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Интерпретируйте опережение и отставание", "Используйте признаки опережения или отставания, чтобы объяснить, нужна ли интеграция прямо сейчас.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Обновите удалённые refs", "Сначала выполните безопасный шаг получения новых данных об удалённой ветке без интеграции в локальную историю."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Отделите получение данных от интеграции", "Используйте текущие сигналы divergence как аргумент в пользу `fetch`, а не немедленного `pull`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Оставьте merge или rebase на потом", "После отдельного `fetch` уже можно будет решать, нужна ли интеграция, но этот сценарий останавливается раньше.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Дисциплина работы с удалённым репозиторием", "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "В этом preview-сценарии оценивается команда из семейства `git fetch`, а не `pull`, `merge` или `rebase`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница сценария", "Задача заканчивается после обновления remote-tracking состояния и не выполняет интеграцию удалённых коммитов в локальную ветку.")
                     )
             )
     );

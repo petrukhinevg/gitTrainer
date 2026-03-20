@@ -86,8 +86,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/banner.js", "clean")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по удалённому репозиторию", "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка для решения", "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал устаревшего remote-tracking состояния", "Локальная `main` уже опережает известный `origin/main`, но на удалённом есть ещё не полученные изменения, поэтому текущая картина divergence неполная."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему pull ещё рано", "Пока remote-tracking refs не обновлены, `pull` смешивает получение новых данных и интеграцию. Сначала нужен отдельный `fetch`.")
                     )
             )
     );

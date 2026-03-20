@@ -1,14 +1,15 @@
 package com.example.gittrainer.app;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.json.JsonParser;
 import org.springframework.boot.json.JsonParserFactory;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.io.InputStream;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class MvpLifecycleFlowTest {
 
     private final WebApplicationContext webApplicationContext;
@@ -206,6 +208,53 @@ class MvpLifecycleFlowTest {
                                 {
                                   "answerType": "command_text",
                                   "answer": "git log --oneline --graph --decorate"
+                                }
+                                """)
+        );
+
+        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+
+        assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
+        assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
+        assertThat(stringValue(mapValue(retryFeedback, "retryState"), "status")).isEqualTo("complete");
+    }
+
+    @Test
+    void completesRemoteSyncFlowUsingAuthoredFetchFirstCues() throws Exception {
+        Map<String, Object> detailResponse = performJson(get("/api/scenarios/remote-sync-preview"));
+        Map<String, Object> workspace = mapValue(detailResponse, "workspace");
+        Map<String, Object> task = mapValue(workspace, "task");
+        Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
+
+        assertThat(stringValue(task, "goal")).contains("fetch");
+        assertThat(stringValue(task, "goal")).contains("remote-tracking");
+        assertThat(listValue(task, "annotations"))
+                .extracting(item -> stringValue(castMap(item), "label"))
+                .contains("Что считается безопасным шагом");
+        assertThat(listValue(repositoryContext, "branches"))
+                .extracting(item -> stringValue(castMap(item), "name"))
+                .contains("main", "origin/main");
+
+        Map<String, Object> startSessionResponse = performJson(
+                post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "remote-sync-preview"
+                                }
+                                """)
+        );
+        String sessionId = stringValue(startSessionResponse, "sessionId");
+
+        Map<String, Object> submissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git fetch origin"
                                 }
                                 """)
         );

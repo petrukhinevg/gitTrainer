@@ -62,4 +62,18 @@ class SubmitAnswerUseCaseRetryGuidanceTest {
         assertThat(result.retryGuidance().explanation().code()).isEqualTo("unsupported-answer-type");
         assertThat(result.retryGuidance().hint().code()).isEqualTo("unsupported-answer-type-nudge");
     }
+
+    @Test
+    void returnsRemoteSyncSpecificGuidanceForPrematurePull() {
+        StartSessionResult startedSession = startSessionUseCase.start(new StartSessionCommand("remote-sync-preview", null));
+
+        SubmitAnswerResult result = submitAnswerUseCase.submit(
+                startedSession.session().sessionId(),
+                new SubmitAnswerCommand("command_text", "git pull")
+        );
+
+        assertThat(result.retryGuidance().explanation().code())
+                .isEqualTo("remote-sync-requires-fetch-first");
+        assertThat(result.retryGuidance().hint().code()).isEqualTo("remote-fetch-nudge");
+    }
 }
