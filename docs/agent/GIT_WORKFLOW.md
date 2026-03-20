@@ -9,6 +9,17 @@
 - Для статусов issue и project board смотри `docs/agent/BOARD_WORKFLOW.md`.
 - Для CLI и GraphQL-команд GitHub смотри `docs/agent/GITHUB_AUTOMATION.md`.
 
+## Быстрый старт эпика
+
+Используй эту последовательность, когда запускается новый epic flow:
+
+1. Создай epic branch от `main`.
+2. Сделай начальный epic commit в этой ветке.
+3. Запушь epic branch в `origin`.
+4. Создай epic PR в `main`.
+5. Создай child task branches от текущей головы epic branch.
+6. Зарегистрируй child branches как linked branches у соответствующих issues до начала реализации.
+
 ## Базовый git-процесс
 
 - `main` — production-ветка.
@@ -49,4 +60,4 @@
 
 - Перед каждым `git push` запускай `./gradlew check`.
 - Если изменялся backend-код, по возможности запускай `./gradlew test`.
-- Если в будущем появится каталог `frontend/` и изменялся frontend-код, перед push запускай production build этой части внутри `frontend/`.
+- Если изменялся frontend-код, перед push запускай production build этой части внутри `frontend/`.
