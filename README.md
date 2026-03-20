@@ -14,8 +14,9 @@
 Локальный запуск backend c Postgres:
 
 - `docker compose -f docker-compose.postgres.yml up -d` для запуска локальной БД
-- `SPRING_PROFILES_ACTIVE=postgres ./gradlew bootRun` для запуска backend с JDBC-репозиториями и миграциями Flyway
+- `./gradlew bootRun` для запуска backend с Postgres-репозиториями и миграциями Flyway (runtime по умолчанию)
 - можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun` если нужен явный запуск без Postgres (только локальный fallback)
 
 Основные документы проекта:
 
