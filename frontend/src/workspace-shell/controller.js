@@ -1539,8 +1539,11 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
 function toUserFacingRecoveryMessage(message, fallbackMessage) {
     const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
     return resolvedMessage
+        .replace(/local-fixture/gi, "локальные фикстуры")
+        .replace(/fixture-unavailable/gi, "недоступный источник")
         .replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.")
-        .replace(/Выберите другой provider/gi, "Выберите другой источник");
+        .replace(/Выберите другой provider/gi, "Выберите другой источник")
+        .replace(/provider/gi, "источник");
 }
 
 function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {

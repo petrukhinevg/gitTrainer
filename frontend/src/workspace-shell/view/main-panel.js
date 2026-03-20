@@ -409,6 +409,7 @@ function renderWelcomePage(state, { tagOptions, providerOptions }) {
                 <span class="lesson-spotlight__pill">Маршрут: ${formatRoute(state.route)}</span>
             </div>
         </section>
+        ${renderCatalogControlPanel(state, { tagOptions, providerOptions })}
         ${renderProviderModeNotice(state.providerName)}
         <section class="lesson-block lesson-block--reading">
             <div class="lesson-section__header">
@@ -563,9 +564,12 @@ function renderProviderModeNotice(providerName) {
 
 function renderProviderRecoveryNotice(providerName, { route }) {
     if (providerName === "backend-api") {
+        const recoveryCopy = route === "catalog"
+            ? "Если сервер временно недоступен, используйте селектор «Источник» на этом экране и переключитесь на локальные фикстуры только для диагностики или dev-проверки."
+            : "Если сервер временно недоступен, вернитесь в каталог и через селектор «Источник» переключитесь на локальные фикстуры только для диагностики или dev-проверки.";
         return `
             <div class="practice-inline-note practice-inline-note--warning">
-                <p class="panel-copy">Если сервер временно недоступен, вернитесь в каталог и переключите источник на локальные фикстуры только для диагностики или dev-проверки.</p>
+                <p class="panel-copy">${escapeHtml(recoveryCopy)}</p>
             </div>
         `;
     }
