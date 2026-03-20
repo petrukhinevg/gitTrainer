@@ -1,12 +1,10 @@
 # GitHub automation и CLI
 
-Этот документ хранит операционные заметки для `gh` и GraphQL. Добавляй сюда только устойчивые последовательности команд, которые реально переиспользуются.
+Этот документ хранит переиспользуемые команды для `gh` и GraphQL. Правила процесса смотри в `docs/agent/GIT_WORKFLOW.md` и `docs/agent/BOARD_WORKFLOW.md`.
 
 ## Связанные ветки и PR-linkage
 
-В текущем процессе linked branch и `Linked pull requests` критичны только для epic issue с PR в `main`. Для дочерних задач отдельная привязка issue к PR не требуется.
-
-Чтобы посмотреть связанные ветки для epic issue:
+Чтобы посмотреть связанные ветки для issue:
 
 ```sh
 gh issue develop --list 324 --repo petrukhinevg/gitTrainer
@@ -14,7 +12,7 @@ gh issue develop --list 324 --repo petrukhinevg/gitTrainer
 
 Если целевой ветки ещё нет, `gh issue develop` может создать и зарегистрировать её.
 
-Если удалённая ветка уже существует, GitHub может отказаться заполнять привязку задним числом. В таком случае сначала создай новое имя linked branch и уже из него открывай PR, а не рассчитывай, что существующее имя ветки станет linked retroactively.
+Если удалённая ветка уже существует, GitHub может отказаться заполнять привязку задним числом. В таком случае создай новое имя linked branch и уже из него открывай PR.
 
 GraphQL mutation, которая сработала для создания linked branch с новым именем:
 
@@ -39,10 +37,7 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 - `oid`: SHA коммита, на который должна указывать linked branch
 - `name`: новое имя удалённой ветки, например `324_InstructionRefactor`
 
-Наблюдаемое поведение:
-
-- создание linked branch на новом имени удалённой ветки сработало
-- попытка зарегистрировать уже существующее имя удалённой ветки не дала надёжного backfill
+Практическое наблюдение: новое имя linked branch работает надёжнее, чем попытка привязать уже существующее.
 
 ## Подзадачи parent issue
 
@@ -106,14 +101,7 @@ gh pr create \
 gh project field-list 4 --owner petrukhinevg --format json
 ```
 
-На текущей доске этот вызов должен показывать как минимум поля:
-
-- `Status`
-- `Linked pull requests`
-- `Parent issue`
-- `Sub-issues progress`
-
-Если вывода `gh project item-list` недостаточно, чтобы определить id карточки элемента в проекте, запроси его напрямую из issue:
+Если `gh project item-list` не даёт id карточки, запроси его напрямую из issue:
 
 ```sh
 gh api graphql -f query='query {
