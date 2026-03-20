@@ -93,6 +93,8 @@ class CatalogShellPageTest {
         mockMvc.perform(get("/app.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("const DEFAULT_PROVIDER_NAME = \"backend-api\";")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("const PREFERRED_PROVIDER_ORDER = Object.freeze([")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("const returnLabel = route === \"catalog\" ?")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("swap providers to repopulate the scenario map"))))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Try another provider."))));
 

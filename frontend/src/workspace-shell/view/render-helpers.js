@@ -22,6 +22,24 @@ export function formatProviderName(value) {
     }
 }
 
+export function formatProviderOptionLabel(value) {
+    switch (String(value ?? "").trim().toLowerCase()) {
+        case "backend-api":
+            return "Сервер (основной путь)";
+        case "local-fixture":
+            return "Локальные фикстуры (диагностика)";
+        case "fixture-unavailable":
+            return "Недоступный источник (fallback-проверка)";
+        default:
+            return formatProviderName(value);
+    }
+}
+
+export function isDiagnosticProvider(value) {
+    const normalizedValue = String(value ?? "").trim().toLowerCase();
+    return normalizedValue === "local-fixture" || normalizedValue === "fixture-unavailable";
+}
+
 export function formatTag(value) {
     switch (String(value ?? "").trim().toLowerCase()) {
         case "status":

@@ -1,6 +1,5 @@
 package com.example.gittrainer.app;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.json.JsonParser;
@@ -33,7 +32,7 @@ class MvpLifecycleFlowTest {
         this.webApplicationContext = webApplicationContext;
     }
 
-    @BeforeEach
+    @org.junit.jupiter.api.BeforeEach
     void setUpMockMvc() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
     }
@@ -173,6 +172,81 @@ class MvpLifecycleFlowTest {
         assertThat(stringValue(mapValue(retryFeedback, "retryState"), "status")).isEqualTo("complete");
     }
 
+    @Test
+    void completesBackendDemoFlowAndReflectsUpdatedProgressWithoutSourceSwitch() throws Exception {
+        Map<String, Object> initialCatalogResponse = performJson(get("/api/scenarios"));
+        Map<String, Object> initialProgressResponse = performJson(get("/api/progress"));
+
+        Map<String, Object> catalogStatusBasics = findMapByField(listValue(initialCatalogResponse, "items"), "slug", "status-basics");
+        Map<String, Object> initialStatusBasicsProgress = findMapByField(
+                listValue(initialProgressResponse, "items"),
+                "scenarioSlug",
+                "status-basics"
+        );
+        int initialAttemptCount = intValue(initialStatusBasicsProgress, "attemptCount");
+        int initialCompletionCount = intValue(initialStatusBasicsProgress, "completionCount");
+
+        assertThat(stringValue(catalogStatusBasics, "title")).isNotBlank();
+
+        Map<String, Object> detailResponse = performJson(get("/api/scenarios/status-basics"));
+        assertThat(stringValue(detailResponse, "slug")).isEqualTo("status-basics");
+
+        Map<String, Object> startSessionResponse = performJson(
+                post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "status-basics"
+                                }
+                                """)
+        );
+        String sessionId = stringValue(startSessionResponse, "sessionId");
+
+        Map<String, Object> submissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status --short"
+                                }
+                                """)
+        );
+
+        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+
+        assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
+
+        Map<String, Object> progressResponse = performJson(get("/api/progress"));
+        Map<String, Object> progressMeta = mapValue(progressResponse, "meta");
+        Map<String, Object> completedStatusBasics = findMapByField(
+                listValue(progressResponse, "items"),
+                "scenarioSlug",
+                "status-basics"
+        );
+        Map<String, Object> statusBasicsRecentActivity = findMapByField(
+                listValue(progressResponse, "recentActivity"),
+                "scenarioSlug",
+                "status-basics"
+        );
+        Map<String, Object> recommendations = mapValue(progressResponse, "recommendations");
+        Map<String, Object> nextRecommendation = mapValue(recommendations, "next");
+
+        assertThat(stringValue(progressMeta, "source")).isEqualTo("mvp-fixture");
+        assertThat(stringValue(completedStatusBasics, "status")).isEqualTo("completed");
+        assertThat(intValue(completedStatusBasics, "attemptCount")).isEqualTo(initialAttemptCount + 1);
+        assertThat(intValue(completedStatusBasics, "completionCount")).isEqualTo(initialCompletionCount + 1);
+        assertThat(stringValue(statusBasicsRecentActivity, "status")).isEqualTo("completed");
+        assertThat(stringValue(statusBasicsRecentActivity, "eventType")).isEqualTo("completed");
+        assertThat(stringValue(nextRecommendation, "scenarioSlug")).isNotBlank().isNotEqualTo("status-basics");
+        assertThat(stringValue(nextRecommendation, "scenarioTitle")).isNotBlank();
+        assertThat(listValue(recommendations, "solved"))
+                .extracting(item -> stringValue(castMap(item), "scenarioSlug"))
+                .contains("status-basics");
+    }
+
     private Map<String, Object> performJson(MockHttpServletRequestBuilder requestBuilder) throws Exception {
         MvcResult result = mockMvc.perform(requestBuilder.accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is2xxSuccessful())
@@ -222,6 +296,23 @@ class MvpLifecycleFlowTest {
     private Object firstValue(List<?> items) {
         assertThat(items).as("Expected non-empty list").isNotEmpty();
         return items.getFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> findMapByField(List<?> items, String fieldName, String expectedValue) {
+        return items.stream()
+                .map(this::castMap)
+                .filter(item -> expectedValue.equals(String.valueOf(item.get(fieldName))))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Expected entry with field `%s` = `%s`".formatted(fieldName, expectedValue)
+                ));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castMap(Object value) {
+        assertThat(value).isInstanceOf(Map.class);
+        return (Map<String, Object>) value;
     }
 
     private String stringValue(Map<String, Object> source, String key) {
