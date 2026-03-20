@@ -4,6 +4,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 description = 'gitTrainer'
@@ -29,6 +31,10 @@ def frontendDistDir = frontendDir.dir("dist")
 def frontendTestStaticDir = layout.buildDirectory.dir("resources/main/static")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
 def npmCommand = resolveNpmCommand(isWindows)
+def dockerCommand = resolveDockerCommand(isWindows)
+def colimaCommand = resolveColimaCommand(isWindows)
+def postgresComposeFile = layout.projectDirectory.file("docker-compose.postgres.yml").asFile
+def postgresContainerName = "git-trainer-postgres"
 
 static def resolveNpmCommand(boolean isWindows) {
     if (isWindows) {
@@ -45,6 +51,40 @@ static def resolveNpmCommand(boolean isWindows) {
             "/usr/local/bin/npm",
             "/usr/bin/npm"
     ].find { new File(it).exists() } ?: "npm"
+}
+
+static def resolveDockerCommand(boolean isWindows) {
+    if (isWindows) {
+        return "docker.exe"
+    }
+
+    def configuredDocker = System.getenv("DOCKER_BIN")
+    if (configuredDocker && new File(configuredDocker).exists()) {
+        return configuredDocker
+    }
+
+    return [
+            "/opt/homebrew/bin/docker",
+            "/usr/local/bin/docker",
+            "/usr/bin/docker"
+    ].find { new File(it).exists() } ?: "docker"
+}
+
+static def resolveColimaCommand(boolean isWindows) {
+    if (isWindows) {
+        return null
+    }
+
+    def configuredColima = System.getenv("COLIMA_BIN")
+    if (configuredColima && new File(configuredColima).exists()) {
+        return configuredColima
+    }
+
+    return [
+            "/opt/homebrew/bin/colima",
+            "/usr/local/bin/colima",
+            "/usr/bin/colima"
+    ].find { new File(it).exists() }
 }
 
 dependencies {
@@ -109,4 +149,118 @@ tasks.named('bootJar') {
     from(frontendDistDir) {
         into "BOOT-INF/classes/static"
     }
+}
+
+def runCommand = { List<String> command, boolean ignoreExitValue = false ->
+    def process = new ProcessBuilder(command)
+            .directory(layout.projectDirectory.asFile)
+            .start()
+    def stdout = process.inputStream.getText("UTF-8").trim()
+    def stderr = process.errorStream.getText("UTF-8").trim()
+    def exitCode = process.waitFor()
+
+    return [
+            exitCode: exitCode,
+            stdout  : stdout,
+            stderr  : stderr
+    ]
+}
+
+tasks.register('ensureDockerDaemon') {
+    group = 'application'
+    description = 'Проверяет доступность Docker daemon и при colima-context автоматически запускает colima.'
+
+    doLast {
+        def dockerInfo = runCommand([dockerCommand, "info"], true)
+        if (dockerInfo.exitCode == 0) {
+            return
+        }
+
+        def context = runCommand([dockerCommand, "context", "show"], true).stdout
+        if (context == "colima" && colimaCommand) {
+            logger.lifecycle("Docker context `${context}` is active, starting Colima first.")
+            def colimaStart = runCommand([colimaCommand, "start"], true)
+            if (colimaStart.exitCode != 0) {
+                def message = colimaStart.stderr ?: colimaStart.stdout ?: "unknown error"
+                throw new GradleException("Не удалось выполнить `colima start`: ${message}")
+            }
+
+            def dockerInfoAfterStart = runCommand([dockerCommand, "info"], true)
+            if (dockerInfoAfterStart.exitCode == 0) {
+                return
+            }
+
+            def message = dockerInfoAfterStart.stderr ?: dockerInfoAfterStart.stdout ?: "unknown error"
+            throw new GradleException("Docker daemon недоступен даже после `colima start`: ${message}")
+        }
+
+        def message = dockerInfo.stderr ?: dockerInfo.stdout ?: "unknown error"
+        throw new GradleException(
+                "Docker daemon недоступен. Активный context: `${context ?: 'unknown'}`. ${message}"
+        )
+    }
+}
+
+tasks.register('postgresComposeUp') {
+    group = 'application'
+    description = 'Поднимает локальный Postgres из docker-compose.postgres.yml.'
+    dependsOn tasks.named('ensureDockerDaemon')
+
+    doLast {
+        def composeUp = runCommand(
+                [dockerCommand, "compose", "-f", postgresComposeFile.absolutePath, "up", "-d", "postgres"],
+                true
+        )
+        if (composeUp.exitCode != 0) {
+            def message = composeUp.stderr ?: composeUp.stdout ?: "unknown error"
+            throw new GradleException("Не удалось поднять Postgres через docker compose: ${message}")
+        }
+    }
+}
+
+tasks.register('waitForPostgresHealthy') {
+    group = 'application'
+    description = 'Ждёт, пока контейнер Postgres перейдёт в healthy.'
+    dependsOn tasks.named('postgresComposeUp')
+
+    doLast {
+        def attempts = 30
+        def waitMillis = 2000
+        def lastStatus = "unknown"
+
+        for (int attempt = 1; attempt <= attempts; attempt++) {
+            def inspectResult = runCommand(
+                    [dockerCommand, "inspect", "--format", "{{.State.Health.Status}}", postgresContainerName],
+                    true
+            )
+
+            lastStatus = inspectResult.stdout ?: inspectResult.stderr ?: "unknown"
+            if (lastStatus == "healthy") {
+                logger.lifecycle("Postgres container `${postgresContainerName}` is healthy.")
+                return
+            }
+
+            sleep(waitMillis)
+        }
+
+        throw new GradleException(
+                "Postgres container `${postgresContainerName}` did not become healthy in time. Last status: ${lastStatus}"
+        )
+    }
+}
+
+tasks.register('bootRunPostgres', BootRun) {
+    group = 'application'
+    description = 'Поднимает Postgres через docker compose и запускает приложение с PostgreSQL runtime.'
+    dependsOn tasks.named('syncFrontendAssets')
+    dependsOn tasks.named('waitForPostgresHealthy')
+    mainClass = 'com.example.gittrainer.GitTrainerApplication'
+    classpath = sourceSets.main.runtimeClasspath
+    systemProperty 'spring.profiles.active', 'postgres'
+}
+
+tasks.register('postgresComposeDown', Exec) {
+    group = 'application'
+    description = 'Останавливает локальный Postgres из docker-compose.postgres.yml.'
+    commandLine dockerCommand, "compose", "-f", postgresComposeFile.absolutePath, "down"
 }

@@ -1,4 +1,5 @@
 import { FIXTURE_PROGRESS_SUMMARY } from "./progress-fixtures.js";
+import { resolveBackendApiUrl } from "../runtime-origin.js";
 
 export function createLocalFixtureProgressProvider() {
     return {
@@ -22,8 +23,8 @@ export function createBackendApiProgressProvider(fetchImpl = window.fetch.bind(w
     return {
         name: "backend-api",
         async loadProgressSummary() {
-            const url = new URL("/api/progress", window.location.origin);
-            const response = await fetchImpl(url);
+            const url = resolveBackendApiUrl("/api/progress");
+            const response = await fetchImpl(url.toString());
             if (!response.ok) {
                 throw new Error(await resolveProgressErrorMessage(response));
             }

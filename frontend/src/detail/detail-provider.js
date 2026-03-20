@@ -1,4 +1,5 @@
 import { FIXTURE_SCENARIO_DETAILS } from "./detail-fixtures.js";
+import { resolveBackendApiUrl } from "../runtime-origin.js";
 
 export function createLocalFixtureDetailProvider() {
     return {
@@ -27,8 +28,8 @@ export function createBackendApiDetailProvider(fetchImpl = window.fetch.bind(win
     return {
         name: "backend-api",
         async loadScenarioDetail(slug) {
-            const url = new URL(`/api/scenarios/${encodeURIComponent(slug)}`, window.location.origin);
-            const response = await fetchImpl(url);
+            const url = resolveBackendApiUrl(`/api/scenarios/${encodeURIComponent(slug)}`);
+            const response = await fetchImpl(url.toString());
             if (!response.ok) {
                 throw new Error(await resolveDetailErrorMessage(response));
             }

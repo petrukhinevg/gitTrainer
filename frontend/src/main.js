@@ -25,6 +25,7 @@ import {
     createUnavailableFixtureProgressProvider
 } from "./progress/progress-provider.js";
 import { CATALOG_TAG_OPTIONS } from "./catalog/catalog-fixtures.js";
+import { resolveDefaultProviderName } from "./runtime-origin.js";
 import { createCatalogWorkspaceController } from "./workspace-shell/controller.js";
 
 const catalogProviderFactories = Object.freeze({
@@ -55,6 +56,7 @@ const appRoot = document.querySelector("#app");
 
 createCatalogWorkspaceController({
     appRoot,
+    defaultProviderName: resolveDefaultProviderName(),
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,

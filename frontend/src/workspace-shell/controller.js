@@ -22,6 +22,7 @@ const smoothWheelScrollState = new WeakMap();
 
 export function createCatalogWorkspaceController({
     appRoot,
+    defaultProviderName = DEFAULT_PROVIDER_NAME,
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,
@@ -34,7 +35,7 @@ export function createCatalogWorkspaceController({
         selectedFocus: null,
         expandedScenarioSlugs: [],
         pinnedNavigationTag: null,
-        providerName: DEFAULT_PROVIDER_NAME,
+        providerName: defaultProviderName,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
         progress: createInitialProgressState(),
@@ -603,7 +604,7 @@ export function createCatalogWorkspaceController({
 
     async function resetCatalogControls(form) {
         const defaults = {
-            providerName: DEFAULT_PROVIDER_NAME,
+            providerName: defaultProviderName,
             query: cloneQuery(DEFAULT_QUERY)
         };
         const providerChanged = defaults.providerName !== state.providerName;
@@ -1297,7 +1298,7 @@ function isSameQuery(left, right) {
 function readCatalogControls(form) {
     const formData = new FormData(form);
     return {
-        providerName: normalizeOptionalValue(formData.get("providerName")) ?? DEFAULT_PROVIDER_NAME,
+        providerName: normalizeOptionalValue(formData.get("providerName")) ?? defaultProviderName,
         query: {
             difficulty: normalizeOptionalValue(formData.get("difficulty")),
             tags: formData.getAll("tags").map((tag) => String(tag)).filter(Boolean),
