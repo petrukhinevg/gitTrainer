@@ -1,11 +1,12 @@
 import { SessionTransportError } from "../session/session-provider.js";
+import { shouldResetLessonScrollForRouteChange } from "./route-scroll-policy.js";
 import {
     renderCatalogWorkspace,
     renderCatalogWorkspaceShell,
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
 
-const DEFAULT_PROVIDER_NAME = "backend-api";
+const SAFE_FALLBACK_PROVIDER_NAME = "local-fixture";
 const PREFERRED_PROVIDER_ORDER = Object.freeze([
     "backend-api",
     "local-fixture",
@@ -22,6 +23,7 @@ const smoothWheelScrollState = new WeakMap();
 
 export function createCatalogWorkspaceController({
     appRoot,
+    defaultProviderName = SAFE_FALLBACK_PROVIDER_NAME,
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,
@@ -34,7 +36,7 @@ export function createCatalogWorkspaceController({
         selectedFocus: null,
         expandedScenarioSlugs: [],
         pinnedNavigationTag: null,
-        providerName: DEFAULT_PROVIDER_NAME,
+        providerName: defaultProviderName,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
         progress: createInitialProgressState(),
@@ -64,6 +66,7 @@ export function createCatalogWorkspaceController({
     const progressProviders = new Map();
     let navigationAnimationInProgress = false;
     let shellMounted = false;
+    let pendingLessonScrollReset = false;
     let renderedRouteKind = null;
     const renderedSurfaceCache = {
         navigation: null,
@@ -92,8 +95,18 @@ export function createCatalogWorkspaceController({
     async function handleRouteChange() {
         const previousRoute = state.route;
         const previousScenarioSlug = state.selectedScenarioSlug;
+        const previousSelectedFocus = state.selectedFocus;
         const previousProviderName = state.providerName;
         const route = parseRoute(window.location.hash);
+
+        pendingLessonScrollReset = shouldResetLessonScrollForRouteChange({
+            previousRoute,
+            previousScenarioSlug,
+            previousSelectedFocus,
+            nextRoute: route.name,
+            nextScenarioSlug: route.scenarioSlug,
+            nextSelectedFocus: route.focus
+        });
 
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
@@ -306,7 +319,10 @@ export function createCatalogWorkspaceController({
         const isExerciseRoute = state.route === "exercise";
         const isNotFoundRoute = state.route === "not-found";
         const nextRouteKind = isNotFoundRoute ? "not-found" : "workspace";
-        const laneScrollPositions = captureLaneScrollPositions();
+        const shouldResetLessonScroll = pendingLessonScrollReset;
+        const laneScrollPositions = captureLaneScrollPositions({
+            excludedLaneNames: shouldResetLessonScroll ? ["lesson"] : []
+        });
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
 
         if (renderedRouteKind !== nextRouteKind) {
@@ -327,10 +343,17 @@ export function createCatalogWorkspaceController({
             renderWorkspaceSurfaces(selectedCatalogScenario);
         }
 
+        if (shouldResetLessonScroll) {
+            resetLaneScrollPosition("lesson");
+        }
         restoreLaneScrollPositions(laneScrollPositions);
         requestAnimationFrame(() => {
+            if (shouldResetLessonScroll) {
+                resetLaneScrollPosition("lesson");
+            }
             restoreLaneScrollPositions(laneScrollPositions);
         });
+        pendingLessonScrollReset = false;
         bindCatalogControls();
         bindRouteLinks();
         bindNavigationControls();
@@ -603,7 +626,7 @@ export function createCatalogWorkspaceController({
 
     async function resetCatalogControls(form) {
         const defaults = {
-            providerName: DEFAULT_PROVIDER_NAME,
+            providerName: defaultProviderName,
             query: cloneQuery(DEFAULT_QUERY)
         };
         const providerChanged = defaults.providerName !== state.providerName;
@@ -1297,7 +1320,7 @@ function isSameQuery(left, right) {
 function readCatalogControls(form) {
     const formData = new FormData(form);
     return {
-        providerName: normalizeOptionalValue(formData.get("providerName")) ?? DEFAULT_PROVIDER_NAME,
+        providerName: normalizeOptionalValue(formData.get("providerName")) ?? defaultProviderName,
         query: {
             difficulty: normalizeOptionalValue(formData.get("difficulty")),
             tags: formData.getAll("tags").map((tag) => String(tag)).filter(Boolean),
@@ -1520,7 +1543,8 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
-function captureLaneScrollPositions() {
+function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
+    const excludedLaneNameSet = new Set(excludedLaneNames);
     return Array.from(document.querySelectorAll(".lesson-lane__body"))
         .map((laneBody) => {
             const laneRoot = laneBody.closest(".lesson-lane");
@@ -1528,7 +1552,7 @@ function captureLaneScrollPositions() {
                 .find((className) => className.startsWith("lesson-lane--"))
                 ?.replace("lesson-lane--", "");
 
-            if (!laneName) {
+            if (!laneName || excludedLaneNameSet.has(laneName)) {
                 return null;
             }
 
@@ -1541,6 +1565,17 @@ function captureLaneScrollPositions() {
         .filter(Boolean);
 }
 
+function resetLaneScrollPosition(laneName) {
+    const laneBody = document.querySelector(`.lesson-lane--${laneName} .lesson-lane__body`);
+    if (!laneBody) {
+        return;
+    }
+
+    cancelSmoothWheelScroll(laneBody);
+    laneBody.scrollTop = 0;
+    laneBody.scrollLeft = 0;
+}
+
 function restoreLaneScrollPositions(positions) {
     positions.forEach((position) => {
         const laneBody = document.querySelector(`.lesson-lane--${position.laneName} .lesson-lane__body`);
@@ -1551,6 +1586,15 @@ function restoreLaneScrollPositions(positions) {
         laneBody.scrollTop = position.scrollTop;
         laneBody.scrollLeft = position.scrollLeft;
     });
+}
+
+function cancelSmoothWheelScroll(element) {
+    const existingState = smoothWheelScrollState.get(element);
+    if (existingState?.rafId) {
+        cancelAnimationFrame(existingState.rafId);
+    }
+
+    smoothWheelScrollState.delete(element);
 }
 
 function captureSurfaceScrollState(surfaceRoot) {

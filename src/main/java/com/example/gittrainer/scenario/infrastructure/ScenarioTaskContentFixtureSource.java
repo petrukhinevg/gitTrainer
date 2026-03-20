@@ -29,53 +29,56 @@ public class ScenarioTaskContentFixtureSource {
             ),
             "branch-safety", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Решите, продолжать ли задачу на текущей ветке или после переключения.",
+                    "Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "read-current-branch", "Посмотрите на текущую ветку до любых правок файлов или индексации."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "compare-task-intent", "Сопоставьте назначение ветки с задачей, чтобы обосновать, оставаться ли на месте или переключаться."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "avoid-implicit-switch", "Не считайте переключение ветки правильным, пока состояние репозитория и цель задачи не совпадут.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "confirm-active-branch-before-switching", "Сначала подтвердите активную ветку командой чтения, а не пытайтесь сразу выполнить `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "connect-open-edits-to-branch-purpose", "Свяжите имя ветки и уже изменённые файлы с hotfix или release-контекстом, чтобы понять, почему решение о переключении ещё рано."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-observable", "Следующий шаг должен прояснить branch-контекст, но не менять состояние репозитория.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сопоставьте ветку и задачу", "Свяжите имя текущей ветки с описанием задачи, прежде чем предлагать `checkout`."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Поймите, где вы находитесь", "Начните с активной ветки и сигналов того, что рабочее дерево уже используется."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Сформулируйте решение по ветке", "Кратко объясните, нужно ли остаться на ветке или переключиться и почему это безопаснее.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Подтвердите текущую ветку", "Начните с команды чтения branch-контекста, чтобы точно увидеть, где уже открыта работа."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сопоставьте ветку с незавершёнными правками", "Используйте имя ветки и изменённые файлы как подсказку, почему сценарий пока не просит немедленный `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Отложите переключение до подтверждения контекста", "Сначала зафиксируйте безопасный branch-reading шаг, после которого решение о переключении можно будет обосновать.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Граница решения", "Навигация по веткам должна быть осознанной и объяснённой, а не автоматической.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "Пока в hotfix-ветке уже есть незавершённые изменения, сценарий оценивает команду чтения branch-контекста, а не автоматический `checkout`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница решения", "Переключение ветки обсуждается только после того, как UI-контекст подтвердил текущую ветку и характер открытых правок.")
                     )
             ),
             "history-cleanup-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Подготовьте последовательный план очистки, пока ещё не переписывая историю.",
+                    "Сначала просмотрите недавний граф коммитов с `fixup!` и WIP-сигналами, а уже потом формулируйте план очистки без переписывания истории.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "inspect-commit-stack", "Посмотрите на недавний стек коммитов и найдите повторяющиеся или неаккуратные изменения."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "plan-before-rewrite", "Опишите последовательность очистки до выбора любой команды переписывания истории."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-remote-risk-visible", "Учитывайте, могли ли переписываемые коммиты уже быть опубликованы другим.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "preview-commit-graph-before-rewrite", "Начните с команды чтения истории, а не с `rebase -i`, чтобы сначала увидеть стек проблемных коммитов."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "use-fixup-and-wip-as-cues", "Используйте `fixup!` и отдельный WIP-коммит как наблюдаемые сигналы того, какие части истории вообще нужно включить в cleanup."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-in-preview-mode", "Следующий шаг должен показать компактный preview истории, но не менять коммиты.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сгруппируйте цели очистки", "Разделите кандидатов на `fixup`, кандидатов на перестановку и коммиты, которые трогать не нужно."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Прочитайте стек сверху вниз", "Сначала пройдитесь по текущей истории по порядку и только потом предлагайте план очистки."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Назовите безопасный следующий шаг", "Выберите команду планирования или проверки, которая должна идти до любого переписывания.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Просмотрите верхушку истории", "Сначала покажите недавний стек коммитов в компактном виде, чтобы увидеть форму будущей очистки."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Выделите кандидатов на cleanup", "Используйте `fixup!` и WIP как признаки того, какие коммиты стоит обсуждать в плане очистки."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Оставьте переписывание на потом", "Зафиксируйте безопасный preview-шаг, после которого interactive rebase можно будет обосновать, но ещё не выполнять.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Режим планирования", "Эта задача заканчивается на качестве плана и не выполняет переписывание.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "В этом preview-сценарии оценивается компактная команда из семейства `git log`, а не `rebase`, `commit --amend` или `reset`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница сценария", "Задача заканчивается на наблюдаемом preview истории, после которого план cleanup уже можно обсуждать предметно.")
                     )
             ),
             "remote-sync-preview", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Объясните следующую команду для синхронизации после чтения признаков опережения или отставания.",
+                    "Сначала обновите remote-tracking состояние отдельным `fetch`, а уже потом решайте, нужен ли `pull` или другая интеграция.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-tracking", "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "separate-fetch-from-merge", "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-divergence", "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "refresh-remote-state-before-integration", "Начните с отдельного получения новых remote refs, а не с `pull`, чтобы сначала обновить наблюдаемое состояние."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "treat-local-ahead-and-remote-behind-as-incomplete-view", "Считайте текущие признаки опережения и отставания неполными, пока `origin/main` не обновлён через `fetch`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "keep-next-step-in-preview-mode", "Следующий шаг должен принести новые данные с удалённого репозитория, но ещё не выполнять merge или rebase.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите команду синхронизации", "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с удалённого репозитория."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Проверьте связь с отслеживаемой удалённой веткой", "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Интерпретируйте опережение и отставание", "Используйте признаки опережения или отставания, чтобы объяснить, нужна ли интеграция прямо сейчас.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Обновите удалённые refs", "Сначала выполните безопасный шаг получения новых данных об удалённой ветке без интеграции в локальную историю."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Отделите получение данных от интеграции", "Используйте текущие сигналы divergence как аргумент в пользу `fetch`, а не немедленного `pull`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Оставьте merge или rebase на потом", "После отдельного `fetch` уже можно будет решать, нужна ли интеграция, но этот сценарий останавливается раньше.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Дисциплина работы с удалённым репозиторием", "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Что считается безопасным шагом", "В этом preview-сценарии оценивается команда из семейства `git fetch`, а не `pull`, `merge` или `rebase`."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Граница сценария", "Задача заканчивается после обновления remote-tracking состояния и не выполняет интеграцию удалённых коммитов в локальную ветку.")
                     )
             )
     );

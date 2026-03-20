@@ -23,24 +23,24 @@ public class ScenarioCatalogFixtureSource {
                     new ScenarioSummary(
                             "branch-safety",
                             "branch-safety",
-                            "Выбери правильную ветку перед правками",
-                            "Определи активную ветку, сопоставь её с задачей и реши, оставаться ли на месте или сначала переключиться.",
+                            "Подтверди текущую ветку перед правками",
+                            "Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение.",
                             ScenarioDifficulty.BEGINNER,
                             List.of("branching", "navigation", "basics")
                     ),
                     new ScenarioSummary(
                             "history-cleanup-preview",
                             "history-cleanup-preview",
-                            "Просмотри план очистки истории",
-                            "Разбери запутанный стек коммитов и подготовься к дальнейшей очистке, пока ещё не меняя историю.",
+                            "Просмотри историю перед очисткой",
+                            "Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("history", "cleanup", "planning")
                     ),
                     new ScenarioSummary(
                             "remote-sync-preview",
                             "remote-sync-preview",
-                            "Проверь удалённое состояние перед pull",
-                            "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
+                            "Сначала обнови удалённое состояние",
+                            "Подтверди, что локальные данные об `origin/main` могли устареть, и начни с `fetch`, а не с немедленного `pull`.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("remote", "inspection", "planning")
                     )

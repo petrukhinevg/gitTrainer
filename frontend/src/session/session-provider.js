@@ -1,5 +1,6 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
 import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json";
+import { resolveBackendApiUrl } from "../runtime-origin.js";
 
 const SUPPORTED_ANSWER_TYPES = Object.freeze(["command_text"]);
 const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze(
@@ -182,9 +183,19 @@ export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(wi
 
 async function postJson(fetchImpl, path, payload) {
     let response;
+    let url;
 
     try {
-        response = await fetchImpl(new URL(path, window.location.origin), {
+        url = resolveBackendApiUrl(path);
+    } catch (error) {
+        throw new SessionTransportError(
+            error instanceof Error ? error.message : "Backend API сейчас недоступен.",
+            { failureKind: "retryable" }
+        );
+    }
+
+    try {
+        response = await fetchImpl(url.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

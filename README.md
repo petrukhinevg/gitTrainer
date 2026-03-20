@@ -140,6 +140,14 @@ docker compose -f docker-compose.postgres.yml down
 ```bash
 docker compose -f docker-compose.postgres.yml down -v
 ```
+- `docker compose -f docker-compose.postgres.yml up -d` для запуска локальной БД
+- `./gradlew bootRun` для запуска backend с Postgres-репозиториями и миграциями Flyway (runtime по умолчанию)
+- `./gradlew bootRunPostgres` чтобы автоматически поднять docker compose, дождаться healthy-состояния Postgres и только потом запустить backend
+- если активный Docker context указывает на `colima`, `bootRunPostgres` сначала автоматически выполнит `colima start`
+- `./gradlew postgresComposeDown` чтобы остановить локальный контейнер Postgres
+- можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun` если нужен явный запуск без Postgres (только локальный fallback)
+- в IntelliJ IDEA доступен shared run configuration `.run/GitTrainer Local Memory.run.xml`, который запускает `GitTrainerApplication` с профилем `local-memory`
 
 Основные документы проекта:
 

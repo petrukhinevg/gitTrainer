@@ -1,7 +1,7 @@
 package com.example.gittrainer.scenario.api;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,8 +38,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
-                .andExpect(jsonPath("$.items[1].slug").value("remote-sync-preview"))
-                .andExpect(jsonPath("$.items[1].tags[1]").value("inspection"));
+                .andExpect(jsonPath("$.items[2].slug").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[2].tags[1]").value("inspection"));
     }
 
     @Test
@@ -89,8 +89,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("remote-sync-preview"))
-                .andExpect(jsonPath("$.items[3].id").value("history-cleanup-preview"));
+                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.items[3].id").value("remote-sync-preview"));
     }
 
     @Test
@@ -176,6 +176,66 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(2))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Подсказка рабочего дерева"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Подсказка для решения"));
+    }
+
+    @Test
+    void exposesHistoryCleanupScenarioThroughDetailBoundaryWithPreviewFirstCues() throws Exception {
+        mockMvc.perform(get("/api/scenarios/history-cleanup-preview")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.title").value("Просмотри историю перед очисткой"))
+                .andExpect(jsonPath("$.summary").value("Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала просмотрите недавний граф коммитов с `fixup!` и WIP-сигналами, а уже потом формулируйте план очистки без переписывания истории."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("preview-commit-graph-before-rewrite"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с команды чтения истории, а не с `rebase -i`, чтобы сначала увидеть стек проблемных коммитов."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Просмотрите верхушку истории"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("feature/history-cleanup"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал для preview истории"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему rebase ещё рано"));
+    }
+
+    @Test
+    void exposesRemoteSyncScenarioThroughDetailBoundaryWithFetchFirstCues() throws Exception {
+        mockMvc.perform(get("/api/scenarios/remote-sync-preview")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.title").value("Сначала обнови удалённое состояние"))
+                .andExpect(jsonPath("$.summary").value("Подтверди, что локальные данные об `origin/main` могли устареть, и начни с `fetch`, а не с немедленного `pull`."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала обновите remote-tracking состояние отдельным `fetch`, а уже потом решайте, нужен ли `pull` или другая интеграция."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("refresh-remote-state-before-integration"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с отдельного получения новых remote refs, а не с `pull`, чтобы сначала обновить наблюдаемое состояние."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Обновите удалённые refs"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[1].name").value("origin/main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал устаревшего remote-tracking состояния"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему pull ещё рано"));
+    }
+
+    @Test
+    void exposesBranchSafetyScenarioThroughDetailBoundaryWithInspectionFirstCues() throws Exception {
+        mockMvc.perform(get("/api/scenarios/branch-safety")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value("branch-safety"))
+                .andExpect(jsonPath("$.title").value("Подтверди текущую ветку перед правками"))
+                .andExpect(jsonPath("$.summary").value("Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("confirm-active-branch-before-switching"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Сначала подтвердите активную ветку командой чтения, а не пытайтесь сразу выполнить `checkout`."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Подтвердите текущую ветку"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("release/hotfix-7"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал активной ветки"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему нельзя переключаться вслепую"));
     }
 
     @Test

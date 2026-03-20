@@ -47,8 +47,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("docs/release-checklist.md", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Назначение ветки", "Текущая ветка предназначена для hotfix и уже содержит изменения, связанные с релизом."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Напряжение задачи", "Нужно решить, относится ли запрошенная работа сюда или должна идти в feature-ветку.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал активной ветки", "Сейчас активна `release/hotfix-7`, и оба изменённых файла выглядят как незавершённая hotfix или release-работа."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему нельзя переключаться вслепую", "До явной проверки текущей ветки и открытых правок любой `checkout` останется догадкой и может смешать hotfix с feature-задачей.")
                     )
             ),
             "history-cleanup-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
@@ -67,8 +67,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/workspace-shell/view.js", "modified")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по истории", "Среди последних коммитов есть `fixup` и лишнее WIP-изменение, что намекает на будущую очистку."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по безопасности", "Пользователь всё ещё находится в режиме планирования и не должен переписывать историю.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал для preview истории", "Верхушка истории уже показывает `fixup!` рядом с базовым UI-коммитом и отдельный WIP-коммит, поэтому сначала нужен компактный просмотр стека."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему rebase ещё рано", "Сценарий пока просит только увидеть кандидатов на очистку в читаемом виде. Любой `rebase -i` раньше этого шага скрывает обязательный preview.")
                     )
             ),
             "remote-sync-preview", new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
@@ -86,8 +86,8 @@ public class ScenarioRepositoryContextFixtureSource {
                             new ScenarioWorkspaceDetail.ScenarioRepositoryFile("frontend/src/banner.js", "clean")
                     ),
                     List.of(
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка по удалённому репозиторию", "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения."),
-                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Подсказка для решения", "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду.")
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Сигнал устаревшего remote-tracking состояния", "Локальная `main` уже опережает известный `origin/main`, но на удалённом есть ещё не полученные изменения, поэтому текущая картина divergence неполная."),
+                            new ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation("Почему pull ещё рано", "Пока remote-tracking refs не обновлены, `pull` смешивает получение новых данных и интеграцию. Сначала нужен отдельный `fetch`.")
                     )
             )
     );
