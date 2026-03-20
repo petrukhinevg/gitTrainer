@@ -11,6 +11,12 @@
 - `cd frontend && npm run build` для создания production-сборки
 - `./gradlew check` для совместной проверки backend-тестов и интеграции сборки frontend
 
+Локальный запуск backend c Postgres:
+
+- `docker compose -f docker-compose.postgres.yml up -d` для запуска локальной БД
+- `SPRING_PROFILES_ACTIVE=postgres ./gradlew bootRun` для запуска backend с JDBC-репозиториями и миграциями Flyway
+- можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+
 Основные документы проекта:
 
 - `LOCAL_AGENT_START.md`: быстрый старт для каждой новой сессии

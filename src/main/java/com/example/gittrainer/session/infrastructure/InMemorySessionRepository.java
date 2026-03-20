@@ -2,6 +2,7 @@ package com.example.gittrainer.session.infrastructure;
 
 import com.example.gittrainer.session.application.SessionRepository;
 import com.example.gittrainer.session.domain.TrainingSession;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
+@Profile("!postgres & !postgres-test")
 public class InMemorySessionRepository implements SessionRepository {
 
     private final Map<String, TrainingSession> sessions = new ConcurrentHashMap<>();
