@@ -131,6 +131,15 @@ tasks.register('frontendBuild', Exec) {
     commandLine npmCommand, "run", "build"
 }
 
+tasks.register('frontendTest', Exec) {
+    dependsOn tasks.named('frontendInstall')
+    workingDir frontendDir.asFile
+    inputs.files(fileTree(frontendDir) {
+        exclude "dist/**", "node_modules/**"
+    })
+    commandLine npmCommand, "run", "test"
+}
+
 tasks.register('syncFrontendAssets', Copy) {
     dependsOn tasks.named('frontendBuild')
     from(frontendDistDir)
@@ -141,6 +150,7 @@ tasks.register('syncFrontendAssets', Copy) {
 }
 
 tasks.named('check') {
+    dependsOn tasks.named('frontendTest')
     dependsOn tasks.named('syncFrontendAssets')
 }
 

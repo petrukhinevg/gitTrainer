@@ -1,12 +1,20 @@
 const BACKEND_API_UNAVAILABLE_MESSAGE =
     "Backend API недоступен для текущего способа открытия страницы. Запустите приложение через локальный сервер или переключитесь на local-fixture.";
 
-export function resolveDefaultProviderName() {
-    return resolveBrowserOrigin() ? "backend-api" : "local-fixture";
+export function resolveRuntimeProviderBootstrap(locationLike = globalThis?.window?.location) {
+    const backendOrigin = resolveBrowserOrigin(locationLike);
+    return {
+        backendOrigin,
+        defaultProviderName: backendOrigin ? "backend-api" : "local-fixture"
+    };
 }
 
-export function resolveBackendApiUrl(path) {
-    const baseOrigin = resolveBrowserOrigin();
+export function resolveDefaultProviderName(locationLike = globalThis?.window?.location) {
+    return resolveRuntimeProviderBootstrap(locationLike).defaultProviderName;
+}
+
+export function resolveBackendApiUrl(path, locationLike = globalThis?.window?.location) {
+    const baseOrigin = resolveRuntimeProviderBootstrap(locationLike).backendOrigin;
     if (!baseOrigin) {
         throw new Error(BACKEND_API_UNAVAILABLE_MESSAGE);
     }
@@ -14,9 +22,9 @@ export function resolveBackendApiUrl(path) {
     return new URL(path, baseOrigin);
 }
 
-function resolveBrowserOrigin() {
-    const protocol = normalizeBrowserValue(window.location.protocol);
-    const origin = normalizeBrowserValue(window.location.origin);
+function resolveBrowserOrigin(locationLike) {
+    const protocol = normalizeBrowserValue(locationLike?.protocol);
+    const origin = normalizeBrowserValue(locationLike?.origin);
 
     if (!protocol || !origin) {
         return null;

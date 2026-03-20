@@ -5,7 +5,7 @@ import {
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
 
-const DEFAULT_PROVIDER_NAME = "backend-api";
+const SAFE_FALLBACK_PROVIDER_NAME = "local-fixture";
 const PREFERRED_PROVIDER_ORDER = Object.freeze([
     "backend-api",
     "local-fixture",
@@ -22,7 +22,7 @@ const smoothWheelScrollState = new WeakMap();
 
 export function createCatalogWorkspaceController({
     appRoot,
-    defaultProviderName = DEFAULT_PROVIDER_NAME,
+    defaultProviderName = SAFE_FALLBACK_PROVIDER_NAME,
     catalogProviderFactories,
     detailProviderFactories,
     sessionProviderFactories,
