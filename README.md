@@ -4,19 +4,142 @@
 
 Сейчас в репозитории находятся backend на Spring Boot 4 и Java 21, а также отдельное SPA-пространство `frontend/`, которое в production-сборке встраивается в статические ресурсы backend.
 
-Процесс работы с frontend:
+## Требования
 
-- `cd frontend && npm install` для установки зависимостей
-- `cd frontend && npm run dev` для запуска локального dev-сервера SPA
-- `cd frontend && npm run build` для создания production-сборки
-- `./gradlew check` для совместной проверки backend-тестов и интеграции сборки frontend
+- Java 21
+- Node.js и npm
+- Docker Engine
+- Colima, если Docker на машине работает через неё
 
-Локальный запуск backend c Postgres:
+## Полный локальный запуск с Postgres
 
-- `docker compose -f docker-compose.postgres.yml up -d` для запуска локальной БД
-- `./gradlew bootRun` для запуска backend с Postgres-репозиториями и миграциями Flyway (runtime по умолчанию)
-- можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- `SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun` если нужен явный запуск без Postgres (только локальный fallback)
+### 1. Поднять Docker runtime
+
+Если Docker у тебя работает через Colima, сначала запусти её:
+
+```bash
+colima start
+```
+
+Если используешь Docker Desktop, достаточно убедиться, что он уже запущен.
+
+Проверка:
+
+```bash
+docker info
+```
+
+### 2. Поднять локальный Postgres
+
+```bash
+docker compose -f docker-compose.postgres.yml up -d
+```
+
+Проверка:
+
+```bash
+docker compose -f docker-compose.postgres.yml ps
+```
+
+Ожидаемый контейнер: `git-trainer-postgres`.
+
+Если видишь ошибку вида:
+
+```text
+failed to connect to the docker API at unix:///Users/<user>/.colima/default/docker.sock
+```
+
+это означает, что выбран Docker context `colima`, но сама `colima` не запущена. Исправление:
+
+```bash
+colima start
+docker compose -f docker-compose.postgres.yml up -d
+```
+
+### 3. Запустить приложение целиком
+
+Из корня репозитория:
+
+```bash
+./gradlew syncFrontendAssets bootRun
+```
+
+Эта команда:
+
+- установит frontend-зависимости при необходимости
+- соберёт SPA
+- скопирует frontend-ассеты в classpath backend
+- запустит Spring Boot на `http://localhost:8082`
+
+### 4. Открыть приложение
+
+- UI: `http://localhost:8082/`
+- каталог сценариев API: `http://localhost:8082/api/scenarios`
+- прогресс API: `http://localhost:8082/api/progress`
+
+### 5. При необходимости переопределить доступы к Postgres
+
+- `POSTGRES_URL`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+
+Пример:
+
+```bash
+POSTGRES_URL=jdbc:postgresql://localhost:5432/git_trainer \
+POSTGRES_USER=git_trainer \
+POSTGRES_PASSWORD=git_trainer \
+./gradlew syncFrontendAssets bootRun
+```
+
+## Быстрый запуск backend без Postgres
+
+Если нужен локальный fallback без базы:
+
+```bash
+SPRING_PROFILES_ACTIVE=local-memory ./gradlew syncFrontendAssets bootRun
+```
+
+## Изолированная работа с frontend
+
+Если нужен только dev-сервер SPA:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Открывай `http://localhost:5173/`.
+
+Важно: по умолчанию SPA стартует с источником данных `backend-api`. У `vite` сейчас нет proxy на backend, поэтому без backend-запуска переключи источник данных в UI на `local-fixture`, иначе запросы к `/api/...` будут завершаться ошибкой.
+
+## Полезные команды
+
+- `cd frontend && npm install` для установки frontend-зависимостей
+- `cd frontend && npm run build` для production-сборки SPA
+- `./gradlew check` для проверки backend-тестов и интеграции frontend-сборки
+- `./gradlew test` для backend-тестов
+
+## Остановка и сброс
+
+Остановить backend:
+
+```bash
+Ctrl+C
+```
+
+Остановить Postgres:
+
+```bash
+docker compose -f docker-compose.postgres.yml down
+```
+
+Полностью сбросить локальную БД вместе с volume:
+
+```bash
+docker compose -f docker-compose.postgres.yml down -v
+```
 
 Основные документы проекта:
 
