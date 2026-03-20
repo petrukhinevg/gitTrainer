@@ -1,4 +1,5 @@
 import { SessionTransportError } from "../session/session-provider.js";
+import { shouldResetLessonScrollForRouteChange } from "./route-scroll-policy.js";
 import {
     renderCatalogWorkspace,
     renderCatalogWorkspaceShell,
@@ -65,6 +66,7 @@ export function createCatalogWorkspaceController({
     const progressProviders = new Map();
     let navigationAnimationInProgress = false;
     let shellMounted = false;
+    let pendingLessonScrollReset = false;
     let renderedRouteKind = null;
     const renderedSurfaceCache = {
         navigation: null,
@@ -93,8 +95,18 @@ export function createCatalogWorkspaceController({
     async function handleRouteChange() {
         const previousRoute = state.route;
         const previousScenarioSlug = state.selectedScenarioSlug;
+        const previousSelectedFocus = state.selectedFocus;
         const previousProviderName = state.providerName;
         const route = parseRoute(window.location.hash);
+
+        pendingLessonScrollReset = shouldResetLessonScrollForRouteChange({
+            previousRoute,
+            previousScenarioSlug,
+            previousSelectedFocus,
+            nextRoute: route.name,
+            nextScenarioSlug: route.scenarioSlug,
+            nextSelectedFocus: route.focus
+        });
 
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;
@@ -307,7 +319,10 @@ export function createCatalogWorkspaceController({
         const isExerciseRoute = state.route === "exercise";
         const isNotFoundRoute = state.route === "not-found";
         const nextRouteKind = isNotFoundRoute ? "not-found" : "workspace";
-        const laneScrollPositions = captureLaneScrollPositions();
+        const shouldResetLessonScroll = pendingLessonScrollReset;
+        const laneScrollPositions = captureLaneScrollPositions({
+            excludedLaneNames: shouldResetLessonScroll ? ["lesson"] : []
+        });
         appRoot.classList.toggle("app-shell--exercise", isExerciseRoute);
 
         if (renderedRouteKind !== nextRouteKind) {
@@ -328,10 +343,17 @@ export function createCatalogWorkspaceController({
             renderWorkspaceSurfaces(selectedCatalogScenario);
         }
 
+        if (shouldResetLessonScroll) {
+            resetLaneScrollPosition("lesson");
+        }
         restoreLaneScrollPositions(laneScrollPositions);
         requestAnimationFrame(() => {
+            if (shouldResetLessonScroll) {
+                resetLaneScrollPosition("lesson");
+            }
             restoreLaneScrollPositions(laneScrollPositions);
         });
+        pendingLessonScrollReset = false;
         bindCatalogControls();
         bindRouteLinks();
         bindNavigationControls();
@@ -1521,7 +1543,8 @@ function toUserFacingRecoveryMessage(message, fallbackMessage) {
         .replace(/Выберите другой provider/gi, "Выберите другой источник");
 }
 
-function captureLaneScrollPositions() {
+function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
+    const excludedLaneNameSet = new Set(excludedLaneNames);
     return Array.from(document.querySelectorAll(".lesson-lane__body"))
         .map((laneBody) => {
             const laneRoot = laneBody.closest(".lesson-lane");
@@ -1529,7 +1552,7 @@ function captureLaneScrollPositions() {
                 .find((className) => className.startsWith("lesson-lane--"))
                 ?.replace("lesson-lane--", "");
 
-            if (!laneName) {
+            if (!laneName || excludedLaneNameSet.has(laneName)) {
                 return null;
             }
 
@@ -1542,6 +1565,17 @@ function captureLaneScrollPositions() {
         .filter(Boolean);
 }
 
+function resetLaneScrollPosition(laneName) {
+    const laneBody = document.querySelector(`.lesson-lane--${laneName} .lesson-lane__body`);
+    if (!laneBody) {
+        return;
+    }
+
+    cancelSmoothWheelScroll(laneBody);
+    laneBody.scrollTop = 0;
+    laneBody.scrollLeft = 0;
+}
+
 function restoreLaneScrollPositions(positions) {
     positions.forEach((position) => {
         const laneBody = document.querySelector(`.lesson-lane--${position.laneName} .lesson-lane__body`);
@@ -1552,6 +1586,15 @@ function restoreLaneScrollPositions(positions) {
         laneBody.scrollTop = position.scrollTop;
         laneBody.scrollLeft = position.scrollLeft;
     });
+}
+
+function cancelSmoothWheelScroll(element) {
+    const existingState = smoothWheelScrollState.get(element);
+    if (existingState?.rafId) {
+        cancelAnimationFrame(existingState.rafId);
+    }
+
+    smoothWheelScrollState.delete(element);
 }
 
 function captureSurfaceScrollState(surfaceRoot) {
