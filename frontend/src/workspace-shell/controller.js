@@ -5,7 +5,12 @@ import {
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
 
-const DEFAULT_PROVIDER_NAME = "local-fixture";
+const DEFAULT_PROVIDER_NAME = "backend-api";
+const PREFERRED_PROVIDER_ORDER = Object.freeze([
+    "backend-api",
+    "local-fixture",
+    "fixture-unavailable"
+]);
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
 const SMOOTH_WHEEL_SCROLL_DURATION_MS = 180;
 const DEFAULT_QUERY = Object.freeze({
@@ -1315,7 +1320,26 @@ function resolveSharedProviderOptions({
         .filter((providerName) => detailProviders.has(providerName)
             && sessionProviders.has(providerName)
             && progressProviders.has(providerName))
-        .sort();
+        .sort((left, right) => compareProviderPriority(left, right));
+}
+
+function compareProviderPriority(left, right) {
+    const leftIndex = PREFERRED_PROVIDER_ORDER.indexOf(left);
+    const rightIndex = PREFERRED_PROVIDER_ORDER.indexOf(right);
+
+    if (leftIndex === -1 && rightIndex === -1) {
+        return left.localeCompare(right);
+    }
+
+    if (leftIndex === -1) {
+        return 1;
+    }
+
+    if (rightIndex === -1) {
+        return -1;
+    }
+
+    return leftIndex - rightIndex;
 }
 
 function createInitialSubmissionDraftState() {
