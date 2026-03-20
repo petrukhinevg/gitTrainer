@@ -1,5 +1,5 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
-import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json";
+import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json" with { type: "json" };
 import { resolveBackendApiUrl } from "../runtime-origin.js";
 
 const SUPPORTED_ANSWER_TYPES = Object.freeze(["command_text"]);
