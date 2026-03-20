@@ -2,12 +2,14 @@
 
 Этот документ хранит операционные заметки для `gh` и GraphQL. Добавляй сюда только устойчивые последовательности команд, которые реально переиспользуются.
 
-## Связанные ветки
+## Связанные ветки и PR-linkage
 
-Чтобы посмотреть linked branches для issue:
+В текущем процессе linked branch и `Linked pull requests` критичны только для epic issue с PR в `main`. Для дочерних задач отдельная привязка issue к PR не требуется.
+
+Чтобы посмотреть связанные ветки для epic issue:
 
 ```sh
-gh issue develop --list 137 --repo petrukhinevg/gitTrainer
+gh issue develop --list 324 --repo petrukhinevg/gitTrainer
 ```
 
 Если целевой ветки ещё нет, `gh issue develop` может создать и зарегистрировать её.
@@ -35,7 +37,7 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 - `issueId`: GraphQL ID issue из `gh issue view <number> --json id`
 - `repoId`: GraphQL ID репозитория из `gh repo view <owner>/<repo> --json id`
 - `oid`: SHA коммита, на который должна указывать linked branch
-- `name`: новое имя удалённой ветки, например `linked/137-catalog-browse-api-shell-stub-boundary`
+- `name`: новое имя удалённой ветки, например `324_InstructionRefactor`
 
 Наблюдаемое поведение:
 
@@ -86,24 +88,14 @@ gh api graphql \
 
 ## Pull requests
 
-Пример дочернего task PR в epic branch:
-
-```sh
-gh pr create \
-  --base epic/98-scenario-catalog-browsing-mvp \
-  --head linked/137-catalog-browse-api-shell-stub-boundary \
-  --title "#137 Deliver catalog browse API shell and deterministic stub boundary" \
-  --body "Refs #137"
-```
-
-Пример standalone PR в `main`, который должен закрыть issue:
+Пример epic PR в `main`:
 
 ```sh
 gh pr create \
   --base main \
-  --head task/227-translate-documentation-to-russian \
-  --title "#227 Translate repository documentation to Russian" \
-  --body "Closes #227"
+  --head 324_InstructionRefactor \
+  --title "[эпик] Рефакторинг инструкций репозитория" \
+  --body "Closes #324"
 ```
 
 ## Обновление статуса проекта
