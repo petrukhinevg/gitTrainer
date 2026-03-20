@@ -4,6 +4,7 @@ import com.example.gittrainer.progress.application.ProgressRepository;
 import com.example.gittrainer.progress.domain.ScenarioAttemptOutcome;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.session.domain.TrainingSessionSubmission;
 import com.example.gittrainer.session.domain.RetryGuidance;
 import com.example.gittrainer.session.domain.RetryGuidancePolicy;
 import com.example.gittrainer.session.domain.RetryState;
@@ -18,17 +19,20 @@ import java.time.Instant;
 public class SubmitAnswerUseCase {
 
     private final SessionRepository sessionRepository;
+    private final SessionSubmissionRepository sessionSubmissionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final SubmissionAnswerValidator submissionAnswerValidator;
     private final ProgressRepository progressRepository;
 
     public SubmitAnswerUseCase(
             SessionRepository sessionRepository,
+            SessionSubmissionRepository sessionSubmissionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
             SubmissionAnswerValidator submissionAnswerValidator,
             ProgressRepository progressRepository
     ) {
         this.sessionRepository = sessionRepository;
+        this.sessionSubmissionRepository = sessionSubmissionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.submissionAnswerValidator = submissionAnswerValidator;
         this.progressRepository = progressRepository;
@@ -53,6 +57,18 @@ public class SubmitAnswerUseCase {
         Instant submittedAt = Instant.now();
         TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId, failedAttempt)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
+        sessionSubmissionRepository.save(new TrainingSessionSubmission(
+                submissionId,
+                updatedSession.sessionId(),
+                updatedSession.scenarioSlug(),
+                updatedSession.scenarioTitle(),
+                updatedSession.scenarioSource(),
+                updatedSession.submissionCount(),
+                submittedAnswer.type(),
+                submittedAnswer.value(),
+                outcome.correctness(),
+                submittedAt
+        ));
         progressRepository.recordAttemptOutcome(new ScenarioAttemptOutcome(
                 updatedSession.scenarioSlug(),
                 updatedSession.scenarioTitle(),
