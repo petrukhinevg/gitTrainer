@@ -1,20 +1,16 @@
 # GitHub automation и CLI
 
-Этот документ хранит переиспользуемые команды для `gh` и GraphQL. Правила процесса смотри в `docs/agent/GIT_WORKFLOW.md` и `docs/agent/BOARD_WORKFLOW.md`.
+- Переиспользуемые `gh` и GraphQL-команды.
+- Правила процесса смотри в `docs/agent/GIT_WORKFLOW.md` и `docs/agent/BOARD_WORKFLOW.md`.
 
-## Связанные ветки и PR-linkage
-
-Чтобы посмотреть связанные ветки для issue:
+## Linked branch
 
 ```sh
 gh issue develop --list 324 --repo petrukhinevg/gitTrainer
 ```
 
-Если целевой ветки ещё нет, `gh issue develop` может создать и зарегистрировать её.
-
-Если удалённая ветка уже существует, GitHub может отказаться заполнять привязку задним числом. В таком случае создай новое имя linked branch и уже из него открывай PR.
-
-GraphQL mutation, которая сработала для создания linked branch с новым именем:
+- Если ветки ещё нет, команда может её создать.
+- Если удалённая ветка уже существует, для надёжной linkage обычно лучше новое имя.
 
 ```graphql
 mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
@@ -30,18 +26,14 @@ mutation($issueId: ID!, $repoId: ID!, $oid: GitObjectID!, $name: String!) {
 }
 ```
 
-Обязательные входные параметры:
+Параметры:
 
 - `issueId`: GraphQL ID issue из `gh issue view <number> --json id`
 - `repoId`: GraphQL ID репозитория из `gh repo view <owner>/<repo> --json id`
-- `oid`: SHA коммита, на который должна указывать linked branch
-- `name`: новое имя удалённой ветки, например `324_InstructionRefactor`
+- `oid`: SHA коммита
+- `name`: новое имя удалённой ветки
 
-Практическое наблюдение: новое имя linked branch работает надёжнее, чем попытка привязать уже существующее.
-
-## Подзадачи parent issue
-
-Если нужно привязать уже созданную issue как sub-issue к parent issue из CLI, используй GraphQL mutation `addSubIssue`:
+## Add sub-issue
 
 ```graphql
 mutation($issueId: ID!, $subIssueId: ID!) {
@@ -56,12 +48,12 @@ mutation($issueId: ID!, $subIssueId: ID!) {
 }
 ```
 
-Обязательные входные параметры:
+Параметры:
 
 - `issueId`: GraphQL ID parent issue
-- `subIssueId`: GraphQL ID дочерней issue
+- `subIssueId`: GraphQL ID child issue
 
-Получить GraphQL ID issue можно через:
+Получить GraphQL ID issue:
 
 ```sh
 gh issue view <number> --json id
@@ -81,9 +73,7 @@ gh api graphql \
   -F subIssueId='<child-issue-id>'
 ```
 
-## Pull requests
-
-Пример epic PR в `main`:
+## Pull request
 
 ```sh
 gh pr create \
@@ -93,15 +83,15 @@ gh pr create \
   --body "Closes #324"
 ```
 
-## Обновление статуса проекта
+## Update board status
 
-Когда нужно обновить статус на доске из CLI, сначала посмотри поля проекта, чтобы получить id поля `Status` и id его опций:
+Сначала получи id поля `Status` и id его опций:
 
 ```sh
 gh project field-list 4 --owner petrukhinevg --format json
 ```
 
-Если `gh project item-list` не даёт id карточки, запроси его напрямую из issue:
+Если `gh project item-list` не даёт id карточки, запроси его из issue:
 
 ```sh
 gh api graphql -f query='query {
@@ -117,7 +107,7 @@ gh api graphql -f query='query {
 }'
 ```
 
-Затем обнови single-select значение статуса так:
+Затем обнови статус:
 
 ```sh
 gh project item-edit \

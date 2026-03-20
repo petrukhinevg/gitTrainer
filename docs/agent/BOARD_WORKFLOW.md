@@ -1,49 +1,36 @@
 # Issue и project board workflow
 
-Этот документ описывает правила labels, parent/sub-issue, статусов и handoff на project board.
+## Когда читать
 
-## Область действия
+- issue, labels, parent/sub-issue, statuses, board handoff
 
-- Используй этот файл для создания и ведения issue, parent/sub-issue и обновления project board.
-- Для общего рабочего процесса и декомпозиции смотри `docs/TRACKER_WORKFLOW.md`.
-- Для правил ветвления и PR смотри `docs/agent/GIT_WORKFLOW.md`.
-- Для CLI и GraphQL-операций над issue и project board смотри `docs/agent/GITHUB_AUTOMATION.md`.
-- Текущая конфигурация полей и колонок доски зафиксирована в `docs/BOARD.md`.
+## Правила
 
-## Базовые правила
+- Заголовки и описания issue - на русском.
+- Parent issue: `[эпик] <текст>`.
+- Child issue: без `[эпик]`.
+- Сразу ставь корректные labels, если scope уже понятен.
+- Child issues добавляй только в active parent issues.
+- Если parent issue уже `Done`, создавай новый parent issue.
 
-- Заголовки и описания issue оформляй на русском языке.
-- Родительские задачи называй в формате `[эпик] <текст заголовка>`.
-- Дочерние задачи называй просто по смыслу, без префикса `[эпик]`.
-- При создании issue всегда назначай корректный набор labels по фактическому scope и стороне задачи.
-- Не оставляй новую issue без labels, если сторона или тип работы уже понятны.
-- Новые child issues добавляй только в действующие эпики.
-- Если parent issue уже в `Done` на GitHub board, не расширяй его новыми задачами и сначала создай новый активный parent issue.
+## Status
 
-## Статусы
+- sufficiently defined -> `Ready`
+- active work -> `In Progress`
+- implemented -> `Review`
+- accepted -> `Done`
 
-- Если задача уже достаточно описана в момент создания, сразу переводи её в `Ready`.
-- Когда задача берётся в работу, переводи её в `In Progress`.
-- После завершения реализации переводи её в `Review`.
-- После принятия переводи её в `Done`.
+## Board specifics
 
-## Parent и sub-issue на доске
+- Конфигурация полей и колонок: `docs/BOARD.md`.
+- `Linked pull requests` обязательно только для epic issues с PR в `main`.
+- Для child issues отсутствие `Linked pull requests` не блокирует `Review`.
+- Если epic PR уже есть, а linkage пуст, исправь его до завершения handoff.
 
-- Смысловые правила декомпозиции и критерии создания `parent issue` храни в `docs/TRACKER_WORKFLOW.md`.
-- Добавляй child issues только в активные parent issues и привязывай их сразу после создания.
+## Setup
 
-## Linked pull requests
-
-- Поле `Linked pull requests` считай обязательным только для задач эпика, у которых есть PR в `main`.
-- Для дочерних задач не требуй связи issue с PR и не блокируй перевод в `Review` отсутствием `Linked pull requests`.
-- Если epic PR уже существует, а `Linked pull requests` у epic issue всё ещё пусто, исправь привязку до завершения handoff.
-
-## Быстрая настройка issue и доски
-
-Используй эту последовательность, чтобы состояние трекера и доски было консистентным с самого начала:
-
-1. Создай parent issue и все child issues.
-2. Сразу назначь каждой issue корректные labels.
-3. Сразу привяжи каждую child issue к её parent issue.
-4. Добавь все issues на доску.
-5. Выставь корректный начальный `Status`.
+1. Создай parent и child issues.
+2. Назначь labels.
+3. Привяжи child к parent.
+4. Добавь issues на доску.
+5. Выставь начальный `Status`.

@@ -1,56 +1,45 @@
 # Git и PR workflow
 
-Этот документ описывает правила ветвления, коммитов, push и PR в репозитории.
+## Когда читать
 
-## Область действия
-
-- Используй этот файл для работы с ветками, коммитами, push, PR и handoff в review.
-- Для ограничений по локальному каталогу и доступам смотри `docs/agent/OPERATING_RULES.md`.
-- Для статусов issue и project board смотри `docs/agent/BOARD_WORKFLOW.md`.
-- Для CLI и GraphQL-команд GitHub смотри `docs/agent/GITHUB_AUTOMATION.md`.
+- ветки, коммиты, push, PR, review handoff
 
 ## Имена веток
 
-- Именуй ветки в формате `номерКарточкиНаДоске_КороткоОписание`.
-- Используй короткое описание без пробелов.
+- Формат: `номерКарточки_КороткоОписание`.
 
 ## Ветки
 
-- `main` — production-ветка.
-- Epic branches и standalone task branches создаются от `main`.
-- После создания epic branch сделай начальный epic commit в этой ветке до создания любых дочерних task branches.
-- После появления начального epic commit можно создавать child task branches от текущей головы epic branch.
-- При работе внутри эпика создавай каждую дочернюю task branch от текущей головы epic branch, а не от `main` и не от другой child task branch.
-- После разрешённого merge в epic branch следующие дочерние ветки всё равно создавай от обновлённой epic branch.
-- Не вливай дочернюю работу в epic branch и не вливай epic branch в `main` заранее только ради разблокировки разработки.
-- Если дочерняя задача зависит от незавершённой или ещё не влитой sibling work, считай её заблокированной и продолжай только с независимыми задачами.
-- Исключение: merge дочерней task branch в epic branch допустим, если без интегрированного результата дальнейшая разработка действительно невозможна.
-- Дочерние task branches остаются изолированным WIP, пока другие задачи ещё можно развивать от базовой линии эпика.
-- Если более поздняя задача требует влить более раннюю child branch в epic branch до готовности эпика, пропусти её и продолжай с другими незаблокированными задачами.
-- Если дочерняя задача делится по ходу реализации, создавай новые child branches от текущей головы epic branch, а не от ещё незавершённой sibling branch.
+- `main` - production.
+- Epic и standalone task branches создаются от `main`.
+- После создания epic branch сделай initial epic commit до любых child branches.
+- Child branches создавай от текущей головы epic branch, а не от `main` и не от другой child branch.
+- После разрешённого merge в epic branch следующие child branches создавай от обновлённой epic branch.
+- Не вливай child в epic и epic в `main` заранее только ради разблокировки разработки.
+- Если задача зависит от невлитой sibling work, считай её blocked и продолжай с независимыми задачами.
+- Исключение: merge child в epic допустим, если без интеграции дальше нельзя.
+- Если задача делится по ходу работы, новые child branches создавай от текущей головы epic branch.
 
 ## Коммиты
 
-- Используй формат основного implementation commit: `number_ShortCommitDescription`.
-- У каждой task branch должен быть один основной implementation commit, если не потребуются исправления по review.
-- Держи коммиты сфокусированными: не дроби одну задачу на шумные микрокоммиты, но и не смешивай в одном коммите несвязанные изменения.
-- Если локальные изменения уже разрослись или работа переключается на другую задачу, сначала закоммить текущую логическую единицу.
-- Исправления по review оставляй в той же task branch. Не создавай отдельную review-fix branch.
-- При необходимости добавляй один дополнительный commit с суффиксом `review fix`.
+- Основной implementation commit: `number_ShortCommitDescription`.
+- Обычно одна task branch = один основной implementation commit.
+- Review fixes остаются в той же ветке, при необходимости отдельным commit `review fix`.
+- Не смешивай несвязанные изменения.
 
 ## Push и PR
 
-- Не делай push в `origin` во время активной реализации, если пользователь явно этого не попросил.
-- Когда задача переводится в `Review`, убедись, что её рабочая ветка и коммиты уже опубликованы, если этого требует текущий способ handoff.
-- У каждой epic branch должен быть свой PR в `main`, привязанный к epic issue.
-- Для дочерних задач отдельный PR не обязателен, если пользователь явно не просит такой flow.
-- Для нового epic flow порядок такой: создать epic branch, сделать начальный epic commit, при необходимости запушить ветку, открыть epic PR в `main`, затем создавать child task branches.
-- В теле PR используй `Closes #<issue>`, `Fixes #<issue>` или `Resolves #<issue>` только если PR нацелен в `main` и должен закрыть issue после merge.
-- Если для epic PR нужен reference без автозакрытия, используй `Refs #<issue>`.
-- Если для той же пары `head/base` уже существует закрытый PR и GitHub не даёт его переоткрыть, создай новую alias branch на том же коммите и открой новый PR из неё вместо переписывания истории.
+- Не push во время активной реализации без прямой просьбы пользователя.
+- При переводе в `Review` ветка должна быть опубликована, если handoff это требует.
+- У epic branch должен быть PR в `main`.
+- Для child tasks отдельный PR опционален.
+- Epic flow: branch -> initial commit -> optional push -> epic PR -> child branches.
+- `Closes`/`Fixes`/`Resolves` используй только для PR в `main`.
+- Если нужен reference без автозакрытия, используй `Refs`.
+- Если closed PR нельзя reopen для той же `head/base`, открывай новый PR из alias branch.
 
-## Проверки перед push
+## Перед push
 
-- Перед каждым `git push` запускай `./gradlew check`.
-- Если изменялся backend-код, по возможности запускай `./gradlew test`.
-- Если изменялся frontend-код, перед push запускай production build этой части внутри `frontend/`.
+- `./gradlew check`
+- если менялся backend: по возможности `./gradlew test`
+- если менялся frontend: production build в `frontend/`
