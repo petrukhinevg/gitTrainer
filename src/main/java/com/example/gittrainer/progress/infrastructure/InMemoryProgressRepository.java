@@ -5,6 +5,7 @@ import com.example.gittrainer.progress.domain.ScenarioAttemptOutcome;
 import com.example.gittrainer.progress.domain.ScenarioAttemptStart;
 import com.example.gittrainer.progress.domain.ScenarioCompletionEvent;
 import com.example.gittrainer.progress.domain.ScenarioProgressRecord;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Repository
+@Profile("test | local-memory")
 public class InMemoryProgressRepository implements ProgressRepository {
 
     private final ConcurrentHashMap<String, ScenarioProgressRecord> recordsByScenario = new ConcurrentHashMap<>();
