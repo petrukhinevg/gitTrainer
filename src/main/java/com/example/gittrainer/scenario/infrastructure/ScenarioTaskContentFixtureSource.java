@@ -11,20 +11,20 @@ public class ScenarioTaskContentFixtureSource {
     private static final Map<String, ScenarioTaskContentFixture> FIXTURES = Map.of(
             "status-basics", new ScenarioTaskContentFixture(
                     "authored-fixture",
-                    "Прочитайте состояние репозитория, прежде чем выбирать первую безопасную Git-команду.",
+                    "Сначала проверьте состояние рабочего дерева и только после этого выбирайте следующий шаг.",
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "read-short-status", "Посмотрите краткий `status` и отметьте, какие файлы изменены, а какие ещё не отслеживаются."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "check-branch", "Уточните, какая ветка сейчас активна, прежде чем решать, нужно ли вообще переключение."),
-                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "protect-worktree", "Избегайте команд, которые меняют историю или выбрасывают работу, пока дерево ещё только проверяется.")
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(2, "confirm-short-status-signals", "Сверьте краткий `git status --short` и зафиксируйте, какие файлы изменены, а какие ещё не отслеживаются."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(1, "inspect-working-tree-first", "Начните с команды проверки состояния, а не с переключения ветки или изменения файлов."),
+                            new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(3, "avoid-mutation-commands", "Избегайте команд, которые меняют историю или рабочее дерево, пока не подтверждён безопасный шаг проверки.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Соберите сигналы рабочего дерева", "Зафиксируйте, какие пути изменены, не отслеживаются или уже проиндексированы, чтобы следующий шаг опирался на факты."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Определите текущую ветку", "Сначала посмотрите на активную ветку, чтобы не терять ориентацию до предложения любой команды."),
-                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Выберите самый безопасный первый шаг", "Подберите первую Git-команду, которая собирает информацию и не меняет историю репозитория.")
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(2, "Сверьте сигналы short-статуса", "Подтвердите по `git status --short`, какие пути изменены и какие остаются неотслеживаемыми."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(1, "Начните с проверки рабочего дерева", "Первая команда должна только читать состояние репозитория и ничего не менять."),
+                            new ScenarioTaskContentFixture.ScenarioTaskStepFixture(3, "Зафиксируйте безопасный первый шаг", "Для этого сценария ожидается команда из семейства `git status` как честный следующий шаг.")
                     ),
                     java.util.List.of(
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Подсказка по безопасности", "В этом сценарии проверка идёт раньше любых изменений."),
-                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Целевой результат", "Нужно обосновать безопасную первую команду, а не сразу переходить к очистке.")
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(2, "Подсказка по проверке", "Здесь оценивается команда проверки состояния (`git status`), а не команда изменения."),
+                            new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(1, "Целевой результат", "Нужно показать безопасную проверку рабочего дерева до любого stage, checkout или очистки.")
                     )
             ),
             "branch-safety", new ScenarioTaskContentFixture(

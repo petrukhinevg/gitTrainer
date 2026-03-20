@@ -96,15 +96,7 @@ export function renderWorkspacePanelSections(state) {
                 </div>
                 <div class="practice-composer__primary">
                     <form class="practice-composer__form" data-submission-draft-form>
-                        <div class="practice-composer__controls">
-                            <label class="practice-select">
-                                <span class="control-label">Тип ответа</span>
-                                <select name="answerType"${submissionState.status === "pending" ? " disabled" : ""}>
-                                    <option value="command_text"${resolveSelectedAnswerType(state.submissionDraft, "command_text")}>Текст команды</option>
-                                    <option value="file_patch"${resolveSelectedAnswerType(state.submissionDraft, "file_patch")}>Предпросмотр патча</option>
-                                </select>
-                            </label>
-                        </div>
+                        <p class="panel-copy">Введите одну Git-команду. В текущем MVP поддерживается только текст команды.</p>
                         <label class="practice-editor">
                             <span class="practice-editor__prompt">&gt;</span>
                             <textarea name="answer" rows="4" placeholder="Например: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
@@ -645,7 +637,7 @@ function renderCorrectnessFeedbackBlock(submissionResponse, supportedAnswerTypes
                     <div class="practice-inline-note practice-inline-note--warning">
                         <p class="panel-copy">
                             Сейчас эта сессия поддерживает: ${escapeHtml(supportedTypesCopy)}.
-                            Верните тип ответа к поддерживаемому значению и отправьте снова.
+                            Отправьте ответ как одну Git-команду в поле ввода и повторите попытку.
                         </p>
                     </div>
                 ` : ""}
@@ -1185,11 +1177,7 @@ function resolveTransportBadge(bootstrapState, submissionState) {
 }
 
 function resolveActiveAnswerType(submissionDraft) {
-    return submissionDraft?.answerType === "file_patch" ? "предпросмотр патча" : "текст команды";
-}
-
-function resolveSelectedAnswerType(submissionDraft, value) {
-    return submissionDraft?.answerType === value ? " selected" : "";
+    return "текст команды";
 }
 
 function normalizeOutcomeCorrectness(correctness) {
