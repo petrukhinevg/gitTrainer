@@ -39,8 +39,8 @@ public class ScenarioCatalogFixtureSource {
                     new ScenarioSummary(
                             "remote-sync-preview",
                             "remote-sync-preview",
-                            "Проверь удалённое состояние перед pull",
-                            "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
+                            "Сначала обнови удалённое состояние",
+                            "Подтверди, что локальные данные об `origin/main` могли устареть, и начни с `fetch`, а не с немедленного `pull`.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("remote", "inspection", "planning")
                     )

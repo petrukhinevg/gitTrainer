@@ -35,6 +35,30 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
+    void marksFetchCommandAsCorrectForRemoteSyncPreview() {
+        SubmissionOutcome outcome = validator.validate(
+                "remote-sync-preview",
+                new SubmittedAnswer("command_text", "git fetch origin")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
+    }
+
+    @Test
+    void keepsPullIncorrectForRemoteSyncPreview() {
+        SubmissionOutcome outcome = validator.validate(
+                "remote-sync-preview",
+                new SubmittedAnswer("command_text", "git pull")
+        );
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("incorrect", outcome.correctness());
+        assertEquals("unexpected-command", outcome.code());
+    }
+
+    @Test
     void marksUnexpectedCommandAsIncorrect() {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",

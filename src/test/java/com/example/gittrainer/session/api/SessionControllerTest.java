@@ -190,6 +190,28 @@ class SessionControllerTest {
     }
 
     @Test
+    void guidesRemoteSyncBackToFetchBeforeAnyPull() throws Exception {
+        String sessionId = startSessionAndExtractId("remote-sync-preview");
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git pull"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.outcome.correctness").value("incorrect"))
+                .andExpect(jsonPath("$.outcome.code").value("unexpected-command"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.title").value("Сначала обновите удалённое состояние, потом интегрируйте"))
+                .andExpect(jsonPath("$.retryFeedback.explanation.details[0]").value("Правильная следующая попытка должна оставаться в семействе `git fetch` и обновить наблюдаемое состояние `origin/main` без слияния."))
+                .andExpect(jsonPath("$.retryFeedback.hint.level").value("nudge"))
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals[0].title").value("Сначала получите свежие remote refs"));
+    }
+
+    @Test
     void acceptsAlternateCorrectCommandVariantForScenario() throws Exception {
         String sessionId = startSessionAndExtractId();
 

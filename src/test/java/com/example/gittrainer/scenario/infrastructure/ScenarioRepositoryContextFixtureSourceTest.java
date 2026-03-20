@@ -28,6 +28,22 @@ class ScenarioRepositoryContextFixtureSourceTest {
     }
 
     @Test
+    void providesRemoteSyncRepositoryContextWithFetchFirstCues() {
+        ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
+                scenarioRepositoryContextFixtureSource.fixtureFor("remote-sync-preview");
+
+        assertThat(fixture.branches())
+                .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
+                .containsExactly("main", "origin/main");
+        assertThat(fixture.files())
+                .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryFile::status)
+                .containsExactly("clean", "clean");
+        assertThat(fixture.annotations())
+                .extracting(ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation::label)
+                .containsExactly("Сигнал устаревшего remote-tracking состояния", "Почему pull ещё рано");
+    }
+
+    @Test
     void failsExplicitlyWhenRepositoryContextWasNotAuthoredForScenario() {
         assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.fixtureFor("not-authored-yet"))
                 .isInstanceOf(ScenarioRepositoryContextNotAuthoredException.class)

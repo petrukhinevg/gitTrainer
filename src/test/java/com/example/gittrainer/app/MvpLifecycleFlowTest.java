@@ -173,6 +173,53 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
+    void completesRemoteSyncFlowUsingAuthoredFetchFirstCues() throws Exception {
+        Map<String, Object> detailResponse = performJson(get("/api/scenarios/remote-sync-preview"));
+        Map<String, Object> workspace = mapValue(detailResponse, "workspace");
+        Map<String, Object> task = mapValue(workspace, "task");
+        Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
+
+        assertThat(stringValue(task, "goal")).contains("fetch");
+        assertThat(stringValue(task, "goal")).contains("remote-tracking");
+        assertThat(listValue(task, "annotations"))
+                .extracting(item -> stringValue(castMap(item), "label"))
+                .contains("Что считается безопасным шагом");
+        assertThat(listValue(repositoryContext, "branches"))
+                .extracting(item -> stringValue(castMap(item), "name"))
+                .contains("main", "origin/main");
+
+        Map<String, Object> startSessionResponse = performJson(
+                post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "remote-sync-preview"
+                                }
+                                """)
+        );
+        String sessionId = stringValue(startSessionResponse, "sessionId");
+
+        Map<String, Object> submissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git fetch origin"
+                                }
+                                """)
+        );
+
+        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+
+        assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
+        assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
+        assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
+        assertThat(stringValue(mapValue(retryFeedback, "retryState"), "status")).isEqualTo("complete");
+    }
+
+    @Test
     void completesBackendDemoFlowAndReflectsUpdatedProgressWithoutSourceSwitch() throws Exception {
         Map<String, Object> initialCatalogResponse = performJson(get("/api/scenarios"));
         Map<String, Object> initialProgressResponse = performJson(get("/api/progress"));

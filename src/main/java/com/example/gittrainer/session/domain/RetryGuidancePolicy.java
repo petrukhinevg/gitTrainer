@@ -69,6 +69,11 @@ public final class RetryGuidancePolicy {
                     "plan-history-cleanup-before-rewriting",
                     "history-plan"
             );
+            case "remote-sync-preview" -> new ScenarioGuidanceProfile(
+                    "remote-sync-requires-fetch-first",
+                    "refresh-remote-state-before-integration",
+                    "remote-fetch"
+            );
             case "status-basics" -> new ScenarioGuidanceProfile(
                     "inspection-command-should-come-before-mutation",
                     "inspect-working-tree-before-acting",
