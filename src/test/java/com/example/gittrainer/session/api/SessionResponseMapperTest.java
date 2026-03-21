@@ -17,7 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SessionResponseMapperTest {
 
-    private final SessionResponseMapper mapper = new SessionResponseMapper();
+    private final SessionResponseMapper mapper = new SessionResponseMapper(
+            new SessionRetryFeedbackFactory(
+                    new RetryStateResponseMapper(),
+                    new RetryExplanationResponseFactory(),
+                    new RetryHintResponseFactory()
+            )
+    );
 
     @Test
     void mapsPartialRetryGuidanceIntoStableGuidedPayload() {
