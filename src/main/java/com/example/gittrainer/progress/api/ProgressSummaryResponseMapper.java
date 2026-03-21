@@ -43,7 +43,9 @@ public class ProgressSummaryResponseMapper {
         return new ProgressRecommendationsResponse(
                 summary.recommendations().solved().stream().map(this::toRecommendationScenarioResponse).toList(),
                 summary.recommendations().attempted().stream().map(this::toRecommendationScenarioResponse).toList(),
-                summary.recommendations().next() == null ? null : toRecommendationScenarioResponse(summary.recommendations().next()),
+                summary.recommendations().next() == null
+                        ? null
+                        : toRecommendationScenarioResponse(summary.recommendations().next()),
                 summary.recommendations().rationale()
         );
     }

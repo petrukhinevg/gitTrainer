@@ -66,7 +66,10 @@ public class LoadProgressSummaryUseCase {
         );
     }
 
-    private RecentProgressActivity toRecentActivity(ScenarioSummary scenarioSummary, ScenarioProgressRecord progressRecord) {
+    private RecentProgressActivity toRecentActivity(
+            ScenarioSummary scenarioSummary,
+            ScenarioProgressRecord progressRecord
+    ) {
         if (progressRecord == null) {
             return null;
         }

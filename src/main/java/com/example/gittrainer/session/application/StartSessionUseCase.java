@@ -12,6 +12,7 @@ import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+
 @Service
 public class StartSessionUseCase {
 

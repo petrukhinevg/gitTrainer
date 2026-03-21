@@ -83,15 +83,3 @@ public class SessionController {
         return SessionFailureProblemFactory.unavailableScenarioSource(exception);
     }
 }
-
-record SessionStartRequest(
-        String scenarioSlug,
-        String source
-) {
-}
-
-record SessionSubmissionRequest(
-        String answerType,
-        String answer
-) {
-}

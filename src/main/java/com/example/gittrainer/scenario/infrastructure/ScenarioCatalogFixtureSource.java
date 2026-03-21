@@ -12,35 +12,43 @@ public class ScenarioCatalogFixtureSource {
     private static final ScenarioCatalogFixture DEFAULT_CATALOG = new ScenarioCatalogFixture(
             "mvp-fixture",
             List.of(
-                    new ScenarioSummary(
+                    summary(
                             "status-basics",
                             "status-basics",
                             "Сначала проверь рабочее дерево",
-                            "Посмотри на шумный репозиторий и выбери следующую безопасную Git-команду до любых изменений.",
+                            "Посмотри на шумный репозиторий и выбери "
+                                    + "следующую безопасную Git-команду "
+                                    + "до любых изменений.",
                             ScenarioDifficulty.BEGINNER,
                             List.of("status", "working-tree", "basics")
                     ),
-                    new ScenarioSummary(
+                    summary(
                             "branch-safety",
                             "branch-safety",
                             "Подтверди текущую ветку перед правками",
-                            "Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение.",
+                            "Сначала выясни, на какой ветке уже есть "
+                                    + "незавершённые изменения, и только потом "
+                                    + "решай, допустимо ли переключение.",
                             ScenarioDifficulty.BEGINNER,
                             List.of("branching", "navigation", "basics")
                     ),
-                    new ScenarioSummary(
+                    summary(
                             "history-cleanup-preview",
                             "history-cleanup-preview",
                             "Просмотри историю перед очисткой",
-                            "Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю.",
+                            "Сначала собери компактный preview последних "
+                                    + "коммитов с `fixup!` и WIP-сигналами, "
+                                    + "а уже потом решай, как чистить историю.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("history", "cleanup", "planning")
                     ),
-                    new ScenarioSummary(
+                    summary(
                             "remote-sync-preview",
                             "remote-sync-preview",
                             "Сначала обнови удалённое состояние",
-                            "Подтверди, что локальные данные об `origin/main` могли устареть, и начни с `fetch`, а не с немедленного `pull`.",
+                            "Подтверди, что локальные данные об `origin/main` "
+                                    + "могли устареть, и начни с `fetch`, "
+                                    + "а не с немедленного `pull`.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("remote", "inspection", "planning")
                     )
@@ -65,5 +73,16 @@ public class ScenarioCatalogFixtureSource {
                 "mvp-fixture-unavailable",
                 "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
         );
+    }
+
+    private static ScenarioSummary summary(
+            String id,
+            String slug,
+            String title,
+            String summary,
+            ScenarioDifficulty difficulty,
+            List<String> tags
+    ) {
+        return new ScenarioSummary(id, slug, title, summary, difficulty, tags);
     }
 }

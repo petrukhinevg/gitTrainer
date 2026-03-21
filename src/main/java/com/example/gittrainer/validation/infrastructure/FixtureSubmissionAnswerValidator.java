@@ -57,7 +57,9 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
     private static Map<String, Set<String>> loadFixtureRules() {
         JsonParser jsonParser = JsonParserFactory.getJsonParser();
 
-        try (var inputStream = new ClassPathResource("session/fixture-submission-rules.json").getInputStream()) {
+        try (var inputStream = new ClassPathResource(
+                "session/fixture-submission-rules.json"
+        ).getInputStream()) {
             String rawJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             Map<String, Object> parsedRules = jsonParser.parseMap(rawJson);
 
@@ -70,7 +72,10 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
                                     .collect(Collectors.toUnmodifiableSet())
                     ));
         } catch (IOException exception) {
-            throw new IllegalStateException("Не удалось загрузить общие fixture-правила для отправки ответа.", exception);
+            throw new IllegalStateException(
+                    "Не удалось загрузить общие fixture-правила для отправки ответа.",
+                    exception
+            );
         }
     }
 
