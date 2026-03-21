@@ -1,5 +1,5 @@
 import { FIXTURE_SCENARIO_DETAILS } from "./detail-fixtures.js";
-import { resolveBackendApiUrl } from "../runtime-origin.js";
+import { createBackendApiClient } from "../api/backend-api-client.js";
 
 export function createLocalFixtureDetailProvider() {
     return {
@@ -25,31 +25,14 @@ export function createUnavailableFixtureDetailProvider() {
 }
 
 export function createBackendApiDetailProvider(fetchImpl = window.fetch.bind(window)) {
+    const client = createBackendApiClient(fetchImpl);
+
     return {
         name: "backend-api",
         async loadScenarioDetail(slug) {
-            const url = resolveBackendApiUrl(`/api/scenarios/${encodeURIComponent(slug)}`);
-            const response = await fetchImpl(url.toString());
-            if (!response.ok) {
-                throw new Error(await resolveDetailErrorMessage(response));
-            }
-            return response.json();
+            return client.getJson(`/api/scenarios/${encodeURIComponent(slug)}`, {
+                fallbackMessage: "Запрос деталей сценария завершился статусом"
+            });
         }
     };
-}
-
-async function resolveDetailErrorMessage(response) {
-    const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("json")) {
-        try {
-            const payload = await response.json();
-            if (payload && typeof payload.detail === "string" && payload.detail.trim() !== "") {
-                return payload.detail;
-            }
-        } catch {
-            // Если тело ответа не удалось разобрать, показываем общее сообщение по статусу.
-        }
-    }
-
-    return `Запрос деталей сценария завершился статусом ${response.status}`;
 }

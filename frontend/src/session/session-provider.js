@@ -1,6 +1,6 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
 import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json" with { type: "json" };
-import { resolveBackendApiUrl } from "../runtime-origin.js";
+import { createBackendApiClient } from "../api/backend-api-client.js";
 
 const SUPPORTED_ANSWER_TYPES = Object.freeze(["command_text"]);
 const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze(
@@ -158,12 +158,18 @@ export function createUnavailableFixtureSessionProvider() {
 }
 
 export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(window)) {
+    const client = createBackendApiClient(fetchImpl);
+
     return {
         name: "backend-api",
         async startSession({ scenarioSlug, source = null }) {
-            const response = await postJson(fetchImpl, "/api/sessions", {
+            const response = await client.postJson("/api/sessions", {
                 scenarioSlug,
                 source
+            }, {
+                fallbackMessage: "Запрос сессии завершился статусом",
+                networkErrorMessage: "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.",
+                errorFactory: createSessionTransportError
             });
             return normalizeStartSessionResponse(response);
         },
@@ -172,124 +178,21 @@ export function createBackendApiSessionProvider(fetchImpl = window.fetch.bind(wi
                 sessionId,
                 "Перед отправкой ответа нужен id сессии."
             );
-            const response = await postJson(fetchImpl, `/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
+            const response = await client.postJson(`/api/sessions/${encodeURIComponent(normalizedSessionId)}/submissions`, {
                 answerType: normalizeOptionalValue(submission?.answerType) ?? "command_text",
                 answer: submission?.answer
+            }, {
+                fallbackMessage: "Запрос сессии завершился статусом",
+                networkErrorMessage: "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.",
+                errorFactory: createSessionTransportError
             });
             return normalizeSubmissionResponse(response);
         }
     };
 }
 
-async function postJson(fetchImpl, path, payload) {
-    let response;
-    let url;
-
-    try {
-        url = resolveBackendApiUrl(path);
-    } catch (error) {
-        throw new SessionTransportError(
-            error instanceof Error ? error.message : "Backend API сейчас недоступен.",
-            { failureKind: "retryable" }
-        );
-    }
-
-    try {
-        response = await fetchImpl(url.toString(), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-    } catch (error) {
-        if (error instanceof SessionTransportError) {
-            throw error;
-        }
-
-        throw new SessionTransportError(
-            "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.",
-            { failureKind: "retryable" }
-        );
-    }
-
-    if (!response.ok) {
-        throw await resolveSessionTransportError(response);
-    }
-
-    return response.json();
-}
-
-async function resolveSessionTransportError(response) {
-    const problem = await readProblemPayload(response);
-    const message = resolveTransportErrorMessage(response.status, problem);
-    const failurePolicy = resolveFailurePolicy(response.status, problem);
-    return new SessionTransportError(message, {
-        failureKind: failurePolicy.failureKind,
-        status: response.status,
-        failureDisposition: failurePolicy.failureDisposition,
-        retryable: failurePolicy.retryable,
-        code: problem?.code
-    });
-}
-
-async function readProblemPayload(response) {
-    const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("json")) {
-        try {
-            return await response.json();
-        } catch {
-            return null;
-        }
-    }
-
-    return null;
-}
-
-function resolveTransportErrorMessage(status, problem) {
-    if (problem && typeof problem.detail === "string" && problem.detail.trim() !== "") {
-        return problem.detail;
-    }
-
-    if (problem && typeof problem.message === "string" && problem.message.trim() !== "") {
-        return problem.message;
-    }
-
-    return `Запрос сессии завершился статусом ${status}`;
-}
-
-function resolveFailurePolicy(status, problem) {
-    const failureDisposition = normalizeFailureDisposition(problem?.failureDisposition);
-    if (failureDisposition) {
-        return {
-            failureKind: failureDisposition,
-            failureDisposition,
-            retryable: failureDisposition === "retryable"
-        };
-    }
-
-    if (typeof problem?.retryable === "boolean") {
-        return {
-            failureKind: problem.retryable ? "retryable" : "terminal",
-            failureDisposition: problem.retryable ? "retryable" : "terminal",
-            retryable: problem.retryable
-        };
-    }
-
-    if (status === 408 || status === 425 || status === 429 || status >= 500) {
-        return {
-            failureKind: "retryable",
-            failureDisposition: "retryable",
-            retryable: true
-        };
-    }
-
-    return {
-        failureKind: "terminal",
-        failureDisposition: "terminal",
-        retryable: false
-    };
+function createSessionTransportError(message, metadata = {}) {
+    return new SessionTransportError(message, metadata);
 }
 
 function createPlaceholderRetryFeedback({ scenarioSlug = null, attemptNumber = 0, outcome = null, answer = null } = {}) {
@@ -654,8 +557,4 @@ function scenarioGuidanceNarrative(scenarioSlug, correctness, answer) {
                 strongMessage: "Следующее безопасное действие всё ещё строится на каноничной команде проверки для этого сценария. Выберите команду, которая раскрывает состояние и ничего не меняет."
             };
     }
-}
-
-function normalizeFailureDisposition(value) {
-    return value === "retryable" || value === "terminal" ? value : null;
 }
