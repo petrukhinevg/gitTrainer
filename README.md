@@ -108,7 +108,7 @@ docker compose -f docker-compose.postgres.yml up -d
 POSTGRES_URL=jdbc:postgresql://localhost:5432/git_trainer \
 POSTGRES_USER=git_trainer \
 POSTGRES_PASSWORD=git_trainer \
-./gradlew syncFrontendAssets bootRun
+./gradlew bootRun
 ```
 
 ## Быстрый запуск backend без Postgres
@@ -173,18 +173,6 @@ docker compose -f docker-compose.postgres.yml down
 ```bash
 docker compose -f docker-compose.postgres.yml down -v
 ```
-- `docker compose -f docker-compose.postgres.yml up -d` для запуска локальной БД
-- `./gradlew bootRun` для запуска backend с Postgres-репозиториями и миграциями Flyway (runtime по умолчанию)
-- `./gradlew bootRunPostgres` чтобы автоматически поднять docker compose, дождаться healthy-состояния Postgres и только потом запустить backend
-- если активный Docker context указывает на `colima`, `bootRunPostgres` сначала автоматически выполнит `colima start`
-- `./gradlew postgresComposeDown` чтобы остановить локальный контейнер Postgres
-- можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- `SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun` если нужен явный запуск без Postgres (только локальный fallback)
-- в IntelliJ IDEA доступны shared run configuration:
-  - `.run/GitTrainer Default.run.xml`
-  - `.run/GitTrainer Postgres.run.xml`
-  - `.run/GitTrainer Local Memory.run.xml`
-  - `.run/GitTrainer Postgres Down.run.xml`
 
 Основные документы проекта:
 
