@@ -134,7 +134,12 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."));
+                .andExpect(jsonPath("$.title").value("Источник сценариев недоступен"))
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."))
+                .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
+                .andExpect(jsonPath("$.failureDisposition").value("retryable"))
+                .andExpect(jsonPath("$.retryable").value(true))
+                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
     }
 
     @Test
@@ -243,7 +248,11 @@ class ScenarioCatalogControllerTest {
         mockMvc.perform(get("/api/scenarios/not-a-real-scenario")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Сценарий не найден: not-a-real-scenario"));
+                .andExpect(jsonPath("$.title").value("Сценарий не найден"))
+                .andExpect(jsonPath("$.detail").value("Сценарий не найден: not-a-real-scenario"))
+                .andExpect(jsonPath("$.code").value("scenario-not-found"))
+                .andExpect(jsonPath("$.failureDisposition").value("terminal"))
+                .andExpect(jsonPath("$.retryable").value(false));
     }
 
     @Test
@@ -252,6 +261,11 @@ class ScenarioCatalogControllerTest {
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."));
+                .andExpect(jsonPath("$.title").value("Источник сценариев недоступен"))
+                .andExpect(jsonPath("$.detail").value("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."))
+                .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
+                .andExpect(jsonPath("$.failureDisposition").value("retryable"))
+                .andExpect(jsonPath("$.retryable").value(true))
+                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
     }
 }

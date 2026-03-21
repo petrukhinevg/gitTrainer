@@ -50,16 +50,28 @@ public class ScenarioDetailResponseMapper {
                         new ScenarioRepositoryContextResponse(
                                 detail.repositoryContext().status(),
                                 detail.repositoryContext().branches().stream()
-                                        .map(branch -> new ScenarioRepositoryBranchResponse(branch.name(), branch.current()))
+                                        .map(branch -> new ScenarioRepositoryBranchResponse(
+                                                branch.name(),
+                                                branch.current()
+                                        ))
                                         .toList(),
                                 detail.repositoryContext().commits().stream()
-                                        .map(commit -> new ScenarioRepositoryCommitResponse(commit.id(), commit.summary()))
+                                        .map(commit -> new ScenarioRepositoryCommitResponse(
+                                                commit.id(),
+                                                commit.summary()
+                                        ))
                                         .toList(),
                                 detail.repositoryContext().files().stream()
-                                        .map(file -> new ScenarioRepositoryFileResponse(file.path(), file.status()))
+                                        .map(file -> new ScenarioRepositoryFileResponse(
+                                                file.path(),
+                                                file.status()
+                                        ))
                                         .toList(),
                                 detail.repositoryContext().annotations().stream()
-                                        .map(annotation -> new ScenarioWorkspaceAnnotationResponse(annotation.label(), annotation.message()))
+                                        .map(annotation -> new ScenarioWorkspaceAnnotationResponse(
+                                                annotation.label(),
+                                                annotation.message()
+                                        ))
                                         .toList()
                         )
                 )

@@ -53,7 +53,8 @@ public final class ProgressRecommendationPolicy {
                     solvedItems.stream().map(ProgressRecommendationPolicy::toScenario).toList(),
                     List.of(),
                     toScenario(revisitItem),
-                    "Все сценарии уже завершены, поэтому можно вернуться к последнему активному упражнению и повторить его."
+                    "Все сценарии уже завершены, поэтому можно вернуться "
+                            + "к последнему активному упражнению и повторить его."
             );
         }
 

@@ -26,20 +26,29 @@
 - Обычно одна task branch = один основной implementation commit.
 - Review fixes остаются в той же ветке, при необходимости отдельным commit `review fix`.
 - Не смешивай несвязанные изменения.
+- Перед каждым коммитом запускай `./gradlew checkstyleMain`.
 
 ## Push и PR
 
 - Не push во время активной реализации без прямой просьбы пользователя.
-- При переводе в `Review` ветка должна быть опубликована, если handoff это требует.
+- Для каждой task branch создавай PR.
+- После локального завершения задачи следующий обязательный шаг - опубликовать ветку и создать PR.
+- Только после создания PR задачу можно переводить в `Review`.
+- Задача без PR не считается готовой к handoff, даже если код и проверки локально зелёные.
 - У epic branch должен быть PR в `main`.
-- Для child tasks отдельный PR опционален.
+- Для child branch тоже нужен PR, обычно в epic branch.
 - Epic flow: branch -> initial commit -> optional push -> epic PR -> child branches.
-- `Closes`/`Fixes`/`Resolves` используй только для PR в `main`.
-- Если нужен reference без автозакрытия, используй `Refs`.
+- `Closes`/`Fixes`/`Resolves` используй только для epic PR в `main`.
+- PR и issue обязательно связывай только для epic issues.
+- Для child и standalone task отдельный linkage PR <-> issue не обязателен, если этого не требует handoff.
 - Если closed PR нельзя reopen для той же `head/base`, открывай новый PR из alias branch.
 
-## Перед push
+## После завершения задачи, перед merge
 
+- Во время активной реализации не требуется часто запускать тесты; используй их только если это нужно для отладки или локальной проверки гипотезы.
+- Финальные проверки запускай после завершения работы над задачей и перед merge.
+- `./gradlew checkstyleMain`
 - `./gradlew check`
-- если менялся backend: по возможности `./gradlew test`
+- если менялся backend: при необходимости отдельно `./gradlew test`
 - если менялся frontend: production build в `frontend/`
+- После успешных проверок: push ветку, создай PR и только потом переводи issue в `Review`.

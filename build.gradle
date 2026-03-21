@@ -1,10 +1,12 @@
 plugins {
     id 'java'
+    id 'checkstyle'
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
 import org.springframework.boot.gradle.tasks.run.BootRun
+import java.net.ServerSocket
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
@@ -14,6 +16,11 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+checkstyle {
+    toolVersion = '10.21.4'
+    configFile = layout.projectDirectory.file("checkstyle.xml").asFile
 }
 
 configurations {
@@ -35,6 +42,7 @@ def dockerCommand = resolveDockerCommand(isWindows)
 def colimaCommand = resolveColimaCommand(isWindows)
 def postgresComposeFile = layout.projectDirectory.file("docker-compose.postgres.yml").asFile
 def postgresContainerName = "git-trainer-postgres"
+def defaultServerPort = 8083
 
 static def resolveNpmCommand(boolean isWindows) {
     if (isWindows) {
@@ -154,6 +162,10 @@ tasks.named('check') {
     dependsOn tasks.named('syncFrontendAssets')
 }
 
+tasks.named('checkstyleMain') {
+    dependsOn tasks.named('syncFrontendAssets')
+}
+
 tasks.named('bootJar') {
     dependsOn tasks.named('frontendBuild')
     from(frontendDistDir) {
@@ -162,7 +174,8 @@ tasks.named('bootJar') {
 }
 
 def runCommand = { List<String> command, boolean ignoreExitValue = false ->
-    def process = new ProcessBuilder(command)
+    def normalizedCommand = command.collect { String.valueOf(it) }
+    def process = new ProcessBuilder(normalizedCommand)
             .directory(layout.projectDirectory.asFile)
             .start()
     def stdout = process.inputStream.getText("UTF-8").trim()
@@ -174,6 +187,60 @@ def runCommand = { List<String> command, boolean ignoreExitValue = false ->
             stdout  : stdout,
             stderr  : stderr
     ]
+}
+
+def resolvePortOwner = { int port ->
+    if (isWindows) {
+        return null
+    }
+
+    def result = runCommand(["/bin/sh", "-lc", "lsof -nP -iTCP:${port} -sTCP:LISTEN | tail -n +2 | head -n 1"], true)
+    if (result.exitCode != 0) {
+        return null
+    }
+
+    return result.stdout ?: null
+}
+
+tasks.register('ensureFrontendTooling') {
+    group = 'application'
+    description = 'Проверяет доступность Node.js и npm до frontend build.'
+
+    doLast {
+        try {
+            def npmVersion = runCommand([npmCommand, "--version"], true)
+            if (npmVersion.exitCode != 0) {
+                def message = npmVersion.stderr ?: npmVersion.stdout ?: "unknown error"
+                throw new GradleException(
+                        "npm недоступен. Установите Node.js и npm или укажите путь через NPM_BIN. ${message}"
+                )
+            }
+        } catch (IOException exception) {
+            throw new GradleException(
+                    "npm недоступен. Установите Node.js и npm или укажите путь через NPM_BIN. ${exception.message}",
+                    exception
+            )
+        }
+    }
+}
+
+tasks.register('ensureBackendPortAvailable') {
+    group = 'application'
+    description = 'Проверяет, что локальный порт backend свободен перед bootRun.'
+
+    doLast {
+        try {
+            ServerSocket socket = new ServerSocket(defaultServerPort)
+            socket.close()
+        } catch (IOException exception) {
+            def owner = resolvePortOwner(defaultServerPort)
+            def ownerSuffix = owner ? " Занятый порт слушает: ${owner}" : ""
+            throw new GradleException(
+                    "Порт ${defaultServerPort} уже занят. Освободите его или переопределите server.port.${ownerSuffix}",
+                    exception
+            )
+        }
+    }
 }
 
 tasks.register('ensureDockerDaemon') {
@@ -202,6 +269,13 @@ tasks.register('ensureDockerDaemon') {
 
             def message = dockerInfoAfterStart.stderr ?: dockerInfoAfterStart.stdout ?: "unknown error"
             throw new GradleException("Docker daemon недоступен даже после `colima start`: ${message}")
+        }
+
+        if (context == "colima" && !colimaCommand) {
+            throw new GradleException(
+                    "Docker context `${context}` активен, но `colima` не найден в PATH и COLIMA_BIN не задан. " +
+                            "Установите Colima, переключите Docker context или задайте COLIMA_BIN."
+            )
         }
 
         def message = dockerInfo.stderr ?: dockerInfo.stdout ?: "unknown error"
@@ -253,10 +327,23 @@ tasks.register('waitForPostgresHealthy') {
             sleep(waitMillis)
         }
 
+        def containerLogs = runCommand([dockerCommand, "logs", "--tail", "50", postgresContainerName], true)
+        def diagnosticTail = containerLogs.stdout ?: containerLogs.stderr ?: "логи контейнера недоступны"
+
         throw new GradleException(
-                "Postgres container `${postgresContainerName}` did not become healthy in time. Last status: ${lastStatus}"
+                "Postgres container `${postgresContainerName}` did not become healthy in time. Last status: ${lastStatus}. " +
+                        "Последние логи: ${diagnosticTail}"
         )
     }
+}
+
+tasks.named('frontendInstall') {
+    dependsOn tasks.named('ensureFrontendTooling')
+}
+
+tasks.named('bootRun') {
+    dependsOn tasks.named('syncFrontendAssets')
+    dependsOn tasks.named('ensureBackendPortAvailable')
 }
 
 tasks.register('bootRunPostgres', BootRun) {
@@ -264,6 +351,7 @@ tasks.register('bootRunPostgres', BootRun) {
     description = 'Поднимает Postgres через docker compose и запускает приложение с PostgreSQL runtime.'
     dependsOn tasks.named('syncFrontendAssets')
     dependsOn tasks.named('waitForPostgresHealthy')
+    dependsOn tasks.named('ensureBackendPortAvailable')
     mainClass = 'com.example.gittrainer.GitTrainerApplication'
     classpath = sourceSets.main.runtimeClasspath
     systemProperty 'spring.profiles.active', 'postgres'

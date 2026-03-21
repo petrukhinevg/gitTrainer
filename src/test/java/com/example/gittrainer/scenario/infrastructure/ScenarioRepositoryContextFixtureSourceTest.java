@@ -18,7 +18,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
     @Test
     void providesAuthoredRepositoryContextFixtureForKnownScenario() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.fixtureFor("status-basics");
+                scenarioRepositoryContextFixtureSource.loadRepositoryContext("status-basics");
 
         assertThat(fixture.status()).isEqualTo("authored-fixture");
         assertThat(fixture.branches()).hasSize(2);
@@ -30,7 +30,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
     @Test
     void providesHistoryCleanupRepositoryContextWithPreviewCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.fixtureFor("history-cleanup-preview");
+                scenarioRepositoryContextFixtureSource.loadRepositoryContext("history-cleanup-preview");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -50,7 +50,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
     @Test
     void providesRemoteSyncRepositoryContextWithFetchFirstCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.fixtureFor("remote-sync-preview");
+                scenarioRepositoryContextFixtureSource.loadRepositoryContext("remote-sync-preview");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -66,7 +66,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
     @Test
     void providesBranchSafetyRepositoryContextWithHotfixCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.fixtureFor("branch-safety");
+                scenarioRepositoryContextFixtureSource.loadRepositoryContext("branch-safety");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -82,7 +82,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
 
     @Test
     void failsExplicitlyWhenRepositoryContextWasNotAuthoredForScenario() {
-        assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.fixtureFor("not-authored-yet"))
+        assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.loadRepositoryContext("not-authored-yet"))
                 .isInstanceOf(ScenarioRepositoryContextNotAuthoredException.class)
                 .hasMessage("Контекст репозитория не подготовлен для сценария: not-authored-yet");
     }

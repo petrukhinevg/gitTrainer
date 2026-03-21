@@ -224,7 +224,10 @@ public class PostgresProgressRepository implements ProgressRepository {
         }
     }
 
-    private ScenarioProgressRecord mapProgressRecord(java.sql.ResultSet resultSet, int rowNum) throws java.sql.SQLException {
+    private ScenarioProgressRecord mapProgressRecord(
+            java.sql.ResultSet resultSet,
+            int rowNum
+    ) throws java.sql.SQLException {
         return new ScenarioProgressRecord(
                 resultSet.getString("scenario_slug"),
                 resultSet.getString("scenario_title"),
@@ -241,7 +244,10 @@ public class PostgresProgressRepository implements ProgressRepository {
         );
     }
 
-    private ScenarioCompletionEvent mapCompletionEvent(java.sql.ResultSet resultSet, int rowNum) throws java.sql.SQLException {
+    private ScenarioCompletionEvent mapCompletionEvent(
+            java.sql.ResultSet resultSet,
+            int rowNum
+    ) throws java.sql.SQLException {
         return new ScenarioCompletionEvent(
                 resultSet.getString("scenario_slug"),
                 resultSet.getString("scenario_title"),

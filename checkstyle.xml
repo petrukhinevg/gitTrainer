@@ -29,7 +29,7 @@
     <!-- Exclude unit test code -->
     <module name="BeforeExecutionExclusionFileFilter">
         <property name="fileNamePattern"
-                  value=".*[\\/]src[\\/]test[\\/]java[\\/]com[\\/]srg[\\/]lm[\\/].*$"/>
+                  value=".*[\\/]src[\\/]test[\\/]java[\\/].*$"/>
     </module>
 
     <!-- Exclude module test code -->

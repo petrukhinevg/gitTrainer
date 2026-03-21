@@ -1,5 +1,5 @@
 import { FIXTURE_PROGRESS_SUMMARY } from "./progress-fixtures.js";
-import { resolveBackendApiUrl } from "../runtime-origin.js";
+import { createBackendApiClient } from "../api/backend-api-client.js";
 
 export function createLocalFixtureProgressProvider() {
     return {
@@ -20,15 +20,15 @@ export function createUnavailableFixtureProgressProvider() {
 }
 
 export function createBackendApiProgressProvider(fetchImpl = window.fetch.bind(window)) {
+    const client = createBackendApiClient(fetchImpl);
+
     return {
         name: "backend-api",
         async loadProgressSummary() {
-            const url = resolveBackendApiUrl("/api/progress");
-            const response = await fetchImpl(url.toString());
-            if (!response.ok) {
-                throw new Error(await resolveProgressErrorMessage(response));
-            }
-            return normalizeProgressSummaryResponse(await response.json());
+            const response = await client.getJson("/api/progress", {
+                fallbackMessage: "Запрос прогресса завершился статусом"
+            });
+            return normalizeProgressSummaryResponse(response);
         }
     };
 }
@@ -99,20 +99,4 @@ function normalizeCount(value) {
 function normalizeOptionalValue(value) {
     const normalized = String(value ?? "").trim();
     return normalized.length ? normalized : null;
-}
-
-async function resolveProgressErrorMessage(response) {
-    const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("json")) {
-        try {
-            const payload = await response.json();
-            if (payload && typeof payload.detail === "string" && payload.detail.trim() !== "") {
-                return payload.detail;
-            }
-        } catch {
-            // Fall back to status-based copy when the body cannot be parsed.
-        }
-    }
-
-    return `Запрос прогресса завершился статусом ${response.status}`;
 }

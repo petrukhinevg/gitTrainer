@@ -1,8 +1,5 @@
 package com.example.gittrainer.session.application;
 
-import com.example.gittrainer.scenario.application.LoadScenarioDetailUseCase;
-import com.example.gittrainer.scenario.application.ScenarioDetailResult;
-import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
 import com.example.gittrainer.progress.application.ProgressRepository;
 import com.example.gittrainer.progress.domain.ScenarioAttemptStart;
 import com.example.gittrainer.session.domain.RetryStatePolicy;
@@ -12,23 +9,24 @@ import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+
 @Service
 public class StartSessionUseCase {
 
     private final SessionRepository sessionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
-    private final LoadScenarioDetailUseCase loadScenarioDetailUseCase;
+    private final SessionScenarioReadPort sessionScenarioReadPort;
     private final ProgressRepository progressRepository;
 
     public StartSessionUseCase(
             SessionRepository sessionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
-            LoadScenarioDetailUseCase loadScenarioDetailUseCase,
+            SessionScenarioReadPort sessionScenarioReadPort,
             ProgressRepository progressRepository
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
-        this.loadScenarioDetailUseCase = loadScenarioDetailUseCase;
+        this.sessionScenarioReadPort = sessionScenarioReadPort;
         this.progressRepository = progressRepository;
     }
 
@@ -37,15 +35,16 @@ public class StartSessionUseCase {
             throw SessionRequestValidationException.missingScenarioSlug();
         }
 
-        ScenarioDetailResult detailResult = loadScenarioDetailUseCase.load(
-                new ScenarioDetailQuery(command.scenarioSlug(), command.source())
+        SessionScenarioSnapshot scenario = sessionScenarioReadPort.loadForSessionStart(
+                command.scenarioSlug(),
+                command.source()
         );
 
         TrainingSession session = sessionRepository.save(new TrainingSession(
                 sessionIdentityGenerator.nextSessionId(),
-                detailResult.detail().slug(),
-                detailResult.detail().title(),
-                detailResult.source(),
+                scenario.slug(),
+                scenario.title(),
+                scenario.source(),
                 Instant.now(),
                 SessionState.ACTIVE,
                 0,

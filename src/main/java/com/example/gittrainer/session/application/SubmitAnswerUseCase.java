@@ -55,7 +55,8 @@ public class SubmitAnswerUseCase {
         boolean failedAttempt = outcome.requiresRetry();
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
         Instant submittedAt = Instant.now();
-        TrainingSession updatedSession = sessionRepository.recordSubmission(normalizedSessionId, submissionId, failedAttempt)
+        TrainingSession updatedSession = sessionRepository
+                .recordSubmission(normalizedSessionId, submissionId, failedAttempt)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
         sessionSubmissionRepository.save(new TrainingSessionSubmission(
                 submissionId,

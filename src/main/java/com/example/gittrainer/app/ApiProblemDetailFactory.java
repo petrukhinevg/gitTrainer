@@ -1,18 +1,20 @@
-package com.example.gittrainer.session.api;
+package com.example.gittrainer.app;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
-import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
-final class SessionFailureProblemFactory {
+final class ApiProblemDetailFactory {
 
-    private SessionFailureProblemFactory() {
+    private ApiProblemDetailFactory() {
     }
 
-    static ProblemDetail invalidRequest(SessionRequestValidationException exception) {
+    static ProblemDetail invalidSessionRequest(SessionRequestValidationException exception) {
         return createProblem(
                 HttpStatus.BAD_REQUEST,
                 "Некорректный запрос сессии",
@@ -45,7 +47,7 @@ final class SessionFailureProblemFactory {
         );
     }
 
-    static ProblemDetail unavailableScenarioSource(ScenarioCatalogSourceUnavailableException exception) {
+    static ProblemDetail unavailableScenarioSource(ScenarioSourceUnavailableException exception) {
         ProblemDetail problem = createProblem(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "Источник сценариев недоступен",
@@ -56,6 +58,28 @@ final class SessionFailureProblemFactory {
         );
         problem.setProperty("sourceName", exception.sourceName());
         return problem;
+    }
+
+    static ProblemDetail missingTaskContent(ScenarioTaskContentNotAuthoredException exception) {
+        return createProblem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Контент сценария не подготовлен",
+                exception.getMessage(),
+                "scenario-task-content-not-authored",
+                "terminal",
+                false
+        );
+    }
+
+    static ProblemDetail missingRepositoryContext(ScenarioRepositoryContextNotAuthoredException exception) {
+        return createProblem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Контекст сценария не подготовлен",
+                exception.getMessage(),
+                "scenario-repository-context-not-authored",
+                "terminal",
+                false
+        );
     }
 
     private static ProblemDetail createProblem(

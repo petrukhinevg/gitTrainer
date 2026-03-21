@@ -1,16 +1,10 @@
 package com.example.gittrainer.session.api;
 
-import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
-import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
-import com.example.gittrainer.session.application.SessionNotFoundException;
-import com.example.gittrainer.session.application.SessionRequestValidationException;
 import com.example.gittrainer.session.application.StartSessionCommand;
 import com.example.gittrainer.session.application.StartSessionUseCase;
 import com.example.gittrainer.session.application.SubmitAnswerCommand;
 import com.example.gittrainer.session.application.SubmitAnswerUseCase;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,36 +56,4 @@ public class SessionController {
                 )
         );
     }
-
-    @ExceptionHandler(SessionRequestValidationException.class)
-    ProblemDetail handleValidationFailure(SessionRequestValidationException exception) {
-        return SessionFailureProblemFactory.invalidRequest(exception);
-    }
-
-    @ExceptionHandler(SessionNotFoundException.class)
-    ProblemDetail handleMissingSession(SessionNotFoundException exception) {
-        return SessionFailureProblemFactory.missingSession(exception);
-    }
-
-    @ExceptionHandler(ScenarioDetailNotFoundException.class)
-    ProblemDetail handleMissingScenario(ScenarioDetailNotFoundException exception) {
-        return SessionFailureProblemFactory.missingScenario(exception);
-    }
-
-    @ExceptionHandler(ScenarioCatalogSourceUnavailableException.class)
-    ProblemDetail handleUnavailableSource(ScenarioCatalogSourceUnavailableException exception) {
-        return SessionFailureProblemFactory.unavailableScenarioSource(exception);
-    }
-}
-
-record SessionStartRequest(
-        String scenarioSlug,
-        String source
-) {
-}
-
-record SessionSubmissionRequest(
-        String answerType,
-        String answer
-) {
 }

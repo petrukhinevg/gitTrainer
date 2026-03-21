@@ -1,5 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ class ScenarioCatalogFixtureSourceTest {
     @Test
     void providesUnavailableSourceFixtureAsDomainSpecificFailure() {
         assertThatThrownBy(() -> scenarioCatalogFixtureSource.unavailableCatalog())
-                .isInstanceOf(ScenarioCatalogSourceUnavailableException.class)
+                .isInstanceOf(ScenarioSourceUnavailableException.class)
                 .hasMessage("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже.");
     }
 }
