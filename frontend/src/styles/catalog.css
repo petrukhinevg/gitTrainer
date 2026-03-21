@@ -13,6 +13,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    padding-top: 1px;
 }
 
 .scenario-legend__tags {
@@ -113,15 +114,32 @@
     shape-rendering: geometricPrecision;
     opacity: 0;
     filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tag-connection-accent) 24%, transparent));
-    transition: opacity 180ms ease;
+    transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tag-connection-map__path--lead {
     stroke-width: 3.5;
 }
 
+.tag-connection-map__path--branch {
+    stroke-width: 2.5;
+    opacity: 0.82;
+}
+
 .tag-connection-map__canvas--visible .tag-connection-map__path {
     opacity: 0.9;
+}
+
+.tag-connection-map__canvas--visible .tag-connection-map__path--branch {
+    opacity: 0.82;
+}
+
+.tag-connection-map__canvas--visible .tag-connection-map__path--branch-hidden {
+    opacity: 0;
+}
+
+.tag-connection-map__canvas--visible .tag-connection-map__path--branch-removing {
+    opacity: 0;
 }
 
 .tag-connection-map__dot {

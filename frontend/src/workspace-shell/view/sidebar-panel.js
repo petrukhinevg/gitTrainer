@@ -56,7 +56,6 @@ function renderTrainingFlow(state, tagOptions) {
     return `
         <div class="tag-connection-map" data-tag-connection-map>
             <div class="scenario-legend">
-                <span class="control-label">Карта тегов</span>
                 <div class="scenario-legend__tags">
                     ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
                 </div>
@@ -191,6 +190,7 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagToken
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
+            data-tag-branch-target="true"
         >
             <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
@@ -204,6 +204,7 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tag
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
+            data-tag-branch-target="true"
         >
             <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>

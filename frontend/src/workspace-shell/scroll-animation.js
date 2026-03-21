@@ -95,6 +95,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
         return Promise.resolve();
     }
 
+    delete panel.dataset.tagConnectionCollapsing;
     panel.style.height = "0px";
     panel.style.opacity = "0";
     panel.style.overflow = "hidden";
@@ -147,6 +148,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         return Promise.resolve();
     }
 
+    panel.dataset.tagConnectionCollapsing = "true";
     panel.style.height = `${panel.getBoundingClientRect().height}px`;
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
@@ -160,6 +162,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
     return waitForScenarioAnimation(panel, () => {
         stopFrameTracking();
         panel.style.removeProperty("transition");
+        delete panel.dataset.tagConnectionCollapsing;
         onFrame?.();
     });
 }
