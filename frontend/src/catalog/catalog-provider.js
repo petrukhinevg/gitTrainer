@@ -1,5 +1,5 @@
 import { FIXTURE_SCENARIO_CATALOG } from "./catalog-fixtures.js";
-import { resolveBackendApiUrl } from "../runtime-origin.js";
+import { createBackendApiClient } from "../api/backend-api-client.js";
 
 export function createLocalFixtureCatalogProvider() {
     return {
@@ -31,10 +31,12 @@ export function createUnavailableFixtureCatalogProvider() {
 }
 
 export function createBackendApiCatalogProvider(fetchImpl = window.fetch.bind(window)) {
+    const client = createBackendApiClient(fetchImpl);
+
     return {
         name: "backend-api",
         async browseCatalog(query) {
-            const url = resolveBackendApiUrl("/api/scenarios");
+            const url = new URL("/api/scenarios", "http://backend.local");
             if (query.difficulty) {
                 url.searchParams.set("difficulty", query.difficulty);
             }
@@ -45,11 +47,9 @@ export function createBackendApiCatalogProvider(fetchImpl = window.fetch.bind(wi
                 url.searchParams.append("tag", tag);
             }
 
-            const response = await fetchImpl(url.toString());
-            if (!response.ok) {
-                throw new Error(`Запрос каталога завершился статусом ${response.status}`);
-            }
-            return response.json();
+            return client.getJson(`${url.pathname}${url.search}`, {
+                fallbackMessage: "Запрос каталога завершился статусом"
+            });
         }
     };
 }
