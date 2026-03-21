@@ -1,8 +1,6 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
 
 const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
-const SMOOTH_WHEEL_SCROLL_DURATION_MS = 180;
-const smoothWheelScrollState = new WeakMap();
 
 export function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
     const excludedLaneNameSet = new Set(excludedLaneNames);
@@ -32,7 +30,6 @@ export function resetLaneScrollPosition(laneName) {
         return;
     }
 
-    cancelSmoothWheelScroll(laneBody);
     laneBody.scrollTop = 0;
     laneBody.scrollLeft = 0;
 }
@@ -87,22 +84,8 @@ export function restoreSurfaceScrollState(surfaceRoot, scrollState) {
 }
 
 export function bindSmoothScrollContainers() {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-        return;
-    }
-
-    document
-        .querySelectorAll(".lesson-lane__body, [data-practice-surface-scroll]")
-        .forEach((element) => {
-            if (element.dataset.smoothWheelBound === "true") {
-                return;
-            }
-
-            element.dataset.smoothWheelBound = "true";
-            element.addEventListener("wheel", (event) => {
-                handleSmoothWheelScroll(event, element);
-            }, { passive: false });
-        });
+    // Internal panels rely on frequent programmatic scroll restores during rerender.
+    // Native wheel scrolling is more stable here than an additional JS animation layer.
 }
 
 export function animateScenarioExpansion(appRoot, slug) {
@@ -171,97 +154,6 @@ export function animateScenarioCollapse(appRoot, slug) {
     return waitForScenarioAnimation(panel, () => {
         panel.style.removeProperty("transition");
     });
-}
-
-function cancelSmoothWheelScroll(element) {
-    const existingState = smoothWheelScrollState.get(element);
-    if (existingState?.rafId) {
-        cancelAnimationFrame(existingState.rafId);
-    }
-
-    smoothWheelScrollState.delete(element);
-}
-
-function handleSmoothWheelScroll(event, element) {
-    if (event.defaultPrevented || event.ctrlKey || event.metaKey) {
-        return;
-    }
-
-    if (Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) {
-        return;
-    }
-
-    const maxScrollTop = element.scrollHeight - element.clientHeight;
-    if (maxScrollTop <= 0) {
-        return;
-    }
-
-    const currentTarget = smoothWheelScrollState.get(element)?.targetScrollTop ?? element.scrollTop;
-    const nextTarget = clampNumber(
-        currentTarget + normalizeWheelDelta(event, element),
-        0,
-        maxScrollTop
-    );
-
-    if (nextTarget === currentTarget) {
-        return;
-    }
-
-    event.preventDefault();
-    animateSmoothWheelScroll(element, nextTarget);
-}
-
-function animateSmoothWheelScroll(element, targetScrollTop) {
-    const existingState = smoothWheelScrollState.get(element);
-    const nextState = existingState ?? {};
-    nextState.startScrollTop = element.scrollTop;
-    nextState.targetScrollTop = targetScrollTop;
-    nextState.startTime = performance.now();
-
-    if (!existingState) {
-        nextState.rafId = requestAnimationFrame((timestamp) => {
-            stepSmoothWheelScroll(element, timestamp);
-        });
-    }
-
-    smoothWheelScrollState.set(element, nextState);
-}
-
-function stepSmoothWheelScroll(element, timestamp) {
-    const state = smoothWheelScrollState.get(element);
-    if (!state) {
-        return;
-    }
-
-    const progress = Math.min((timestamp - state.startTime) / SMOOTH_WHEEL_SCROLL_DURATION_MS, 1);
-    const easedProgress = 1 - ((1 - progress) ** 3);
-    const nextScrollTop = state.startScrollTop + ((state.targetScrollTop - state.startScrollTop) * easedProgress);
-    element.scrollTop = nextScrollTop;
-
-    if (progress < 1 && Math.abs(state.targetScrollTop - nextScrollTop) > 0.5) {
-        state.rafId = requestAnimationFrame((nextTimestamp) => {
-            stepSmoothWheelScroll(element, nextTimestamp);
-        });
-        return;
-    }
-
-    element.scrollTop = state.targetScrollTop;
-    smoothWheelScrollState.delete(element);
-}
-
-function normalizeWheelDelta(event, element) {
-    switch (event.deltaMode) {
-        case WheelEvent.DOM_DELTA_LINE:
-            return event.deltaY * 16;
-        case WheelEvent.DOM_DELTA_PAGE:
-            return event.deltaY * element.clientHeight * 0.9;
-        default:
-            return event.deltaY;
-    }
-}
-
-function clampNumber(value, min, max) {
-    return Math.min(Math.max(value, min), max);
 }
 
 function resolveSurfaceScrollElement(surfaceRoot, key) {

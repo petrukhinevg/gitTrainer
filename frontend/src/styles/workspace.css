@@ -130,7 +130,6 @@
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    scroll-behavior: smooth;
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(31, 23, 32, 0.16) transparent;

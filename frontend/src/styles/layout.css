@@ -152,7 +152,6 @@ body {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    scroll-behavior: smooth;
     overscroll-behavior: contain;
     padding-bottom: 16px;
     align-content: start;
