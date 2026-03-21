@@ -1,6 +1,6 @@
 package com.example.gittrainer.scenario.application;
 
-import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
+import com.example.gittrainer.scenario.domain.CatalogBrowseQuery;
 import com.example.gittrainer.session.application.SessionScenarioReadPort;
 import com.example.gittrainer.session.application.SessionScenarioSnapshot;
 import org.springframework.stereotype.Component;
@@ -8,20 +8,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class ScenarioSessionReadBridge implements SessionScenarioReadPort {
 
-    private final ScenarioDetailGateway scenarioDetailGateway;
+    private final ScenarioCatalogGateway scenarioCatalogGateway;
 
-    public ScenarioSessionReadBridge(ScenarioDetailGateway scenarioDetailGateway) {
-        this.scenarioDetailGateway = scenarioDetailGateway;
+    public ScenarioSessionReadBridge(ScenarioCatalogGateway scenarioCatalogGateway) {
+        this.scenarioCatalogGateway = scenarioCatalogGateway;
     }
 
     @Override
     public SessionScenarioSnapshot loadForSessionStart(String scenarioSlug, String source) {
-        ScenarioDetailQuery query = new ScenarioDetailQuery(scenarioSlug, source);
-        return scenarioDetailGateway.loadScenarioDetail(query)
-                .map(detail -> new SessionScenarioSnapshot(
-                        detail.slug(),
-                        detail.title(),
-                        scenarioDetailGateway.sourceName(query)
+        CatalogBrowseQuery query = new CatalogBrowseQuery(null, null, null, source);
+        return scenarioCatalogGateway.loadCatalog(query).stream()
+                .filter(item -> item.slug().equals(scenarioSlug))
+                .findFirst()
+                .map(scenario -> new SessionScenarioSnapshot(
+                        scenario.slug(),
+                        scenario.title(),
+                        scenarioCatalogGateway.sourceName(query)
                 ))
                 .orElseThrow(() -> new ScenarioDetailNotFoundException(scenarioSlug));
     }

@@ -1,10 +1,9 @@
 package com.example.gittrainer.scenario.api;
 
 import com.example.gittrainer.GitTrainerApplication;
-import com.example.gittrainer.scenario.application.ScenarioDetailGateway;
+import com.example.gittrainer.scenario.application.ScenarioTaskContent;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentGateway;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
-import com.example.gittrainer.scenario.domain.ScenarioDetailQuery;
-import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,15 +15,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Optional;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = {
         GitTrainerApplication.class,
-        ScenarioApiExceptionHandlingTest.FailingScenarioDetailGatewayConfig.class
+        ScenarioApiExceptionHandlingTest.FailingTaskContentGatewayConfig.class
 })
 class ScenarioApiExceptionHandlingTest {
 
@@ -52,20 +49,15 @@ class ScenarioApiExceptionHandlingTest {
     }
 
     @TestConfiguration
-    static class FailingScenarioDetailGatewayConfig {
+    static class FailingTaskContentGatewayConfig {
 
         @Bean
         @Primary
-        ScenarioDetailGateway failingScenarioDetailGateway() {
-            return new ScenarioDetailGateway() {
+        ScenarioTaskContentGateway failingScenarioTaskContentGateway() {
+            return new ScenarioTaskContentGateway() {
                 @Override
-                public Optional<ScenarioWorkspaceDetail> loadScenarioDetail(ScenarioDetailQuery query) {
-                    throw new ScenarioTaskContentNotAuthoredException(query.slug());
-                }
-
-                @Override
-                public String sourceName(ScenarioDetailQuery query) {
-                    return "failing-detail-gateway";
+                public ScenarioTaskContent loadTaskContent(String scenarioSlug) {
+                    throw new ScenarioTaskContentNotAuthoredException(scenarioSlug);
                 }
             };
         }

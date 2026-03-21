@@ -2,8 +2,8 @@ package com.example.gittrainer.app;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
 import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
-import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
 import org.springframework.http.HttpStatus;
@@ -47,7 +47,7 @@ final class ApiProblemDetailFactory {
         );
     }
 
-    static ProblemDetail unavailableScenarioSource(ScenarioCatalogSourceUnavailableException exception) {
+    static ProblemDetail unavailableScenarioSource(ScenarioSourceUnavailableException exception) {
         ProblemDetail problem = createProblem(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "Источник сценариев недоступен",

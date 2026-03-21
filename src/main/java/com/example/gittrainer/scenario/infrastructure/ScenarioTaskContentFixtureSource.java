@@ -1,5 +1,7 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioTaskContent;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentGateway;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import org.springframework.stereotype.Component;
 
@@ -7,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class ScenarioTaskContentFixtureSource {
+public class ScenarioTaskContentFixtureSource implements ScenarioTaskContentGateway {
 
-    private static final Map<String, ScenarioTaskContentFixture> FIXTURES = Map.of(
+    private static final Map<String, ScenarioTaskContent> FIXTURES = Map.of(
             "status-basics", fixture(
                     "Сначала проверьте состояние рабочего дерева "
                             + "и только после этого выбирайте следующий шаг.",
@@ -287,8 +289,9 @@ public class ScenarioTaskContentFixtureSource {
             )
     );
 
-    public ScenarioTaskContentFixture fixtureFor(String scenarioSlug) {
-        ScenarioTaskContentFixture fixture = FIXTURES.get(scenarioSlug);
+    @Override
+    public ScenarioTaskContent loadTaskContent(String scenarioSlug) {
+        ScenarioTaskContent fixture = FIXTURES.get(scenarioSlug);
         if (fixture == null) {
             throw new ScenarioTaskContentNotAuthoredException(scenarioSlug);
         }
@@ -296,36 +299,36 @@ public class ScenarioTaskContentFixtureSource {
         return fixture;
     }
 
-    private static ScenarioTaskContentFixture fixture(
+    private static ScenarioTaskContent fixture(
             String goal,
-            List<ScenarioTaskContentFixture.ScenarioTaskInstructionFixture> instructions,
-            List<ScenarioTaskContentFixture.ScenarioTaskStepFixture> steps,
-            List<ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture> annotations
+            List<ScenarioTaskContent.ScenarioTaskInstruction> instructions,
+            List<ScenarioTaskContent.ScenarioTaskStep> steps,
+            List<ScenarioTaskContent.ScenarioTaskAnnotation> annotations
     ) {
-        return new ScenarioTaskContentFixture("authored-fixture", goal, instructions, steps, annotations);
+        return new ScenarioTaskContent("authored-fixture", goal, instructions, steps, annotations);
     }
 
-    private static ScenarioTaskContentFixture.ScenarioTaskInstructionFixture instruction(
+    private static ScenarioTaskContent.ScenarioTaskInstruction instruction(
             int position,
             String id,
             String text
     ) {
-        return new ScenarioTaskContentFixture.ScenarioTaskInstructionFixture(position, id, text);
+        return new ScenarioTaskContent.ScenarioTaskInstruction(position, id, text);
     }
 
-    private static ScenarioTaskContentFixture.ScenarioTaskStepFixture step(
+    private static ScenarioTaskContent.ScenarioTaskStep step(
             int position,
             String title,
             String detail
     ) {
-        return new ScenarioTaskContentFixture.ScenarioTaskStepFixture(position, title, detail);
+        return new ScenarioTaskContent.ScenarioTaskStep(position, title, detail);
     }
 
-    private static ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture annotation(
+    private static ScenarioTaskContent.ScenarioTaskAnnotation annotation(
             int position,
             String label,
             String message
     ) {
-        return new ScenarioTaskContentFixture.ScenarioTaskAnnotationFixture(position, label, message);
+        return new ScenarioTaskContent.ScenarioTaskAnnotation(position, label, message);
     }
 }
