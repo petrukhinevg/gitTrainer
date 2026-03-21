@@ -138,7 +138,7 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
     if (!navigationDetail || navigationDetail.status === "idle" || navigationDetail.status === "loading") {
         return `
             <div class="flow-subtask-group">
-                <div class="flow-subtask-placeholder" data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}">
+                <div class="flow-subtask-placeholder">
                     <span class="flow-block__eyebrow">Загрузка</span>
                     <strong class="flow-block__title">Подготавливаем подзадачи</strong>
                 </div>
@@ -151,7 +151,6 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
             <div class="flow-subtask-group">
                 <div
                     class="flow-subtask-placeholder flow-subtask-placeholder--error"
-                    data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
                 >
                     <span class="flow-block__eyebrow">Недоступно</span>
                     <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Подзадачи недоступны")}</strong>
@@ -192,7 +191,6 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagToken
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
-            data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
         >
             <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
@@ -206,7 +204,6 @@ function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tag
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
-            data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
         >
             <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>

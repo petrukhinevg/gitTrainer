@@ -3,12 +3,11 @@ import { NAVIGATION_TOGGLE_ANIMATION_MS } from "./scroll-animation.js";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const EDGE_PADDING_PX = 8;
-const TARGET_OFFSET_PX = 8;
+const TARGET_OFFSET_PX = 2;
 const TRUNK_OFFSET_PX = 14;
-const TARGET_RETURN_GAP_PX = 12;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
-const CONNECTION_EXTEND_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
-const CONNECTION_TRIM_MS = Math.round(NAVIGATION_TOGGLE_ANIMATION_MS * 0.75);
+const CONNECTION_DRAW_SPEED_PX_PER_MS = 1.35;
+const CONNECTION_MIN_ANIMATION_MS = 32;
 
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
@@ -30,25 +29,36 @@ export function bindNavigationTagConnections({ appRoot }) {
 
     let rafId = 0;
     let resizeObserver = null;
-    const draw = ({ instant = false } = {}) => {
+    let pendingDrawOptions = null;
+
+    const draw = ({ instant = false, preserveAnimation = false } = {}) => {
         rafId = 0;
+        pendingDrawOptions = null;
         renderNavigationTagConnections({
             instant,
+            preserveAnimation,
             layoutRoot,
             navigationLane,
             mapRoot,
             canvas
         });
     };
-    const queueDraw = ({ instant = false } = {}) => {
+
+    const queueDraw = (options = {}) => {
+        pendingDrawOptions = {
+            instant: Boolean(options.instant),
+            preserveAnimation: Boolean(options.preserveAnimation)
+        };
+
         if (rafId) {
-            cancelAnimationFrame(rafId);
+            return;
         }
 
         rafId = requestAnimationFrame(() => {
-            draw({ instant });
+            draw(pendingDrawOptions ?? {});
         });
     };
+
     window.addEventListener("resize", queueDraw);
 
     navigationLane.__redrawTagConnections = queueDraw;
@@ -58,7 +68,9 @@ export function bindNavigationTagConnections({ appRoot }) {
         }
 
         clearCanvasHideTimer(canvas);
-        clearCanvasMorphTimer(canvas);
+        clearCanvasHideFrame(canvas);
+        clearCanvasAnimation(canvas);
+        clearCanvasAnimationFrame(canvas);
         window.removeEventListener("resize", queueDraw);
         navigationBody?.removeEventListener("scroll", queueDraw);
         resizeObserver?.disconnect();
@@ -75,8 +87,8 @@ export function bindNavigationTagConnections({ appRoot }) {
     queueDraw();
 }
 
-export function redrawNavigationTagConnections(appRoot, { instant = false } = {}) {
-    appRoot.querySelector(".lesson-lane--navigation")?.__redrawTagConnections?.({ instant });
+export function redrawNavigationTagConnections(appRoot, options = {}) {
+    appRoot.querySelector(".lesson-lane--navigation")?.__redrawTagConnections?.(options);
 }
 
 export function buildTagConnectionGeometry({ rootRect, buttonRect, targetRects, sideReferenceRect = rootRect }) {
@@ -132,34 +144,11 @@ export function buildTagConnectionGeometry({ rootRect, buttonRect, targetRects, 
 }
 
 export function buildContinuousConnectionPath(geometry) {
-    if (!geometry?.start || !Array.isArray(geometry.targets) || geometry.targets.length === 0) {
-        return "";
-    }
-
-    let carryX = resolveCarryX({
-        side: geometry.side,
-        currentCarryX: geometry.trunkX,
-        targetX: geometry.targets[0].x
-    });
-    const segments = [`M ${geometry.start.x} ${geometry.start.y}`, `H ${carryX}`];
-
-    geometry.targets.forEach((target, index) => {
-        const nextCarryX = resolveCarryX({
-            side: geometry.side,
-            currentCarryX: carryX,
-            targetX: target.x
-        });
-
-        segments.push(`V ${target.y}`);
-        segments.push(`H ${target.x}`);
-        segments.push(`H ${index === 0 ? carryX : nextCarryX}`);
-        carryX = index === 0 ? carryX : nextCarryX;
-    });
-
-    return segments.join(" ");
+    const polyline = buildContinuousConnectionPolyline(geometry);
+    return polyline ? buildPathDataFromPoints(polyline.points) : "";
 }
 
-function renderNavigationTagConnections({ instant = false, layoutRoot, navigationLane, mapRoot, canvas }) {
+function renderNavigationTagConnections({ instant = false, preserveAnimation = false, layoutRoot, navigationLane, mapRoot, canvas }) {
     const activeTag = normalizeTagToken(navigationLane.dataset.highlightTag);
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;
@@ -193,66 +182,341 @@ function renderNavigationTagConnections({ instant = false, layoutRoot, navigatio
 
     const previousState = navigationLane.__tagConnectionState ?? null;
     const accent = resolveAccentColor(button);
-    const nextPathData = buildContinuousConnectionPath(geometry);
-    const nextState = {
-        activeTag,
-        pathData: nextPathData,
-        pathLength: measurePathLength(nextPathData)
-    };
-    const renderMode = instant ? "instant" : resolveRenderMode(previousState, nextState);
-    const displayPathData = renderMode === "trim" && previousState
-        ? previousState.pathData
-        : nextState.pathData;
+    const nextState = createConnectionState(activeTag, geometry);
+    const renderState = resolveRenderState({
+        canvas,
+        instant,
+        preserveAnimation,
+        previousState,
+        nextState
+    });
+    const visiblePathData = buildPartialPathData(renderState.renderPoints, renderState.visibleLength);
+    const startDot = createCircleElement(
+        renderState.renderPoints[0].x,
+        renderState.renderPoints[0].y,
+        accent,
+        "tag-connection-map__dot tag-connection-map__dot--visible"
+    );
+    const targetDots = renderState.renderTargetPoints.map((target, index) => {
+        const isVisible = renderState.visibleLength >= renderState.renderTargetRevealLengths[index];
+        return createCircleElement(
+            target.x,
+            target.y,
+            accent,
+            `tag-connection-map__dot${isVisible ? " tag-connection-map__dot--visible" : ""}`
+        );
+    });
     const leadPath = createPathElement(
-        displayPathData,
+        visiblePathData,
         accent,
         "tag-connection-map__path tag-connection-map__path--lead"
     );
-    setPathAnimationMetrics(leadPath, renderMode === "trim" && previousState
-        ? previousState.pathLength
-        : nextState.pathLength);
 
     clearCanvasHideTimer(canvas);
     canvas.setAttribute("viewBox", `0 0 ${geometry.width} ${geometry.height}`);
     canvas.setAttribute("width", String(geometry.width));
     canvas.setAttribute("height", String(geometry.height));
-    canvas.replaceChildren(
-        leadPath,
-        createCircleElement(geometry.start.x, geometry.start.y, accent, "tag-connection-map__dot"),
-        ...geometry.targets.map((target) => (
-            createCircleElement(target.x, target.y, accent, "tag-connection-map__dot")
-        ))
-    );
-    renderConnection(canvas, leadPath, renderMode, previousState, nextState);
+    canvas.replaceChildren(leadPath, startDot, ...targetDots);
+    showCanvasSteady(canvas);
     navigationLane.__tagConnectionState = nextState;
+
+    if (renderState.isAnimating) {
+        scheduleCanvasAnimationFrame(canvas, navigationLane);
+    } else {
+        clearCanvasAnimationFrame(canvas);
+    }
 }
 
-function createPathElement(pathData, accent, className) {
-    const path = document.createElementNS(SVG_NAMESPACE, "path");
-    path.setAttribute("d", pathData);
-    path.setAttribute("class", className);
-    path.style.setProperty("--tag-connection-accent", accent);
-    return path;
+function createConnectionState(activeTag, geometry) {
+    const polyline = buildContinuousConnectionPolyline(geometry);
+    return {
+        activeTag,
+        pathData: buildPathDataFromPoints(polyline.points),
+        pathLength: polyline.length,
+        points: polyline.points,
+        targetPoints: polyline.targetPoints,
+        targetRevealLengths: polyline.targetRevealLengths
+    };
 }
 
-function createCircleElement(x, y, accent, className) {
-    const circle = document.createElementNS(SVG_NAMESPACE, "circle");
-    circle.setAttribute("cx", String(x));
-    circle.setAttribute("cy", String(y));
-    circle.setAttribute("r", "2.5");
-    circle.setAttribute("class", className);
-    circle.style.setProperty("--tag-connection-accent", accent);
-    return circle;
+function buildContinuousConnectionPolyline(geometry) {
+    if (!geometry?.start || !Array.isArray(geometry.targets) || geometry.targets.length === 0) {
+        return null;
+    }
+
+    const points = [copyPoint(geometry.start)];
+    const targetPoints = [];
+    const targetRevealLengths = [];
+    let pathLength = 0;
+    const carryX = geometry.trunkX;
+
+    pathLength += pushPolylinePoint(points, { x: carryX, y: geometry.start.y });
+
+    geometry.targets.forEach((target) => {
+        pathLength += pushPolylinePoint(points, { x: carryX, y: target.y });
+        pathLength += pushPolylinePoint(points, target);
+        targetPoints.push(copyPoint(target));
+        targetRevealLengths.push(pathLength);
+        pathLength += pushPolylinePoint(points, { x: carryX, y: target.y });
+    });
+
+    return {
+        points,
+        length: pathLength || 1,
+        targetPoints,
+        targetRevealLengths
+    };
+}
+
+function pushPolylinePoint(points, point) {
+    const lastPoint = points[points.length - 1];
+    if (lastPoint && lastPoint.x === point.x && lastPoint.y === point.y) {
+        return 0;
+    }
+
+    points.push(copyPoint(point));
+
+    if (!lastPoint) {
+        return 0;
+    }
+
+    return measureSegmentLength(lastPoint, point);
+}
+
+function buildPartialPathData(points, visibleLength) {
+    if (!Array.isArray(points) || points.length === 0) {
+        return "";
+    }
+
+    const commands = [`M ${points[0].x} ${points[0].y}`];
+    let remainingLength = Math.max(0, visibleLength);
+
+    for (let index = 0; index < points.length - 1; index += 1) {
+        const start = points[index];
+        const end = points[index + 1];
+        const segmentLength = measureSegmentLength(start, end);
+
+        if (segmentLength === 0 || remainingLength <= 0) {
+            continue;
+        }
+
+        if (remainingLength >= segmentLength) {
+            appendPathSegment(commands, end);
+            remainingLength -= segmentLength;
+            continue;
+        }
+
+        appendPathSegment(commands, interpolateSegmentPoint(start, end, remainingLength));
+        break;
+    }
+
+    return commands.join(" ");
+}
+
+function buildPathDataFromPoints(points) {
+    if (!Array.isArray(points) || points.length === 0) {
+        return "";
+    }
+
+    const commands = [`M ${points[0].x} ${points[0].y}`];
+    points.slice(1).forEach((point) => {
+        appendPathSegment(commands, point);
+    });
+    return commands.join(" ");
+}
+
+function appendPathSegment(commands, point) {
+    commands.push(`L ${point.x} ${point.y}`);
+}
+
+function interpolateSegmentPoint(start, end, visibleLength) {
+    const segmentLength = measureSegmentLength(start, end);
+    if (segmentLength === 0) {
+        return copyPoint(start);
+    }
+
+    const ratio = clampNumber(visibleLength / segmentLength, 0, 1);
+    return {
+        x: snapCoordinate(start.x + ((end.x - start.x) * ratio)),
+        y: snapCoordinate(start.y + ((end.y - start.y) * ratio))
+    };
+}
+
+function measureSegmentLength(start, end) {
+    return Math.abs(end.x - start.x) + Math.abs(end.y - start.y);
+}
+
+function resolveRenderState({ canvas, instant, preserveAnimation, previousState, nextState }) {
+    const now = performance.now();
+    const currentVisibleLength = readAnimatedVisibleLength(canvas, previousState?.pathLength ?? 0, now);
+    const animationRenderState = readAnimationRenderState(canvas);
+
+    if (instant) {
+        clearCanvasAnimation(canvas);
+        return {
+            visibleLength: nextState.pathLength,
+            isAnimating: false,
+            renderPoints: nextState.points,
+            renderTargetPoints: nextState.targetPoints,
+            renderTargetRevealLengths: nextState.targetRevealLengths
+        };
+    }
+
+    if (!previousState || previousState.activeTag !== nextState.activeTag) {
+        return createAnimatedRenderState(canvas, {
+            activeTag: nextState.activeTag,
+            fromLength: 0,
+            toLength: nextState.pathLength,
+            renderSourceState: nextState,
+            now
+        });
+    }
+
+    if (previousState.pathData === nextState.pathData) {
+        const visibleLength = readAnimatedVisibleLength(canvas, nextState.pathLength, now);
+        return {
+            visibleLength,
+            isAnimating: hasActiveAnimation(canvas),
+            renderPoints: animationRenderState?.renderPoints ?? nextState.points,
+            renderTargetPoints: animationRenderState?.renderTargetPoints ?? nextState.targetPoints,
+            renderTargetRevealLengths: animationRenderState?.renderTargetRevealLengths ?? nextState.targetRevealLengths
+        };
+    }
+
+    const isShrinking = isPathPrefix(nextState.pathData, previousState.pathData);
+    const renderSourceState = isShrinking ? previousState : nextState;
+
+    if (
+        preserveAnimation
+        || hasActiveAnimation(canvas)
+        || isPathPrefix(previousState.pathData, nextState.pathData)
+        || isShrinking
+    ) {
+        return createAnimatedRenderState(canvas, {
+            activeTag: nextState.activeTag,
+            fromLength: clampNumber(currentVisibleLength, 0, Math.max(previousState.pathLength, nextState.pathLength)),
+            toLength: nextState.pathLength,
+            renderSourceState,
+            now
+        });
+    }
+
+    clearCanvasAnimation(canvas);
+    return {
+        visibleLength: nextState.pathLength,
+        isAnimating: false,
+        renderPoints: nextState.points,
+        renderTargetPoints: nextState.targetPoints,
+        renderTargetRevealLengths: nextState.targetRevealLengths
+    };
+}
+
+function createAnimatedRenderState(canvas, { activeTag, fromLength, toLength, renderSourceState, now }) {
+    const clampedFromLength = clampNumber(fromLength, 0, Math.max(fromLength, toLength));
+    if (Math.abs(toLength - clampedFromLength) < 0.5) {
+        clearCanvasAnimation(canvas);
+        return {
+            visibleLength: toLength,
+            isAnimating: false,
+            renderPoints: renderSourceState.points,
+            renderTargetPoints: renderSourceState.targetPoints,
+            renderTargetRevealLengths: renderSourceState.targetRevealLengths
+        };
+    }
+
+    canvas.__tagConnectionAnimation = {
+        activeTag,
+        fromLength: clampedFromLength,
+        toLength,
+        renderPoints: renderSourceState.points,
+        renderTargetPoints: renderSourceState.targetPoints,
+        renderTargetRevealLengths: renderSourceState.targetRevealLengths,
+        startedAt: now,
+        duration: resolveAnimationDuration(Math.abs(toLength - clampedFromLength))
+    };
+
+    return {
+        visibleLength: clampedFromLength,
+        isAnimating: true,
+        renderPoints: renderSourceState.points,
+        renderTargetPoints: renderSourceState.targetPoints,
+        renderTargetRevealLengths: renderSourceState.targetRevealLengths
+    };
+}
+
+function readAnimatedVisibleLength(canvas, fallbackLength, now = performance.now()) {
+    const animation = canvas.__tagConnectionAnimation;
+    if (!animation) {
+        return fallbackLength;
+    }
+
+    const elapsed = Math.max(0, now - animation.startedAt);
+    const progress = animation.duration <= 0 ? 1 : clampNumber(elapsed / animation.duration, 0, 1);
+    const currentLength = animation.fromLength + ((animation.toLength - animation.fromLength) * progress);
+
+    if (progress >= 1) {
+        clearCanvasAnimation(canvas);
+        return animation.toLength;
+    }
+
+    return currentLength;
+}
+
+function resolveAnimationDuration(distance) {
+    return Math.max(CONNECTION_MIN_ANIMATION_MS, distance / CONNECTION_DRAW_SPEED_PX_PER_MS);
+}
+
+function readAnimationRenderState(canvas) {
+    const animation = canvas.__tagConnectionAnimation;
+    if (!animation) {
+        return null;
+    }
+
+    return {
+        renderPoints: animation.renderPoints,
+        renderTargetPoints: animation.renderTargetPoints,
+        renderTargetRevealLengths: animation.renderTargetRevealLengths
+    };
+}
+
+function hasActiveAnimation(canvas) {
+    return Boolean(canvas.__tagConnectionAnimation);
+}
+
+function scheduleCanvasAnimationFrame(canvas, navigationLane) {
+    if (canvas.__tagConnectionAnimationFrame) {
+        return;
+    }
+
+    canvas.__tagConnectionAnimationFrame = window.requestAnimationFrame(() => {
+        canvas.__tagConnectionAnimationFrame = 0;
+        navigationLane.__redrawTagConnections?.({ preserveAnimation: true });
+    });
+}
+
+function clearCanvasAnimationFrame(canvas) {
+    if (!canvas.__tagConnectionAnimationFrame) {
+        return;
+    }
+
+    window.cancelAnimationFrame(canvas.__tagConnectionAnimationFrame);
+    canvas.__tagConnectionAnimationFrame = 0;
 }
 
 function clearCanvas(canvas) {
     clearCanvasHideTimer(canvas);
-    clearCanvasMorphTimer(canvas);
+    clearCanvasHideFrame(canvas);
+    clearCanvasAnimation(canvas);
+    clearCanvasAnimationFrame(canvas);
     canvas.removeAttribute("viewBox");
     canvas.classList.remove("tag-connection-map__canvas--visible");
     canvas.classList.remove("tag-connection-map__canvas--instant");
     canvas.classList.remove("tag-connection-map__canvas--steady");
     canvas.replaceChildren();
+}
+
+function clearCanvasAnimation(canvas) {
+    canvas.__tagConnectionAnimation = null;
 }
 
 function resolveAccentColor(element) {
@@ -284,34 +548,22 @@ function clampNumber(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-function resolveCarryX({ side, currentCarryX, targetX }) {
-    if (side === "left") {
-        return Math.min(targetX - TARGET_RETURN_GAP_PX, currentCarryX + TARGET_RETURN_GAP_PX);
-    }
-
-    return Math.max(targetX + TARGET_RETURN_GAP_PX, currentCarryX - TARGET_RETURN_GAP_PX);
+function createPathElement(pathData, accent, className) {
+    const path = document.createElementNS(SVG_NAMESPACE, "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("class", className);
+    path.style.setProperty("--tag-connection-accent", accent);
+    return path;
 }
 
-function setPathAnimationMetrics(path, pathLength = null) {
-    const resolvedPathLength = pathLength ?? measurePathLength(path.getAttribute("d") ?? "");
-    path.style.setProperty("--tag-connection-length", String(resolvedPathLength || 1));
-    return resolvedPathLength || 1;
-}
-
-function revealCanvas(canvas, { animate }) {
-    clearCanvasHideTimer(canvas);
-    canvas.classList.remove("tag-connection-map__canvas--visible");
-    canvas.classList.remove("tag-connection-map__canvas--steady");
-    canvas.classList.toggle("tag-connection-map__canvas--instant", !animate);
-
-    requestAnimationFrame(() => {
-        canvas.classList.add("tag-connection-map__canvas--visible");
-        if (!animate) {
-            requestAnimationFrame(() => {
-                canvas.classList.remove("tag-connection-map__canvas--instant");
-            });
-        }
-    });
+function createCircleElement(x, y, accent, className) {
+    const circle = document.createElementNS(SVG_NAMESPACE, "circle");
+    circle.setAttribute("cx", String(x));
+    circle.setAttribute("cy", String(y));
+    circle.setAttribute("r", "2.5");
+    circle.setAttribute("class", className);
+    circle.style.setProperty("--tag-connection-accent", accent);
+    return circle;
 }
 
 function hideCanvas(canvas) {
@@ -321,10 +573,17 @@ function hideCanvas(canvas) {
     }
 
     clearCanvasHideTimer(canvas);
-    canvas.classList.remove("tag-connection-map__canvas--visible");
-    canvas.__tagConnectionHideTimer = window.setTimeout(() => {
-        clearCanvas(canvas);
-    }, CONNECTION_FADE_OUT_MS);
+    clearCanvasHideFrame(canvas);
+    clearCanvasAnimation(canvas);
+    clearCanvasAnimationFrame(canvas);
+    canvas.classList.remove("tag-connection-map__canvas--instant");
+    canvas.__tagConnectionHideFrame = window.requestAnimationFrame(() => {
+        canvas.__tagConnectionHideFrame = 0;
+        canvas.classList.remove("tag-connection-map__canvas--visible");
+        canvas.__tagConnectionHideTimer = window.setTimeout(() => {
+            clearCanvas(canvas);
+        }, CONNECTION_FADE_OUT_MS);
+    });
 }
 
 function clearCanvasHideTimer(canvas) {
@@ -336,97 +595,17 @@ function clearCanvasHideTimer(canvas) {
     canvas.__tagConnectionHideTimer = 0;
 }
 
-function resolveRenderMode(previousState, nextState) {
-    if (!previousState || previousState.activeTag !== nextState.activeTag) {
-        return "reveal";
+function clearCanvasHideFrame(canvas) {
+    if (!canvas.__tagConnectionHideFrame) {
+        return;
     }
 
-    if (previousState.pathData === nextState.pathData) {
-        return "steady";
-    }
-
-    if (isPathPrefix(previousState.pathData, nextState.pathData)) {
-        return "extend";
-    }
-
-    if (isPathPrefix(nextState.pathData, previousState.pathData)) {
-        return "trim";
-    }
-
-    return "steady";
-}
-
-function renderConnection(canvas, leadPath, renderMode, previousState, nextState) {
-    switch (renderMode) {
-        case "instant":
-            showCanvasSteady(canvas);
-            return;
-        case "reveal":
-            revealCanvas(canvas, { animate: true });
-            return;
-        case "extend":
-            extendCanvasPath(canvas, leadPath, previousState, nextState);
-            return;
-        case "trim":
-            trimCanvasPath(canvas, leadPath, previousState, nextState);
-            return;
-        case "steady":
-        default:
-            showCanvasSteady(canvas);
-    }
-}
-
-function extendCanvasPath(canvas, leadPath, previousState, nextState) {
-    const previousLength = previousState?.pathLength ?? 0;
-    const nextLength = nextState.pathLength;
-    const preservedLength = clampNumber(previousLength, 0, nextLength);
-
-    showCanvasSteady(canvas);
-    leadPath.style.strokeDasharray = String(nextLength);
-    leadPath.style.strokeDashoffset = String(Math.max(nextLength - preservedLength, 0));
-
-    requestAnimationFrame(() => {
-        canvas.classList.remove("tag-connection-map__canvas--instant");
-        leadPath.style.transition = [
-            "opacity 180ms ease",
-            `stroke-dashoffset ${CONNECTION_EXTEND_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
-        ].join(", ");
-        leadPath.style.strokeDashoffset = "0";
-    });
-}
-
-function trimCanvasPath(canvas, leadPath, previousState, nextState) {
-    const previousLength = previousState?.pathLength ?? 0;
-    const nextLength = nextState.pathLength;
-    const hiddenLength = Math.max(previousLength - nextLength, 0);
-
-    showCanvasSteady(canvas);
-    leadPath.style.strokeDasharray = String(previousLength);
-    leadPath.style.strokeDashoffset = "0";
-
-    requestAnimationFrame(() => {
-        canvas.classList.remove("tag-connection-map__canvas--instant");
-        leadPath.style.transition = [
-            "opacity 180ms ease",
-            `stroke-dashoffset ${CONNECTION_TRIM_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`
-        ].join(", ");
-        leadPath.style.strokeDashoffset = String(hiddenLength);
-    });
-
-    clearCanvasMorphTimer(canvas);
-    canvas.__tagConnectionMorphTimer = window.setTimeout(() => {
-        leadPath.setAttribute("d", nextState.pathData);
-        setPathAnimationMetrics(leadPath, nextLength);
-        leadPath.style.strokeDasharray = String(nextLength);
-        leadPath.style.strokeDashoffset = "0";
-        showCanvasSteady(canvas);
-        canvas.__tagConnectionMorphTimer = 0;
-    }, CONNECTION_TRIM_MS);
+    window.cancelAnimationFrame(canvas.__tagConnectionHideFrame);
+    canvas.__tagConnectionHideFrame = 0;
 }
 
 function showCanvasSteady(canvas) {
     clearCanvasHideTimer(canvas);
-    clearCanvasMorphTimer(canvas);
     canvas.classList.add("tag-connection-map__canvas--visible");
     canvas.classList.add("tag-connection-map__canvas--instant");
     canvas.classList.add("tag-connection-map__canvas--steady");
@@ -444,25 +623,13 @@ function isPathPrefix(prefixPath, fullPath) {
     return fullPath === prefixPath || fullPath.startsWith(`${prefixPath} `);
 }
 
-function measurePathLength(pathData) {
-    if (!pathData) {
-        return 1;
-    }
-
-    const probePath = document.createElementNS(SVG_NAMESPACE, "path");
-    probePath.setAttribute("d", pathData);
-    return typeof probePath.getTotalLength === "function" ? (probePath.getTotalLength() || 1) : 1;
-}
-
 function snapCoordinate(value) {
     return Math.round(value * 2) / 2;
 }
 
-function clearCanvasMorphTimer(canvas) {
-    if (!canvas.__tagConnectionMorphTimer) {
-        return;
-    }
-
-    window.clearTimeout(canvas.__tagConnectionMorphTimer);
-    canvas.__tagConnectionMorphTimer = 0;
+function copyPoint(point) {
+    return {
+        x: point.x,
+        y: point.y
+    };
 }

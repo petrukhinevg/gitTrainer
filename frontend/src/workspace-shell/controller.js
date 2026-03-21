@@ -659,7 +659,7 @@ export function createCatalogWorkspaceController({
             try {
                 await animateScenarioCollapse(appRoot, slug, {
                     onFrame: () => {
-                        redrawNavigationTagConnections(appRoot, { instant: true });
+                        redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 });
                 collapseScenario(slug);
@@ -680,7 +680,7 @@ export function createCatalogWorkspaceController({
             await Promise.all([
                 animateScenarioExpansion(appRoot, slug, {
                     onFrame: () => {
-                        redrawNavigationTagConnections(appRoot, { instant: true });
+                        redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 }),
                 dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false })

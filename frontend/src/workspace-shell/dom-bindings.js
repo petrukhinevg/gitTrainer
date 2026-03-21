@@ -160,7 +160,7 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
     }
 
     const applyNavigationHighlight = (hoveredTag = null) => {
-        const activeTag = hoveredTag ?? state.pinnedNavigationTag;
+        const activeTag = state.pinnedNavigationTag ?? hoveredTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
         } else {

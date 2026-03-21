@@ -54,11 +54,12 @@ test("сохраняет правую ориентацию тега при ка�
     });
 
     assert.equal(geometry.side, "right");
-    assert.ok(geometry.targets[0].x > sideReferenceRect.width);
+    assert.ok(geometry.targets[0].x > geometry.start.x);
+    assert.ok(geometry.targets[0].x < geometry.trunkX);
     assert.ok(geometry.trunkX > geometry.start.x);
 });
 
-test("после соединения с блоком линия смещается и только потом идет вниз", () => {
+test("после соединения с блоком линия возвращается на ту же вертикаль", () => {
     const geometry = buildTagConnectionGeometry({
         rootRect: createRect(0, 0, 280, 640),
         buttonRect: createRect(138, 20, 102, 28),
@@ -69,20 +70,19 @@ test("после соединения с блоком линия смещает�
     });
 
     const path = buildContinuousConnectionPath(geometry);
-    const expectedStepOut = `H ${geometry.targets[0].x} H `;
-    const secondVerticalPrefix = `V ${geometry.targets[1].y}`;
+    const points = parsePathPoints(path);
+    const firstReturnPoint = points[4];
+    const secondVerticalPoint = points[5];
 
     assert.match(path, /^M /);
-    assert.ok(path.includes(expectedStepOut));
-    assert.ok(path.includes(secondVerticalPrefix));
-
-    const firstReturnX = extractReturnXAfterFirstTarget(path, geometry.targets[0].x);
-    assert.notEqual(firstReturnX, geometry.trunkX);
-    assert.ok(firstReturnX < geometry.trunkX);
-    assert.ok(firstReturnX > geometry.targets[0].x);
+    assert.deepEqual(points[3], geometry.targets[0]);
+    assert.equal(firstReturnPoint.y, geometry.targets[0].y);
+    assert.equal(secondVerticalPoint.x, firstReturnPoint.x);
+    assert.equal(secondVerticalPoint.y, geometry.targets[1].y);
+    assert.equal(firstReturnPoint.x, geometry.trunkX);
 });
 
-test("первая вертикаль совпадает с вертикалью после первого блока", () => {
+test("все вертикальные сегменты идут по одной координате", () => {
     const geometry = buildTagConnectionGeometry({
         rootRect: createRect(0, 0, 280, 640),
         buttonRect: createRect(138, 20, 102, 28),
@@ -93,9 +93,15 @@ test("первая вертикаль совпадает с вертикалью
     });
 
     const path = buildContinuousConnectionPath(geometry);
-    const firstReturnX = extractReturnXAfterFirstTarget(path, geometry.targets[0].x);
+    const points = parsePathPoints(path);
+    const firstReturnPoint = points[1];
+    const firstVerticalPoint = points[2];
 
-    assert.ok(path.startsWith(`M ${geometry.start.x} ${geometry.start.y} H ${firstReturnX} V ${geometry.targets[0].y}`));
+    assert.deepEqual(points[0], geometry.start);
+    assert.equal(firstReturnPoint.x, firstVerticalPoint.x);
+    assert.equal(firstReturnPoint.x, geometry.trunkX);
+    assert.equal(firstReturnPoint.y, geometry.start.y);
+    assert.equal(firstVerticalPoint.y, geometry.targets[0].y);
 });
 
 function createRect(left, top, width, height) {
@@ -109,7 +115,9 @@ function createRect(left, top, width, height) {
     };
 }
 
-function extractReturnXAfterFirstTarget(path, targetX) {
-    const match = path.match(new RegExp(`H ${targetX} H (\\d+(?:\\.\\d+)?)`));
-    return Number(match?.[1]);
+function parsePathPoints(path) {
+    return Array.from(path.matchAll(/[ML] (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)/g), (match) => ({
+        x: Number(match[1]),
+        y: Number(match[2])
+    }));
 }
