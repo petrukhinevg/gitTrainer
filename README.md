@@ -69,13 +69,13 @@ docker compose -f docker-compose.postgres.yml up -d
 - установит frontend-зависимости при необходимости
 - соберёт SPA
 - скопирует frontend-ассеты в classpath backend
-- запустит Spring Boot на `http://localhost:8082`
+- запустит Spring Boot на `http://localhost:8083`
 
 ### 4. Открыть приложение
 
-- UI: `http://localhost:8082/`
-- каталог сценариев API: `http://localhost:8082/api/scenarios`
-- прогресс API: `http://localhost:8082/api/progress`
+- UI: `http://localhost:8083/`
+- каталог сценариев API: `http://localhost:8083/api/scenarios`
+- прогресс API: `http://localhost:8083/api/progress`
 
 ### 5. При необходимости переопределить доступы к Postgres
 
@@ -160,6 +160,7 @@ docker compose -f docker-compose.postgres.yml down -v
 - `docs/BACKEND_ROADMAP.md`: план поставки backend-части
 - `docs/FRONTEND_ROADMAP.md`: план поставки frontend-части
 - `docs/TRACKER_WORKFLOW.md`: декомпозиция задач, рабочий workflow и гигиена scope
+- `docs/EPIC_324_BASELINE.md`: baseline runtime, API и SPA-контрактов для рефакторинга
 - `docs/agent/GIT_WORKFLOW.md`: ветки, коммиты, push, PR и проверки перед push
 - `docs/agent/BOARD_WORKFLOW.md`: labels, parent/sub-issue и project board
 - `docs/agent/GITHUB_AUTOMATION.md`: `gh`, GraphQL и GitHub automation notes
