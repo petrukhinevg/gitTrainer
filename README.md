@@ -61,15 +61,34 @@ docker compose -f docker-compose.postgres.yml up -d
 Из корня репозитория:
 
 ```bash
-./gradlew syncFrontendAssets bootRun
+./gradlew bootRun
 ```
 
 Эта команда:
 
+- проверит, что `npm` доступен
 - установит frontend-зависимости при необходимости
 - соберёт SPA
 - скопирует frontend-ассеты в classpath backend
+- проверит, что `8083` свободен
 - запустит Spring Boot на `http://localhost:8083`
+
+Если `8083` уже занят, `bootRun` теперь падает заранее с понятным сообщением. На macOS и Linux в тексте также показывается process, который слушает порт.
+
+Если нужен запуск с автоматическим `docker compose up`, ожиданием healthy-состояния Postgres и дополнительной диагностикой Docker runtime, используй:
+
+```bash
+./gradlew bootRunPostgres
+```
+
+`bootRunPostgres`:
+
+- проверяет Docker daemon
+- при активном context `colima` автоматически вызывает `colima start`
+- поднимает `postgres` через `docker compose`
+- ждёт healthy-состояние контейнера
+- тоже валидирует свободный `8083`
+- затем запускает backend с профилем `postgres`
 
 ### 4. Открыть приложение
 
@@ -97,7 +116,7 @@ POSTGRES_PASSWORD=git_trainer \
 Если нужен локальный fallback без базы:
 
 ```bash
-SPRING_PROFILES_ACTIVE=local-memory ./gradlew syncFrontendAssets bootRun
+SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun
 ```
 
 ## Изолированная работа с frontend
@@ -112,7 +131,19 @@ npm run dev
 
 Открывай `http://localhost:5173/`.
 
-Важно: по умолчанию SPA стартует с источником данных `backend-api`. У `vite` сейчас нет proxy на backend, поэтому без backend-запуска переключи источник данных в UI на `local-fixture`, иначе запросы к `/api/...` будут завершаться ошибкой.
+Важно:
+
+- по умолчанию SPA стартует с источником данных `backend-api`
+- Vite уже проксирует `/api` на `http://localhost:8083`
+- если backend не запущен, запросы всё равно будут падать, поэтому в таком случае переключи источник данных в UI на `local-fixture`
+- backend origin для dev-прокси можно переопределить через `BACKEND_DEV_ORIGIN`
+
+Пример:
+
+```bash
+cd frontend
+BACKEND_DEV_ORIGIN=http://localhost:8090 npm run dev
+```
 
 ## Полезные команды
 
@@ -120,6 +151,8 @@ npm run dev
 - `cd frontend && npm run build` для production-сборки SPA
 - `./gradlew check` для проверки backend-тестов и интеграции frontend-сборки
 - `./gradlew test` для backend-тестов
+- `./gradlew bootRunPostgres` для полного happy path с Docker/Postgres preflight
+- `./gradlew postgresComposeDown` для остановки локального Postgres
 
 ## Остановка и сброс
 
@@ -147,7 +180,11 @@ docker compose -f docker-compose.postgres.yml down -v
 - `./gradlew postgresComposeDown` чтобы остановить локальный контейнер Postgres
 - можно переопределить доступы через `POSTGRES_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
 - `SPRING_PROFILES_ACTIVE=local-memory ./gradlew bootRun` если нужен явный запуск без Postgres (только локальный fallback)
-- в IntelliJ IDEA доступен shared run configuration `.run/GitTrainer Local Memory.run.xml`, который запускает `GitTrainerApplication` с профилем `local-memory`
+- в IntelliJ IDEA доступны shared run configuration:
+  - `.run/GitTrainer Default.run.xml`
+  - `.run/GitTrainer Postgres.run.xml`
+  - `.run/GitTrainer Local Memory.run.xml`
+  - `.run/GitTrainer Postgres Down.run.xml`
 
 Основные документы проекта:
 
