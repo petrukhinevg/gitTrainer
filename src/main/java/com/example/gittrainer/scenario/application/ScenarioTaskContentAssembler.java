@@ -1,32 +1,30 @@
 package com.example.gittrainer.scenario.application;
 
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
-import com.example.gittrainer.scenario.infrastructure.ScenarioTaskContentFixture;
-import com.example.gittrainer.scenario.infrastructure.ScenarioTaskContentFixtureSource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ScenarioTaskContentAssembler {
 
-    private final ScenarioTaskContentFixtureSource scenarioTaskContentFixtureSource;
+    private final ScenarioTaskContentGateway scenarioTaskContentGateway;
 
-    public ScenarioTaskContentAssembler(ScenarioTaskContentFixtureSource scenarioTaskContentFixtureSource) {
-        this.scenarioTaskContentFixtureSource = scenarioTaskContentFixtureSource;
+    public ScenarioTaskContentAssembler(ScenarioTaskContentGateway scenarioTaskContentGateway) {
+        this.scenarioTaskContentGateway = scenarioTaskContentGateway;
     }
 
     public ScenarioWorkspaceDetail.ScenarioTaskPreview assemble(String scenarioSlug) {
-        ScenarioTaskContentFixture fixture = scenarioTaskContentFixtureSource.fixtureFor(scenarioSlug);
+        ScenarioTaskContent taskContent = scenarioTaskContentGateway.loadTaskContent(scenarioSlug);
         return new ScenarioWorkspaceDetail.ScenarioTaskPreview(
-                fixture.status(),
-                fixture.goal(),
-                fixture.instructions().stream()
+                taskContent.status(),
+                taskContent.goal(),
+                taskContent.instructions().stream()
                         .sorted((left, right) -> Integer.compare(left.position(), right.position()))
                         .map(instruction -> new ScenarioWorkspaceDetail.ScenarioTaskInstruction(
                                 instruction.id(),
                                 instruction.text()
                         ))
                         .toList(),
-                fixture.steps().stream()
+                taskContent.steps().stream()
                         .sorted((left, right) -> Integer.compare(left.position(), right.position()))
                         .map(step -> new ScenarioWorkspaceDetail.ScenarioTaskStep(
                                 step.position(),
@@ -34,7 +32,7 @@ public class ScenarioTaskContentAssembler {
                                 step.detail()
                         ))
                         .toList(),
-                fixture.annotations().stream()
+                taskContent.annotations().stream()
                         .sorted((left, right) -> Integer.compare(left.position(), right.position()))
                         .map(annotation -> new ScenarioWorkspaceDetail.ScenarioTaskAnnotation(
                                 annotation.label(),

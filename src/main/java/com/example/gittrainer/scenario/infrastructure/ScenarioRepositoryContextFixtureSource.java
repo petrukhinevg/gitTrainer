@@ -1,5 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextGateway;
 import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.stereotype.Component;
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class ScenarioRepositoryContextFixtureSource {
+public class ScenarioRepositoryContextFixtureSource implements ScenarioRepositoryContextGateway {
 
     private static final Map<String, ScenarioWorkspaceDetail.ScenarioRepositoryContext> FIXTURES = Map.of(
             "status-basics", context(
@@ -142,7 +143,8 @@ public class ScenarioRepositoryContextFixtureSource {
             )
     );
 
-    public ScenarioWorkspaceDetail.ScenarioRepositoryContext fixtureFor(String scenarioSlug) {
+    @Override
+    public ScenarioWorkspaceDetail.ScenarioRepositoryContext loadRepositoryContext(String scenarioSlug) {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture = FIXTURES.get(scenarioSlug);
         if (fixture == null) {
             throw new ScenarioRepositoryContextNotAuthoredException(scenarioSlug);

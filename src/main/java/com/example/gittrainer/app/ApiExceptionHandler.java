@@ -2,8 +2,8 @@ package com.example.gittrainer.app;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
 import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
-import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
 import org.springframework.http.ProblemDetail;
@@ -28,8 +28,8 @@ public class ApiExceptionHandler {
         return ApiProblemDetailFactory.missingScenario(exception);
     }
 
-    @ExceptionHandler(ScenarioCatalogSourceUnavailableException.class)
-    ProblemDetail handleUnavailableSource(ScenarioCatalogSourceUnavailableException exception) {
+    @ExceptionHandler(ScenarioSourceUnavailableException.class)
+    ProblemDetail handleUnavailableSource(ScenarioSourceUnavailableException exception) {
         return ApiProblemDetailFactory.unavailableScenarioSource(exception);
     }
 

@@ -1,5 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
 import com.example.gittrainer.scenario.domain.ScenarioDifficulty;
 import com.example.gittrainer.scenario.domain.ScenarioSummary;
 import org.springframework.stereotype.Component;
@@ -69,7 +70,7 @@ public class ScenarioCatalogFixtureSource {
     }
 
     public ScenarioCatalogFixture unavailableCatalog() {
-        throw new ScenarioCatalogSourceUnavailableException(
+        throw new ScenarioSourceUnavailableException(
                 "mvp-fixture-unavailable",
                 "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
         );

@@ -2,9 +2,9 @@ package com.example.gittrainer.progress.api;
 
 import com.example.gittrainer.GitTrainerApplication;
 import com.example.gittrainer.scenario.application.ScenarioCatalogGateway;
+import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
 import com.example.gittrainer.scenario.domain.CatalogBrowseQuery;
 import com.example.gittrainer.scenario.domain.ScenarioSummary;
-import com.example.gittrainer.scenario.infrastructure.ScenarioCatalogSourceUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,7 +61,7 @@ class ProgressApiExceptionHandlingTest {
             return new ScenarioCatalogGateway() {
                 @Override
                 public List<ScenarioSummary> loadCatalog(CatalogBrowseQuery query) {
-                    throw new ScenarioCatalogSourceUnavailableException(
+                    throw new ScenarioSourceUnavailableException(
                             "mvp-fixture-unavailable",
                             "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
                     );
