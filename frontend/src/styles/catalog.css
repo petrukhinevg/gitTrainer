@@ -9,60 +9,10 @@
 
 .scenario-legend {
     display: grid;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: 6px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 12px;
-    background: rgba(255, 250, 241, 0.28);
-}
-
-.scenario-legend__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.scenario-legend__details {
-    position: relative;
-}
-
-.scenario-legend__button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border: 1px solid rgba(31, 23, 32, 0.12);
-    border-radius: 999px;
-    background: rgba(255, 250, 241, 0.5);
-    color: var(--ink-soft);
-    cursor: pointer;
-    list-style: none;
-    font-family: "Courier New", Courier, monospace;
-    font-size: 0.82rem;
-}
-
-.scenario-legend__button::-webkit-details-marker {
-    display: none;
-}
-
-.scenario-legend__popover {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 2;
-    width: min(260px, 72vw);
-    display: grid;
-    gap: 6px;
-    padding: 10px;
-    border: 1px solid rgba(31, 23, 32, 0.12);
-    border-radius: 12px;
-    background: rgba(255, 250, 241, 0.96);
-    box-shadow: 0 18px 32px rgba(22, 46, 56, 0.14);
 }
 
 .scenario-legend__tags {
@@ -121,9 +71,92 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-accent) 18%, transparent);
 }
 
+.tag-connection-map {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    isolation: isolate;
+}
+
+.tag-connection-map__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 240ms ease;
+}
+
+.tag-connection-map__canvas--visible {
+    opacity: 1;
+}
+
+.tag-connection-map__canvas--instant,
+.tag-connection-map__canvas--instant .tag-connection-map__path,
+.tag-connection-map__canvas--instant .tag-connection-map__dot {
+    transition: none;
+}
+
+.tag-connection-map__path {
+    --tag-connection-accent: #456d9a;
+    fill: none;
+    stroke: var(--tag-connection-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    shape-rendering: geometricPrecision;
+    opacity: 0;
+    stroke-dasharray: var(--tag-connection-length, 1);
+    stroke-dashoffset: var(--tag-connection-length, 1);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tag-connection-accent) 24%, transparent));
+    transition:
+        opacity 180ms ease,
+        stroke-dashoffset 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tag-connection-map__path--lead {
+    stroke-width: 3.5;
+}
+
+.tag-connection-map__canvas--visible .tag-connection-map__path {
+    opacity: 0.9;
+    stroke-dashoffset: 0;
+}
+
+.tag-connection-map__dot {
+    --tag-connection-accent: #456d9a;
+    fill: color-mix(in srgb, var(--tag-connection-accent) 72%, white);
+    stroke: rgba(255, 250, 241, 0.92);
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0.72);
+    transition:
+        opacity 180ms ease 60ms,
+        transform 240ms cubic-bezier(0.22, 1, 0.36, 1) 60ms;
+}
+
+.tag-connection-map__canvas--visible .tag-connection-map__dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.scenario-legend,
+.flow-block-list,
+.flow-node,
+.flow-subtask-placeholder {
+    position: relative;
+    z-index: 1;
+}
+
 .flow-block-list {
-    --flow-tag-lane-gap: 2px;
-    --flow-graph-gutter: 0px;
     display: grid;
     gap: 6px;
     width: 100%;
@@ -221,73 +254,6 @@
     box-sizing: border-box;
 }
 
-.flow-node__graph {
-    display: none;
-}
-
-.flow-tag-line {
-    position: absolute;
-    top: 4px;
-    bottom: 4px;
-    left: calc(var(--flow-tag-lane, 0) * var(--flow-tag-lane-gap, 6px));
-    width: 8px;
-    opacity: 0.12;
-    transform: translateX(-1px);
-    transform-origin: center;
-    transition: opacity 180ms ease, transform 220ms ease;
-}
-
-.flow-tag-line__stem,
-.flow-tag-line__node,
-.flow-tag-line__branch {
-    position: absolute;
-    background: var(--tag-accent);
-}
-
-.flow-tag-line__stem {
-    left: 1px;
-    width: 1.5px;
-    border-radius: 999px;
-}
-
-.flow-tag-line__stem--top {
-    top: 0;
-    bottom: calc(50% + 1px);
-}
-
-.flow-tag-line__stem--bottom {
-    top: calc(50% + 3px);
-    bottom: 0;
-}
-
-.flow-tag-line--first .flow-tag-line__stem--top {
-    top: calc(50% - 0.5px);
-}
-
-.flow-tag-line--last .flow-tag-line__stem--bottom {
-    bottom: calc(50% - 2.5px);
-}
-
-.flow-tag-line__node {
-    top: 50%;
-    left: 0;
-    width: 4px;
-    height: 4px;
-    border-radius: 999px;
-    transform: translateY(-50%);
-    box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--tag-accent) 14%, transparent);
-}
-
-.flow-tag-line__branch {
-    top: 50%;
-    left: 3px;
-    width: 9px;
-    height: 1.5px;
-    border-radius: 999px;
-    transform: translateY(-50%);
-    clip-path: polygon(0 0, 100% 0, 68% 50%, 100% 100%, 0 100%, 38% 50%);
-}
-
 .flow-block__sr-tags {
     position: absolute;
     width: 1px;
@@ -347,90 +313,47 @@
     display: block;
 }
 
-.lesson-lane--navigation[data-highlight-tag="status"] .flow-node[data-tags~="status"] .flow-tag-line--status,
-.lesson-lane--navigation[data-highlight-tag="working-tree"] .flow-node[data-tags~="working-tree"] .flow-tag-line--working-tree,
-.lesson-lane--navigation[data-highlight-tag="basics"] .flow-node[data-tags~="basics"] .flow-tag-line--basics,
-.lesson-lane--navigation[data-highlight-tag="branching"] .flow-node[data-tags~="branching"] .flow-tag-line--branching,
-.lesson-lane--navigation[data-highlight-tag="navigation"] .flow-node[data-tags~="navigation"] .flow-tag-line--navigation,
-.lesson-lane--navigation[data-highlight-tag="history"] .flow-node[data-tags~="history"] .flow-tag-line--history,
-.lesson-lane--navigation[data-highlight-tag="cleanup"] .flow-node[data-tags~="cleanup"] .flow-tag-line--cleanup,
-.lesson-lane--navigation[data-highlight-tag="planning"] .flow-node[data-tags~="planning"] .flow-tag-line--planning,
-.lesson-lane--navigation[data-highlight-tag="remote"] .flow-node[data-tags~="remote"] .flow-tag-line--remote,
-.lesson-lane--navigation[data-highlight-tag="inspection"] .flow-node[data-tags~="inspection"] .flow-tag-line--inspection {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.flow-tag-line--status,
 .scenario-legend__tag--status {
     --tag-accent: #4c7b67;
 }
 
-.flow-tag-line--working-tree,
 .scenario-legend__tag--working-tree {
     --tag-accent: #6b8f4e;
 }
 
-.flow-tag-line--basics,
 .scenario-legend__tag--basics {
     --tag-accent: #c48a3a;
 }
 
-.flow-tag-line--branching,
 .scenario-legend__tag--branching {
     --tag-accent: #456d9a;
 }
 
-.flow-tag-line--navigation,
 .scenario-legend__tag--navigation {
     --tag-accent: #8e5aa8;
 }
 
-.flow-tag-line--history,
 .scenario-legend__tag--history {
     --tag-accent: #9a5f45;
 }
 
-.flow-tag-line--cleanup,
 .scenario-legend__tag--cleanup {
     --tag-accent: #b65b5b;
 }
 
-.flow-tag-line--planning,
 .scenario-legend__tag--planning {
     --tag-accent: #5179a4;
 }
 
-.flow-tag-line--remote,
 .scenario-legend__tag--remote {
     --tag-accent: #2d7f8c;
 }
 
-.flow-tag-line--inspection,
 .scenario-legend__tag--inspection {
     --tag-accent: #7a7d39;
 }
 
-.flow-tag-line--status,
-.flow-tag-line--working-tree,
-.flow-tag-line--basics,
-.flow-tag-line--branching,
-.flow-tag-line--navigation,
-.flow-tag-line--history,
-.flow-tag-line--cleanup,
-.flow-tag-line--planning,
-.flow-tag-line--remote,
-.flow-tag-line--inspection {
-    background: var(--tag-accent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--tag-accent) 24%, transparent);
-}
-
 @media (max-width: 960px) {
-    .scenario-legend__popover {
-        left: 0;
-        right: auto;
-    }
-
     .flow-block-list,
     .flow-subtask-group {
         width: 100%;
@@ -439,9 +362,6 @@
 
     .flow-block {
         min-width: 0;
-    }
-    .flow-node__graph {
-        width: var(--flow-graph-gutter, 12px);
     }
 }
 

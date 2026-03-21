@@ -14,6 +14,11 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
             <div class="lesson-layout__lane lesson-layout__lane--practice">
                 ${practiceLane}
             </div>
+            <svg
+                class="lesson-layout__tag-connection-overlay tag-connection-map__canvas"
+                data-tag-connection-canvas
+                aria-hidden="true"
+            ></svg>
         </section>
     `;
 }

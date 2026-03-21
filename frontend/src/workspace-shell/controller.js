@@ -20,6 +20,7 @@ import {
     restoreLaneScrollPositions,
     restoreSurfaceScrollState
 } from "./scroll-animation.js";
+import { redrawNavigationTagConnections } from "./tag-connection-overlay.js";
 import {
     renderCatalogWorkspace,
     renderCatalogWorkspaceShell,
@@ -656,9 +657,14 @@ export function createCatalogWorkspaceController({
             navigationAnimationInProgress = true;
 
             try {
-                await animateScenarioCollapse(appRoot, slug);
+                await animateScenarioCollapse(appRoot, slug, {
+                    onFrame: () => {
+                        redrawNavigationTagConnections(appRoot, { instant: true });
+                    }
+                });
                 collapseScenario(slug);
                 render();
+                redrawNavigationTagConnections(appRoot);
             } finally {
                 navigationAnimationInProgress = false;
             }
@@ -672,9 +678,14 @@ export function createCatalogWorkspaceController({
 
         try {
             await Promise.all([
-                animateScenarioExpansion(appRoot, slug),
+                animateScenarioExpansion(appRoot, slug, {
+                    onFrame: () => {
+                        redrawNavigationTagConnections(appRoot, { instant: true });
+                    }
+                }),
                 dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false })
             ]);
+            redrawNavigationTagConnections(appRoot);
         } finally {
             navigationAnimationInProgress = false;
         }

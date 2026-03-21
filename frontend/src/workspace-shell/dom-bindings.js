@@ -1,4 +1,8 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
+import {
+    bindNavigationTagConnections,
+    redrawNavigationTagConnections
+} from "./tag-connection-overlay.js";
 
 export function bindWorkspaceShellDom({
     appRoot,
@@ -27,6 +31,7 @@ export function bindWorkspaceShellDom({
         handleSubmissionDraftSubmit,
         resetSubmissionDraft
     });
+    bindNavigationTagConnections({ appRoot });
 }
 
 export function captureDraftFieldSnapshot(field) {
@@ -158,10 +163,11 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         const activeTag = hoveredTag ?? state.pinnedNavigationTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
-            return;
+        } else {
+            delete navigationLane.dataset.highlightTag;
         }
 
-        delete navigationLane.dataset.highlightTag;
+        redrawNavigationTagConnections(appRoot);
     };
 
     const syncNavigationLegendState = () => {

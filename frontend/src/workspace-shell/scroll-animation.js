@@ -1,6 +1,6 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
 
-const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
+export const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
 
 export function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
     const excludedLaneNameSet = new Set(excludedLaneNames);
@@ -88,9 +88,10 @@ export function bindSmoothScrollContainers() {
     // Native wheel scrolling is more stable here than an additional JS animation layer.
 }
 
-export function animateScenarioExpansion(appRoot, slug) {
+export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {}) {
     const panel = findScenarioPanel(appRoot, slug);
     if (!panel || prefersReducedMotion()) {
+        onFrame?.();
         return Promise.resolve();
     }
 
@@ -101,6 +102,7 @@ export function animateScenarioExpansion(appRoot, slug) {
 
     return new Promise((resolve) => {
         let observer = null;
+        const stopFrameTracking = startAnimationFrameTracking(onFrame);
 
         const startAnimation = () => {
             if (typeof ResizeObserver !== "undefined") {
@@ -117,12 +119,14 @@ export function animateScenarioExpansion(appRoot, slug) {
             panel.style.opacity = "1";
 
             void waitForScenarioAnimation(panel, () => {
+                stopFrameTracking();
                 observer?.disconnect();
                 panel.style.removeProperty("height");
                 panel.style.removeProperty("opacity");
                 panel.style.removeProperty("overflow");
                 panel.style.removeProperty("transition");
                 panel.style.removeProperty("will-change");
+                onFrame?.();
                 resolve();
             });
         };
@@ -136,9 +140,10 @@ export function animateScenarioExpansion(appRoot, slug) {
     });
 }
 
-export function animateScenarioCollapse(appRoot, slug) {
+export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) {
     const panel = findScenarioPanel(appRoot, slug);
     if (!panel || prefersReducedMotion()) {
+        onFrame?.();
         return Promise.resolve();
     }
 
@@ -151,8 +156,11 @@ export function animateScenarioCollapse(appRoot, slug) {
     panel.style.height = "0px";
     panel.style.opacity = "0";
 
+    const stopFrameTracking = startAnimationFrameTracking(onFrame);
     return waitForScenarioAnimation(panel, () => {
+        stopFrameTracking();
         panel.style.removeProperty("transition");
+        onFrame?.();
     });
 }
 
@@ -178,6 +186,34 @@ function createScenarioPanelTransition() {
         `height ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
         `opacity ${Math.round(NAVIGATION_TOGGLE_ANIMATION_MS * 0.7)}ms ease`
     ].join(", ");
+}
+
+function startAnimationFrameTracking(onFrame) {
+    if (typeof onFrame !== "function") {
+        return () => {
+        };
+    }
+
+    let frameId = 0;
+    let active = true;
+
+    const tick = () => {
+        if (!active) {
+            return;
+        }
+
+        onFrame();
+        frameId = window.requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    return () => {
+        active = false;
+        if (frameId) {
+            window.cancelAnimationFrame(frameId);
+        }
+    };
 }
 
 function waitForScenarioAnimation(panel, cleanup) {

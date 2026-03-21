@@ -37,6 +37,7 @@ body {
     --practice-lane-width: 50%;
     --practice-lane-min-width: 420px;
     display: grid;
+    position: relative;
     grid-template-areas: "navigation lesson practice";
     grid-template-columns:
         minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
@@ -49,6 +50,7 @@ body {
     overflow: hidden;
     background: rgba(255, 250, 241, 0.74);
     align-items: stretch;
+    isolation: isolate;
 }
 
 .lesson-layout__lane {
@@ -57,6 +59,18 @@ body {
     display: flex;
     height: 100%;
     overflow: hidden;
+    position: relative;
+    z-index: 0;
+}
+
+.lesson-layout__tag-connection-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 4;
 }
 
 .lesson-layout__lane--navigation {

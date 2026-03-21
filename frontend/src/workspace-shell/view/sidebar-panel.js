@@ -53,39 +53,25 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
-    const tagLaneMap = createTagLaneMap(tagOptions, state.catalog.items);
-    const tagSpanMap = createTagSpanMap(state.catalog.items);
-
-    const laneCount = Math.max(1, tagLaneMap.size);
-
     return `
-        <div class="scenario-legend">
-            <div class="scenario-legend__header">
+        <div class="tag-connection-map" data-tag-connection-map>
+            <div class="scenario-legend">
                 <span class="control-label">Карта тегов</span>
-                <details class="scenario-legend__details">
-                    <summary class="scenario-legend__button" aria-label="Показать пояснение к цветным линиям">i</summary>
-                    <div class="scenario-legend__popover">
-                        <strong>Пояснение к цветным линиям</strong>
-                        <p class="panel-copy">Наведите на тег, чтобы подсветить связанные сценарии в левой колонке. Цветовые линии показывают, какие сценарии сходятся по смысловым тегам.</p>
-                    </div>
-                </details>
+                <div class="scenario-legend__tags">
+                    ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
+                </div>
             </div>
-            <div class="scenario-legend__tags">
-                ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
+            <div class="flow-block-list" data-flow-block-list>
+                ${renderWelcomeFlowBlock(state)}
+                ${renderProgressFlowBlock(state)}
+                ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
+                    state,
+                    item,
+                    index,
+                    isActive: item.slug === state.selectedScenarioSlug,
+                    selectedFocus: state.selectedFocus
+                })).join("")}
             </div>
-        </div>
-        <div class="flow-block-list" data-flow-block-list style="--flow-tag-lane-count:${laneCount}">
-            ${renderWelcomeFlowBlock(state)}
-            ${renderProgressFlowBlock(state)}
-            ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
-                state,
-                item,
-                index,
-                tagLaneMap,
-                tagSpanMap,
-                isActive: item.slug === state.selectedScenarioSlug,
-                selectedFocus: state.selectedFocus
-            })).join("")}
         </div>
     `;
 }
@@ -110,7 +96,7 @@ function renderProgressFlowBlock(state) {
     `;
 }
 
-function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, isActive, selectedFocus }) {
+function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
@@ -121,7 +107,7 @@ function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, i
                 id="flow-subtasks-${encodeHashSegment(item.slug)}"
                 data-scenario-panel="${escapeHtml(item.slug)}"
             >
-                ${renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive)}
+                ${renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive, tagTokens)}
             </div>
         `
         : "";
@@ -132,12 +118,10 @@ function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, i
                 class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
                 type="button"
                 data-scenario-toggle="${encodeHashSegment(item.slug)}"
+                data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
-                <span class="flow-node__graph" aria-hidden="true">
-                    ${item.tags.map((tag) => renderScenarioTagLine(tag, item.slug, tagLaneMap, tagSpanMap)).join("")}
-                </span>
                 <span class="flow-block__heading">
                     <span class="flow-block__eyebrow">Задание ${index + 1}</span>
                     <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
@@ -150,11 +134,11 @@ function renderScenarioFlowBlock({ state, item, index, tagLaneMap, tagSpanMap, i
     `;
 }
 
-function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, isActiveScenario) {
+function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, isActiveScenario, tagTokens) {
     if (!navigationDetail || navigationDetail.status === "idle" || navigationDetail.status === "loading") {
         return `
             <div class="flow-subtask-group">
-                <div class="flow-subtask-placeholder">
+                <div class="flow-subtask-placeholder" data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}">
                     <span class="flow-block__eyebrow">Загрузка</span>
                     <strong class="flow-block__title">Подготавливаем подзадачи</strong>
                 </div>
@@ -165,7 +149,10 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
     if (navigationDetail.status === "error") {
         return `
             <div class="flow-subtask-group">
-                <div class="flow-subtask-placeholder flow-subtask-placeholder--error">
+                <div
+                    class="flow-subtask-placeholder flow-subtask-placeholder--error"
+                    data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
+                >
                     <span class="flow-block__eyebrow">Недоступно</span>
                     <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Подзадачи недоступны")}</strong>
                 </div>
@@ -175,9 +162,9 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
 
     return `
         <div class="flow-subtask-group">
-            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario)}
+            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens)}
             ${navigationDetail.data.workspace.task.steps.map((step) => (
-                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario)
+                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens)
             )).join("")}
         </div>
     `;
@@ -199,12 +186,13 @@ function resolveNavigationDetail(state, slug) {
     };
 }
 
-function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario) {
+function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens) {
     const focusId = "overview";
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
+            data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
         >
             <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
@@ -212,12 +200,13 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario) {
     `;
 }
 
-function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario) {
+function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens) {
     const focusId = `step-${step.position}`;
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
+            data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
         >
             <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
@@ -241,29 +230,6 @@ function renderLegendTag(tag, pinnedNavigationTag) {
     `;
 }
 
-function renderScenarioTagLine(tag, slug, tagLaneMap, tagSpanMap) {
-    const token = toTagToken(tag);
-    const span = tagSpanMap.get(token) ?? {
-        firstSlug: slug,
-        lastSlug: slug
-    };
-    const laneIndex = tagLaneMap.get(token) ?? 0;
-    const classes = [
-        "flow-tag-line",
-        `flow-tag-line--${token}`,
-        span.firstSlug === slug ? "flow-tag-line--first" : "",
-        span.lastSlug === slug ? "flow-tag-line--last" : ""
-    ].filter(Boolean).join(" ");
-    return `
-        <span class="${escapeHtml(classes)}" style="--flow-tag-lane:${laneIndex}">
-            <span class="flow-tag-line__stem flow-tag-line__stem--top"></span>
-            <span class="flow-tag-line__stem flow-tag-line__stem--bottom"></span>
-            <span class="flow-tag-line__node"></span>
-            <span class="flow-tag-line__branch"></span>
-        </span>
-    `;
-}
-
 function renderScenarioTagAccessibilityText(tags) {
     const formattedTags = tags
         .map((tag) => formatTag(tag))
@@ -283,55 +249,4 @@ function toTagToken(tag) {
         .toLowerCase()
         .replaceAll(/[^a-z0-9]+/g, "-")
         .replaceAll(/^-+|-+$/g, "");
-}
-
-function createTagLaneMap(tagOptions, items = []) {
-    const laneMap = new Map();
-    let nextLane = 0;
-
-    tagOptions.forEach((tag) => {
-        const token = toTagToken(tag);
-        if (!token || laneMap.has(token)) {
-            return;
-        }
-
-        laneMap.set(token, nextLane);
-        nextLane += 1;
-    });
-
-    items.forEach((item) => {
-        item.tags.forEach((tag) => {
-            const token = toTagToken(tag);
-            if (!token || laneMap.has(token)) {
-                return;
-            }
-
-            laneMap.set(token, nextLane);
-            nextLane += 1;
-        });
-    });
-
-    return laneMap;
-}
-
-function createTagSpanMap(items) {
-    const tagSpanMap = new Map();
-
-    items.forEach((item) => {
-        item.tags.forEach((tag) => {
-            const token = toTagToken(tag);
-            const existing = tagSpanMap.get(token);
-            if (!existing) {
-                tagSpanMap.set(token, {
-                    firstSlug: item.slug,
-                    lastSlug: item.slug
-                });
-                return;
-            }
-
-            existing.lastSlug = item.slug;
-        });
-    });
-
-    return tagSpanMap;
 }
