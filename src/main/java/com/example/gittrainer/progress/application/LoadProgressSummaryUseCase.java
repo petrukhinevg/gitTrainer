@@ -3,10 +3,6 @@ package com.example.gittrainer.progress.application;
 import com.example.gittrainer.progress.domain.ProgressStatus;
 import com.example.gittrainer.progress.domain.ProgressStatusPolicy;
 import com.example.gittrainer.progress.domain.ScenarioProgressRecord;
-import com.example.gittrainer.scenario.application.BrowseScenarioCatalogUseCase;
-import com.example.gittrainer.scenario.application.CatalogBrowseResult;
-import com.example.gittrainer.scenario.domain.CatalogBrowseQuery;
-import com.example.gittrainer.scenario.domain.ScenarioSummary;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,29 +14,28 @@ import java.util.function.Function;
 @Service
 public class LoadProgressSummaryUseCase {
 
-    private final BrowseScenarioCatalogUseCase browseScenarioCatalogUseCase;
+    private final ProgressScenarioCatalogReadPort progressScenarioCatalogReadPort;
     private final ProgressRepository progressRepository;
 
     public LoadProgressSummaryUseCase(
-            BrowseScenarioCatalogUseCase browseScenarioCatalogUseCase,
+            ProgressScenarioCatalogReadPort progressScenarioCatalogReadPort,
             ProgressRepository progressRepository
     ) {
-        this.browseScenarioCatalogUseCase = browseScenarioCatalogUseCase;
+        this.progressScenarioCatalogReadPort = progressScenarioCatalogReadPort;
         this.progressRepository = progressRepository;
     }
 
     public ProgressSummary load() {
-        CatalogBrowseResult catalogBrowseResult = browseScenarioCatalogUseCase.browse(
-                new CatalogBrowseQuery(null, null, null, null)
-        );
+        ProgressScenarioCatalogReadPort.ProgressScenarioCatalogSnapshot catalogSnapshot =
+                progressScenarioCatalogReadPort.loadCatalog();
         Map<String, ScenarioProgressRecord> progressByScenario = progressRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(ScenarioProgressRecord::scenarioSlug, Function.identity()));
 
-        List<ProgressSummaryItem> items = catalogBrowseResult.items().stream()
+        List<ProgressSummaryItem> items = catalogSnapshot.items().stream()
                 .map(item -> toSummaryItem(item, progressByScenario.get(item.slug())))
                 .toList();
 
-        List<RecentProgressActivity> recentActivity = catalogBrowseResult.items().stream()
+        List<RecentProgressActivity> recentActivity = catalogSnapshot.items().stream()
                 .map(item -> toRecentActivity(item, progressByScenario.get(item.slug())))
                 .filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparing(RecentProgressActivity::happenedAt).reversed())
@@ -50,11 +45,14 @@ public class LoadProgressSummaryUseCase {
                 items,
                 recentActivity,
                 ProgressRecommendationPolicy.derive(items),
-                catalogBrowseResult.source()
+                catalogSnapshot.source()
         );
     }
 
-    private ProgressSummaryItem toSummaryItem(ScenarioSummary scenarioSummary, ScenarioProgressRecord progressRecord) {
+    private ProgressSummaryItem toSummaryItem(
+            ProgressScenarioCatalogReadPort.ProgressScenarioSnapshot scenarioSummary,
+            ScenarioProgressRecord progressRecord
+    ) {
         ProgressStatus status = ProgressStatusPolicy.deriveStatus(progressRecord);
         return new ProgressSummaryItem(
                 scenarioSummary.slug(),
@@ -67,7 +65,7 @@ public class LoadProgressSummaryUseCase {
     }
 
     private RecentProgressActivity toRecentActivity(
-            ScenarioSummary scenarioSummary,
+            ProgressScenarioCatalogReadPort.ProgressScenarioSnapshot scenarioSummary,
             ScenarioProgressRecord progressRecord
     ) {
         if (progressRecord == null) {
