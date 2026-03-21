@@ -613,6 +613,7 @@ function buildSecondaryBranchStates({
         return [
             {
                 key: branchKey,
+                activeTag,
                 pathData: buildPathDataFromPoints(polyline.points),
                 pathLength: polyline.length,
                 points: polyline.points,
@@ -741,7 +742,8 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
         }
 
         const previousState = path.__branchStateData ?? null;
-        const shouldKeepVisible = isBranchFullyVisible(previousState);
+        const shouldKeepVisible = previousState?.activeTag === branch.activeTag
+            && isBranchFullyVisible(previousState);
 
         const renderState = resolveBranchRenderState({
             path,
@@ -756,17 +758,18 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
 function resolveBranchRenderState({ path, nextState, targetVisibleLength, instant = false }) {
     const now = performance.now();
     const previousState = path.__branchStateData ?? null;
+    const shouldResetForTagSwitch = previousState?.activeTag !== nextState.activeTag;
     const fallbackLength = previousState?.currentVisibleLength ?? previousState?.pathLength ?? 0;
     const currentVisibleLength = readBranchAnimatedVisibleLength(path, fallbackLength, now);
     const nextVisibleLength = clampNumber(targetVisibleLength, 0, nextState.pathLength);
-    const wasFullyVisible = isBranchFullyVisible(previousState);
+    const wasFullyVisible = !shouldResetForTagSwitch && isBranchFullyVisible(previousState);
 
     if (instant) {
         clearBranchAnimation(path);
         return finalizeBranchRenderState(nextState, nextVisibleLength, false);
     }
 
-    if (!previousState) {
+    if (!previousState || shouldResetForTagSwitch) {
         if (nextVisibleLength <= 0.5) {
             return finalizeBranchRenderState(nextState, 0, false, { shouldRemove: true });
         }
