@@ -160,6 +160,10 @@ tasks.named('check') {
     dependsOn tasks.named('syncFrontendAssets')
 }
 
+tasks.named('checkstyleMain') {
+    dependsOn tasks.named('syncFrontendAssets')
+}
+
 tasks.named('bootJar') {
     dependsOn tasks.named('frontendBuild')
     from(frontendDistDir) {

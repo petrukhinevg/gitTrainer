@@ -31,12 +31,14 @@
 ## Push и PR
 
 - Не push во время активной реализации без прямой просьбы пользователя.
-- При переводе в `Review` ветка должна быть опубликована, если handoff это требует.
+- Для каждой task branch создавай PR.
+- При переводе в `Review` ветка должна быть опубликована и для неё должен существовать PR.
 - У epic branch должен быть PR в `main`.
-- Для child tasks отдельный PR опционален.
+- Для child branch тоже нужен PR, обычно в epic branch.
 - Epic flow: branch -> initial commit -> optional push -> epic PR -> child branches.
-- `Closes`/`Fixes`/`Resolves` используй только для PR в `main`.
-- Если нужен reference без автозакрытия, используй `Refs`.
+- `Closes`/`Fixes`/`Resolves` используй только для epic PR в `main`.
+- PR и issue обязательно связывай только для epic issues.
+- Для child и standalone task отдельный linkage PR <-> issue не обязателен, если этого не требует handoff.
 - Если closed PR нельзя reopen для той же `head/base`, открывай новый PR из alias branch.
 
 ## После завершения задачи, перед merge

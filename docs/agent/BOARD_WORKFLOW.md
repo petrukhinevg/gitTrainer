@@ -23,8 +23,9 @@
 ## Board specifics
 
 - Конфигурация полей и колонок: `docs/BOARD.md`.
+- PR должен существовать для любой задачи, переводимой в `Review`.
 - `Linked pull requests` обязательно только для epic issues с PR в `main`.
-- Для child issues отсутствие `Linked pull requests` не блокирует `Review`.
+- Для child issues отсутствие `Linked pull requests` не блокирует `Review`, если сам PR уже создан.
 - Если epic PR уже есть, а linkage пуст, исправь его до завершения handoff.
 
 ## Setup
