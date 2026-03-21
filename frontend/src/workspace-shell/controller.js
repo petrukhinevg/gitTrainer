@@ -1,5 +1,9 @@
 import { SessionTransportError } from "../session/session-transport-error.js";
-import { shouldResetLessonScrollForRouteChange } from "./route-scroll-policy.js";
+import { createWorkspaceDataOrchestrator } from "./data-orchestration.js";
+import {
+    createWorkspaceRouteOrchestrator,
+    resetRouteScopedWorkspaceState
+} from "./route-orchestration.js";
 import {
     renderCatalogWorkspace,
     renderCatalogWorkspaceShell,
@@ -56,14 +60,9 @@ export function createCatalogWorkspaceController({
         }
     };
 
-    let latestCatalogRequestId = 0;
-    let latestDetailRequestId = 0;
     let latestSessionBootstrapRequestId = 0;
     let latestSubmissionRequestId = 0;
-    let latestProgressRequestId = 0;
-    const detailLoadTasks = new Map();
     const sessionProviders = new Map();
-    const progressProviders = new Map();
     let navigationAnimationInProgress = false;
     let shellMounted = false;
     let pendingLessonScrollReset = false;
@@ -80,6 +79,47 @@ export function createCatalogWorkspaceController({
         sessionProviderFactories,
         progressProviderFactories
     });
+    const dataOrchestrator = createWorkspaceDataOrchestrator({
+        state,
+        render,
+        catalogProviderFactories,
+        detailProviderFactories,
+        progressProviderFactories,
+        cloneQuery,
+        toUserFacingRecoveryMessage,
+        isEmptyProgressSummary,
+        createInitialSubmissionDraftState,
+        createInitialSessionState,
+        createInitialProgressState,
+        ensureExerciseSession,
+        invalidateSessionRequests
+    });
+    const routeOrchestrator = createWorkspaceRouteOrchestrator({
+        state,
+        render,
+        ensureCatalogLoaded: dataOrchestrator.ensureCatalogLoaded,
+        loadProgressSummary: dataOrchestrator.loadProgressSummary,
+        loadScenarioDetail: dataOrchestrator.loadScenarioDetail,
+        ensureExerciseSession,
+        onExerciseRouteSelected: (slug) => {
+            expandScenario(slug, { loadDetail: false });
+        },
+        resetRouteScopedState: ({ previousRoute, previousScenarioSlug, previousProviderName }) => {
+            resetRouteScopedWorkspaceState({
+                state,
+                previousRoute,
+                previousScenarioSlug,
+                previousProviderName,
+                createInitialSubmissionDraftState,
+                createInitialSessionState,
+                createInitialProgressState,
+                invalidateSessionRequests
+            });
+        },
+        setPendingLessonScrollReset: (shouldReset) => {
+            pendingLessonScrollReset = shouldReset;
+        }
+    });
 
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
@@ -93,225 +133,7 @@ export function createCatalogWorkspaceController({
     }
 
     async function handleRouteChange() {
-        const previousRoute = state.route;
-        const previousScenarioSlug = state.selectedScenarioSlug;
-        const previousSelectedFocus = state.selectedFocus;
-        const previousProviderName = state.providerName;
-        const route = parseRoute(window.location.hash);
-
-        pendingLessonScrollReset = shouldResetLessonScrollForRouteChange({
-            previousRoute,
-            previousScenarioSlug,
-            previousSelectedFocus,
-            nextRoute: route.name,
-            nextScenarioSlug: route.scenarioSlug,
-            nextSelectedFocus: route.focus
-        });
-
-        state.route = route.name;
-        state.selectedScenarioSlug = route.scenarioSlug;
-        state.selectedFocus = route.focus;
-
-        if (route.name === "exercise" && route.scenarioSlug) {
-            expandScenario(route.scenarioSlug, { loadDetail: false });
-        }
-
-        resetRouteScopedState({
-            previousRoute,
-            previousScenarioSlug,
-            previousProviderName
-        });
-        render();
-
-        if (state.route === "not-found") {
-            return;
-        }
-
-        await Promise.all([
-            ensureCatalogLoaded(),
-            state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
-            state.route === "exercise" ? loadScenarioDetail(state.selectedScenarioSlug, { syncSelected: true }) : Promise.resolve(),
-            state.route === "exercise" ? ensureExerciseSession() : Promise.resolve()
-        ]);
-    }
-
-    function ensureCatalogLoaded() {
-        if (state.catalog.status !== "idle") {
-            return Promise.resolve();
-        }
-
-        return loadCatalog();
-    }
-
-    async function loadCatalog() {
-        const requestId = ++latestCatalogRequestId;
-        const providerName = state.providerName;
-        const querySnapshot = cloneQuery(state.query);
-
-        state.catalog.status = "loading";
-        state.catalog.items = [];
-        state.catalog.meta = null;
-        state.catalog.error = null;
-        render();
-
-        try {
-            const providerFactory = catalogProviderFactories[providerName];
-            if (!providerFactory) {
-                throw new Error(`Неизвестный источник каталога: ${providerName}`);
-            }
-
-            const provider = providerFactory();
-            const catalog = await provider.browseCatalog(querySnapshot);
-            if (requestId !== latestCatalogRequestId) {
-                return;
-            }
-
-            state.catalog.items = catalog.items;
-            state.catalog.meta = catalog.meta;
-            state.catalog.status = catalog.items.length === 0 ? "empty" : "ready";
-        } catch (error) {
-            if (requestId !== latestCatalogRequestId) {
-                return;
-            }
-
-            state.catalog.items = [];
-            state.catalog.meta = null;
-            state.catalog.error = toUserFacingRecoveryMessage(
-                error instanceof Error ? error.message : null,
-                "Источник каталога сейчас недоступен. Повторите чуть позже."
-            );
-            state.catalog.status = "error";
-        }
-
-        if (requestId !== latestCatalogRequestId) {
-            return;
-        }
-
-        render();
-    }
-
-    async function loadScenarioDetail(slug = state.selectedScenarioSlug, { syncSelected = false } = {}) {
-        if (!slug) {
-            state.detail.status = "missing";
-            state.detail.data = null;
-            state.detail.error = "В маршруте упражнения не указан код сценария.";
-            render();
-            return;
-        }
-
-        const requestId = syncSelected ? ++latestDetailRequestId : latestDetailRequestId;
-        const providerName = state.providerName;
-        const cachedDetail = state.detailCache[slug];
-
-        if (cachedDetail?.status === "ready") {
-            if (syncSelected) {
-                state.detail.status = "ready";
-                state.detail.data = cachedDetail.data;
-                state.detail.error = null;
-                render();
-            }
-            return;
-        }
-
-        if (syncSelected) {
-            state.detail.status = "loading";
-            state.detail.data = null;
-            state.detail.error = null;
-        }
-
-        state.detailCache[slug] = {
-            status: "loading",
-            data: null,
-            error: null
-        };
-
-        // For background preloads from the left rail, the panel already shows the
-        // loading placeholder after the expansion render. Avoid replacing that DOM
-        // subtree here, otherwise the first-open animation gets interrupted before
-        // the height transition can complete.
-        if (syncSelected) {
-            render();
-        }
-
-        if (detailLoadTasks.has(slug)) {
-            await detailLoadTasks.get(slug);
-            syncSelectedDetailFromCache(slug, requestId, syncSelected);
-            return;
-        }
-
-        try {
-            const detailLoadTask = (async () => {
-                const providerFactory = detailProviderFactories[providerName];
-                if (!providerFactory) {
-                    throw new Error(`Неизвестный источник деталей сценария: ${providerName}`);
-                }
-
-                const provider = providerFactory();
-                const detail = await provider.loadScenarioDetail(slug);
-                state.detailCache[slug] = {
-                    status: "ready",
-                    data: detail,
-                    error: null
-                };
-            })();
-
-            detailLoadTasks.set(slug, detailLoadTask);
-            await detailLoadTask;
-        } catch (error) {
-            state.detailCache[slug] = {
-                status: "error",
-                data: null,
-                error: toUserFacingRecoveryMessage(
-                    error instanceof Error ? error.message : null,
-                    "Источник деталей сценария сейчас недоступен. Повторите чуть позже."
-                )
-            };
-        } finally {
-            detailLoadTasks.delete(slug);
-        }
-
-        syncSelectedDetailFromCache(slug, requestId, syncSelected);
-    }
-
-    async function loadProgressSummary() {
-        if (state.route !== "progress") {
-            return;
-        }
-
-        const requestId = ++latestProgressRequestId;
-        state.progress.status = "loading";
-        state.progress.summary = null;
-        state.progress.error = null;
-        render();
-
-        try {
-            const provider = resolveProgressProvider(state.providerName);
-            const summary = await provider.loadProgressSummary();
-            if (requestId !== latestProgressRequestId || state.route !== "progress") {
-                return;
-            }
-
-            state.progress.summary = summary;
-            state.progress.error = null;
-            state.progress.status = isEmptyProgressSummary(summary) ? "empty" : "ready";
-        } catch (error) {
-            if (requestId !== latestProgressRequestId || state.route !== "progress") {
-                return;
-            }
-
-            state.progress.summary = null;
-            state.progress.error = toUserFacingRecoveryMessage(
-                error instanceof Error ? error.message : null,
-                "Сводка прогресса сейчас недоступна. Повторите чуть позже."
-            );
-            state.progress.status = "error";
-        }
-
-        if (requestId !== latestProgressRequestId || state.route !== "progress") {
-            return;
-        }
-
-        render();
+        await routeOrchestrator.handleRouteChange();
     }
 
     function render() {
@@ -617,11 +439,11 @@ export function createCatalogWorkspaceController({
         state.query = nextControlsState.query;
 
         if (providerChanged) {
-            resetProviderScopedState();
+            dataOrchestrator.resetProviderScopedState();
         }
 
         render();
-        await reloadActiveRouteData();
+        await dataOrchestrator.reloadActiveRouteData();
     }
 
     async function resetCatalogControls(form) {
@@ -638,12 +460,12 @@ export function createCatalogWorkspaceController({
         state.providerName = defaults.providerName;
         state.query = defaults.query;
         if (providerChanged) {
-            resetProviderScopedState();
+            dataOrchestrator.resetProviderScopedState();
         }
 
         form.reset();
         render();
-        await reloadActiveRouteData();
+        await dataOrchestrator.reloadActiveRouteData();
     }
 
     function handleSubmissionDraftInput(event) {
@@ -932,58 +754,13 @@ export function createCatalogWorkspaceController({
         await ensureExerciseSession({ force: true });
     }
 
-    async function reloadActiveRouteData() {
-        await Promise.all([
-            loadCatalog(),
-            state.route === "progress" ? loadProgressSummary() : Promise.resolve(),
-            state.route === "exercise" ? loadScenarioDetail() : Promise.resolve(),
-            state.route === "exercise" ? ensureExerciseSession({ force: true }) : Promise.resolve()
-        ]);
-    }
-
-    function resetRouteScopedState({ previousRoute, previousScenarioSlug, previousProviderName }) {
-        const sameExerciseScenario = previousRoute === "exercise"
-            && state.route === "exercise"
-            && previousScenarioSlug === state.selectedScenarioSlug
-            && previousProviderName === state.providerName;
-
-        if (!sameExerciseScenario) {
-            state.submissionDraft = createInitialSubmissionDraftState();
-            state.session = createInitialSessionState();
-            ++latestSessionBootstrapRequestId;
-            ++latestSubmissionRequestId;
-        }
-
-        if (state.route !== "progress") {
-            state.progress = createInitialProgressState();
-        }
-
-        if (state.route !== "exercise") {
-            state.selectedFocus = null;
-            state.detail.status = "idle";
-            state.detail.data = null;
-            state.detail.error = null;
-        }
-    }
-
     function resetSubmissionRequestState() {
         state.session.submission = createInitialSubmissionRequestState();
     }
 
-    function resetProviderScopedState() {
-        state.detail.status = state.route === "exercise" ? "loading" : "idle";
-        state.detail.data = null;
-        state.detail.error = null;
-        state.detailCache = {};
-        state.submissionDraft = createInitialSubmissionDraftState();
-        state.session = createInitialSessionState();
-        state.progress = createInitialProgressState();
-        sessionProviders.clear();
-        progressProviders.clear();
-        ++latestDetailRequestId;
+    function invalidateSessionRequests() {
         ++latestSessionBootstrapRequestId;
         ++latestSubmissionRequestId;
-        ++latestProgressRequestId;
     }
 
     function captureDraftFieldSnapshot(field) {
@@ -1056,21 +833,6 @@ export function createCatalogWorkspaceController({
         return provider;
     }
 
-    function resolveProgressProvider(providerName) {
-        if (progressProviders.has(providerName)) {
-            return progressProviders.get(providerName);
-        }
-
-        const providerFactory = progressProviderFactories[providerName];
-        if (!providerFactory) {
-            throw new Error(`Неизвестный источник данных прогресса: ${providerName}`);
-        }
-
-        const provider = providerFactory();
-        progressProviders.set(providerName, provider);
-        return provider;
-    }
-
     return {
         bootstrap
     };
@@ -1082,7 +844,7 @@ export function createCatalogWorkspaceController({
 
         state.expandedScenarioSlugs = [...state.expandedScenarioSlugs, slug];
         if (loadDetail) {
-            void loadScenarioDetail(slug, { syncSelected: false });
+            void dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false });
         }
     }
 
@@ -1137,7 +899,7 @@ export function createCatalogWorkspaceController({
         try {
             await Promise.all([
                 animateScenarioExpansion(slug),
-                loadScenarioDetail(slug, { syncSelected: false })
+                dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false })
             ]);
         } finally {
             navigationAnimationInProgress = false;
@@ -1253,40 +1015,6 @@ export function createCatalogWorkspaceController({
     function prefersReducedMotion() {
         return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     }
-}
-
-function parseRoute(hash) {
-    if (hash === "#/catalog") {
-        return {
-            name: "catalog",
-            scenarioSlug: null,
-            focus: null
-        };
-    }
-
-    if (hash === "#/progress") {
-        return {
-            name: "progress",
-            scenarioSlug: null,
-            focus: null
-        };
-    }
-
-    const exerciseMatch = hash.match(/^#\/exercise\/([^?#]+)(?:\?([^#]+))?$/);
-    if (exerciseMatch) {
-        const query = new URLSearchParams(exerciseMatch[2] ?? "");
-        return {
-            name: "exercise",
-            scenarioSlug: decodeURIComponent(exerciseMatch[1]),
-            focus: normalizeOptionalValue(query.get("focus"))
-        };
-    }
-
-    return {
-        name: "not-found",
-        scenarioSlug: null,
-        focus: null
-    };
 }
 
 function resolveSelectedCatalogScenario(state, catalogItems) {
