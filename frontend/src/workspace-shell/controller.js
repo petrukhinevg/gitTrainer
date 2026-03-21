@@ -1,4 +1,4 @@
-import { SessionTransportError } from "../session/session-provider.js";
+import { SessionTransportError } from "../session/session-transport-error.js";
 import { shouldResetLessonScrollForRouteChange } from "./route-scroll-policy.js";
 import {
     renderCatalogWorkspace,
