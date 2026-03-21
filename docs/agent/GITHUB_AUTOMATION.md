@@ -78,6 +78,7 @@ gh api graphql \
 - PR создаём для любой task branch.
 - Для epic PR в `main` используй связку с issue (`Closes #...`).
 - Для child task PR linkage с issue не обязателен, если workflow не требует иного.
+- После создания PR переведи issue в `Review`; не оставляй локально готовую задачу в `In Progress`.
 
 ```sh
 gh pr create \
