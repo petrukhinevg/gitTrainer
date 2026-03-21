@@ -111,11 +111,39 @@ test("сохраняет достижимый fallback flow после ошиб�
 function createSharedProviderFactories(overrides = {}) {
     const createProvider = (providerName) => () => ({
         name: providerName,
-        async loadScenarioDetail() {
+        async loadScenarioDetail(slug = "unknown-scenario") {
             if (overrides.loadScenarioDetail) {
-                return overrides.loadScenarioDetail(providerName);
+                return overrides.loadScenarioDetail(providerName, slug);
             }
-            throw new Error("detail should not load on catalog route");
+            return {
+                slug,
+                title: slug,
+                summary: "prefetched detail",
+                difficulty: "beginner",
+                tags: ["branching"],
+                meta: {
+                    source: providerName
+                },
+                workspace: {
+                    shell: {
+                        leftPanelTitle: "Карта сценария",
+                        centerPanelTitle: "Урок",
+                        rightPanelTitle: "Практика"
+                    },
+                    task: {
+                        goal: "prefetched goal",
+                        instructions: [],
+                        steps: [],
+                        annotations: []
+                    },
+                    repositoryContext: {
+                        branches: [],
+                        commits: [],
+                        files: [],
+                        annotations: []
+                    }
+                }
+            };
         },
         async startSession() {
             if (overrides.startSession) {

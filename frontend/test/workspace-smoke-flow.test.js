@@ -122,15 +122,16 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
         assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
         assert.match(appRoot.textContent, /Рекомендация/iu);
 
-        assert.deepEqual(requests.slice(0, 4), [
+        assert.deepEqual(requests.slice(0, 5), [
             "GET /api/scenarios",
             "GET /api/scenarios/branch-safety",
+            "GET /api/scenarios/remote-sync-preview",
             "POST /api/sessions",
             "POST /api/sessions/session-1/submissions"
         ]);
-        assert.ok(requests.length >= 5, "После перехода на progress должен быть хотя бы один запрос сводки прогресса");
+        assert.ok(requests.length >= 6, "После перехода на progress должен быть хотя бы один запрос сводки прогресса");
         assert.ok(
-            requests.slice(4).every((request) => request === "GET /api/progress"),
+            requests.slice(5).every((request) => request === "GET /api/progress"),
             "После submit дополнительные сетевые запросы должны ограничиваться только progress summary"
         );
     } finally {

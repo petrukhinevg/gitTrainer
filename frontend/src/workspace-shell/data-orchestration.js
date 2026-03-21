@@ -16,7 +16,9 @@ export function createWorkspaceDataOrchestrator({
     let latestCatalogRequestId = 0;
     let latestDetailRequestId = 0;
     let latestProgressRequestId = 0;
+    let detailCacheGeneration = 0;
     const detailLoadTasks = new Map();
+    const detailProviders = new Map();
     const progressProviders = new Map();
 
     function ensureCatalogLoaded() {
@@ -53,6 +55,10 @@ export function createWorkspaceDataOrchestrator({
             state.catalog.items = catalog.items;
             state.catalog.meta = catalog.meta;
             state.catalog.status = catalog.items.length === 0 ? "empty" : "ready";
+            void prefetchCatalogDetails(catalog.items, {
+                providerName,
+                generation: detailCacheGeneration
+            });
         } catch (error) {
             if (requestId !== latestCatalogRequestId) {
                 return;
@@ -119,36 +125,10 @@ export function createWorkspaceDataOrchestrator({
             return;
         }
 
-        try {
-            const detailLoadTask = (async () => {
-                const providerFactory = detailProviderFactories[providerName];
-                if (!providerFactory) {
-                    throw new Error(`Неизвестный источник деталей сценария: ${providerName}`);
-                }
-
-                const provider = providerFactory();
-                const detail = await provider.loadScenarioDetail(slug);
-                state.detailCache[slug] = {
-                    status: "ready",
-                    data: detail,
-                    error: null
-                };
-            })();
-
-            detailLoadTasks.set(slug, detailLoadTask);
-            await detailLoadTask;
-        } catch (error) {
-            state.detailCache[slug] = {
-                status: "error",
-                data: null,
-                error: toUserFacingRecoveryMessage(
-                    error instanceof Error ? error.message : null,
-                    "Источник деталей сценария сейчас недоступен. Повторите чуть позже."
-                )
-            };
-        } finally {
-            detailLoadTasks.delete(slug);
-        }
+        await ensureDetailCached(slug, {
+            providerName,
+            generation: detailCacheGeneration
+        });
 
         syncSelectedDetailFromCache(slug, requestId, syncSelected);
     }
@@ -208,6 +188,9 @@ export function createWorkspaceDataOrchestrator({
         state.detail.data = null;
         state.detail.error = null;
         state.detailCache = {};
+        detailCacheGeneration += 1;
+        detailLoadTasks.clear();
+        detailProviders.clear();
         state.submissionDraft = createInitialSubmissionDraftState();
         state.session = createInitialSessionState();
         state.progress = createInitialProgressState();
@@ -215,6 +198,68 @@ export function createWorkspaceDataOrchestrator({
         ++latestDetailRequestId;
         invalidateSessionRequests();
         ++latestProgressRequestId;
+    }
+
+    async function ensureDetailCached(slug, { providerName, generation }) {
+        if (!slug) {
+            return null;
+        }
+
+        if (state.detailCache[slug]?.status === "ready") {
+            return state.detailCache[slug];
+        }
+
+        if (detailLoadTasks.has(slug)) {
+            await detailLoadTasks.get(slug);
+            return state.detailCache[slug] ?? null;
+        }
+
+        const detailLoadTask = (async () => {
+            try {
+                const provider = resolveDetailProvider(providerName);
+                const detail = await provider.loadScenarioDetail(slug);
+                if (!isCurrentDetailGeneration(generation, providerName)) {
+                    return null;
+                }
+
+                state.detailCache[slug] = {
+                    status: "ready",
+                    data: detail,
+                    error: null
+                };
+            } catch (error) {
+                if (!isCurrentDetailGeneration(generation, providerName)) {
+                    return null;
+                }
+
+                state.detailCache[slug] = {
+                    status: "error",
+                    data: null,
+                    error: toUserFacingRecoveryMessage(
+                        error instanceof Error ? error.message : null,
+                        "Источник деталей сценария сейчас недоступен. Повторите чуть позже."
+                    )
+                };
+            } finally {
+                detailLoadTasks.delete(slug);
+            }
+
+            return state.detailCache[slug] ?? null;
+        })();
+
+        detailLoadTasks.set(slug, detailLoadTask);
+        return detailLoadTask;
+    }
+
+    async function prefetchCatalogDetails(items, { providerName, generation }) {
+        const slugs = items
+            .map((item) => item?.slug)
+            .filter((slug, index, values) => typeof slug === "string" && slug.length > 0 && values.indexOf(slug) === index);
+
+        await Promise.allSettled(slugs.map((slug) => ensureDetailCached(slug, {
+            providerName,
+            generation
+        })));
     }
 
     function syncSelectedDetailFromCache(slug, requestId, syncSelected) {
@@ -251,6 +296,25 @@ export function createWorkspaceDataOrchestrator({
         const provider = providerFactory();
         progressProviders.set(providerName, provider);
         return provider;
+    }
+
+    function resolveDetailProvider(providerName) {
+        if (detailProviders.has(providerName)) {
+            return detailProviders.get(providerName);
+        }
+
+        const providerFactory = detailProviderFactories[providerName];
+        if (!providerFactory) {
+            throw new Error(`Неизвестный источник деталей сценария: ${providerName}`);
+        }
+
+        const provider = providerFactory();
+        detailProviders.set(providerName, provider);
+        return provider;
+    }
+
+    function isCurrentDetailGeneration(generation, providerName) {
+        return generation === detailCacheGeneration && providerName === state.providerName;
     }
 
     return {
