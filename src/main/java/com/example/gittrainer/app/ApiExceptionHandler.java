@@ -6,6 +6,7 @@ import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableExce
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
+import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -41,5 +42,10 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ScenarioRepositoryContextNotAuthoredException.class)
     ProblemDetail handleMissingRepositoryContext(ScenarioRepositoryContextNotAuthoredException exception) {
         return ApiProblemDetailFactory.missingRepositoryContext(exception);
+    }
+
+    @ExceptionHandler(ValidationRunnerExecutionException.class)
+    ProblemDetail handleValidationRunnerFailure(ValidationRunnerExecutionException exception) {
+        return ApiProblemDetailFactory.validationRunnerUnavailable(exception);
     }
 }

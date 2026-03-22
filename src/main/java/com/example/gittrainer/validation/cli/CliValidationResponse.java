@@ -1,0 +1,26 @@
+package com.example.gittrainer.validation.cli;
+
+import java.util.List;
+
+public record CliValidationResponse(
+        String status,
+        String correctness,
+        String code,
+        String message,
+        List<CliValidationObservation> observations,
+        List<String> artifacts,
+        CliValidationTiming timing
+) {
+
+    public CliValidationResponse withTiming(long durationMs) {
+        return new CliValidationResponse(
+                status,
+                correctness,
+                code,
+                message,
+                observations,
+                artifacts,
+                new CliValidationTiming(durationMs)
+        );
+    }
+}

@@ -36,6 +36,7 @@
 - 2.1 Detail API shell: endpoint, DTO, stub workspace payload. Пара: frontend 2.1.
 - 2.2 Task content model: instructions, steps, goal text, static annotations. Пара: frontend 2.2.
 - 2.3 Repo context model: branches, commits, files и другие cues для MVP-сценариев. Пара: frontend 2.3.
+- 2.4 DB-backed authored scenarios: хранение catalog/detail task content, repo cues и validation-ready authored records в БД для внешнего CLI validator. Backend-only.
 
 ### Родительская задача 3. Бэкенд для отправки ответа и проверки корректности
 
@@ -45,6 +46,9 @@
 - 3.2 Validation model: first answer types, correct/incorrect/partial/unsupported results. Пара: frontend 3.3.
 - 3.3 Submit error policy: request errors, retryable vs terminal, unsupported mapping. Пара: frontend 3.2.
 - 3.4 Session-backed repo state: execute supported commands and return normalized repo graph payload. Пара: frontend 3.7.
+- 3.5 CLI git validator: DB-backed validator spec, external runner contract, sandbox execution и сохранение validation runs. Backend-only.
+  - Контракт и JSON I/O: `docs/CLI_VALIDATOR_CONTRACT.md`.
+  - DB-ready curriculum под authored content: `docs/DB_READY_GIT_CURRICULUM.md`.
 
 ### Родительская задача 4. Бэкенд для управляемых повторных попыток и подсказок
 

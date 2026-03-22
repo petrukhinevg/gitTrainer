@@ -7,7 +7,11 @@ public final class RetryGuidancePolicy {
     private RetryGuidancePolicy() {
     }
 
-    public static RetryGuidance selectGuidance(String scenarioSlug, SubmissionOutcome outcome, RetryState retryState) {
+    public static RetryGuidance selectGuidance(
+            RetryGuidanceProfile incorrectGuidance,
+            SubmissionOutcome outcome,
+            RetryState retryState
+    ) {
         if (outcome == null || retryState == null || !outcome.requiresRetry()) {
             return RetryGuidance.notNeeded();
         }
@@ -16,7 +20,7 @@ public final class RetryGuidancePolicy {
         return switch (normalizedCorrectness) {
             case "partial" -> partialGuidance(retryState);
             case "unsupported" -> unsupportedGuidance(retryState);
-            default -> incorrectGuidance(scenarioSlug, retryState);
+            default -> incorrectGuidance(incorrectGuidance, retryState);
         };
     }
 
@@ -46,45 +50,15 @@ public final class RetryGuidancePolicy {
         );
     }
 
-    private static RetryGuidance incorrectGuidance(String scenarioSlug, RetryState retryState) {
-        ScenarioGuidanceProfile profile = scenarioProfile(scenarioSlug);
+    private static RetryGuidance incorrectGuidance(RetryGuidanceProfile profile, RetryState retryState) {
+        RetryGuidanceProfile safeProfile = profile == null ? RetryGuidanceProfile.fallback() : profile;
         return new RetryGuidance(
-                RetryExplanationSelection.selected(profile.explanationCode(), profile.focus()),
+                RetryExplanationSelection.selected(safeProfile.explanationCode(), safeProfile.focus()),
                 RetryHintSelection.selected(
                         resolveHintLevel(retryState),
-                        hintCode(profile.hintPrefix(), retryState)
+                        hintCode(safeProfile.hintTemplateCode(), retryState)
                 )
         );
-    }
-
-    private static ScenarioGuidanceProfile scenarioProfile(String scenarioSlug) {
-        return switch (scenarioSlug) {
-            case "branch-safety" -> new ScenarioGuidanceProfile(
-                    "branch-choice-needs-task-alignment",
-                    "compare-branch-purpose-before-switching",
-                    "branch-intent"
-            );
-            case "history-cleanup-preview" -> new ScenarioGuidanceProfile(
-                    "history-cleanup-requires-plan-first",
-                    "plan-history-cleanup-before-rewriting",
-                    "history-plan"
-            );
-            case "remote-sync-preview" -> new ScenarioGuidanceProfile(
-                    "remote-sync-requires-fetch-first",
-                    "refresh-remote-state-before-integration",
-                    "remote-fetch"
-            );
-            case "status-basics" -> new ScenarioGuidanceProfile(
-                    "inspection-command-should-come-before-mutation",
-                    "inspect-working-tree-before-acting",
-                    "working-tree-inspection"
-            );
-            default -> new ScenarioGuidanceProfile(
-                    "retry-guidance-needs-scenario-review",
-                    "revisit-scenario-goal-before-next-attempt",
-                    "generic-retry"
-            );
-        };
     }
 
     private static String resolveHintLevel(RetryState retryState) {
@@ -98,12 +72,5 @@ public final class RetryGuidancePolicy {
                 ? "strong"
                 : "nudge";
         return prefix + "-" + suffix;
-    }
-
-    private record ScenarioGuidanceProfile(
-            String explanationCode,
-            String focus,
-            String hintPrefix
-    ) {
     }
 }

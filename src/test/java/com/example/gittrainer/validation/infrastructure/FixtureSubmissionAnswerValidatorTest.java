@@ -8,14 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FixtureSubmissionAnswerValidatorTest {
 
-    private final FixtureSubmissionAnswerValidator validator = new FixtureSubmissionAnswerValidator();
+    private final FixtureSubmissionAnswerValidator validator =
+            new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource());
 
     @Test
     void marksMatchingCommandAsCorrect() {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("correct", outcome.correctness());
@@ -27,7 +28,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status --short")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("correct", outcome.correctness());
@@ -39,7 +40,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "history-cleanup-preview",
                 new SubmittedAnswer("command_text", "git log --oneline --graph --decorate")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("correct", outcome.correctness());
@@ -51,7 +52,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "remote-sync-preview",
                 new SubmittedAnswer("command_text", "git fetch origin")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("correct", outcome.correctness());
@@ -63,7 +64,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "branch-safety",
                 new SubmittedAnswer("command_text", "git branch --show-current")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("correct", outcome.correctness());
@@ -75,7 +76,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "history-cleanup-preview",
                 new SubmittedAnswer("command_text", "git rebase -i HEAD~3")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
@@ -87,7 +88,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "remote-sync-preview",
                 new SubmittedAnswer("command_text", "git pull")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
@@ -99,7 +100,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "branch-safety",
                 new SubmittedAnswer("command_text", "git checkout feature/menu-refresh")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
@@ -111,7 +112,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git checkout main")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
@@ -123,7 +124,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
                 new SubmittedAnswer("file_patch", "diff --git a")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("unsupported", outcome.correctness());
@@ -135,7 +136,7 @@ class FixtureSubmissionAnswerValidatorTest {
         SubmissionOutcome outcome = validator.validate(
                 "unknown-scenario",
                 new SubmittedAnswer("command_text", "git status")
-        );
+        ).outcome();
 
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());

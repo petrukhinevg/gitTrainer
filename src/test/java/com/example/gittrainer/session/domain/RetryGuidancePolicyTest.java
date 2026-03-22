@@ -10,7 +10,11 @@ class RetryGuidancePolicyTest {
     @Test
     void selectsScenarioSpecificIncorrectGuidanceForStatusBasics() {
         RetryGuidance guidance = RetryGuidancePolicy.selectGuidance(
-                "status-basics",
+                new RetryGuidanceProfile(
+                        "inspection-command-should-come-before-mutation",
+                        "inspect-working-tree-before-acting",
+                        "working-tree-inspection"
+                ),
                 SubmissionOutcome.incorrect("unexpected-command", "Wrong command."),
                 RetryState.retryAvailable(1, 1, StrongerHintEligibility.LOCKED)
         );
@@ -25,7 +29,11 @@ class RetryGuidancePolicyTest {
     @Test
     void escalatesHintStrengthAfterRepeatedFailure() {
         RetryGuidance guidance = RetryGuidancePolicy.selectGuidance(
-                "branch-safety",
+                new RetryGuidanceProfile(
+                        "branch-choice-needs-task-alignment",
+                        "compare-branch-purpose-before-switching",
+                        "branch-intent"
+                ),
                 SubmissionOutcome.incorrect("unexpected-command", "Wrong command."),
                 RetryState.retryAvailable(2, 2, StrongerHintEligibility.ELIGIBLE)
         );
@@ -38,7 +46,7 @@ class RetryGuidancePolicyTest {
     @Test
     void selectsUnsupportedAnswerGuidanceWithoutScenarioSpecificBranching() {
         RetryGuidance guidance = RetryGuidancePolicy.selectGuidance(
-                "history-cleanup-preview",
+                RetryGuidanceProfile.fallback(),
                 SubmissionOutcome.unsupported("unsupported-answer-type", "Unsupported."),
                 RetryState.retryAvailable(1, 1, StrongerHintEligibility.LOCKED)
         );
@@ -51,7 +59,7 @@ class RetryGuidancePolicyTest {
     @Test
     void supportsPartialAnswerCasesEvenBeforeValidatorProducesThem() {
         RetryGuidance guidance = RetryGuidancePolicy.selectGuidance(
-                "status-basics",
+                RetryGuidanceProfile.fallback(),
                 new SubmissionOutcome("evaluated", "partial", "partial-match", "Almost there."),
                 RetryState.retryAvailable(2, 2, StrongerHintEligibility.ELIGIBLE)
         );
@@ -64,7 +72,7 @@ class RetryGuidancePolicyTest {
     @Test
     void returnsNotNeededGuidanceAfterCorrectAnswer() {
         RetryGuidance guidance = RetryGuidancePolicy.selectGuidance(
-                "status-basics",
+                RetryGuidanceProfile.fallback(),
                 SubmissionOutcome.correct("expected-command", "Correct."),
                 RetryState.completed(1)
         );

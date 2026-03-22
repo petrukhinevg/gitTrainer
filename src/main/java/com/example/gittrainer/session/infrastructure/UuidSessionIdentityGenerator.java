@@ -17,4 +17,9 @@ public class UuidSessionIdentityGenerator implements SessionIdentityGenerator {
     public String nextSubmissionId() {
         return "submission_" + UUID.randomUUID();
     }
+
+    @Override
+    public String nextValidationRunId() {
+        return "validation_run_" + UUID.randomUUID();
+    }
 }

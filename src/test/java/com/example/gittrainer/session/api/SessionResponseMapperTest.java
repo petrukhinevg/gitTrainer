@@ -3,11 +3,14 @@ package com.example.gittrainer.session.api;
 import com.example.gittrainer.session.application.SubmitAnswerResult;
 import com.example.gittrainer.session.domain.RetryGuidance;
 import com.example.gittrainer.session.domain.RetryGuidancePolicy;
+import com.example.gittrainer.session.domain.RetryGuidanceProfile;
 import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.session.domain.StrongerHintEligibility;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.TrainingSession;
+import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +23,12 @@ class SessionResponseMapperTest {
     private final SessionResponseMapper mapper = new SessionResponseMapper(
             new SessionRetryFeedbackFactory(
                     new RetryStateResponseMapper(),
-                    new RetryExplanationResponseFactory(),
-                    new RetryHintResponseFactory()
+                    new RetryExplanationResponseFactory(
+                            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+                    ),
+                    new RetryHintResponseFactory(
+                            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+                    )
             )
     );
 
@@ -34,7 +41,15 @@ class SessionResponseMapperTest {
                 "partial-command-match",
                 "Отправленная команда указывает в правильную область проверки, но её ещё нужно уточнить."
         );
-        RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance("status-basics", outcome, retryState);
+        RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance(
+                new RetryGuidanceProfile(
+                        "inspection-command-should-come-before-mutation",
+                        "inspect-working-tree-before-acting",
+                        "working-tree-inspection"
+                ),
+                outcome,
+                retryState
+        );
 
         SessionSubmissionResponse response = mapper.toSubmissionResponse(new SubmitAnswerResult(
                 "submission_2",
