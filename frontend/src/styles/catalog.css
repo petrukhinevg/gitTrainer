@@ -13,12 +13,21 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    align-self: start;
     position: sticky;
     top: 0;
     z-index: 3;
     padding-top: 1px;
     padding-bottom: 12px;
     margin-bottom: 10px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 250, 241, 0.98) 0%,
+            rgba(255, 250, 241, 0.96) 72%,
+            rgba(255, 250, 241, 0) 100%
+        );
+    backdrop-filter: blur(10px);
 }
 
 .scenario-legend__tags {
@@ -104,6 +113,7 @@
     position: relative;
     display: grid;
     gap: 0;
+    align-content: start;
     width: 100%;
     min-width: 0;
     isolation: isolate;
