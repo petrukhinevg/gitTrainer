@@ -74,8 +74,8 @@
 
 .scenario-legend__tag--active {
     border-color: var(--tag-accent);
-    background: color-mix(in srgb, var(--tag-accent) 14%, rgba(255, 250, 241, 0.92));
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--tag-accent) 16%, transparent);
+    background: color-mix(in srgb, var(--tag-accent) 11%, rgba(255, 250, 241, 0.96));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--tag-accent) 12%, transparent);
 }
 
 .scenario-legend__swatch {
@@ -94,11 +94,11 @@
     --tag-color-working-tree: #709a4e;
     --tag-color-basics: #c48a3a;
     --tag-color-branching: #456d9a;
-    --tag-color-navigation: #8549a2;
+    --tag-color-navigation: #6d3e85;
     --tag-color-history: #9a5f45;
     --tag-color-cleanup: #b65b5b;
-    --tag-color-planning: #ffde6f;
-    --tag-color-remote: #af3aad;
+    --tag-color-planning: #c04a77;
+    --tag-color-remote: #bd4bbb;
     --tag-color-inspection: #7a7d39;
     --flow-block-active-accent: var(--tag-color-default);
     position: relative;
@@ -308,9 +308,9 @@
 
 .flow-block--active {
     color: #111;
-    border-color: rgba(9, 25, 31, 0.18);
-    background: color-mix(in srgb, var(--flow-block-active-accent) 38%, rgba(255, 250, 241, 0.68));
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--flow-block-active-accent) 16%, transparent);
+    border-color: color-mix(in srgb, var(--flow-block-active-accent) 42%, rgba(9, 25, 31, 0.34));
+    background: color-mix(in srgb, var(--flow-block-active-accent) 22%, rgba(255, 250, 241, 0.9));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 12%, transparent);
 }
 
 .flow-block--toggle {
@@ -324,28 +324,28 @@
 }
 
 .flow-block--subtask.flow-block--active {
-    border-color: rgba(9, 25, 31, 0.18);
-    background: color-mix(in srgb, var(--flow-block-active-accent) 38%, rgba(255, 250, 241, 0.68));
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--flow-block-active-accent) 16%, transparent);
+    border-color: color-mix(in srgb, var(--flow-block-active-accent) 42%, rgba(9, 25, 31, 0.34));
+    background: color-mix(in srgb, var(--flow-block-active-accent) 22%, rgba(255, 250, 241, 0.9));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 12%, transparent);
 }
 
 .flow-block:hover {
     transform: translateX(2px);
     color: #111;
-    border-color: rgba(9, 25, 31, 0.18);
-    background: color-mix(in srgb, var(--flow-block-active-accent) 18%, rgba(255, 250, 241, 0.82));
+    border-color: color-mix(in srgb, var(--flow-block-active-accent) 28%, rgba(9, 25, 31, 0.28));
+    background: color-mix(in srgb, var(--flow-block-active-accent) 12%, rgba(255, 250, 241, 0.9));
 }
 
 .flow-block--active:hover {
     color: #111;
-    border-color: rgba(9, 25, 31, 0.18);
-    background: color-mix(in srgb, var(--flow-block-active-accent) 28%, rgba(255, 250, 241, 0.8));
+    border-color: color-mix(in srgb, var(--flow-block-active-accent) 48%, rgba(9, 25, 31, 0.34));
+    background: color-mix(in srgb, var(--flow-block-active-accent) 26%, rgba(255, 250, 241, 0.92));
 }
 
 .flow-block--subtask.flow-block--active:hover {
     color: #111;
-    border-color: rgba(9, 25, 31, 0.18);
-    background: color-mix(in srgb, var(--flow-block-active-accent) 28%, rgba(255, 250, 241, 0.8));
+    border-color: color-mix(in srgb, var(--flow-block-active-accent) 48%, rgba(9, 25, 31, 0.34));
+    background: color-mix(in srgb, var(--flow-block-active-accent) 26%, rgba(255, 250, 241, 0.92));
 }
 
 .flow-subtask-group {
