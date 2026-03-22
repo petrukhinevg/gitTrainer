@@ -95,17 +95,25 @@ class PostgresAuthoredScenarioReadModelTest {
         assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("mvp-fixture");
         assertThat(catalog)
                 .extracting(ScenarioSummary::slug)
-                .contains("status-basics", "branch-safety", "history-cleanup-preview", "remote-sync-preview");
+                .contains(
+                        "status-basics",
+                        "branch-safety",
+                        "history-cleanup-preview",
+                        "remote-sync-preview",
+                        "stash-checkpoint-draft",
+                        "merge-sandbox-outline",
+                        "tag-checkpoint-preview"
+                );
         assertThat(taskContent.goal()).contains("рабочего дерева");
         assertThat(taskContent.instructions()).hasSize(3);
         assertThat(repositoryContext.branches()).extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
                 .contains("main");
         assertThat(repositoryContext.files()).extracting(ScenarioWorkspaceDetail.ScenarioRepositoryFile::status)
                 .contains("modified", "untracked");
-        assertThat(scenarioCount).isGreaterThanOrEqualTo(4);
-        assertThat(answerCount).isGreaterThanOrEqualTo(12);
-        assertThat(validatorSpecCount).isGreaterThanOrEqualTo(4);
-        assertThat(validatorRuleCount).isGreaterThanOrEqualTo(12);
+        assertThat(scenarioCount).isGreaterThanOrEqualTo(7);
+        assertThat(answerCount).isGreaterThanOrEqualTo(21);
+        assertThat(validatorSpecCount).isGreaterThanOrEqualTo(7);
+        assertThat(validatorRuleCount).isGreaterThanOrEqualTo(21);
         assertThat(remoteSyncValidatorType).isEqualTo("git_repo_state_probe");
     }
 

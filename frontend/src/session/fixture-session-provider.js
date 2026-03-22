@@ -215,8 +215,17 @@ function isPartialFixtureMatch(scenarioSlug, normalizedAnswer) {
             return normalizedAnswer.startsWith("git status")
                 || normalizedAnswer.startsWith("git branch");
         case "history-cleanup-preview":
+        case "merge-sandbox-outline":
             return normalizedAnswer.startsWith("git log")
                 || normalizedAnswer.startsWith("git show");
+        case "remote-sync-preview":
+            return normalizedAnswer.startsWith("git fetch")
+                || normalizedAnswer.startsWith("git remote");
+        case "stash-checkpoint-draft":
+            return normalizedAnswer.startsWith("git stash");
+        case "tag-checkpoint-preview":
+            return normalizedAnswer.startsWith("git tag")
+                || normalizedAnswer.startsWith("git show-ref");
         default:
             return false;
     }

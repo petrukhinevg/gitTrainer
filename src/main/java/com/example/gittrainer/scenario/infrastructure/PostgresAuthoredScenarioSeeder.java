@@ -99,7 +99,17 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
                             enabled
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), TRUE)
-                        ON CONFLICT (scenario_slug) DO NOTHING
+                        ON CONFLICT (scenario_slug) DO UPDATE
+                        SET scenario_id = EXCLUDED.scenario_id,
+                            source_key = EXCLUDED.source_key,
+                            source_name = EXCLUDED.source_name,
+                            title = EXCLUDED.title,
+                            summary = EXCLUDED.summary,
+                            difficulty = EXCLUDED.difficulty,
+                            tags_json = EXCLUDED.tags_json,
+                            task_payload = EXCLUDED.task_payload,
+                            repository_context_payload = EXCLUDED.repository_context_payload,
+                            enabled = EXCLUDED.enabled
                         """)
                 .params(
                         summary.slug(),

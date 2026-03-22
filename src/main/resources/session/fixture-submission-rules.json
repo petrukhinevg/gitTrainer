@@ -18,5 +18,20 @@
     "git fetch",
     "git fetch origin",
     "git fetch --all --prune"
+  ],
+  "stash-checkpoint-draft": [
+    "git stash push -u",
+    "git stash push --include-untracked",
+    "git stash push -u -m \"ui-test\""
+  ],
+  "merge-sandbox-outline": [
+    "git log --oneline --graph --decorate --all",
+    "git diff main...feature/mock-merge-window",
+    "git status -sb"
+  ],
+  "tag-checkpoint-preview": [
+    "git tag --list",
+    "git tag -l",
+    "git show-ref --tags"
   ]
 }

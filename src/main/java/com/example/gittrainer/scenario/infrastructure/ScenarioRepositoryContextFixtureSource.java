@@ -140,6 +140,90 @@ public class ScenarioRepositoryContextFixtureSource implements ScenarioRepositor
                                             + "Сначала нужен отдельный `fetch`."
                             )
                     )
+            ),
+            "stash-checkpoint-draft", context(
+                    List.of(
+                            branch("feature/test-stash-panel", true),
+                            branch("main", false)
+                    ),
+                    List.of(
+                            commit("5d91af0", "test: добавить временный контент для панели"),
+                            commit("88ce113", "ui: подготовить черновой блок навигации")
+                    ),
+                    List.of(
+                            file("frontend/src/demo-panel.js", "modified"),
+                            file("notes/ui-placeholder.txt", "untracked")
+                    ),
+                    List.of(
+                            annotation(
+                                    "Контекст для теста",
+                                    "Данные подобраны так, чтобы сценарий "
+                                            + "выглядел правдоподобно, "
+                                            + "но не требовал настоящего "
+                                            + "доменного смысла."
+                            ),
+                            annotation(
+                                    "Безопасный следующий шаг",
+                                    "В authored fixture здесь достаточно "
+                                            + "тестовой команды из области stash."
+                            )
+                    )
+            ),
+            "merge-sandbox-outline", context(
+                    List.of(
+                            branch("feature/mock-merge-window", true),
+                            branch("main", false),
+                            branch("release/demo", false)
+                    ),
+                    List.of(
+                            commit("fbe4309", "test: набросать фикстуру для merge preview"),
+                            commit("2cc9b15", "feat: добавить условный баннер синхронизации")
+                    ),
+                    List.of(
+                            file("frontend/src/merge-banner.js", "modified"),
+                            file("docs/mock-merge-plan.md", "modified")
+                    ),
+                    List.of(
+                            annotation(
+                                    "Тестовая ветка",
+                                    "Данные репозитория оставлены условными, "
+                                            + "чтобы блок выглядел как обычный "
+                                            + "учебный сценарий."
+                            ),
+                            annotation(
+                                    "Подход к ответу",
+                                    "В серверном режиме здесь достаточно "
+                                            + "команды просмотра истории "
+                                            + "или различий."
+                            )
+                    )
+            ),
+            "tag-checkpoint-preview", context(
+                    List.of(
+                            branch("main", true),
+                            branch("origin/main", false)
+                    ),
+                    List.of(
+                            commit("11b7d31", "test: добавить условный тег релизного ориентира"),
+                            commit("d34aa0c", "docs: обновить заметки по контрольным точкам")
+                    ),
+                    List.of(
+                            file("docs/release-tags.md", "clean"),
+                            file("frontend/src/tag-chip.js", "clean")
+                    ),
+                    List.of(
+                            annotation(
+                                    "Тестовая проверка",
+                                    "Контекст сделан спокойным, чтобы сценарий "
+                                            + "можно было использовать как "
+                                            + "дополнительный навигационный узел."
+                            ),
+                            annotation(
+                                    "Подсказка по ответу",
+                                    "В серверном режиме ожидается безопасный "
+                                            + "просмотр списка тегов."
+                            )
+                    )
             )
     );
 

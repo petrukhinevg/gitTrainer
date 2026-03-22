@@ -31,6 +31,30 @@ export const FIXTURE_SCENARIO_CATALOG = Object.freeze({
             summary: "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
             difficulty: "intermediate",
             tags: ["remote", "inspection", "planning"]
+        },
+        {
+            id: "stash-checkpoint-draft",
+            slug: "stash-checkpoint-draft",
+            title: "Тестовый блок про временное сохранение",
+            summary: "Добавочный fixture-блок для проверки UI: ещё один родитель с несколькими дочерними шагами и нейтральным текстом.",
+            difficulty: "beginner",
+            tags: ["status", "cleanup", "planning"]
+        },
+        {
+            id: "merge-sandbox-outline",
+            slug: "merge-sandbox-outline",
+            title: "Тестовый блок про слияние без спешки",
+            summary: "Служебный сценарий для тестирования навигации: раскрывается как обычный блок, но несёт упрощённый учебный текст.",
+            difficulty: "intermediate",
+            tags: ["branching", "history", "planning"]
+        },
+        {
+            id: "tag-checkpoint-preview",
+            slug: "tag-checkpoint-preview",
+            title: "Тестовый блок про теги и ориентиры",
+            summary: "Ещё один fixture-родитель для проверки длинной ленты: внутри только тестовые шаги без особой смысловой нагрузки.",
+            difficulty: "beginner",
+            tags: ["navigation", "inspection", "remote"]
         }
     ],
     meta: {

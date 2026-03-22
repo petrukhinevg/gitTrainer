@@ -52,6 +52,36 @@ public class ScenarioCatalogFixtureSource {
                                     + "а не с немедленного `pull`.",
                             ScenarioDifficulty.INTERMEDIATE,
                             List.of("remote", "inspection", "planning")
+                    ),
+                    summary(
+                            "stash-checkpoint-draft",
+                            "stash-checkpoint-draft",
+                            "Тестовый блок про временное сохранение",
+                            "Добавочный authored-сценарий для проверки "
+                                    + "длинной левой панели и нескольких "
+                                    + "дочерних шагов без строгой смысловой нагрузки.",
+                            ScenarioDifficulty.BEGINNER,
+                            List.of("status", "cleanup", "planning")
+                    ),
+                    summary(
+                            "merge-sandbox-outline",
+                            "merge-sandbox-outline",
+                            "Тестовый блок про слияние без спешки",
+                            "Служебный authored-сценарий для проверки "
+                                    + "раскрытия ещё одного родителя "
+                                    + "и среднего списка подзадач.",
+                            ScenarioDifficulty.INTERMEDIATE,
+                            List.of("branching", "history", "planning")
+                    ),
+                    summary(
+                            "tag-checkpoint-preview",
+                            "tag-checkpoint-preview",
+                            "Тестовый блок про теги и ориентиры",
+                            "Дополнительный authored-сценарий для проверки "
+                                    + "длины маршрута и поведения "
+                                    + "навигационной ленты.",
+                            ScenarioDifficulty.BEGINNER,
+                            List.of("navigation", "inspection", "remote")
                     )
             )
     );

@@ -21,7 +21,7 @@ class ScenarioTaskContentFixtureSourceTest {
 
         assertThat(fixture.status()).isEqualTo("authored-fixture");
         assertThat(fixture.instructions()).hasSize(3);
-        assertThat(fixture.steps()).hasSize(3);
+        assertThat(fixture.steps()).hasSize(5);
         assertThat(fixture.annotations()).hasSize(2);
     }
 

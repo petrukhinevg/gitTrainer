@@ -25,7 +25,10 @@ class ScenarioCatalogFixtureSourceTest {
                         "status-basics",
                         "branch-safety",
                         "history-cleanup-preview",
-                        "remote-sync-preview"
+                        "remote-sync-preview",
+                        "stash-checkpoint-draft",
+                        "merge-sandbox-outline",
+                        "tag-checkpoint-preview"
                 );
     }
 
