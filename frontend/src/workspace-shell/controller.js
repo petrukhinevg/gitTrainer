@@ -648,6 +648,22 @@ export function createCatalogWorkspaceController({
         state.expandedScenarioSlugs = state.expandedScenarioSlugs.filter((item) => item !== slug);
     }
 
+    function syncNavigationSurfaceCacheFromDom() {
+        const navigationSurface = appRoot.querySelector('[data-render-surface="navigation"]');
+        renderedSurfaceCache.navigation = navigationSurface ? navigationSurface.innerHTML : null;
+    }
+
+    function syncCollapsedScenarioNavigationNode(slug) {
+        const toggleButton = appRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`);
+        if (toggleButton) {
+            toggleButton.setAttribute("aria-expanded", "false");
+            toggleButton.querySelector(".flow-block__indicator")?.replaceChildren(">");
+        }
+
+        appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`)?.remove();
+        syncNavigationSurfaceCacheFromDom();
+    }
+
     async function toggleScenarioExpansion(slug) {
         if (navigationAnimationInProgress) {
             return;
@@ -663,7 +679,7 @@ export function createCatalogWorkspaceController({
                     }
                 });
                 collapseScenario(slug);
-                render();
+                syncCollapsedScenarioNavigationNode(slug);
                 redrawNavigationTagConnections(appRoot);
             } finally {
                 navigationAnimationInProgress = false;
