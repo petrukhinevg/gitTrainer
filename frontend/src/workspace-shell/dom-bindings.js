@@ -10,6 +10,7 @@ export function bindWorkspaceShellDom({
     handleRouteChange,
     applyCatalogControls,
     resetCatalogControls,
+    toggleNavigationVisibility,
     toggleScenarioExpansion,
     ensureExerciseSession,
     retryLastSubmission,
@@ -21,6 +22,7 @@ export function bindWorkspaceShellDom({
 }) {
     bindCatalogControls({ applyCatalogControls, resetCatalogControls });
     bindRouteLinks(handleRouteChange);
+    bindNavigationVisibilityControl({ appRoot, toggleNavigationVisibility });
     bindNavigationControls({ appRoot, state, toggleScenarioExpansion });
     bindPracticeSurfaceControls({
         ensureExerciseSession,
@@ -134,6 +136,22 @@ function bindRouteLinks(handleRouteChange) {
             window.history.pushState(null, "", nextHash);
             void handleRouteChange();
         });
+    });
+}
+
+function bindNavigationVisibilityControl({ appRoot, toggleNavigationVisibility }) {
+    const button = appRoot.querySelector("[data-navigation-visibility-toggle]");
+    if (
+        !(button instanceof HTMLElement)
+        || button.tagName !== "BUTTON"
+        || button.dataset.navigationVisibilityBound === "true"
+    ) {
+        return;
+    }
+
+    button.dataset.navigationVisibilityBound = "true";
+    button.addEventListener("click", () => {
+        toggleNavigationVisibility();
     });
 }
 

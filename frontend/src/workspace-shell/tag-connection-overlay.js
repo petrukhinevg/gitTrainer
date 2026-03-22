@@ -188,6 +188,22 @@ export function buildContinuousConnectionPath(geometry) {
     return polyline ? buildPathDataFromPoints(polyline.points) : "";
 }
 
+function shouldRenderNavigationConnections(layoutRoot) {
+    if (!(layoutRoot instanceof HTMLElement)) {
+        return false;
+    }
+
+    if (window.matchMedia?.("(max-width: 960px)").matches) {
+        return true;
+    }
+
+    return (
+        !layoutRoot.classList.contains("lesson-layout--navigation-collapsed")
+            || layoutRoot.classList.contains("lesson-layout--navigation-collapsing")
+    )
+        && !layoutRoot.classList.contains("lesson-layout--navigation-transitioning");
+}
+
 function renderNavigationTagConnections({
     instant = false,
     preserveAnimation = false,
@@ -197,6 +213,12 @@ function renderNavigationTagConnections({
     mapRoot,
     canvas
 }) {
+    if (!shouldRenderNavigationConnections(layoutRoot)) {
+        navigationLane.__tagConnectionState = null;
+        hideCanvas(canvas);
+        return;
+    }
+
     const activeTag = normalizeTagToken(navigationLane.dataset.highlightTag);
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;

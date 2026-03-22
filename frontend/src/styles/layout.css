@@ -30,19 +30,24 @@ body {
 }
 
 .lesson-layout {
-    --navigation-lane-min-width: 272px;
-    --navigation-lane-width: 12.5%;
+    --navigation-lane-width: 320px;
+    --navigation-lane-current-width: var(--navigation-lane-width);
     --lesson-lane-width: 37.5%;
     --lesson-lane-min-width: 320px;
     --practice-lane-width: 50%;
     --practice-lane-min-width: 420px;
+    --practice-lane-current-width: clamp(
+        var(--practice-lane-min-width),
+        var(--practice-lane-width),
+        calc(100% - var(--navigation-lane-width) - var(--lesson-lane-min-width))
+    );
     display: grid;
     position: relative;
     grid-template-areas: "navigation lesson practice";
     grid-template-columns:
-        minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
-        minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
-        minmax(var(--practice-lane-min-width), var(--practice-lane-width));
+        var(--navigation-lane-current-width)
+        minmax(var(--lesson-lane-min-width), 1fr)
+        var(--practice-lane-current-width);
     gap: 0;
     width: 100%;
     height: 100%;
@@ -51,6 +56,11 @@ body {
     background: rgba(255, 250, 241, 0.74);
     align-items: stretch;
     isolation: isolate;
+    transition: grid-template-columns 180ms ease;
+}
+
+.lesson-layout--navigation-collapsed {
+    --navigation-lane-current-width: 0px;
 }
 
 .lesson-layout__lane {
@@ -71,11 +81,77 @@ body {
     overflow: visible;
     pointer-events: none;
     z-index: 4;
+    transform: translateX(0);
+    opacity: 1;
+    transition:
+        opacity 120ms ease,
+        transform 180ms ease;
+}
+
+.lesson-layout__navigation-toggle {
+    position: absolute;
+    top: 20px;
+    left: calc(var(--navigation-lane-current-width) - 16px);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 12px 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.96);
+    color: var(--ink-strong);
+    box-shadow: 0 12px 28px rgba(47, 31, 19, 0.12);
+    font: inherit;
+    cursor: pointer;
+    transition:
+        left 180ms ease,
+        background-color 180ms ease,
+        color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
+}
+
+.lesson-layout__navigation-toggle:hover,
+.lesson-layout__navigation-toggle:focus-visible {
+    background: var(--accent);
+    color: #fffaf1;
+    box-shadow: 0 14px 30px rgba(0, 48, 93, 0.24);
+    outline: none;
+}
+
+.lesson-layout__navigation-toggle:active {
+    transform: translateY(1px);
+}
+
+.lesson-layout--navigation-collapsed .lesson-layout__navigation-toggle {
+    left: 12px;
+}
+
+.lesson-layout__navigation-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.lesson-layout__navigation-toggle-text {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .lesson-layout__lane--navigation {
     grid-area: navigation;
-    min-width: var(--navigation-lane-min-width);
+    min-width: var(--navigation-lane-current-width);
+    max-width: var(--navigation-lane-current-width);
+    transition: min-width 180ms ease, max-width 180ms ease;
 }
 
 .lesson-layout__lane--lesson {
@@ -105,9 +181,13 @@ body {
 
 .lesson-lane--navigation {
     width: 100%;
-    min-width: var(--navigation-lane-min-width);
-    max-width: none;
+    min-width: var(--navigation-lane-current-width);
+    max-width: var(--navigation-lane-width);
     padding-left: 0;
+    transition:
+        opacity 140ms ease,
+        transform 180ms ease,
+        visibility 0s linear 0s;
 }
 
 .lesson-lane--navigation .lesson-lane__body {
@@ -144,6 +224,26 @@ body {
     background:
         linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
         var(--paper-strong);
+}
+
+.lesson-layout--navigation-collapsed:not(.lesson-layout--navigation-collapsing) .lesson-layout__tag-connection-overlay,
+.lesson-layout--navigation-transitioning .lesson-layout__tag-connection-overlay {
+    opacity: 0;
+}
+
+.lesson-layout--navigation-collapsed .lesson-layout__tag-connection-overlay {
+    transform: translateX(calc(-1 * var(--navigation-lane-width)));
+}
+
+.lesson-layout--navigation-collapsed.lesson-layout--navigation-collapsing .lesson-layout__tag-connection-overlay {
+    opacity: 1;
+}
+
+.lesson-layout--navigation-collapsed .lesson-lane--navigation {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-18px);
 }
 
 .lesson-lane__header,
@@ -239,25 +339,28 @@ body {
 
 @media (max-width: 1180px) {
     .lesson-layout {
-        --navigation-lane-min-width: 252px;
         --lesson-lane-width: 34%;
         --lesson-lane-min-width: 260px;
         --practice-lane-width: 50%;
         --practice-lane-min-width: 360px;
+        --practice-lane-current-width: clamp(
+            var(--practice-lane-min-width),
+            var(--practice-lane-width),
+            calc(100% - var(--navigation-lane-width) - var(--lesson-lane-min-width))
+        );
         grid-template-columns:
-            minmax(var(--navigation-lane-min-width), var(--navigation-lane-width))
-            minmax(var(--lesson-lane-min-width), var(--lesson-lane-width))
-            minmax(var(--practice-lane-min-width), var(--practice-lane-width));
+            var(--navigation-lane-current-width)
+            minmax(var(--lesson-lane-min-width), 1fr)
+            var(--practice-lane-current-width);
     }
 }
 
 @media (max-width: 1280px) {
     .lesson-layout--exercise {
-        --navigation-lane-min-width: 296px;
         grid-template-areas:
             "navigation practice"
             "lesson practice";
-        grid-template-columns: minmax(var(--navigation-lane-min-width), var(--navigation-lane-width)) minmax(360px, 1fr);
+        grid-template-columns: var(--navigation-lane-current-width) minmax(360px, 1fr);
         grid-template-rows: auto minmax(0, 1fr);
     }
 
@@ -287,7 +390,6 @@ body {
     }
 
     .lesson-layout {
-        --navigation-lane-min-width: 0;
         grid-template-areas:
             "navigation"
             "lesson"
@@ -297,6 +399,15 @@ body {
         height: auto;
         overflow: visible;
         background: transparent;
+    }
+
+    .lesson-layout__navigation-toggle {
+        display: none;
+    }
+
+    .lesson-layout__lane--navigation {
+        min-width: 0;
+        max-width: none;
     }
 
     .lesson-layout__lane--practice {
@@ -319,6 +430,17 @@ body {
         max-width: none;
         padding-left: 18px;
         padding-right: 18px;
+    }
+
+    .lesson-layout__tag-connection-overlay {
+        opacity: 1;
+    }
+
+    .lesson-layout--navigation-collapsed .lesson-lane--navigation {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
     }
 
     .lesson-lane__body {

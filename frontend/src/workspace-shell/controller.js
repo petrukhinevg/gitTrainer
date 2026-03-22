@@ -15,6 +15,7 @@ import {
     animateScenarioExpansion,
     bindSmoothScrollContainers,
     captureLaneScrollPositions,
+    NAVIGATION_TOGGLE_ANIMATION_MS,
     captureSurfaceScrollState,
     resetLaneScrollPosition,
     restoreLaneScrollPositions,
@@ -53,6 +54,9 @@ export function createCatalogWorkspaceController({
         selectedScenarioSlug: null,
         selectedFocus: null,
         expandedScenarioSlugs: [],
+        isNavigationCollapsed: false,
+        isNavigationCollapsing: false,
+        isNavigationExpandedReady: true,
         pinnedNavigationTag: null,
         providerName: defaultProviderName,
         submissionDraft: createInitialSubmissionDraftState(),
@@ -78,6 +82,9 @@ export function createCatalogWorkspaceController({
     let latestSubmissionRequestId = 0;
     const sessionProviders = new Map();
     let navigationAnimationInProgress = false;
+    let navigationRevealTimeoutId = 0;
+    let navigationCollapseTimeoutId = 0;
+    let cleanupPendingNavigationReveal = null;
     let shellMounted = false;
     let pendingLessonScrollReset = false;
     let renderedRouteKind = null;
@@ -196,6 +203,7 @@ export function createCatalogWorkspaceController({
             handleRouteChange,
             applyCatalogControls,
             resetCatalogControls,
+            toggleNavigationVisibility,
             toggleScenarioExpansion,
             ensureExerciseSession,
             retryLastSubmission,
@@ -217,6 +225,111 @@ export function createCatalogWorkspaceController({
         shellMounted = true;
     }
 
+    function syncLayoutChrome() {
+        const layout = appRoot.querySelector(".lesson-layout");
+        if (!layout) {
+            return;
+        }
+
+        layout.classList.toggle("lesson-layout--navigation-collapsed", state.isNavigationCollapsed);
+        layout.classList.toggle("lesson-layout--navigation-collapsing", state.isNavigationCollapsing);
+        layout.classList.toggle(
+            "lesson-layout--navigation-transitioning",
+            !state.isNavigationCollapsed && !state.isNavigationExpandedReady
+        );
+
+        const navigationLane = layout.querySelector(".lesson-layout__lane--navigation");
+        if (navigationLane instanceof HTMLElement) {
+            if (state.isNavigationCollapsed) {
+                navigationLane.setAttribute("aria-hidden", "true");
+                navigationLane.setAttribute("inert", "");
+            } else {
+                navigationLane.removeAttribute("aria-hidden");
+                navigationLane.removeAttribute("inert");
+            }
+        }
+
+        const navigationToggle = layout.querySelector("[data-navigation-visibility-toggle]");
+        if (navigationToggle instanceof HTMLElement && navigationToggle.tagName === "BUTTON") {
+            const actionLabel = state.isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель";
+            navigationToggle.setAttribute("aria-label", actionLabel);
+            navigationToggle.setAttribute("title", actionLabel);
+            navigationToggle.setAttribute("aria-expanded", state.isNavigationCollapsed ? "false" : "true");
+            navigationToggle.dataset.navigationVisibilityState = state.isNavigationCollapsed ? "collapsed" : "expanded";
+            navigationToggle.querySelector("[data-navigation-visibility-label]")?.replaceChildren(
+                state.isNavigationCollapsed ? ">" : "<"
+            );
+        }
+    }
+
+    function cancelPendingNavigationReveal() {
+        if (navigationRevealTimeoutId) {
+            window.clearTimeout(navigationRevealTimeoutId);
+            navigationRevealTimeoutId = 0;
+        }
+
+        cleanupPendingNavigationReveal?.();
+        cleanupPendingNavigationReveal = null;
+    }
+
+    function cancelPendingNavigationCollapse() {
+        if (!navigationCollapseTimeoutId) {
+            return;
+        }
+
+        window.clearTimeout(navigationCollapseTimeoutId);
+        navigationCollapseTimeoutId = 0;
+    }
+
+    function finishNavigationReveal() {
+        cancelPendingNavigationReveal();
+
+        if (state.isNavigationCollapsed) {
+            return;
+        }
+
+        state.isNavigationExpandedReady = true;
+        syncLayoutChrome();
+        redrawNavigationTagConnections(appRoot);
+    }
+
+    function scheduleNavigationReveal() {
+        cancelPendingNavigationReveal();
+        cancelPendingNavigationCollapse();
+
+        const layout = appRoot.querySelector(".lesson-layout");
+        if (!(layout instanceof HTMLElement) || state.isNavigationCollapsed) {
+            return;
+        }
+
+        const handleTransitionEnd = (event) => {
+            if (event.target !== layout || event.propertyName !== "grid-template-columns") {
+                return;
+            }
+
+            finishNavigationReveal();
+        };
+
+        layout.addEventListener("transitionend", handleTransitionEnd);
+        cleanupPendingNavigationReveal = () => {
+            layout.removeEventListener("transitionend", handleTransitionEnd);
+        };
+        navigationRevealTimeoutId = window.setTimeout(
+            finishNavigationReveal,
+            NAVIGATION_TOGGLE_ANIMATION_MS + 40
+        );
+    }
+
+    function scheduleNavigationCollapseCleanup() {
+        cancelPendingNavigationCollapse();
+        navigationCollapseTimeoutId = window.setTimeout(() => {
+            navigationCollapseTimeoutId = 0;
+            state.isNavigationCollapsing = false;
+            syncLayoutChrome();
+            redrawNavigationTagConnections(appRoot);
+        }, NAVIGATION_TOGGLE_ANIMATION_MS + 40);
+    }
+
     function renderWorkspaceSurfaces(selectedCatalogScenario) {
         const surfaces = renderCatalogWorkspaceSurfaces({
             state,
@@ -229,6 +342,7 @@ export function createCatalogWorkspaceController({
         patchSurface("lesson", surfaces.lesson);
         patchSurface("practice-viewer", surfaces.practiceViewer, "practiceViewer");
         patchSurface("practice-surface", surfaces.practiceSurface, "practiceSurface");
+        syncLayoutChrome();
     }
 
     function patchSurface(surfaceName, nextMarkup, cacheKey = surfaceName) {
@@ -704,6 +818,39 @@ export function createCatalogWorkspaceController({
             redrawNavigationTagConnections(appRoot);
         } finally {
             navigationAnimationInProgress = false;
+        }
+    }
+
+    function toggleNavigationVisibility() {
+        const layout = appRoot.querySelector(".lesson-layout");
+        const navigationLane = layout?.querySelector(".lesson-layout__lane--navigation");
+        const navigationToggle = layout?.querySelector("[data-navigation-visibility-toggle]");
+        const focusedInsideNavigation = navigationLane instanceof HTMLElement && navigationLane.contains(document.activeElement);
+
+        if (state.isNavigationCollapsed) {
+            cancelPendingNavigationCollapse();
+            state.isNavigationCollapsed = false;
+            state.isNavigationCollapsing = false;
+            state.isNavigationExpandedReady = false;
+            syncLayoutChrome();
+            scheduleNavigationReveal();
+            redrawNavigationTagConnections(appRoot);
+        } else {
+            cancelPendingNavigationReveal();
+            state.isNavigationCollapsed = true;
+            state.isNavigationCollapsing = true;
+            state.isNavigationExpandedReady = true;
+            syncLayoutChrome();
+            scheduleNavigationCollapseCleanup();
+        }
+
+        if (
+            state.isNavigationCollapsed
+            && focusedInsideNavigation
+            && navigationToggle instanceof HTMLElement
+            && navigationToggle.tagName === "BUTTON"
+        ) {
+            navigationToggle.focus({ preventScroll: true });
         }
     }
 }
