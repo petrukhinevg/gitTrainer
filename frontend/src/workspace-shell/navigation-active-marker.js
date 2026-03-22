@@ -7,16 +7,28 @@ export function bindNavigationActiveMarker({ appRoot }) {
         return;
     }
 
-    navigationLane.__navigationActiveMarkerCleanup?.();
-
     const navigationBody = navigationLane.querySelector(".lesson-lane__body");
     const mapRoot = navigationLane.querySelector("[data-tag-connection-map]");
     const marker = navigationLane.querySelector("[data-navigation-active-marker]");
     if (!(mapRoot instanceof HTMLElement) || !(marker instanceof HTMLElement)) {
         navigationLane.__redrawNavigationActiveMarker = null;
         navigationLane.__navigationActiveMarkerCleanup = null;
+        navigationLane.__navigationActiveMarkerBinding = null;
         return;
     }
+
+    const existingBinding = navigationLane.__navigationActiveMarkerBinding ?? null;
+    if (
+        existingBinding?.layoutRoot === layoutRoot
+        && existingBinding?.navigationBody === navigationBody
+        && existingBinding?.mapRoot === mapRoot
+        && existingBinding?.marker === marker
+    ) {
+        navigationLane.__redrawNavigationActiveMarker?.();
+        return;
+    }
+
+    navigationLane.__navigationActiveMarkerCleanup?.();
 
     const previousState = navigationLane.__navigationActiveMarkerState ?? null;
     if (previousState) {
@@ -33,17 +45,19 @@ export function bindNavigationActiveMarker({ appRoot }) {
         rafId = 0;
         pendingOptions = null;
 
+        const previousState = navigationLane.__navigationActiveMarkerState ?? null;
         const nextState = resolveNavigationActiveMarkerState({
             layoutRoot,
             mapRoot
         });
-        applyNavigationActiveMarkerState(marker, nextState, { instant });
+        applyNavigationActiveMarkerState(marker, nextState, { instant, previousState });
         navigationLane.__navigationActiveMarkerState = nextState;
     };
 
     const queueDraw = (options = {}) => {
+        const nextInstant = Boolean(options.instant);
         pendingOptions = {
-            instant: Boolean(options.instant)
+            instant: pendingOptions ? pendingOptions.instant && nextInstant : nextInstant
         };
 
         if (rafId) {
@@ -60,12 +74,18 @@ export function bindNavigationActiveMarker({ appRoot }) {
 
     if (typeof ResizeObserver !== "undefined") {
         resizeObserver = new ResizeObserver(() => {
-            queueDraw({ instant: true });
+            queueDraw();
         });
         resizeObserver.observe(mapRoot);
     }
 
     navigationLane.__redrawNavigationActiveMarker = queueDraw;
+    navigationLane.__navigationActiveMarkerBinding = {
+        layoutRoot,
+        navigationBody,
+        mapRoot,
+        marker
+    };
     navigationLane.__navigationActiveMarkerCleanup = () => {
         if (rafId) {
             window.cancelAnimationFrame(rafId);
@@ -74,6 +94,7 @@ export function bindNavigationActiveMarker({ appRoot }) {
         window.removeEventListener("resize", queueDraw);
         navigationBody?.removeEventListener("scroll", queueDraw);
         resizeObserver?.disconnect();
+        navigationLane.__navigationActiveMarkerBinding = null;
     };
 
     queueDraw({ instant: !previousState });
@@ -93,14 +114,15 @@ export function resolveNavigationActiveMarkerState({ layoutRoot, mapRoot }) {
         return createHiddenNavigationActiveMarkerState();
     }
 
-    const offset = measureNavigationActiveMarkerOffset({ mapRoot, target });
-    if (typeof offset !== "number") {
+    const geometry = measureNavigationActiveMarkerGeometry({ mapRoot, target });
+    if (!geometry) {
         return createHiddenNavigationActiveMarkerState();
     }
 
     return {
         visible: true,
-        y: offset
+        top: geometry.top,
+        height: geometry.height
     };
 }
 
@@ -188,7 +210,7 @@ function normalizeOptionalValue(value) {
     return normalized.length ? normalized : null;
 }
 
-export function measureNavigationActiveMarkerOffset({ mapRoot, target }) {
+export function measureNavigationActiveMarkerGeometry({ mapRoot, target }) {
     if (!(mapRoot instanceof HTMLElement) || !(target instanceof HTMLElement)) {
         return null;
     }
@@ -196,11 +218,19 @@ export function measureNavigationActiveMarkerOffset({ mapRoot, target }) {
     const mapRect = mapRoot.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
 
-    if (!Number.isFinite(mapRect.top) || !Number.isFinite(targetRect.top) || targetRect.height <= 0) {
+    if (
+        !Number.isFinite(mapRect.top)
+        || !Number.isFinite(targetRect.top)
+        || !Number.isFinite(targetRect.height)
+        || targetRect.height <= 0
+    ) {
         return null;
     }
 
-    return targetRect.top - mapRect.top + (targetRect.height / 2);
+    return {
+        top: targetRect.top - mapRect.top,
+        height: targetRect.height
+    };
 }
 
 function shouldRenderNavigationActiveMarker(layoutRoot) {
@@ -215,15 +245,37 @@ function shouldRenderNavigationActiveMarker(layoutRoot) {
 function createHiddenNavigationActiveMarkerState() {
     return {
         visible: false,
-        y: 0
+        top: 0,
+        height: 0
     };
 }
 
-function applyNavigationActiveMarkerState(marker, state, { instant = false } = {}) {
+export function resolveNavigationActiveMarkerMotionDuration(previousState, nextState) {
+    if (!previousState?.visible || !nextState?.visible) {
+        return 240;
+    }
+
+    const travelDistance = Math.abs((nextState.top ?? 0) - (previousState.top ?? 0));
+    const sizeDelta = Math.abs((nextState.height ?? 0) - (previousState.height ?? 0));
+    const weightedDistance = travelDistance + (sizeDelta * 0.35);
+
+    return clampNumber(Math.round(240 + (weightedDistance * 0.95)), 240, 620);
+}
+
+function applyNavigationActiveMarkerState(marker, state, { instant = false, previousState = null } = {}) {
     marker.classList.toggle("navigation-flow-rail__marker--instant", instant);
 
-    if (typeof state?.y === "number") {
-        marker.style.setProperty("--navigation-active-marker-y", `${state.y}px`);
+    marker.style.setProperty(
+        "--navigation-active-marker-motion-duration",
+        `${resolveNavigationActiveMarkerMotionDuration(previousState, state)}ms`
+    );
+
+    if (typeof state?.top === "number") {
+        marker.style.setProperty("--navigation-active-marker-top", `${state.top}px`);
+    }
+
+    if (typeof state?.height === "number") {
+        marker.style.setProperty("--navigation-active-marker-height", `${Math.max(state.height, 24)}px`);
     }
 
     if (state?.visible) {
@@ -231,4 +283,8 @@ function applyNavigationActiveMarkerState(marker, state, { instant = false } = {
     } else {
         delete marker.dataset.visible;
     }
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(Math.max(value, min), max);
 }

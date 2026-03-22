@@ -118,39 +118,61 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 16px;
+    width: 1px;
     pointer-events: none;
     z-index: 2;
 }
 
 .navigation-flow-rail--shell {
-    left: 20px;
+    left: 8px;
 }
 
 .navigation-flow-rail__line {
     position: absolute;
     top: 2px;
     bottom: 2px;
-    left: 1px;
-    width: 1px;
-    background: transparent;
+    left: 3px;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(31, 23, 32, 0.12) 0%, rgba(31, 23, 32, 0.04) 100%);
 }
 
 .navigation-flow-rail__marker {
+    --navigation-active-marker-accent: rgba(72, 72, 72, 0.75);
+    --navigation-active-marker-motion-duration: 200ms;
     position: absolute;
     top: 0;
-    left: -10px;
-    width: 9px;
-    height: 12px;
-    background: linear-gradient(180deg, #1b1b1b 0%, #000 100%);
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
-    transform: translate3d(0, calc(var(--navigation-active-marker-y, 0px) - 50%), 0);
-    transform-origin: left center;
+    left: 2px;
+    width: 4px;
+    height: max(var(--navigation-active-marker-height, 0px), 24px);
+    transform: translate3d(0, var(--navigation-active-marker-top, 0px), 0);
     opacity: 0;
-    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.28));
+    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--navigation-active-marker-accent) 18%, transparent));
     transition:
-        transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 140ms ease;
+        transform var(--navigation-active-marker-motion-duration) cubic-bezier(0.2, 0.9, 0.25, 1),
+        height var(--navigation-active-marker-motion-duration) cubic-bezier(0.2, 0.9, 0.25, 1),
+        opacity 80ms ease;
+}
+
+.navigation-flow-rail__marker::before,
+.navigation-flow-rail__marker::after {
+    content: "";
+    position: absolute;
+}
+
+.navigation-flow-rail__marker::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    border-radius: 999px;
+    background: var(--navigation-active-marker-accent);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--navigation-active-marker-accent) 12%, transparent),
+        0 0 18px color-mix(in srgb, var(--navigation-active-marker-accent) 18%, transparent);
+}
+
+.navigation-flow-rail__marker::after {
+    content: none;
 }
 
 .navigation-flow-rail__marker[data-visible="true"] {
@@ -158,6 +180,11 @@
 }
 
 .navigation-flow-rail__marker--instant {
+    transition: none;
+}
+
+.navigation-flow-rail__marker--instant::before,
+.navigation-flow-rail__marker--instant::after {
     transition: none;
 }
 

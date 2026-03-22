@@ -23,6 +23,7 @@ import {
     restoreSurfaceScrollState
 } from "./scroll-animation.js";
 import { redrawNavigationActiveMarker } from "./navigation-active-marker.js";
+import { resolveNavigationActiveMarkerTarget } from "./navigation-active-marker.js";
 import { syncNavigationMarkerTarget } from "./navigation-active-marker.js";
 import { redrawNavigationTagConnections } from "./tag-connection-overlay.js";
 import {
@@ -312,7 +313,7 @@ export function createCatalogWorkspaceController({
 
         state.isNavigationExpandedReady = true;
         syncLayoutChrome();
-        redrawNavigationActiveMarker(appRoot, { instant: true });
+        redrawNavigationActiveMarker(appRoot);
         redrawNavigationTagConnections(appRoot);
     }
 
@@ -349,7 +350,7 @@ export function createCatalogWorkspaceController({
             navigationCollapseTimeoutId = 0;
             state.isNavigationCollapsing = false;
             syncLayoutChrome();
-            redrawNavigationActiveMarker(appRoot, { instant: true });
+            redrawNavigationActiveMarker(appRoot);
             redrawNavigationTagConnections(appRoot);
         }, NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS + 40);
     }
@@ -873,14 +874,17 @@ export function createCatalogWorkspaceController({
             activeNavigationAnimationSlugs.add(slug);
 
             try {
+                prepareNavigationMarkerForScenarioCollapse(appRoot, slug);
+                redrawNavigationActiveMarker(appRoot);
                 await animateScenarioCollapse(appRoot, slug, {
                     onFrame: () => {
-                        redrawNavigationActiveMarker(appRoot, { instant: true });
+                        redrawNavigationActiveMarker(appRoot);
                         redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 });
                 collapseScenario(slug);
                 syncCollapsedScenarioNavigationNode(slug);
+                redrawNavigationActiveMarker(appRoot);
                 redrawNavigationTagConnections(appRoot);
             } finally {
                 activeNavigationAnimationSlugs.delete(slug);
@@ -900,12 +904,13 @@ export function createCatalogWorkspaceController({
             await Promise.all([
                 animateScenarioExpansion(appRoot, slug, {
                     onFrame: () => {
-                        redrawNavigationActiveMarker(appRoot, { instant: true });
+                        redrawNavigationActiveMarker(appRoot);
                         redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 }),
                 dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false })
             ]);
+            redrawNavigationActiveMarker(appRoot);
             redrawNavigationTagConnections(appRoot);
         } finally {
             state.expandingScenarioSlugs = state.expandingScenarioSlugs.filter((item) => item !== slug);
@@ -926,7 +931,7 @@ export function createCatalogWorkspaceController({
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = false;
             syncLayoutChrome();
-            redrawNavigationActiveMarker(appRoot, { instant: true });
+            redrawNavigationActiveMarker(appRoot);
             scheduleNavigationReveal();
             redrawNavigationTagConnections(appRoot);
         } else {
@@ -935,7 +940,7 @@ export function createCatalogWorkspaceController({
             state.isNavigationCollapsing = true;
             state.isNavigationExpandedReady = true;
             syncLayoutChrome();
-            redrawNavigationActiveMarker(appRoot, { instant: true });
+            redrawNavigationActiveMarker(appRoot);
             scheduleNavigationCollapseCleanup();
         }
 
@@ -1174,6 +1179,31 @@ function syncNavigationSurfaceActiveState(surfaceRoot, state) {
         selectedScenarioSlug: state.selectedScenarioSlug,
         selectedFocus: state.selectedFocus
     });
+}
+
+function prepareNavigationMarkerForScenarioCollapse(appRoot, slug) {
+    if (!(appRoot instanceof HTMLElement) || !slug) {
+        return;
+    }
+
+    const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+    const collapsingPanel = appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`);
+    const collapsingToggle = appRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`);
+    if (
+        !(mapRoot instanceof HTMLElement)
+        || !(collapsingPanel instanceof HTMLElement)
+        || !(collapsingToggle instanceof HTMLElement)
+    ) {
+        return;
+    }
+
+    const activeTarget = resolveNavigationActiveMarkerTarget(mapRoot);
+    if (!(activeTarget instanceof HTMLElement) || !collapsingPanel.contains(activeTarget)) {
+        return;
+    }
+
+    delete activeTarget.dataset.navigationMarkerTarget;
+    collapsingToggle.dataset.navigationMarkerTarget = "true";
 }
 
 function syncNavigationRouteShortcutState(surfaceRoot, state) {

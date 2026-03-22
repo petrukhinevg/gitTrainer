@@ -7,6 +7,7 @@ import { renderSidebarPanelContent } from "../src/workspace-shell/view/sidebar-p
 import {
     bindNavigationActiveMarker,
     redrawNavigationActiveMarker,
+    resolveNavigationActiveMarkerMotionDuration,
     resolveNavigationActiveMarkerTarget,
     syncNavigationMarkerTarget
 } from "../src/workspace-shell/navigation-active-marker.js";
@@ -45,14 +46,16 @@ test("маркер выбирает активную подзадачу прио
 
         assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), subtaskLink);
         assert.equal(marker.dataset.visible, "true");
-        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "219px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "46px");
 
         subtaskLink.classList.remove("flow-block--active");
         redrawNavigationActiveMarker(appRoot, { instant: true });
         flushRafQueue(window);
 
         assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), scenarioToggle);
-        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "106px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "80px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "52px");
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -84,7 +87,8 @@ test("маркер следует за явно выбранной целью и
         bindNavigationActiveMarker({ appRoot });
         flushRafQueue(window);
 
-        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "219px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "46px");
 
         activeSubtaskLink.classList.remove("flow-block--active");
         remoteScenarioToggle.classList.add("flow-block--active");
@@ -99,9 +103,103 @@ test("маркер следует за явно выбранной целью и
 
         assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), activeSubtaskLink);
         assert.equal(marker.dataset.visible, "true");
-        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "219px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "46px");
         assert.equal(activeSubtaskLink.dataset.navigationMarkerTarget, "true");
         assert.equal(remoteScenarioToggle.hasAttribute("data-navigation-marker-target"), false);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("обычный redraw не должен терять анимацию из-за instant redraw в том же кадре", () => {
+    const dom = new JSDOM(createMarkerFixture(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const scenarioToggle = appRoot.querySelector("[data-scenario-toggle]");
+        const subtaskLink = appRoot.querySelector("[data-scenario-focus]");
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(scenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(subtaskLink, createRect(40, 236, 204, 46));
+
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        subtaskLink.classList.remove("flow-block--active");
+        redrawNavigationActiveMarker(appRoot);
+        redrawNavigationActiveMarker(appRoot, { instant: true });
+        flushRafQueue(window);
+
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "80px");
+        assert.equal(marker.classList.contains("navigation-flow-rail__marker--instant"), false);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("длинный переход маркера получает более длинную анимацию, чем короткий", () => {
+    const shortDuration = resolveNavigationActiveMarkerMotionDuration(
+        { visible: true, top: 80, height: 46 },
+        { visible: true, top: 120, height: 46 }
+    );
+    const longDuration = resolveNavigationActiveMarkerMotionDuration(
+        { visible: true, top: 80, height: 46 },
+        { visible: true, top: 420, height: 46 }
+    );
+
+    assert.ok(longDuration > shortDuration);
+    assert.equal(shortDuration, 278);
+    assert.equal(longDuration, 563);
+});
+
+test("повторный bind на том же navigation DOM переиспользует маркер и не сбрасывает анимацию", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const firstStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const secondScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(firstStep, createRect(40, 236, 204, 46));
+        assignRect(secondScenarioToggle, createRect(24, 320, 220, 52));
+
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "branch-safety",
+            selectedFocus: "step-1"
+        });
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        const redrawBefore = navigationLane.__redrawNavigationActiveMarker;
+
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "remote-sync-preview",
+            selectedFocus: null
+        });
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        assert.equal(navigationLane.__redrawNavigationActiveMarker, redrawBefore);
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "280px");
+        assert.equal(marker.classList.contains("navigation-flow-rail__marker--instant"), false);
     } finally {
         restoreGlobals();
         dom.window.close();
