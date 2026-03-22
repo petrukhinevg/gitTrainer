@@ -228,7 +228,7 @@ function renderNavigationTagConnections({
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
-        clearFlowSubtaskActiveTagState(mapRoot);
+        clearFlowSubtaskActiveTagState(mapRoot, { animateShift: true });
         clearSecondaryBranchSideState(mapRoot);
         hideCanvas(canvas);
         return;
@@ -1180,7 +1180,7 @@ function syncFlowSubtaskState({
 }) {
     const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys);
     if (animateShift) {
-        triggerFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, nextGroups));
+        prepareFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, nextGroups));
     }
 
     applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups);
@@ -1266,10 +1266,12 @@ function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
     });
 }
 
-function triggerFlowSubtaskShiftAnimation(groups) {
+function prepareFlowSubtaskShiftAnimation(groups) {
     if (!Array.isArray(groups) || groups.length === 0) {
         return;
     }
+
+    let shouldForceLayout = false;
 
     groups.forEach((group) => {
         if (!(group instanceof HTMLElement)) {
@@ -1283,6 +1285,21 @@ function triggerFlowSubtaskShiftAnimation(groups) {
 
         if (group.dataset.flowSubtaskShiftAnimating !== "true") {
             group.dataset.flowSubtaskShiftAnimating = "true";
+            shouldForceLayout = true;
+        }
+    });
+
+    if (shouldForceLayout) {
+        groups.forEach((group) => {
+            if (group instanceof HTMLElement) {
+                void group.offsetWidth;
+            }
+        });
+    }
+
+    groups.forEach((group) => {
+        if (!(group instanceof HTMLElement)) {
+            return;
         }
 
         group.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
@@ -1301,9 +1318,13 @@ function isCollapsingSubtaskGroup(element) {
     return subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true";
 }
 
-function clearFlowSubtaskActiveTagState(mapRoot) {
+function clearFlowSubtaskActiveTagState(mapRoot, { animateShift = false } = {}) {
     if (!(mapRoot instanceof HTMLElement)) {
         return;
+    }
+
+    if (animateShift) {
+        prepareFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, new Set()));
     }
 
     mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
@@ -1313,6 +1334,10 @@ function clearFlowSubtaskActiveTagState(mapRoot) {
 
         delete element.dataset.flowSubtaskActiveTag;
     });
+
+    if (animateShift) {
+        return;
+    }
 
     mapRoot.querySelectorAll("[data-flow-subtask-shift-animating]").forEach((element) => {
         if (!(element instanceof HTMLElement)) {
