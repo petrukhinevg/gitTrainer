@@ -203,6 +203,25 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         });
     };
 
+    const triggerPinnedTagShiftAnimation = () => {
+        const mapRoot = navigationLane.querySelector("[data-tag-connection-map]");
+        if (!(mapRoot instanceof HTMLElement)) {
+            return;
+        }
+
+        if (typeof mapRoot.__flowSubtaskShiftAnimationTimeoutId === "number" && mapRoot.__flowSubtaskShiftAnimationTimeoutId) {
+            window.clearTimeout(mapRoot.__flowSubtaskShiftAnimationTimeoutId);
+        }
+
+        delete mapRoot.dataset.flowSubtaskShiftAnimating;
+        void mapRoot.offsetWidth;
+        mapRoot.dataset.flowSubtaskShiftAnimating = "true";
+        mapRoot.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
+            delete mapRoot.dataset.flowSubtaskShiftAnimating;
+            mapRoot.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }, 260);
+    };
+
     applyNavigationHighlight();
     syncNavigationLegendState();
 
@@ -228,6 +247,7 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         button.addEventListener("click", (event) => {
             event.preventDefault();
             state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
+            triggerPinnedTagShiftAnimation();
             applyNavigationHighlight();
             syncNavigationLegendState();
         });
