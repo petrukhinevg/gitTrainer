@@ -1,13 +1,17 @@
 package com.example.gittrainer.session.api;
 
+import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
 import com.example.gittrainer.session.domain.RetryExplanationSelection;
+import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RetryExplanationResponseFactoryTest {
 
-    private final RetryExplanationResponseFactory factory = new RetryExplanationResponseFactory();
+    private final RetryExplanationResponseFactory factory = new RetryExplanationResponseFactory(
+            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+    );
 
     @Test
     void formatsSubmittedAnswerInsidePartialGuidanceMessage() {

@@ -1,5 +1,7 @@
 package com.example.gittrainer.session.api;
 
+import com.example.gittrainer.session.application.RetryFeedbackCatalog;
+import com.example.gittrainer.session.application.RetryHintTemplate;
 import com.example.gittrainer.session.domain.RetryHintSelection;
 import org.springframework.stereotype.Component;
 
@@ -7,6 +9,12 @@ import java.util.List;
 
 @Component
 class RetryHintResponseFactory {
+
+    private final RetryFeedbackCatalog retryFeedbackCatalog;
+
+    RetryHintResponseFactory(RetryFeedbackCatalog retryFeedbackCatalog) {
+        this.retryFeedbackCatalog = retryFeedbackCatalog;
+    }
 
     RetryHintResponse placeholderResponse() {
         return new RetryHintResponse(
@@ -42,29 +50,30 @@ class RetryHintResponseFactory {
             return new RetryHintNarrative("baseline", "Подсказка сейчас недоступна.", List.of());
         }
 
-        HintCopy hintCopy = hintCopy(hintSelection.code());
+        RetryHintTemplate hintTemplate = retryFeedbackCatalog.findHintTemplate(templateCode(hintSelection.code()))
+                .orElseGet(this::fallbackTemplate);
         boolean strongerHintUnlocked = "strong".equals(hintSelection.level());
         List<RetryHintRevealResponse> reveals = strongerHintUnlocked
                 ? List.of(
                         reveal(
                                 "nudge",
                                 "Показать первую подсказку",
-                                hintCopy.nudgeTitle(),
-                                hintCopy.nudgeMessage()
+                                hintTemplate.nudgeTitle(),
+                                hintTemplate.nudgeMessage()
                         ),
                         reveal(
                                 "strong",
                                 "Показать усиленную подсказку",
-                                hintCopy.strongTitle(),
-                                hintCopy.strongMessage()
+                                hintTemplate.strongTitle(),
+                                hintTemplate.strongMessage()
                         )
                 )
                 : List.of(
                         reveal(
                                 "nudge",
                                 "Показать первую подсказку",
-                                hintCopy.nudgeTitle(),
-                                hintCopy.nudgeMessage()
+                                hintTemplate.nudgeTitle(),
+                                hintTemplate.nudgeMessage()
                         )
                 );
 
@@ -78,85 +87,28 @@ class RetryHintResponseFactory {
         );
     }
 
-    private HintCopy hintCopy(String hintCode) {
-        String code = hintCode == null ? "" : hintCode;
+    private String templateCode(String hintCode) {
+        if (hintCode == null || hintCode.isBlank()) {
+            return "generic-retry";
+        }
+        if (hintCode.endsWith("-strong")) {
+            return hintCode.substring(0, hintCode.length() - "-strong".length());
+        }
+        if (hintCode.endsWith("-nudge")) {
+            return hintCode.substring(0, hintCode.length() - "-nudge".length());
+        }
+        return hintCode;
+    }
 
-        return switch (code) {
-            case "partial-answer-nudge", "partial-answer-strong" -> new HintCopy(
-                    "Останьтесь в том же семействе проверок",
-                    "Оставайтесь в той же зоне проверки, но уберите лишний охват "
-                            + "или переключитесь на каноничную безопасную команду "
-                            + "для сценария.",
-                    "Сверьтесь с точным безопасным шагом",
-                    "Ищите самую маленькую команду, которая проверяет именно то "
-                            + "состояние репозитория, о котором спрашивает задача, "
-                            + "без лишнего намерения."
-            );
-            case "unsupported-answer-type-nudge", "unsupported-answer-type-strong" -> new HintCopy(
-                    "Используйте режим текста команды",
-                    "Переключите тип ответа обратно на текст команды "
-                            + "и оставьте следующую попытку "
-                            + "в форме простой команды проверки.",
-                    "Ориентируйтесь на поддерживаемый пример",
-                    "Посмотрите на бейдж поддерживаемого типа ответа над формой "
-                            + "и сначала вернитесь к этому режиму."
-            );
-            case "branch-intent-nudge", "branch-intent-strong" -> new HintCopy(
-                    "Сначала подтвердите активную ветку",
-                    "Выберите branch-reading шаг, который ничего не меняет "
-                            + "в репозитории, но явно показывает, "
-                            + "где сейчас открыта работа.",
-                    "Выберите команду чтения branch-контекста",
-                    "Нужна самая маленькая команда из семейства "
-                            + "`git branch --show-current` или branch-aware "
-                            + "`git status`, которая подтверждает текущую ветку "
-                            + "до любых решений о `checkout`."
-            );
-            case "history-plan-nudge", "history-plan-strong" -> new HintCopy(
-                    "Сначала покажите компактную историю",
-                    "Оставайтесь в preview-режиме и выберите команду, "
-                            + "которая показывает верхушку истории с `fixup!` "
-                            + "и WIP, не меняя коммиты.",
-                    "Выберите команду просмотра графа истории",
-                    "Нужна компактная команда из семейства "
-                            + "`git log --oneline --decorate`; вариант с `--graph` "
-                            + "тоже подходит, если делает стек читаемее."
-            );
-            case "working-tree-inspection-nudge", "working-tree-inspection-strong" -> new HintCopy(
-                    "Начните с проверки рабочего дерева",
-                    "Сценарий спрашивает о состоянии репозитория, "
-                            + "поэтому следующая попытка должна оставаться "
-                            + "в семействе `git status`, "
-                            + "а не менять файлы или ветки.",
-                    "Используйте `git status` как безопасный первый шаг",
-                    "Сначала отправьте `git status` или `git status --short`, "
-                            + "чтобы подтвердить изменённые "
-                            + "и неотслеживаемые файлы "
-                            + "до любого следующего действия."
-            );
-            case "remote-fetch-nudge", "remote-fetch-strong" -> new HintCopy(
-                    "Сначала получите свежие remote refs",
-                    "Выберите отдельный шаг получения данных с удалённого "
-                            + "репозитория, который обновляет картину "
-                            + "`origin/main`, но не интегрирует изменения "
-                            + "в локальную ветку.",
-                    "Выберите команду из семейства `git fetch`",
-                    "Нужна команда вроде `git fetch` или `git fetch origin`, "
-                            + "а не `pull`, потому что сценарий сначала оценивает "
-                            + "обновление remote-tracking состояния."
-            );
-            default -> new HintCopy(
-                    "Вернитесь к цели сценария",
-                    "Переформулируйте задачу в одном предложении "
-                            + "и держите следующую попытку сфокусированной "
-                            + "на самой маленькой безопасной команде, "
-                            + "которая на неё отвечает.",
-                    "Покажите самый маленький безопасный следующий шаг",
-                    "Уберите лишнее намерение и выберите команду, "
-                            + "которая даёт недостающий сигнал "
-                            + "до любого более крупного действия."
-            );
-        };
+    private RetryHintTemplate fallbackTemplate() {
+        return retryFeedbackCatalog.findHintTemplate("generic-retry")
+                .orElse(new RetryHintTemplate(
+                        "Вернитесь к цели сценария",
+                        "Переформулируйте задачу в одном предложении.",
+                        "Покажите самый маленький безопасный следующий шаг",
+                        "Уберите лишнее намерение и выберите команду, "
+                                + "которая даёт недостающий сигнал до любого более крупного действия."
+                ));
     }
 
     private RetryHintRevealResponse reveal(
@@ -172,14 +124,6 @@ class RetryHintResponseFactory {
             String level,
             String message,
             List<RetryHintRevealResponse> reveals
-    ) {
-    }
-
-    private record HintCopy(
-            String nudgeTitle,
-            String nudgeMessage,
-            String strongTitle,
-            String strongMessage
     ) {
     }
 }

@@ -1,13 +1,17 @@
 package com.example.gittrainer.session.api;
 
 import com.example.gittrainer.session.domain.RetryHintSelection;
+import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RetryHintResponseFactoryTest {
 
-    private final RetryHintResponseFactory factory = new RetryHintResponseFactory();
+    private final RetryHintResponseFactory factory = new RetryHintResponseFactory(
+            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+    );
 
     @Test
     void exposesBothHintLevelsWhenStrongGuidanceIsUnlocked() {

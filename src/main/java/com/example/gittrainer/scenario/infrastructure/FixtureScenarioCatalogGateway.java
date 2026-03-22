@@ -3,11 +3,13 @@ package com.example.gittrainer.scenario.infrastructure;
 import com.example.gittrainer.scenario.application.ScenarioCatalogGateway;
 import com.example.gittrainer.scenario.domain.CatalogBrowseQuery;
 import com.example.gittrainer.scenario.domain.ScenarioSummary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@Profile("test | local-memory")
 public class FixtureScenarioCatalogGateway implements ScenarioCatalogGateway {
 
     private final ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;

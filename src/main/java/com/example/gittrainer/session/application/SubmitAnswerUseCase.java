@@ -6,7 +6,6 @@ import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.session.domain.TrainingSessionSubmission;
 import com.example.gittrainer.session.domain.RetryGuidance;
-import com.example.gittrainer.session.domain.RetryGuidancePolicy;
 import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
@@ -23,19 +22,22 @@ public class SubmitAnswerUseCase {
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final SubmissionAnswerValidator submissionAnswerValidator;
     private final ProgressRepository progressRepository;
+    private final RetryGuidanceResolver retryGuidanceResolver;
 
     public SubmitAnswerUseCase(
             SessionRepository sessionRepository,
             SessionSubmissionRepository sessionSubmissionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
             SubmissionAnswerValidator submissionAnswerValidator,
-            ProgressRepository progressRepository
+            ProgressRepository progressRepository,
+            RetryGuidanceResolver retryGuidanceResolver
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionSubmissionRepository = sessionSubmissionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.submissionAnswerValidator = submissionAnswerValidator;
         this.progressRepository = progressRepository;
+        this.retryGuidanceResolver = retryGuidanceResolver;
     }
 
     public SubmitAnswerResult submit(String sessionId, SubmitAnswerCommand command) {
@@ -80,7 +82,7 @@ public class SubmitAnswerUseCase {
                 submittedAt
         ));
         RetryState retryState = RetryStatePolicy.afterSubmission(updatedSession, failedAttempt);
-        RetryGuidance retryGuidance = RetryGuidancePolicy.selectGuidance(
+        RetryGuidance retryGuidance = retryGuidanceResolver.resolve(
                 session.scenarioSlug(),
                 outcome,
                 retryState
