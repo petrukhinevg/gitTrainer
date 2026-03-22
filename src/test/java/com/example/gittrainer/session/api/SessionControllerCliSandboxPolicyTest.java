@@ -4,10 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,17 +16,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties = {
         "gittrainer.validator.cli.enabled=true",
-        "gittrainer.validator.cli.allow-external-executable=true",
-        "gittrainer.validator.cli.executable=/definitely-missing-cli-binary",
+        "gittrainer.validator.cli.executable=/bin/echo",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
 })
 @ActiveProfiles("local-memory")
-class SessionControllerCliFailureTest {
+class SessionControllerCliSandboxPolicyTest {
 
     private final WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
-    SessionControllerCliFailureTest(WebApplicationContext webApplicationContext) {
+    SessionControllerCliSandboxPolicyTest(WebApplicationContext webApplicationContext) {
         this.webApplicationContext = webApplicationContext;
     }
 
@@ -36,7 +35,7 @@ class SessionControllerCliFailureTest {
     }
 
     @Test
-    void returnsRetryableProblemDetailWhenCliRunnerCannotBeStarted() throws Exception {
+    void returnsRetryableProblemDetailWhenExternalExecutableIsDisallowed() throws Exception {
         String sessionId = startSessionAndExtractId();
 
         mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
@@ -50,8 +49,7 @@ class SessionControllerCliFailureTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.title").value("Проверка сценария временно недоступна"))
-                .andExpect(jsonPath("$.code").value("validation-runner-invalid-executable"))
-                .andExpect(jsonPath("$.failureDisposition").value("retryable"))
+                .andExpect(jsonPath("$.code").value("validation-runner-executable-not-allowed"))
                 .andExpect(jsonPath("$.retryable").value(true));
     }
 

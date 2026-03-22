@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,15 +36,18 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
     private static final String RUNNER_KIND = "cli-process";
 
     private final ScenarioValidationSpecSource specSource;
+    private final CliValidationProcessPolicy processPolicy;
     private final Duration timeout;
     private final String executableOverride;
 
     public CliSubmissionAnswerValidator(
             ScenarioValidationSpecSource specSource,
+            CliValidationProcessPolicy processPolicy,
             @Value("${gittrainer.validator.cli.timeout-ms:5000}") long timeoutMs,
             @Value("${gittrainer.validator.cli.executable:}") String executableOverride
     ) {
         this.specSource = specSource;
+        this.processPolicy = processPolicy;
         this.timeout = Duration.ofMillis(timeoutMs);
         this.executableOverride = executableOverride == null ? "" : executableOverride.trim();
     }
@@ -77,13 +81,22 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
     private SubmissionValidationResult runCli(CliValidationRequest request, long startedAt) {
         Path requestFile = null;
+        Path stdoutFile = null;
+        Path stderrFile = null;
         try {
             requestFile = Files.createTempFile("git-validator-request-", ".json");
+            stdoutFile = Files.createTempFile("git-validator-stdout-", ".log");
+            stderrFile = Files.createTempFile("git-validator-stderr-", ".log");
             OBJECT_MAPPER.writeValue(requestFile.toFile(), request);
 
-            Process process = new ProcessBuilder(command(requestFile))
-                    .redirectErrorStream(false)
-                    .start();
+            ProcessBuilder processBuilder = new ProcessBuilder(command(requestFile, request.spec(), startedAt))
+                    .directory(resolveWorkingDirectory(request.spec(), startedAt).toFile())
+                    .redirectOutput(stdoutFile.toFile())
+                    .redirectError(stderrFile.toFile());
+            if (!processPolicy.inheritEnvironment()) {
+                processBuilder.environment().clear();
+            }
+            Process process = processBuilder.start();
 
             Duration effectiveTimeout = effectiveTimeout(request.spec());
             boolean finished = process.waitFor(effectiveTimeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
@@ -98,8 +111,8 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
                 );
             }
 
-            String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            String stdout = readLimitedFile(stdoutFile).trim();
+            String stderr = readLimitedFile(stderrFile).trim();
             if (process.exitValue() != 0) {
                 throw runnerFailure(
                         "validation-runner-failed",
@@ -160,18 +173,15 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
                     startedAt
             );
         } finally {
-            if (requestFile != null) {
-                try {
-                    Files.deleteIfExists(requestFile);
-                } catch (IOException ignored) {
-                    // best-effort cleanup for temporary request payload
-                }
-            }
+            deleteIfExists(requestFile);
+            deleteIfExists(stdoutFile);
+            deleteIfExists(stderrFile);
         }
     }
 
-    private List<String> command(Path requestFile) {
+    private List<String> command(Path requestFile, ScenarioValidationSpec spec, long startedAt) {
         if (!executableOverride.isBlank()) {
+            validateExternalExecutableAllowed(spec, startedAt);
             return List.of(executableOverride, "--request-file", requestFile.toString());
         }
 
@@ -197,6 +207,52 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
         return Duration.ofMillis(Math.min(timeout.toMillis(), spec.timeoutMs()));
     }
 
+    private Path resolveWorkingDirectory(ScenarioValidationSpec spec, long startedAt) {
+        if (!processPolicy.isWorkingDirectoryUsable()) {
+            throw runnerFailure(
+                    "validation-runner-invalid-working-directory",
+                    "Рабочая директория CLI validator не существует или недоступна.",
+                    null,
+                    spec,
+                    startedAt
+            );
+        }
+        if (!processPolicy.isWorkingDirectoryInsideAllowedRoot()) {
+            throw runnerFailure(
+                    "validation-runner-working-directory-outside-root",
+                    "Рабочая директория CLI validator выходит за разрешённый root.",
+                    null,
+                    spec,
+                    startedAt
+            );
+        }
+        return processPolicy.workingDirectory();
+    }
+
+    private void validateExternalExecutableAllowed(ScenarioValidationSpec spec, long startedAt) {
+        if (!processPolicy.allowExternalExecutable()) {
+            throw runnerFailure(
+                    "validation-runner-executable-not-allowed",
+                    "Внешний executable для CLI validator запрещён policy-конфигурацией.",
+                    null,
+                    spec,
+                    startedAt
+            );
+        }
+        Path executablePath = Path.of(executableOverride).normalize();
+        if (!executablePath.isAbsolute()
+                || !Files.isRegularFile(executablePath)
+                || !Files.isExecutable(executablePath)) {
+            throw runnerFailure(
+                    "validation-runner-invalid-executable",
+                    "Указанный executable для CLI validator недоступен.",
+                    null,
+                    spec,
+                    startedAt
+            );
+        }
+    }
+
     private ValidationRunnerExecutionException runnerFailure(
             String errorCode,
             String message,
@@ -217,5 +273,27 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
     private long elapsedMillis(long startedAt) {
         return (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND;
+    }
+
+    private String readLimitedFile(Path file) throws IOException {
+        try (InputStream inputStream = Files.newInputStream(file)) {
+            byte[] bytes = inputStream.readNBytes(processPolicy.maxOutputBytes() + 1);
+            if (bytes.length > processPolicy.maxOutputBytes()) {
+                return new String(bytes, 0, processPolicy.maxOutputBytes(), StandardCharsets.UTF_8).trim()
+                        + " [truncated]";
+            }
+            return new String(bytes, StandardCharsets.UTF_8).trim();
+        }
+    }
+
+    private void deleteIfExists(Path path) {
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+            // best-effort cleanup for temporary validator artifacts
+        }
     }
 }
