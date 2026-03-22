@@ -1,4 +1,5 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
+import { bindNavigationActiveMarker } from "./navigation-active-marker.js";
 import {
     bindNavigationTagConnections,
     redrawNavigationTagConnections
@@ -33,6 +34,7 @@ export function bindWorkspaceShellDom({
         handleSubmissionDraftSubmit,
         resetSubmissionDraft
     });
+    bindNavigationActiveMarker({ appRoot });
     bindNavigationTagConnections({ appRoot });
 }
 

@@ -21,6 +21,7 @@ import {
     restoreLaneScrollPositions,
     restoreSurfaceScrollState
 } from "./scroll-animation.js";
+import { redrawNavigationActiveMarker } from "./navigation-active-marker.js";
 import { redrawNavigationTagConnections } from "./tag-connection-overlay.js";
 import {
     renderCatalogWorkspace,
@@ -306,6 +307,7 @@ export function createCatalogWorkspaceController({
 
         state.isNavigationExpandedReady = true;
         syncLayoutChrome();
+        redrawNavigationActiveMarker(appRoot, { instant: true });
         redrawNavigationTagConnections(appRoot);
     }
 
@@ -342,6 +344,7 @@ export function createCatalogWorkspaceController({
             navigationCollapseTimeoutId = 0;
             state.isNavigationCollapsing = false;
             syncLayoutChrome();
+            redrawNavigationActiveMarker(appRoot, { instant: true });
             redrawNavigationTagConnections(appRoot);
         }, NAVIGATION_TOGGLE_ANIMATION_MS + 40);
     }
@@ -864,6 +867,7 @@ export function createCatalogWorkspaceController({
             try {
                 await animateScenarioCollapse(appRoot, slug, {
                     onFrame: () => {
+                        redrawNavigationActiveMarker(appRoot, { instant: true });
                         redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 });
@@ -886,6 +890,7 @@ export function createCatalogWorkspaceController({
             await Promise.all([
                 animateScenarioExpansion(appRoot, slug, {
                     onFrame: () => {
+                        redrawNavigationActiveMarker(appRoot, { instant: true });
                         redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
                     }
                 }),
@@ -913,6 +918,7 @@ export function createCatalogWorkspaceController({
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = false;
             syncLayoutChrome();
+            redrawNavigationActiveMarker(appRoot, { instant: true });
             scheduleNavigationReveal();
             redrawNavigationTagConnections(appRoot);
         } else {
@@ -921,6 +927,7 @@ export function createCatalogWorkspaceController({
             state.isNavigationCollapsing = true;
             state.isNavigationExpandedReady = true;
             syncLayoutChrome();
+            redrawNavigationActiveMarker(appRoot, { instant: true });
             scheduleNavigationCollapseCleanup();
         }
 
