@@ -32,7 +32,8 @@ public final class GitRepoStateProbeValidator {
                     "unexpected-command",
                     "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария.",
                     List.of(new CliValidationObservation("normalized-answer", normalizedAnswer)),
-                    List.of()
+                    List.of(),
+                    null
             );
         }
 
@@ -64,7 +65,8 @@ public final class GitRepoStateProbeValidator {
                     matchedRule.code(),
                     matchedRule.message(),
                     observations(normalizedAnswer, observedState),
-                    List.of()
+                    List.of(),
+                    null
             );
         } catch (IOException exception) {
             throw new ValidationRunnerExecutionException(
@@ -259,7 +261,8 @@ public final class GitRepoStateProbeValidator {
                         new CliValidationObservation("stdout", commandResult.stdout().trim()),
                         new CliValidationObservation("stderr", commandResult.stderr().trim())
                 ),
-                List.of()
+                List.of(),
+                null
         );
     }
 
@@ -273,7 +276,8 @@ public final class GitRepoStateProbeValidator {
                 "git-repo-state-mismatch",
                 "Команда не привела репозиторий в ожидаемое post-fetch состояние.",
                 observations(normalizedAnswer, observedState),
-                List.of()
+                List.of(),
+                null
         );
     }
 

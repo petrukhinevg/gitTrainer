@@ -8,6 +8,19 @@ public record CliValidationResponse(
         String code,
         String message,
         List<CliValidationObservation> observations,
-        List<String> artifacts
+        List<String> artifacts,
+        CliValidationTiming timing
 ) {
+
+    public CliValidationResponse withTiming(long durationMs) {
+        return new CliValidationResponse(
+                status,
+                correctness,
+                code,
+                message,
+                observations,
+                artifacts,
+                new CliValidationTiming(durationMs)
+        );
+    }
 }

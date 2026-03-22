@@ -9,10 +9,13 @@ import java.util.List;
 
 public final class GitValidationCliHandler {
 
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+
     private GitValidationCliHandler() {
     }
 
     public static CliValidationResponse handle(CliValidationRequest request) {
+        long startedAt = System.nanoTime();
         if (request == null || request.answer() == null || request.spec() == null) {
             throw new ValidationRunnerExecutionException(
                     "validation-runner-invalid-request",
@@ -20,10 +23,10 @@ public final class GitValidationCliHandler {
             );
         }
         if (GitRepoStateProbeValidator.supports(request.spec().validatorType())) {
-            return GitRepoStateProbeValidator.handle(request);
+            return GitRepoStateProbeValidator.handle(request).withTiming(elapsedMillis(startedAt));
         }
         if (GitCommandProbeValidator.supports(request.spec().validatorType())) {
-            return GitCommandProbeValidator.handle(request);
+            return GitCommandProbeValidator.handle(request).withTiming(elapsedMillis(startedAt));
         }
 
         SubmissionOutcome outcome = ScenarioValidationEngine.validate(request.spec(), request.answer());
@@ -38,7 +41,12 @@ public final class GitValidationCliHandler {
                         "normalized-answer",
                         normalizedAnswer
                 )),
-                List.of()
-        );
+                List.of(),
+                null
+        ).withTiming(elapsedMillis(startedAt));
+    }
+
+    private static long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND;
     }
 }

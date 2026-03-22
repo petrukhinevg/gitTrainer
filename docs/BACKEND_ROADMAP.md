@@ -47,6 +47,8 @@
 - 3.3 Submit error policy: request errors, retryable vs terminal, unsupported mapping. Пара: frontend 3.2.
 - 3.4 Session-backed repo state: execute supported commands and return normalized repo graph payload. Пара: frontend 3.7.
 - 3.5 CLI git validator: DB-backed validator spec, external runner contract, sandbox execution и сохранение validation runs. Backend-only.
+  - Контракт и JSON I/O: `docs/CLI_VALIDATOR_CONTRACT.md`.
+  - DB-ready curriculum под authored content: `docs/DB_READY_GIT_CURRICULUM.md`.
 
 ### Родительская задача 4. Бэкенд для управляемых повторных попыток и подсказок
 

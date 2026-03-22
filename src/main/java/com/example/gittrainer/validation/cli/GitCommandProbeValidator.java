@@ -30,7 +30,8 @@ public final class GitCommandProbeValidator {
                     "unexpected-command",
                     "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария.",
                     List.of(new CliValidationObservation("normalized-answer", normalizedAnswer)),
-                    List.of()
+                    List.of(),
+                    null
             );
         }
 
@@ -68,7 +69,8 @@ public final class GitCommandProbeValidator {
                             new CliValidationObservation("stdout", commandResult.stdout().trim()),
                             new CliValidationObservation("workspace-branch", config.expectedStdout())
                     ),
-                    List.of()
+                    List.of(),
+                    null
             );
         } catch (IOException exception) {
             throw new ValidationRunnerExecutionException(
@@ -108,7 +110,8 @@ public final class GitCommandProbeValidator {
                         new CliValidationObservation("stdout", commandResult.stdout().trim()),
                         new CliValidationObservation("stderr", commandResult.stderr().trim())
                 ),
-                List.of()
+                List.of(),
+                null
         );
     }
 
