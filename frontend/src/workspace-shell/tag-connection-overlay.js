@@ -310,6 +310,12 @@ function renderNavigationTagConnections({
         "tag-connection-map__path tag-connection-map__path--lead"
     );
     const secondarySide = nextState.side === "left" ? "right" : "left";
+    syncFlowSubtaskLayoutStateBeforeMeasure({
+        mapRoot,
+        activeTag,
+        pinnedTag,
+        secondarySide
+    });
     const nextBranchStates = buildSecondaryBranchStates({
         activeTag,
         layoutRoot,
@@ -1104,6 +1110,74 @@ function syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates) {
             element.dataset.flowSubtaskActiveTag = activeTag;
         }
     });
+}
+
+function syncFlowSubtaskLayoutStateBeforeMeasure({
+    mapRoot,
+    activeTag,
+    pinnedTag,
+    secondarySide
+}) {
+    if (!(mapRoot instanceof HTMLElement) || !activeTag) {
+        clearFlowSubtaskActiveTagState(mapRoot);
+        clearSecondaryBranchSideState(mapRoot);
+        return;
+    }
+
+    const shouldShiftSubtasks = pinnedTag === activeTag;
+    if (shouldShiftSubtasks) {
+        mapRoot.dataset.secondaryBranchSide = secondarySide;
+    } else {
+        clearSecondaryBranchSideState(mapRoot);
+    }
+
+    const nextGroups = shouldShiftSubtasks
+        ? collectSubtaskGroupsForActiveTag(mapRoot, activeTag)
+        : new Set();
+
+    mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (isCollapsingSubtaskGroup(element)) {
+            return;
+        }
+
+        if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
+            delete element.dataset.flowSubtaskActiveTag;
+        }
+    });
+
+    nextGroups.forEach((element) => {
+        if (element.dataset.flowSubtaskActiveTag !== activeTag) {
+            element.dataset.flowSubtaskActiveTag = activeTag;
+        }
+    });
+}
+
+function collectSubtaskGroupsForActiveTag(mapRoot, activeTag) {
+    const groups = new Set();
+
+    Array.from(
+        mapRoot.querySelectorAll(`.flow-node[data-tags~="${escapeSelectorValue(activeTag)}"]`)
+    ).forEach((node) => {
+        if (!(node instanceof HTMLElement)) {
+            return;
+        }
+
+        const subtaskPanel = node.querySelector("[data-scenario-panel]");
+        if (subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true") {
+            return;
+        }
+
+        const group = node.querySelector(".flow-subtask-group");
+        if (group instanceof HTMLElement) {
+            groups.add(group);
+        }
+    });
+
+    return groups;
 }
 
 function isCollapsingSubtaskGroup(element) {

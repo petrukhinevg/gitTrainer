@@ -299,6 +299,7 @@ body {
 .lesson-layout--navigation-collapsing .lesson-lane--lesson,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson {
     transform: translateX(-10px);
+    padding-left: 26px;
     box-shadow:
         -18px 0 28px rgba(57, 89, 121, 0.12),
         var(--shadow);
@@ -516,6 +517,7 @@ body {
         animation: none;
         box-shadow: var(--shadow);
         will-change: auto;
+        padding-left: 18px;
     }
 
     .lesson-lane__body {

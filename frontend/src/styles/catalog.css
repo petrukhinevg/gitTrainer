@@ -98,7 +98,7 @@
     --tag-color-history: #9a5f45;
     --tag-color-cleanup: #b65b5b;
     --tag-color-planning: #c04a77;
-    --tag-color-remote: #bd4bbb;
+    --tag-color-remote: #9a5998;
     --tag-color-inspection: #7a7d39;
     --flow-block-active-accent: var(--tag-color-default);
     position: relative;
@@ -306,8 +306,13 @@
     --flow-subtask-rail-accent: var(--tag-color-inspection);
 }
 
+.flow-block[data-flow-block-active-tag] {
+    border-color: var(--flow-block-active-accent);
+}
+
 .flow-block--active {
     color: #111;
+    border-width: 2px;
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 42%, rgba(9, 25, 31, 0.34));
     background: color-mix(in srgb, var(--flow-block-active-accent) 22%, rgba(255, 250, 241, 0.9));
     box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 12%, transparent);
@@ -324,6 +329,7 @@
 }
 
 .flow-block--subtask.flow-block--active {
+    border-width: 2px;
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 42%, rgba(9, 25, 31, 0.34));
     background: color-mix(in srgb, var(--flow-block-active-accent) 22%, rgba(255, 250, 241, 0.9));
     box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 12%, transparent);
@@ -346,6 +352,17 @@
     color: #111;
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 48%, rgba(9, 25, 31, 0.34));
     background: color-mix(in srgb, var(--flow-block-active-accent) 26%, rgba(255, 250, 241, 0.92));
+}
+
+.flow-block--active:not([data-flow-block-active-tag]) {
+    border-color: rgba(31, 23, 32, 0.48);
+    background: rgba(225, 219, 210, 0.96);
+    box-shadow: 0 8px 18px rgba(31, 23, 32, 0.12);
+}
+
+.flow-block--active:not([data-flow-block-active-tag]):hover {
+    border-color: rgba(31, 23, 32, 0.56);
+    background: rgba(231, 226, 218, 0.99);
 }
 
 .flow-subtask-group {
