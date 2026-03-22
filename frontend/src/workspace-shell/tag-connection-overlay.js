@@ -6,9 +6,9 @@ const EDGE_PADDING_PX = 0;
 const TARGET_OFFSET_PX = 0;
 const TRUNK_OFFSET_PX = 10;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
-const CONNECTION_DRAW_SPEED_PX_PER_MS = 1.75;
-const CONNECTION_MIN_ANIMATION_MS = 8;
-const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.5;
+const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
+const CONNECTION_MIN_ANIMATION_MS = 40;
+const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
@@ -215,6 +215,7 @@ function renderNavigationTagConnections({
 }) {
     if (!shouldRenderNavigationConnections(layoutRoot)) {
         navigationLane.__tagConnectionState = null;
+        clearFlowBlockActiveTagState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -222,6 +223,7 @@ function renderNavigationTagConnections({
     const activeTag = normalizeTagToken(navigationLane.dataset.highlightTag);
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;
+        clearFlowBlockActiveTagState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -243,6 +245,7 @@ function renderNavigationTagConnections({
 
     if (!buttonRect || targetEntries.length === 0) {
         navigationLane.__tagConnectionState = null;
+        clearFlowBlockActiveTagState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -258,6 +261,7 @@ function renderNavigationTagConnections({
 
     if (!geometry) {
         navigationLane.__tagConnectionState = null;
+        clearFlowBlockActiveTagState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -322,12 +326,21 @@ function renderNavigationTagConnections({
     canvas.setAttribute("width", String(geometry.width));
     canvas.setAttribute("height", String(geometry.height));
     mainLayer.replaceChildren(leadPath, startDot, ...targetDots);
-    syncSecondaryBranchLayer({
+    const branchPathByKey = syncSecondaryBranchLayer({
         branchLayer,
         accent,
         visibleLength: renderState.visibleLength,
         nextBranchStates,
         instant
+    });
+    syncFlowBlockActiveTagState({
+        mapRoot,
+        activeTag,
+        targetEntries,
+        targetRevealLengths: nextState.targetRevealLengths,
+        visibleLength: renderState.visibleLength,
+        branchPathByKey,
+        nextBranchStates
     });
     showCanvasSteady(canvas);
     nextState.secondaryBranches = nextBranchStates;
@@ -657,7 +670,9 @@ function buildSecondaryBranchStates({
                 pathData: buildPathDataFromPoints(polyline.points),
                 pathLength: polyline.length,
                 points: polyline.points,
-                revealLength: revealLengthByKey.get(branchKey) ?? 0
+                revealLength: revealLengthByKey.get(branchKey) ?? 0,
+                targetElements: childBlocks.map((entry) => entry.element),
+                targetRevealLengths: polyline.targetRevealLengths
             }
         ];
     });
@@ -783,6 +798,7 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
         applyBranchRenderState(path, accent, renderState);
     });
 
+    const branchPathByKey = new Map();
     nextBranchStates.forEach((branch) => {
         let path = branchLayer.querySelector(`[data-branch-key="${escapeSelectorValue(branch.key)}"]`);
         if (!(path instanceof SVGPathElement)) {
@@ -806,6 +822,50 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
             instant
         });
         applyBranchRenderState(path, accent, renderState);
+        branchPathByKey.set(branch.key, path);
+    });
+
+    return branchPathByKey;
+}
+
+function syncFlowBlockActiveTagState({
+    mapRoot,
+    activeTag,
+    targetEntries,
+    targetRevealLengths,
+    visibleLength,
+    branchPathByKey,
+    nextBranchStates
+}) {
+    clearFlowBlockActiveTagState(mapRoot);
+
+    if (!(mapRoot instanceof HTMLElement) || !activeTag) {
+        return;
+    }
+
+    targetEntries.forEach((entry, index) => {
+        if (!(entry.element instanceof HTMLElement)) {
+            return;
+        }
+
+        if ((targetRevealLengths[index] ?? Number.POSITIVE_INFINITY) <= visibleLength + 0.5) {
+            entry.element.dataset.flowBlockActiveTag = activeTag;
+        }
+    });
+
+    nextBranchStates.forEach((branch) => {
+        const path = branchPathByKey.get(branch.key);
+        const currentVisibleLength = path?.__branchStateData?.currentVisibleLength ?? 0;
+
+        branch.targetElements?.forEach((element, index) => {
+            if (!(element instanceof HTMLElement)) {
+                return;
+            }
+
+            if ((branch.targetRevealLengths?.[index] ?? Number.POSITIVE_INFINITY) <= currentVisibleLength + 0.5) {
+                element.dataset.flowBlockActiveTag = activeTag;
+            }
+        });
     });
 }
 
@@ -970,6 +1030,20 @@ function clearCanvas(canvas) {
 
 function clearCanvasAnimation(canvas) {
     canvas.__tagConnectionAnimation = null;
+}
+
+function clearFlowBlockActiveTagState(mapRoot) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    mapRoot.querySelectorAll("[data-flow-block-active-tag]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        delete element.dataset.flowBlockActiveTag;
+    });
 }
 
 function resolveAccentColor(element) {
@@ -1174,6 +1248,7 @@ function hideCanvas(canvas) {
     clearCanvasHideFrame(canvas);
     clearCanvasAnimation(canvas);
     clearCanvasAnimationFrame(canvas);
+    resetBranchLayerAnimationState(canvas);
     canvas.classList.remove("tag-connection-map__canvas--instant");
     canvas.__tagConnectionHideFrame = window.requestAnimationFrame(() => {
         canvas.__tagConnectionHideFrame = 0;
@@ -1200,6 +1275,17 @@ function clearCanvasHideFrame(canvas) {
 
     window.cancelAnimationFrame(canvas.__tagConnectionHideFrame);
     canvas.__tagConnectionHideFrame = 0;
+}
+
+function resetBranchLayerAnimationState(canvas) {
+    canvas.querySelectorAll("[data-branch-key]").forEach((element) => {
+        if (!(element instanceof SVGPathElement)) {
+            return;
+        }
+
+        clearBranchAnimation(element);
+        element.__branchStateData = null;
+    });
 }
 
 function showCanvasSteady(canvas) {

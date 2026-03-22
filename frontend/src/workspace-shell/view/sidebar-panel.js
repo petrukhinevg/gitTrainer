@@ -138,6 +138,7 @@ function renderProgressFlowBlock(state) {
 
 function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
+    const shouldAnimateSubtasks = state.expandingScenarioSlug === item.slug;
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
     const subtaskBlocks = isExpanded
@@ -152,8 +153,7 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                     navigationDetail,
                     selectedFocus,
                     isActive,
-                    tagTokens,
-                    state.pinnedNavigationTag
+                    shouldAnimateSubtasks
                 )}
             </div>
         `
@@ -166,7 +166,6 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 type="button"
                 data-scenario-toggle="${encodeHashSegment(item.slug)}"
                 data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
-                ${renderFlowBlockActiveTagAttribute(state.pinnedNavigationTag, tagTokens)}
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
@@ -187,13 +186,12 @@ function renderExpandedScenarioContent(
     navigationDetail,
     selectedFocus,
     isActiveScenario,
-    tagTokens,
-    pinnedNavigationTag
+    shouldAnimateSubtasks
 ) {
     if (!navigationDetail || navigationDetail.status === "idle" || navigationDetail.status === "loading") {
         return `
             <div class="flow-subtask-group">
-                <div class="flow-subtask-placeholder">
+                <div class="flow-subtask-placeholder" ${renderFlowSubtaskEnterStyle(0, shouldAnimateSubtasks)}>
                     <span class="flow-block__eyebrow">Загрузка</span>
                     <strong class="flow-block__title">Подготавливаем подзадачи</strong>
                 </div>
@@ -206,6 +204,7 @@ function renderExpandedScenarioContent(
             <div class="flow-subtask-group">
                 <div
                     class="flow-subtask-placeholder flow-subtask-placeholder--error"
+                    ${renderFlowSubtaskEnterStyle(0, shouldAnimateSubtasks)}
                 >
                     <span class="flow-block__eyebrow">Недоступно</span>
                     <strong class="flow-block__title">${escapeHtml(navigationDetail.error ?? "Подзадачи недоступны")}</strong>
@@ -214,12 +213,27 @@ function renderExpandedScenarioContent(
         `;
     }
 
+    const stepBlocks = navigationDetail.data.workspace.task.steps.map((step, index) => (
+        renderSubtaskFlowBlock(
+            slug,
+            step,
+            selectedFocus,
+            isActiveScenario,
+            index + 1,
+            shouldAnimateSubtasks
+        )
+    )).join("");
+
     return `
         <div class="flow-subtask-group">
-            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag)}
-            ${navigationDetail.data.workspace.task.steps.map((step) => (
-                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag)
-            )).join("")}
+            ${renderOverviewFlowBlock(
+                slug,
+                selectedFocus,
+                isActiveScenario,
+                0,
+                shouldAnimateSubtasks
+            )}
+            ${stepBlocks}
         </div>
     `;
 }
@@ -240,14 +254,20 @@ function resolveNavigationDetail(state, slug) {
     };
 }
 
-function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag) {
+function renderOverviewFlowBlock(
+    slug,
+    selectedFocus,
+    isActiveScenario,
+    enterIndex,
+    shouldAnimateSubtasks
+) {
     const focusId = "overview";
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
             data-tag-branch-target="true"
-            ${renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens)}
+            ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >
             <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
@@ -255,14 +275,21 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagToken
     `;
 }
 
-function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag) {
+function renderSubtaskFlowBlock(
+    slug,
+    step,
+    selectedFocus,
+    isActiveScenario,
+    enterIndex,
+    shouldAnimateSubtasks
+) {
     const focusId = `step-${step.position}`;
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
             data-tag-branch-target="true"
-            ${renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens)}
+            ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >
             <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
@@ -299,12 +326,12 @@ function renderScenarioTagAccessibilityText(tags) {
     return `<span class="flow-block__sr-tags">Теги: ${escapeHtml(formattedTags)}</span>`;
 }
 
-function renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens) {
-    if (!pinnedNavigationTag || !tagTokens.includes(pinnedNavigationTag)) {
+function renderFlowSubtaskEnterStyle(index, shouldAnimate) {
+    if (!shouldAnimate) {
         return "";
     }
 
-    return `data-flow-block-active-tag="${escapeHtml(pinnedNavigationTag)}"`;
+    return `data-flow-subtask-enter="true" style="--flow-subtask-enter-index: ${escapeHtml(index)}"`;
 }
 
 function toTagToken(tag) {

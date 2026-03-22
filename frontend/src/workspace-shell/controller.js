@@ -54,6 +54,7 @@ export function createCatalogWorkspaceController({
         selectedScenarioSlug: null,
         selectedFocus: null,
         expandedScenarioSlugs: [],
+        expandingScenarioSlug: null,
         isNavigationCollapsed: false,
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
@@ -355,6 +356,9 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        const preservedNavigationTagState = surfaceName === "navigation"
+            ? captureNavigationFlowBlockTagState(target)
+            : [];
         const previousLaneBody = target.querySelector(".lesson-lane__body");
         const preservedLaneScroll = previousLaneBody
             ? {
@@ -364,6 +368,9 @@ export function createCatalogWorkspaceController({
             : null;
         const preservedScrollState = captureSurfaceScrollState(target);
         target.innerHTML = nextMarkup;
+        if (surfaceName === "navigation") {
+            restoreNavigationFlowBlockTagState(target, preservedNavigationTagState);
+        }
         const nextLaneBody = target.querySelector(".lesson-lane__body");
         if (nextLaneBody && preservedLaneScroll) {
             nextLaneBody.scrollTop = preservedLaneScroll.scrollTop;
@@ -760,6 +767,9 @@ export function createCatalogWorkspaceController({
 
     function collapseScenario(slug) {
         state.expandedScenarioSlugs = state.expandedScenarioSlugs.filter((item) => item !== slug);
+        if (state.expandingScenarioSlug === slug) {
+            state.expandingScenarioSlug = null;
+        }
     }
 
     function syncNavigationSurfaceCacheFromDom() {
@@ -803,6 +813,7 @@ export function createCatalogWorkspaceController({
         }
 
         navigationAnimationInProgress = true;
+        state.expandingScenarioSlug = slug;
         expandScenario(slug, { loadDetail: false });
         render();
 
@@ -817,6 +828,9 @@ export function createCatalogWorkspaceController({
             ]);
             redrawNavigationTagConnections(appRoot);
         } finally {
+            if (state.expandingScenarioSlug === slug) {
+                state.expandingScenarioSlug = null;
+            }
             navigationAnimationInProgress = false;
         }
     }
@@ -853,6 +867,67 @@ export function createCatalogWorkspaceController({
             navigationToggle.focus({ preventScroll: true });
         }
     }
+}
+
+export function captureNavigationFlowBlockTagState(surfaceRoot) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return [];
+    }
+
+    return Array.from(surfaceRoot.querySelectorAll("[data-flow-block-active-tag]"))
+        .map((element) => {
+            if (!(element instanceof HTMLElement)) {
+                return null;
+            }
+
+            const tag = element.dataset.flowBlockActiveTag;
+            if (!tag) {
+                return null;
+            }
+
+            if (element.dataset.scenarioToggle) {
+                return {
+                    kind: "scenario-toggle",
+                    key: element.dataset.scenarioToggle,
+                    tag
+                };
+            }
+
+            const href = element.getAttribute("href");
+            if (href) {
+                return {
+                    kind: "href",
+                    key: href,
+                    tag
+                };
+            }
+
+            return null;
+        })
+        .filter(Boolean);
+}
+
+export function restoreNavigationFlowBlockTagState(surfaceRoot, entries) {
+    if (!(surfaceRoot instanceof HTMLElement) || !Array.isArray(entries) || entries.length === 0) {
+        return;
+    }
+
+    entries.forEach((entry) => {
+        if (!entry?.kind || !entry.key || !entry.tag) {
+            return;
+        }
+
+        let element = null;
+        if (entry.kind === "scenario-toggle") {
+            element = surfaceRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(entry.key)}"]`);
+        } else if (entry.kind === "href") {
+            element = surfaceRoot.querySelector(`[href="${escapeSelectorValue(entry.key)}"]`);
+        }
+
+        if (element instanceof HTMLElement) {
+            element.dataset.flowBlockActiveTag = entry.tag;
+        }
+    });
 }
 
 function resolveSelectedCatalogScenario(state, catalogItems) {
