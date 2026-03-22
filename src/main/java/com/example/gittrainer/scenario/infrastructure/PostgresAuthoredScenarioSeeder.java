@@ -24,6 +24,7 @@ import java.util.Map;
 public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
 
     private static final String DEFAULT_SOURCE_KEY = "default";
+    private static final int DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000;
 
     private final JdbcClient jdbcClient;
     private final AuthoredScenarioJsonMapper jsonMapper;
@@ -60,6 +61,7 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
         for (ScenarioSummary summary : defaultCatalog.items()) {
             seedScenario(defaultCatalog.sourceName(), summary);
             seedAcceptedAnswers(summary.slug(), acceptedAnswersByScenario.get(summary.slug()));
+            seedValidationSpec(summary.slug(), acceptedAnswersByScenario.get(summary.slug()));
             seedIncorrectGuidance(summary.slug(), retryFeedbackFixtureSource.findIncorrectGuidance(summary.slug())
                     .orElse(RetryGuidanceProfile.fallback()));
         }
@@ -146,6 +148,63 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
         }
     }
 
+    private void seedValidationSpec(String scenarioSlug, List<String> acceptedAnswers) {
+        if (acceptedAnswers == null || acceptedAnswers.isEmpty()) {
+            return;
+        }
+
+        String specId = validatorSpecId(scenarioSlug, "command_text");
+        jdbcClient.sql("""
+                        INSERT INTO authored_scenario_validator_specs (
+                            validator_spec_id,
+                            scenario_slug,
+                            answer_type,
+                            validator_type,
+                            timeout_ms,
+                            enabled
+                        )
+                        VALUES (?, ?, ?, ?, ?, TRUE)
+                        ON CONFLICT (scenario_slug, answer_type) DO NOTHING
+                        """)
+                .params(
+                        specId,
+                        scenarioSlug,
+                        "command_text",
+                        "exact_command_match",
+                        DEFAULT_VALIDATOR_TIMEOUT_MS
+                )
+                .update();
+
+        for (int index = 0; index < acceptedAnswers.size(); index++) {
+            String answer = acceptedAnswers.get(index);
+            jdbcClient.sql("""
+                            INSERT INTO authored_scenario_validator_rules (
+                                validator_spec_id,
+                                position,
+                                match_type,
+                                raw_match_value,
+                                normalized_match_value,
+                                outcome_correctness,
+                                outcome_code,
+                                outcome_message
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT (validator_spec_id, normalized_match_value) DO NOTHING
+                            """)
+                    .params(
+                            specId,
+                            index + 1,
+                            "exact_normalized_command",
+                            answer,
+                            FixtureSubmissionRuleLoader.normalizeCommand(answer),
+                            "correct",
+                            "expected-command",
+                            "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
+                    )
+                    .update();
+        }
+    }
+
     private void seedIncorrectGuidance(String scenarioSlug, RetryGuidanceProfile profile) {
         jdbcClient.sql("""
                         INSERT INTO authored_scenario_retry_guidance (
@@ -198,5 +257,9 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
                         retryFeedbackJsonMapper.writeValue(template)
                 )
                 .update();
+    }
+
+    private String validatorSpecId(String scenarioSlug, String answerType) {
+        return "default:" + scenarioSlug + ":" + answerType;
     }
 }

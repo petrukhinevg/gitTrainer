@@ -69,7 +69,8 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
                     .redirectErrorStream(false)
                     .start();
 
-            boolean finished = process.waitFor(timeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+            Duration effectiveTimeout = effectiveTimeout(request.spec());
+            boolean finished = process.waitFor(effectiveTimeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
             if (!finished) {
                 process.destroyForcibly();
                 throw new ValidationRunnerExecutionException(
@@ -149,5 +150,12 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
     private String resolveJavaExecutable() {
         String suffix = System.getProperty("os.name").toLowerCase().contains("win") ? "java.exe" : "java";
         return Path.of(System.getProperty("java.home"), "bin", suffix).toString();
+    }
+
+    private Duration effectiveTimeout(ScenarioValidationSpec spec) {
+        if (spec.timeoutMs() <= 0) {
+            return timeout;
+        }
+        return Duration.ofMillis(Math.min(timeout.toMillis(), spec.timeoutMs()));
     }
 }

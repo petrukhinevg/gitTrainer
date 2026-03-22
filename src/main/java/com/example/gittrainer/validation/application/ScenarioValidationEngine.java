@@ -6,6 +6,7 @@ import com.example.gittrainer.validation.domain.SubmissionOutcome;
 public final class ScenarioValidationEngine {
 
     private static final String EXACT_COMMAND_MATCH = "exact_command_match";
+    private static final String EXACT_NORMALIZED_COMMAND = "exact_normalized_command";
 
     private ScenarioValidationEngine() {
     }
@@ -17,9 +18,19 @@ public final class ScenarioValidationEngine {
                     "CLI validator пока не поддерживает тип проверки: " + spec.validatorType()
             );
         }
+        boolean unsupportedRuleType = spec.rules().stream()
+                .map(ScenarioValidationRule::matchType)
+                .anyMatch(matchType -> !EXACT_NORMALIZED_COMMAND.equals(matchType));
+        if (unsupportedRuleType) {
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-unsupported-rule",
+                    "CLI validator пока не поддерживает тип match rule в validator spec."
+            );
+        }
 
         String normalizedAnswer = CommandTextNormalizer.normalize(answer.value());
         return spec.rules().stream()
+                .filter(rule -> EXACT_NORMALIZED_COMMAND.equals(rule.matchType()))
                 .filter(rule -> rule.normalizedAnswerValue().equals(normalizedAnswer))
                 .findFirst()
                 .map(ScenarioValidationEngine::toOutcome)

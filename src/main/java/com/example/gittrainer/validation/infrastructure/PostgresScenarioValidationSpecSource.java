@@ -22,34 +22,64 @@ public class PostgresScenarioValidationSpecSource implements ScenarioValidationS
 
     @Override
     public Optional<ScenarioValidationSpec> findSpec(String scenarioSlug, String answerType) {
+        PersistedSpec persistedSpec = jdbcClient.sql("""
+                        SELECT validator_spec_id,
+                               validator_type,
+                               timeout_ms
+                        FROM authored_scenario_validator_specs
+                        WHERE scenario_slug = ?
+                          AND answer_type = ?
+                          AND enabled = TRUE
+                        LIMIT 1
+                        """)
+                .params(scenarioSlug, answerType)
+                .query((resultSet, rowNum) -> new PersistedSpec(
+                        resultSet.getString("validator_spec_id"),
+                        resultSet.getString("validator_type"),
+                        resultSet.getLong("timeout_ms")
+                ))
+                .optional()
+                .orElse(null);
+        if (persistedSpec == null) {
+            return Optional.empty();
+        }
+
         List<ScenarioValidationRule> rules = jdbcClient.sql("""
-                        SELECT normalized_answer_value,
+                        SELECT match_type,
+                               raw_match_value,
+                               normalized_match_value,
                                outcome_correctness,
                                outcome_code,
                                outcome_message
-                        FROM authored_scenario_answers
-                        WHERE scenario_slug = ?
-                          AND answer_type = ?
+                        FROM authored_scenario_validator_rules
+                        WHERE validator_spec_id = ?
                         ORDER BY position
                         """)
-                .params(scenarioSlug, answerType)
+                .param(persistedSpec.specId())
                 .query((resultSet, rowNum) -> new ScenarioValidationRule(
-                        resultSet.getString("normalized_answer_value"),
+                        resultSet.getString("match_type"),
+                        resultSet.getString("raw_match_value"),
+                        resultSet.getString("normalized_match_value"),
                         resultSet.getString("outcome_correctness"),
                         resultSet.getString("outcome_code"),
                         resultSet.getString("outcome_message")
                 ))
                 .list();
 
-        if (rules.isEmpty()) {
-            return Optional.empty();
-        }
-
         return Optional.of(new ScenarioValidationSpec(
+                persistedSpec.specId(),
                 scenarioSlug,
                 answerType,
-                "exact_command_match",
+                persistedSpec.validatorType(),
+                persistedSpec.timeoutMs(),
                 rules
         ));
+    }
+
+    private record PersistedSpec(
+            String specId,
+            String validatorType,
+            long timeoutMs
+    ) {
     }
 }

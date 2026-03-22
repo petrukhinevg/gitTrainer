@@ -24,17 +24,23 @@ class GitValidationCliMainTest {
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status --short"),
                 new ScenarioValidationSpec(
+                        "fixture:status-basics:command_text",
                         "status-basics",
                         "command_text",
                         "exact_command_match",
+                        5000,
                         List.of(
                                 new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git status",
                                         "git status",
                                         "correct",
                                         "expected-command",
                                         "ok"
                                 ),
                                 new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git status --short",
                                         "git status --short",
                                         "correct",
                                         "expected-command",

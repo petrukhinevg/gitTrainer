@@ -15,6 +15,7 @@ import java.util.Optional;
 @Profile("test | local-memory")
 public class FixtureScenarioValidationSpecSource implements ScenarioValidationSpecSource {
 
+    private static final long DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000L;
     private static final Map<String, List<String>> RULES = FixtureSubmissionRuleLoader.loadRules();
 
     @Override
@@ -25,9 +26,10 @@ public class FixtureScenarioValidationSpecSource implements ScenarioValidationSp
         }
 
         List<ScenarioValidationRule> rules = commands.stream()
-                .map(CommandTextNormalizer::normalize)
                 .map(command -> new ScenarioValidationRule(
+                        "exact_normalized_command",
                         command,
+                        CommandTextNormalizer.normalize(command),
                         "correct",
                         "expected-command",
                         "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
@@ -35,9 +37,11 @@ public class FixtureScenarioValidationSpecSource implements ScenarioValidationSp
                 .toList();
 
         return Optional.of(new ScenarioValidationSpec(
+                "fixture:" + scenarioSlug + ":" + answerType,
                 scenarioSlug,
                 answerType,
                 "exact_command_match",
+                DEFAULT_VALIDATOR_TIMEOUT_MS,
                 rules
         ));
     }

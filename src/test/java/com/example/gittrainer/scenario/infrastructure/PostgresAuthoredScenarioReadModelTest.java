@@ -77,6 +77,12 @@ class PostgresAuthoredScenarioReadModelTest {
         Long answerCount = jdbcClient.sql("SELECT COUNT(*) FROM authored_scenario_answers")
                 .query(Long.class)
                 .single();
+        Long validatorSpecCount = jdbcClient.sql("SELECT COUNT(*) FROM authored_scenario_validator_specs")
+                .query(Long.class)
+                .single();
+        Long validatorRuleCount = jdbcClient.sql("SELECT COUNT(*) FROM authored_scenario_validator_rules")
+                .query(Long.class)
+                .single();
 
         assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("mvp-fixture");
         assertThat(catalog)
@@ -90,10 +96,12 @@ class PostgresAuthoredScenarioReadModelTest {
                 .contains("modified", "untracked");
         assertThat(scenarioCount).isGreaterThanOrEqualTo(4);
         assertThat(answerCount).isGreaterThanOrEqualTo(12);
+        assertThat(validatorSpecCount).isGreaterThanOrEqualTo(4);
+        assertThat(validatorRuleCount).isGreaterThanOrEqualTo(12);
     }
 
     @Test
-    void validatesAnswersUsingDatabaseBackedAcceptedAnswerRecords() {
+    void validatesAnswersUsingDatabaseBackedValidatorSpecs() {
         SubmissionOutcome correctOutcome = submissionAnswerValidator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status --short")
