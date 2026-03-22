@@ -19,6 +19,9 @@ export function createWorkspaceRouteOrchestrator({
         const previousSelectedFocus = state.selectedFocus;
         const previousProviderName = state.providerName;
         const route = parseWorkspaceRoute(windowObject.location.hash);
+        const nextScenarioAlreadyExpanded = route.name === "exercise"
+            && typeof route.scenarioSlug === "string"
+            && state.expandedScenarioSlugs.includes(route.scenarioSlug);
 
         setPendingLessonScrollReset(shouldResetLessonScrollForRouteChange({
             previousRoute,
@@ -31,7 +34,7 @@ export function createWorkspaceRouteOrchestrator({
         setPendingNavigationSelectionSyncOnly(
             previousRoute === "exercise"
             && route.name === "exercise"
-            && previousScenarioSlug === route.scenarioSlug
+            && nextScenarioAlreadyExpanded
         );
 
         state.route = route.name;
@@ -130,6 +133,7 @@ export function resetRouteScopedWorkspaceState({
         state.detail.status = "idle";
         state.detail.data = null;
         state.detail.error = null;
+        state.detail.scenarioSlug = null;
     }
 }
 

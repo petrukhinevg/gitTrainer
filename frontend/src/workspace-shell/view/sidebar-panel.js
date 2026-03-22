@@ -239,7 +239,7 @@ function renderExpandedScenarioContent(
 }
 
 function resolveNavigationDetail(state, slug) {
-    if (slug === state.selectedScenarioSlug && state.detail.status !== "idle") {
+    if (slug === state.detail.scenarioSlug && state.detail.status !== "idle") {
         return {
             status: state.detail.status,
             data: state.detail.data,

@@ -42,6 +42,7 @@ const DEFAULT_QUERY = Object.freeze({
 const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-enter",
     "data-flow-block-active-tag",
+    "data-tag-legend-bound",
     "data-navigation-toggle-bound",
     "data-route-link-bound"
 ]);
@@ -79,7 +80,8 @@ export function createCatalogWorkspaceController({
         detail: {
             status: "idle",
             data: null,
-            error: null
+            error: null,
+            scenarioSlug: null
         },
         detailCache: {
         }
@@ -370,6 +372,7 @@ export function createCatalogWorkspaceController({
         if (surfaceName === "navigation" && (
             shouldSyncNavigationSelectionOnly(target)
             || canRetainNavigationSurface(target, nextMarkup)
+            || tryPatchNavigationScenarioNodes(target, nextMarkup)
         )) {
             syncNavigationSurfaceActiveState(target, state);
             renderedSurfaceCache[cacheKey] = nextMarkup;
@@ -823,6 +826,31 @@ export function createCatalogWorkspaceController({
         syncNavigationSurfaceCacheFromDom();
     }
 
+    function clearScenarioSubtaskEnterState(slug) {
+        if (!slug) {
+            return;
+        }
+
+        const panel = appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`);
+        if (!(panel instanceof HTMLElement)) {
+            return;
+        }
+
+        Array.from(panel.querySelectorAll("[data-flow-subtask-enter]")).forEach((element) => {
+            if (!(element instanceof HTMLElement)) {
+                return;
+            }
+
+            element.removeAttribute("data-flow-subtask-enter");
+            element.style.removeProperty("--flow-subtask-enter-index");
+            if (!element.getAttribute("style")?.trim()) {
+                element.removeAttribute("style");
+            }
+        });
+
+        syncNavigationSurfaceCacheFromDom();
+    }
+
     async function toggleScenarioExpansion(slug) {
         if (navigationAnimationInProgress) {
             return;
@@ -866,6 +894,7 @@ export function createCatalogWorkspaceController({
             if (state.expandingScenarioSlug === slug) {
                 state.expandingScenarioSlug = null;
             }
+            clearScenarioSubtaskEnterState(slug);
             navigationAnimationInProgress = false;
         }
     }
@@ -972,6 +1001,63 @@ function canRetainNavigationSurface(surfaceRoot, nextMarkup) {
 
     return serializeNormalizedNavigationMarkup(surfaceRoot.innerHTML)
         === serializeNormalizedNavigationMarkup(nextMarkup);
+}
+
+function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return false;
+    }
+
+    const template = document.createElement("template");
+    template.innerHTML = nextMarkup;
+
+    const currentFlowList = surfaceRoot.querySelector("[data-flow-block-list]");
+    const nextFlowList = template.content.querySelector("[data-flow-block-list]");
+    if (!(currentFlowList instanceof HTMLElement) || !(nextFlowList instanceof HTMLElement)) {
+        return false;
+    }
+
+    const currentScenarioNodes = Array.from(currentFlowList.children).filter(isScenarioFlowNode);
+    const nextScenarioNodes = Array.from(nextFlowList.children).filter(isScenarioFlowNode);
+    if (currentScenarioNodes.length !== nextScenarioNodes.length) {
+        return false;
+    }
+
+    const diffEntries = [];
+
+    for (let index = 0; index < currentScenarioNodes.length; index += 1) {
+        const currentNode = currentScenarioNodes[index];
+        const nextNode = nextScenarioNodes[index];
+        const currentSlug = currentNode.querySelector("[data-scenario-toggle]")?.getAttribute("data-scenario-toggle");
+        const nextSlug = nextNode.querySelector("[data-scenario-toggle]")?.getAttribute("data-scenario-toggle");
+
+        if (!currentSlug || !nextSlug || currentSlug !== nextSlug) {
+            return false;
+        }
+
+        if (serializeNormalizedNavigationMarkup(currentNode.outerHTML) !== serializeNormalizedNavigationMarkup(nextNode.outerHTML)) {
+            diffEntries.push({
+                currentNode,
+                nextNode
+            });
+        }
+    }
+
+    if (diffEntries.length === 0) {
+        return false;
+    }
+
+    const preservedNavigationTagState = captureNavigationFlowBlockTagState(surfaceRoot);
+    diffEntries.forEach(({ currentNode, nextNode }) => {
+        currentNode.replaceWith(nextNode.cloneNode(true));
+    });
+    restoreNavigationFlowBlockTagState(surfaceRoot, preservedNavigationTagState);
+
+    return true;
+}
+
+function isScenarioFlowNode(element) {
+    return element instanceof HTMLElement && element.classList.contains("flow-node");
 }
 
 function serializeNormalizedNavigationMarkup(markup) {

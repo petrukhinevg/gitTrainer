@@ -67,6 +67,45 @@ test("анимационные индексы не навешиваются на
     }
 });
 
+test("раскрытая соседняя группа берёт подзадачи из своего cache, а не из detail предыдущего сценария", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            selectedScenarioSlug: "remote-sync-preview",
+            expandedScenarioSlugs: ["branch-safety", "remote-sync-preview"],
+            catalogItems: [
+                {
+                    slug: "branch-safety",
+                    title: "Подтверди текущую ветку",
+                    tags: ["branching", "navigation"]
+                },
+                {
+                    slug: "remote-sync-preview",
+                    title: "Синхронизируй удалённое состояние",
+                    tags: ["remote", "planning"]
+                }
+            ],
+            detail: createSelectedDetailState("branch-safety", ["Проверь ветку", "Сверь изменения"]),
+            detailCache: {
+                "branch-safety": createDetailCacheEntry(["Проверь ветку", "Сверь изменения"]),
+                "remote-sync-preview": createDetailCacheEntry(["Сделай fetch", "Проверь ahead/behind"])
+            }
+        }),
+        null,
+        ["branching", "navigation", "remote", "planning"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+
+    try {
+        const remoteTitles = Array.from(
+            dom.window.document.querySelectorAll('[data-scenario-panel="remote-sync-preview"] .flow-block__title')
+        ).map((entry) => entry.textContent?.trim());
+
+        assert.deepEqual(remoteTitles, ["Обзор", "Сделай fetch", "Проверь ahead/behind"]);
+    } finally {
+        dom.window.close();
+    }
+});
+
 function createReadyState({
     expandingScenarioSlug = null,
     expandedScenarioSlugs = ["branch-safety"],
@@ -79,7 +118,9 @@ function createReadyState({
     ],
     detailCache = {
         "branch-safety": createDetailCacheEntry(["Проверь ветку", "Сверь изменения"])
-    }
+    },
+    selectedScenarioSlug = null,
+    detail = createSelectedDetailState()
 } = {}) {
     return {
         route: "exercise",
@@ -90,14 +131,10 @@ function createReadyState({
         },
         expandedScenarioSlugs,
         expandingScenarioSlug,
-        selectedScenarioSlug: null,
+        selectedScenarioSlug,
         selectedFocus: null,
         pinnedNavigationTag: null,
-        detail: {
-            status: "idle",
-            data: null,
-            error: null
-        },
+        detail,
         detailCache
     };
 }
@@ -116,5 +153,32 @@ function createDetailCacheEntry(stepTitles) {
             }
         },
         error: null
+    };
+}
+
+function createSelectedDetailState(scenarioSlug = null, stepTitles = []) {
+    if (!scenarioSlug) {
+        return {
+            status: "idle",
+            data: null,
+            error: null,
+            scenarioSlug: null
+        };
+    }
+
+    return {
+        status: "ready",
+        data: {
+            workspace: {
+                task: {
+                    steps: stepTitles.map((title, index) => ({
+                        position: index + 1,
+                        title
+                    }))
+                }
+            }
+        },
+        error: null,
+        scenarioSlug
     };
 }

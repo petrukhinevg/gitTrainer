@@ -33,6 +33,8 @@ body {
     --navigation-lane-width: 320px;
     --navigation-lane-current-width: var(--navigation-lane-width);
     --navigation-toolbar-height: 24px;
+    --navigation-collapse-duration: 180ms;
+    --navigation-collapse-easing: cubic-bezier(0.22, 1, 0.36, 1);
     --lesson-lane-width: 37.5%;
     --lesson-lane-min-width: 320px;
     --practice-lane-width: 40%;
@@ -59,7 +61,7 @@ body {
     background: rgba(255, 250, 241, 0.74);
     align-items: stretch;
     isolation: isolate;
-    transition: grid-template-columns 180ms ease;
+    transition: grid-template-columns var(--navigation-collapse-duration) var(--navigation-collapse-easing);
 }
 
 .lesson-layout--navigation-collapsed {
@@ -154,17 +156,22 @@ body {
     grid-area: navigation;
     min-width: var(--navigation-lane-current-width);
     max-width: var(--navigation-lane-current-width);
-    transition: min-width 180ms ease, max-width 180ms ease;
+    transition:
+        min-width var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        max-width var(--navigation-collapse-duration) var(--navigation-collapse-easing);
+    z-index: 0;
 }
 
 .lesson-layout__lane--lesson {
     grid-area: lesson;
     border-left: 0;
+    z-index: 2;
 }
 
 .lesson-layout__lane--practice {
     grid-area: practice;
     border-left: 1px solid var(--border);
+    z-index: 3;
 }
 
 .lesson-lane {
@@ -186,11 +193,34 @@ body {
     width: 100%;
     min-width: var(--navigation-lane-current-width);
     max-width: var(--navigation-lane-width);
+    position: relative;
     padding-left: 0;
     transition:
         opacity 140ms ease,
-        transform 180ms ease,
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        filter var(--navigation-collapse-duration) var(--navigation-collapse-easing),
         visibility 0s linear 0s;
+}
+
+.lesson-lane--navigation::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: right center;
+    background:
+        linear-gradient(
+            270deg,
+            rgba(255, 250, 241, 0.98) 0%,
+            rgba(255, 250, 241, 0.92) 24%,
+            rgba(255, 250, 241, 0.52) 46%,
+            rgba(255, 250, 241, 0) 76%
+        );
+    transition:
+        opacity 120ms ease,
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing);
 }
 
 .lesson-lane--navigation .lesson-lane__body {
@@ -210,6 +240,12 @@ body {
 
 .lesson-lane--lesson {
     padding-right: 0;
+    transform: translateX(0);
+    transform-origin: left center;
+    will-change: transform, box-shadow;
+    transition:
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        box-shadow var(--navigation-collapse-duration) var(--navigation-collapse-easing);
 }
 
 .lesson-lane--lesson .lesson-lane__body {
@@ -246,7 +282,26 @@ body {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateX(-18px);
+    transform: translateX(-10px);
+    filter: saturate(0.94);
+}
+
+.lesson-layout--navigation-collapsed.lesson-layout--navigation-collapsing .lesson-lane--navigation {
+    visibility: visible;
+}
+
+.lesson-layout--navigation-collapsed .lesson-lane--navigation::after,
+.lesson-layout--navigation-collapsing .lesson-lane--navigation::after {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+.lesson-layout--navigation-collapsing .lesson-lane--lesson,
+.lesson-layout--navigation-collapsed .lesson-lane--lesson {
+    transform: translateX(-10px);
+    box-shadow:
+        -18px 0 28px rgba(57, 89, 121, 0.12),
+        var(--shadow);
 }
 
 .lesson-lane__header,
@@ -445,6 +500,22 @@ body {
         visibility: visible;
         pointer-events: auto;
         transform: none;
+        filter: none;
+    }
+
+    .lesson-layout--navigation-collapsed .lesson-lane--navigation::after,
+    .lesson-layout--navigation-collapsing .lesson-lane--navigation::after {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+
+    .lesson-lane--lesson,
+    .lesson-layout--navigation-collapsing .lesson-lane--lesson,
+    .lesson-layout--navigation-collapsed .lesson-lane--lesson {
+        transform: none;
+        animation: none;
+        box-shadow: var(--shadow);
+        will-change: auto;
     }
 
     .lesson-lane__body {

@@ -85,6 +85,7 @@ export function createWorkspaceDataOrchestrator({
             state.detail.status = "missing";
             state.detail.data = null;
             state.detail.error = "В маршруте упражнения не указан код сценария.";
+            state.detail.scenarioSlug = null;
             render();
             return;
         }
@@ -98,6 +99,7 @@ export function createWorkspaceDataOrchestrator({
                 state.detail.status = "ready";
                 state.detail.data = cachedDetail.data;
                 state.detail.error = null;
+                state.detail.scenarioSlug = slug;
                 render();
             }
             return;
@@ -107,6 +109,7 @@ export function createWorkspaceDataOrchestrator({
             state.detail.status = "loading";
             state.detail.data = null;
             state.detail.error = null;
+            state.detail.scenarioSlug = slug;
         }
 
         state.detailCache[slug] = {
@@ -187,6 +190,7 @@ export function createWorkspaceDataOrchestrator({
         state.detail.status = state.route === "exercise" ? "loading" : "idle";
         state.detail.data = null;
         state.detail.error = null;
+        state.detail.scenarioSlug = null;
         state.detailCache = {};
         detailCacheGeneration += 1;
         detailLoadTasks.clear();
@@ -273,6 +277,7 @@ export function createWorkspaceDataOrchestrator({
             state.detail.status = "error";
             state.detail.data = null;
             state.detail.error = "Неизвестная ошибка деталей сценария";
+            state.detail.scenarioSlug = slug;
             render();
             return;
         }
@@ -280,6 +285,7 @@ export function createWorkspaceDataOrchestrator({
         state.detail.status = cachedDetail.status;
         state.detail.data = cachedDetail.data;
         state.detail.error = cachedDetail.error;
+        state.detail.scenarioSlug = slug;
         render();
     }
 
