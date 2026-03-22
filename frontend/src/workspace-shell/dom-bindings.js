@@ -185,6 +185,12 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
             delete navigationLane.dataset.highlightTag;
         }
 
+        if (state.pinnedNavigationTag) {
+            navigationLane.dataset.pinnedTag = state.pinnedNavigationTag;
+        } else {
+            delete navigationLane.dataset.pinnedTag;
+        }
+
         redrawNavigationTagConnections(appRoot);
     };
 

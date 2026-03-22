@@ -266,6 +266,7 @@ function renderOverviewFlowBlock(
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
+            data-scenario-focus="${escapeHtml(focusId)}"
             data-tag-branch-target="true"
             ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >
@@ -288,6 +289,7 @@ function renderSubtaskFlowBlock(
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
+            data-scenario-focus="${escapeHtml(focusId)}"
             data-tag-branch-target="true"
             ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >

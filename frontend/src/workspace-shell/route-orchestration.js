@@ -10,7 +10,8 @@ export function createWorkspaceRouteOrchestrator({
     ensureExerciseSession,
     onExerciseRouteSelected,
     resetRouteScopedState,
-    setPendingLessonScrollReset
+    setPendingLessonScrollReset,
+    setPendingNavigationSelectionSyncOnly
 }) {
     async function handleRouteChange() {
         const previousRoute = state.route;
@@ -27,6 +28,11 @@ export function createWorkspaceRouteOrchestrator({
             nextScenarioSlug: route.scenarioSlug,
             nextSelectedFocus: route.focus
         }));
+        setPendingNavigationSelectionSyncOnly(
+            previousRoute === "exercise"
+            && route.name === "exercise"
+            && previousScenarioSlug === route.scenarioSlug
+        );
 
         state.route = route.name;
         state.selectedScenarioSlug = route.scenarioSlug;

@@ -7,7 +7,7 @@ const TARGET_OFFSET_PX = 0;
 const TRUNK_OFFSET_PX = 10;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
-const CONNECTION_MIN_ANIMATION_MS = 40;
+const CONNECTION_MIN_ANIMATION_MS = 20;
 const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
@@ -222,6 +222,7 @@ function renderNavigationTagConnections({
     }
 
     const activeTag = normalizeTagToken(navigationLane.dataset.highlightTag);
+    const pinnedTag = normalizeTagToken(navigationLane.dataset.pinnedTag);
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
@@ -347,7 +348,11 @@ function renderNavigationTagConnections({
         branchPathByKey,
         nextBranchStates
     });
-    mapRoot.dataset.secondaryBranchSide = secondarySide;
+    if (pinnedTag === activeTag) {
+        mapRoot.dataset.secondaryBranchSide = secondarySide;
+    } else {
+        clearSecondaryBranchSideState(mapRoot);
+    }
     showCanvasSteady(canvas);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;

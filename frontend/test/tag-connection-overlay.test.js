@@ -110,6 +110,7 @@ test("помечает карту левосторонней secondary branch, �
         const childBlock = appRoot.querySelector("[data-tag-branch-target]");
 
         navigationLane.dataset.highlightTag = "branching";
+        navigationLane.dataset.pinnedTag = "branching";
         assignRect(layoutRoot, createRect(0, 0, 960, 640));
         assignRect(navigationBody, createRect(0, 40, 280, 240));
         assignRect(mapRoot, createRect(0, 20, 280, 520));
@@ -122,6 +123,39 @@ test("помечает карту левосторонней secondary branch, �
         flushRafQueue();
 
         assert.equal(mapRoot.dataset.secondaryBranchSide, "left");
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("не включает layout-смещение подзадач только от hover-подсветки тега", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+
+        navigationLane.dataset.highlightTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(132, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot, { instant: true });
+        flushRafQueue();
+
+        assert.equal(mapRoot.dataset.secondaryBranchSide ?? null, null);
     } finally {
         restoreGlobals();
         dom.window.close();
