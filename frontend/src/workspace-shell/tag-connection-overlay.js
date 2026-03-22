@@ -2,15 +2,15 @@ import { escapeSelectorValue } from "./dom-helpers.js";
 import { NAVIGATION_TOGGLE_ANIMATION_MS } from "./scroll-animation.js";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-const EDGE_PADDING_PX = 8;
-const TARGET_OFFSET_PX = 2;
-const TRUNK_OFFSET_PX = 14;
-const SECONDARY_BRANCH_STAGGER_PX = 10;
-const SECONDARY_BRANCH_MAX_EXTRA_OFFSET_PX = 40;
+const EDGE_PADDING_PX = 10;
+const TARGET_OFFSET_PX = 0;
+const TRUNK_OFFSET_PX = 10;
+const SECONDARY_BRANCH_STAGGER_PX = 14;
+const SECONDARY_BRANCH_MAX_EXTRA_OFFSET_PX = 100;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 1.35;
 const CONNECTION_MIN_ANIMATION_MS = 8;
-const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.3;
+const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.5;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");

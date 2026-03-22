@@ -148,6 +148,9 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         return Promise.resolve();
     }
 
+    const navigationBody = appRoot.querySelector(".lesson-lane--navigation .lesson-lane__body");
+    const scrollStabilizer = createNavigationCollapseScrollStabilizer(panel, navigationBody);
+
     panel.dataset.tagConnectionCollapsing = "true";
     panel.style.height = `${panel.getBoundingClientRect().height}px`;
     panel.style.opacity = "1";
@@ -158,13 +161,74 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
     panel.style.height = "0px";
     panel.style.opacity = "0";
 
-    const stopFrameTracking = startAnimationFrameTracking(onFrame);
+    const stopFrameTracking = startAnimationFrameTracking(() => {
+        scrollStabilizer?.update();
+        onFrame?.();
+    });
     return waitForScenarioAnimation(panel, () => {
         stopFrameTracking();
+        scrollStabilizer?.cleanup();
         panel.style.removeProperty("transition");
         delete panel.dataset.tagConnectionCollapsing;
         onFrame?.();
     });
+}
+
+export function createNavigationCollapseScrollStabilizer(panel, navigationBody) {
+    if (!shouldStabilizeCollapseScroll(panel, navigationBody)) {
+        return null;
+    }
+
+    const panelHeight = panel.getBoundingClientRect().height;
+    if (!Number.isFinite(panelHeight) || panelHeight <= 0) {
+        return null;
+    }
+
+    const flowNode = panel.closest(".flow-node");
+    const flowList = flowNode?.parentElement;
+    if (!flowNode || !flowList) {
+        return null;
+    }
+
+    const initialScrollTop = navigationBody.scrollTop;
+    const spacer = document.createElement("div");
+    spacer.dataset.collapseScrollSpacer = "true";
+    spacer.setAttribute("aria-hidden", "true");
+    spacer.style.height = "0px";
+    spacer.style.pointerEvents = "none";
+    flowList.append(spacer);
+
+    return {
+        update() {
+            const currentHeight = panel.getBoundingClientRect().height;
+            const collapsedHeight = Number.isFinite(currentHeight)
+                ? Math.max(0, panelHeight - currentHeight)
+                : 0;
+            spacer.style.height = `${collapsedHeight}px`;
+            navigationBody.scrollTop = initialScrollTop;
+        },
+        cleanup() {
+            spacer.remove();
+            const nextMaxScrollTop = Math.max(0, navigationBody.scrollHeight - navigationBody.clientHeight);
+            navigationBody.scrollTop = Math.min(initialScrollTop, nextMaxScrollTop);
+        }
+    };
+}
+
+export function shouldStabilizeCollapseScroll(panel, navigationBody) {
+    if (!(panel instanceof HTMLElement) || !(navigationBody instanceof HTMLElement)) {
+        return false;
+    }
+
+    const flowNode = panel.closest(".flow-node");
+    const flowList = flowNode?.parentElement;
+    if (!flowNode || !flowList) {
+        return false;
+    }
+
+    const isLastFlowNode = flowList.lastElementChild === flowNode;
+    const isNearBottom = navigationBody.scrollTop + navigationBody.clientHeight >= navigationBody.scrollHeight - 2;
+    return isLastFlowNode && isNearBottom;
 }
 
 function resolveSurfaceScrollElement(surfaceRoot, key) {
