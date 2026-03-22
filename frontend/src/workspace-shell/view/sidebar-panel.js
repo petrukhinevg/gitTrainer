@@ -57,7 +57,7 @@ function renderTrainingFlow(state, tagOptions) {
         <div class="tag-connection-map" data-tag-connection-map>
             <div class="scenario-legend">
                 <div class="scenario-legend__tags">
-                    ${tagOptions.map((tag) => renderLegendTag(tag, state.pinnedNavigationTag)).join("")}
+                    ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag)}
                 </div>
             </div>
             <div class="flow-block-list" data-flow-block-list>
@@ -73,6 +73,47 @@ function renderTrainingFlow(state, tagOptions) {
             </div>
         </div>
     `;
+}
+
+function renderLegendTagRows(tagOptions, pinnedNavigationTag) {
+    const rows = resolveLegendTagRows(tagOptions);
+
+    return rows.map((row) => `
+        <div class="scenario-legend__row">
+            ${row.map((tag) => renderLegendTag(tag, pinnedNavigationTag)).join("")}
+        </div>
+    `).join("");
+}
+
+function resolveLegendTagRows(tagOptions) {
+    const preferredRows = [
+        ["status", "working-tree"],
+        ["basics", "branching"],
+        ["history", "planning"],
+        ["cleanup", "remote"],
+        ["inspection", "navigation"]
+    ];
+    const availableTags = new Set(tagOptions);
+    const rows = [];
+
+    for (const row of preferredRows) {
+        const resolvedRow = row.filter((tag) => availableTags.has(tag));
+
+        if (resolvedRow.length === 0) {
+            continue;
+        }
+
+        resolvedRow.forEach((tag) => availableTags.delete(tag));
+        rows.push(resolvedRow);
+    }
+
+    const remainingTags = tagOptions.filter((tag) => availableTags.has(tag));
+
+    for (let index = 0; index < remainingTags.length; index += 2) {
+        rows.push(remainingTags.slice(index, index + 2));
+    }
+
+    return rows;
 }
 
 function renderWelcomeFlowBlock(state) {
