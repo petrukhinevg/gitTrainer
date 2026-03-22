@@ -87,10 +87,10 @@ function renderLegendTagRows(tagOptions, pinnedNavigationTag) {
 
 function resolveLegendTagRows(tagOptions) {
     const preferredRows = [
-        ["status", "working-tree"],
+        ["cleanup", "working-tree"],
         ["basics", "branching"],
         ["history", "planning"],
-        ["cleanup", "remote"],
+        ["status", "remote"],
         ["inspection", "navigation"]
     ];
     const availableTags = new Set(tagOptions);

@@ -5,8 +5,6 @@ const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const EDGE_PADDING_PX = 0;
 const TARGET_OFFSET_PX = 0;
 const TRUNK_OFFSET_PX = 10;
-const SECONDARY_BRANCH_STAGGER_PX = 14;
-const SECONDARY_BRANCH_MAX_EXTRA_OFFSET_PX = 40;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 1.75;
 const CONNECTION_MIN_ANIMATION_MS = 8;
@@ -100,7 +98,8 @@ export function buildTagConnectionGeometry({
     buttonRect,
     targetRects,
     sideReferenceRect = rootRect,
-    horizontalClampRect = rootRect
+    horizontalClampRect = rootRect,
+    preferredTrunkX = null
 }) {
     if (!rootRect || !buttonRect || !Array.isArray(targetRects) || targetRects.length === 0) {
         return null;
@@ -114,7 +113,8 @@ export function buildTagConnectionGeometry({
         anchorRect: buttonRect,
         targetRects,
         side,
-        horizontalClampRect
+        horizontalClampRect,
+        preferredTrunkX
     });
 }
 
@@ -124,7 +124,8 @@ export function buildAnchoredConnectionGeometry({
     targetRects,
     side,
     trunkOffsetPx = TRUNK_OFFSET_PX,
-    horizontalClampRect = rootRect
+    horizontalClampRect = rootRect,
+    preferredTrunkX = null
 }) {
     if (!rootRect || !anchorRect || !Array.isArray(targetRects) || targetRects.length === 0 || !side) {
         return null;
@@ -151,9 +152,16 @@ export function buildAnchoredConnectionGeometry({
     const branchEdgeX = side === "left"
         ? Math.min(startX, ...branchTargets.map((target) => target.x))
         : Math.max(startX, ...branchTargets.map((target) => target.x));
-    const trunkX = side === "left"
+    const fallbackTrunkX = side === "left"
         ? clampNumber(branchEdgeX - trunkOffsetPx, horizontalBounds.minX, horizontalBounds.maxX)
         : clampNumber(branchEdgeX + trunkOffsetPx, horizontalBounds.minX, horizontalBounds.maxX);
+    const trunkX = resolvePreferredTrunkX({
+        preferredTrunkX,
+        fallbackTrunkX,
+        branchEdgeX,
+        side,
+        horizontalBounds
+    });
     const trunkTop = Math.min(startY, ...branchTargets.map((target) => target.y));
     const trunkBottom = Math.max(startY, ...branchTargets.map((target) => target.y));
 
@@ -196,6 +204,9 @@ function renderNavigationTagConnections({
         return;
     }
 
+    const previousState = navigationLane.__tagConnectionState ?? null;
+    const previousBranchStateByKey = createBranchStateMap(previousState?.secondaryBranches ?? []);
+
     const button = mapRoot.querySelector(`[data-tag-legend-control="${escapeSelectorValue(activeTag)}"]`);
     const targetEntries = Array.from(
         mapRoot.querySelectorAll(`[data-tag-connection-target~="${escapeSelectorValue(activeTag)}"]`)
@@ -219,7 +230,8 @@ function renderNavigationTagConnections({
         buttonRect,
         targetRects: targetEntries.map((entry) => entry.rect),
         sideReferenceRect: mapRoot.getBoundingClientRect(),
-        horizontalClampRect: navigationBody?.getBoundingClientRect() ?? mapRoot.getBoundingClientRect()
+        horizontalClampRect: navigationBody?.getBoundingClientRect() ?? mapRoot.getBoundingClientRect(),
+        preferredTrunkX: previousState?.activeTag === activeTag ? previousState.trunkX : null
     });
 
     if (!geometry) {
@@ -228,7 +240,6 @@ function renderNavigationTagConnections({
         return;
     }
 
-    const previousState = navigationLane.__tagConnectionState ?? null;
     const accent = resolveAccentColor(button);
     const nextState = createConnectionState(
         activeTag,
@@ -269,7 +280,8 @@ function renderNavigationTagConnections({
         navigationBody,
         mapRoot,
         secondarySide: nextState.side === "left" ? "right" : "left",
-        revealLengthByKey: createRevealLengthMap(nextState)
+        revealLengthByKey: createRevealLengthMap(nextState),
+        previousBranchStateByKey
     });
     const { mainLayer, branchLayer, clipRect } = ensureCanvasLayers(canvas);
     syncCanvasViewportClip({
@@ -311,6 +323,7 @@ function createConnectionState(activeTag, geometry, targetKeys = []) {
     return {
         activeTag,
         side: geometry.side,
+        trunkX: geometry.trunkX,
         secondaryBranches: [],
         targetKeys,
         pathData: buildPathDataFromPoints(polyline.points),
@@ -563,7 +576,8 @@ function buildSecondaryBranchStates({
     navigationBody,
     mapRoot,
     secondarySide,
-    revealLengthByKey
+    revealLengthByKey,
+    previousBranchStateByKey
 }) {
     const flowNodes = Array.from(
         mapRoot.querySelectorAll(`.flow-node[data-tags~="${escapeSelectorValue(activeTag)}"]`)
@@ -598,7 +612,10 @@ function buildSecondaryBranchStates({
             targetRects: childBlocks.map((entry) => entry.rect),
             side: secondarySide,
             trunkOffsetPx: resolveSecondaryBranchTrunkOffset(index),
-            horizontalClampRect: navigationBody?.getBoundingClientRect() ?? mapRoot.getBoundingClientRect()
+            horizontalClampRect: navigationBody?.getBoundingClientRect() ?? mapRoot.getBoundingClientRect(),
+            preferredTrunkX: previousBranchStateByKey.get(branchKey)?.activeTag === activeTag
+                ? previousBranchStateByKey.get(branchKey)?.trunkX
+                : null
         });
 
         if (!geometry) {
@@ -614,6 +631,7 @@ function buildSecondaryBranchStates({
             {
                 key: branchKey,
                 activeTag,
+                trunkX: geometry.trunkX,
                 pathData: buildPathDataFromPoints(polyline.points),
                 pathLength: polyline.length,
                 points: polyline.points,
@@ -646,6 +664,20 @@ function createRevealLengthMap(connectionState) {
         revealLengthByKey.set(key, connectionState.targetRevealLengths[index] ?? 0);
     });
     return revealLengthByKey;
+}
+
+function createBranchStateMap(branchStates) {
+    const branchStateByKey = new Map();
+
+    branchStates.forEach((branchState) => {
+        if (!branchState?.key) {
+            return;
+        }
+
+        branchStateByKey.set(branchState.key, branchState);
+    });
+
+    return branchStateByKey;
 }
 
 function ensureCanvasLayers(canvas) {
@@ -992,11 +1024,7 @@ function resolveHorizontalBounds(rootRect, horizontalClampRect, width) {
 }
 
 function resolveSecondaryBranchTrunkOffset(index) {
-    const extraOffset = Math.min(
-        Math.max(0, index) * SECONDARY_BRANCH_STAGGER_PX,
-        SECONDARY_BRANCH_MAX_EXTRA_OFFSET_PX
-    );
-    return TRUNK_OFFSET_PX + extraOffset;
+    return TRUNK_OFFSET_PX;
 }
 
 function resolveTargetKey(element, index = 0) {
@@ -1005,6 +1033,25 @@ function resolveTargetKey(element, index = 0) {
     }
 
     return `target-${index}`;
+}
+
+function resolvePreferredTrunkX({
+    preferredTrunkX,
+    fallbackTrunkX,
+    branchEdgeX,
+    side,
+    horizontalBounds
+}) {
+    if (!Number.isFinite(preferredTrunkX)) {
+        return fallbackTrunkX;
+    }
+
+    const clampedPreferredTrunkX = clampNumber(preferredTrunkX, horizontalBounds.minX, horizontalBounds.maxX);
+    const isValidPreferredTrunkX = side === "left"
+        ? clampedPreferredTrunkX <= branchEdgeX
+        : clampedPreferredTrunkX >= branchEdgeX;
+
+    return isValidPreferredTrunkX ? clampedPreferredTrunkX : fallbackTrunkX;
 }
 
 function ensureCanvasClipPath(canvas, defs, clipRect) {
