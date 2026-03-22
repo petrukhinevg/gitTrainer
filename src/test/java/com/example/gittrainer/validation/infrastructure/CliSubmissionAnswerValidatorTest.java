@@ -23,6 +23,6 @@ class CliSubmissionAnswerValidatorTest {
         assertThat(submissionAnswerValidator.validate(
                 "status-basics",
                 new com.example.gittrainer.session.domain.SubmittedAnswer("command_text", "git status")
-        ).correctness()).isEqualTo("correct");
+        ).outcome().correctness()).isEqualTo("correct");
     }
 }

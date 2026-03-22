@@ -4,7 +4,7 @@ import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.validation.application.ScenarioValidationEngine;
 import com.example.gittrainer.validation.application.ScenarioValidationSpecSource;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
-import com.example.gittrainer.validation.domain.SubmissionOutcome;
+import com.example.gittrainer.validation.domain.SubmissionValidationResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 )
 public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+    private static final String RUNNER_KIND = "in-process-fixture";
     private final ScenarioValidationSpecSource specSource;
 
     public FixtureSubmissionAnswerValidator(ScenarioValidationSpecSource specSource) {
@@ -26,13 +28,36 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
     }
 
     @Override
-    public SubmissionOutcome validate(String scenarioSlug, SubmittedAnswer answer) {
+    public SubmissionValidationResult validate(String scenarioSlug, SubmittedAnswer answer) {
+        long startedAt = System.nanoTime();
         if (!"command_text".equals(answer.type())) {
-            return ScenarioValidationEngine.unsupportedAnswerType();
+            return SubmissionValidationResult.evaluated(
+                    null,
+                    null,
+                    RUNNER_KIND,
+                    elapsedMillis(startedAt),
+                    ScenarioValidationEngine.unsupportedAnswerType()
+            );
         }
 
         return specSource.findSpec(scenarioSlug, answer.type())
-                .map(spec -> ScenarioValidationEngine.validate(spec, answer))
-                .orElseGet(ScenarioValidationEngine::missingRule);
+                .map(spec -> SubmissionValidationResult.evaluated(
+                        spec.specId(),
+                        spec.validatorType(),
+                        RUNNER_KIND,
+                        elapsedMillis(startedAt),
+                        ScenarioValidationEngine.validate(spec, answer)
+                ))
+                .orElseGet(() -> SubmissionValidationResult.evaluated(
+                        null,
+                        null,
+                        RUNNER_KIND,
+                        elapsedMillis(startedAt),
+                        ScenarioValidationEngine.missingRule()
+                ));
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND;
     }
 }

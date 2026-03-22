@@ -9,6 +9,10 @@ import com.example.gittrainer.session.domain.RetryGuidance;
 import com.example.gittrainer.session.domain.RetryState;
 import com.example.gittrainer.session.domain.RetryStatePolicy;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
+import com.example.gittrainer.validation.application.ValidationRunRepository;
+import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
+import com.example.gittrainer.validation.domain.SubmissionValidationResult;
+import com.example.gittrainer.validation.domain.ValidationRunRecord;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +25,7 @@ public class SubmitAnswerUseCase {
     private final SessionSubmissionRepository sessionSubmissionRepository;
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final SubmissionAnswerValidator submissionAnswerValidator;
+    private final ValidationRunRepository validationRunRepository;
     private final ProgressRepository progressRepository;
     private final RetryGuidanceResolver retryGuidanceResolver;
 
@@ -29,6 +34,7 @@ public class SubmitAnswerUseCase {
             SessionSubmissionRepository sessionSubmissionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
             SubmissionAnswerValidator submissionAnswerValidator,
+            ValidationRunRepository validationRunRepository,
             ProgressRepository progressRepository,
             RetryGuidanceResolver retryGuidanceResolver
     ) {
@@ -36,6 +42,7 @@ public class SubmitAnswerUseCase {
         this.sessionSubmissionRepository = sessionSubmissionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.submissionAnswerValidator = submissionAnswerValidator;
+        this.validationRunRepository = validationRunRepository;
         this.progressRepository = progressRepository;
         this.retryGuidanceResolver = retryGuidanceResolver;
     }
@@ -53,9 +60,35 @@ public class SubmitAnswerUseCase {
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
 
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(command.answerType(), command.answer());
-        SubmissionOutcome outcome = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
-        boolean failedAttempt = outcome.requiresRetry();
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
+        String validationRunId = sessionIdentityGenerator.nextValidationRunId();
+        SubmissionValidationResult validationResult;
+        try {
+            validationResult = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
+            validationRunRepository.save(ValidationRunRecord.evaluated(
+                    validationRunId,
+                    session.sessionId(),
+                    submissionId,
+                    session.scenarioSlug(),
+                    submittedAnswer,
+                    validationResult,
+                    Instant.now()
+            ));
+        } catch (ValidationRunnerExecutionException exception) {
+            validationRunRepository.save(ValidationRunRecord.runnerFailure(
+                    validationRunId,
+                    session.sessionId(),
+                    submissionId,
+                    session.scenarioSlug(),
+                    submittedAnswer,
+                    exception,
+                    Instant.now()
+            ));
+            throw exception;
+        }
+
+        SubmissionOutcome outcome = validationResult.outcome();
+        boolean failedAttempt = outcome.requiresRetry();
         Instant submittedAt = Instant.now();
         TrainingSession updatedSession = sessionRepository
                 .recordSubmission(normalizedSessionId, submissionId, failedAttempt)

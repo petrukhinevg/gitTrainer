@@ -5,4 +5,6 @@ public interface SessionIdentityGenerator {
     String nextSessionId();
 
     String nextSubmissionId();
+
+    String nextValidationRunId();
 }

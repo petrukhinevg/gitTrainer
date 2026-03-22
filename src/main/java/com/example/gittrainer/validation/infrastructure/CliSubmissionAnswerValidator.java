@@ -9,6 +9,7 @@ import com.example.gittrainer.validation.application.ValidationRunnerExecutionEx
 import com.example.gittrainer.validation.cli.CliValidationRequest;
 import com.example.gittrainer.validation.cli.CliValidationResponse;
 import com.example.gittrainer.validation.cli.GitValidationCliMain;
+import com.example.gittrainer.validation.domain.SubmissionValidationResult;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,9 @@ import java.util.Optional;
 @ConditionalOnProperty(prefix = "gittrainer.validator.cli", name = "enabled", havingValue = "true")
 public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
+    private static final String RUNNER_KIND = "cli-process";
 
     private final ScenarioValidationSpecSource specSource;
     private final Duration timeout;
@@ -46,20 +49,33 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
     }
 
     @Override
-    public SubmissionOutcome validate(String scenarioSlug, SubmittedAnswer answer) {
+    public SubmissionValidationResult validate(String scenarioSlug, SubmittedAnswer answer) {
+        long startedAt = System.nanoTime();
         if (!"command_text".equals(answer.type())) {
-            return ScenarioValidationEngine.unsupportedAnswerType();
+            return SubmissionValidationResult.evaluated(
+                    null,
+                    null,
+                    RUNNER_KIND,
+                    elapsedMillis(startedAt),
+                    ScenarioValidationEngine.unsupportedAnswerType()
+            );
         }
 
         Optional<ScenarioValidationSpec> spec = specSource.findSpec(scenarioSlug, answer.type());
         if (spec.isEmpty()) {
-            return ScenarioValidationEngine.missingRule();
+            return SubmissionValidationResult.evaluated(
+                    null,
+                    null,
+                    RUNNER_KIND,
+                    elapsedMillis(startedAt),
+                    ScenarioValidationEngine.missingRule()
+            );
         }
 
-        return runCli(new CliValidationRequest(scenarioSlug, answer, spec.get()));
+        return runCli(new CliValidationRequest(scenarioSlug, answer, spec.get()), startedAt);
     }
 
-    private SubmissionOutcome runCli(CliValidationRequest request) {
+    private SubmissionValidationResult runCli(CliValidationRequest request, long startedAt) {
         Path requestFile = null;
         try {
             requestFile = Files.createTempFile("git-validator-request-", ".json");
@@ -73,53 +89,75 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
             boolean finished = process.waitFor(effectiveTimeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                throw new ValidationRunnerExecutionException(
+                throw runnerFailure(
                         "validation-runner-timeout",
-                        "Внешний CLI validator превысил лимит времени."
+                        "Внешний CLI validator превысил лимит времени.",
+                        null,
+                        request.spec(),
+                        startedAt
                 );
             }
 
             String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             if (process.exitValue() != 0) {
-                throw new ValidationRunnerExecutionException(
+                throw runnerFailure(
                         "validation-runner-failed",
-                        stderr.isBlank() ? "Внешний CLI validator завершился с ошибкой." : stderr
+                        stderr.isBlank() ? "Внешний CLI validator завершился с ошибкой." : stderr,
+                        null,
+                        request.spec(),
+                        startedAt
                 );
             }
             if (stdout.isBlank()) {
-                throw new ValidationRunnerExecutionException(
+                throw runnerFailure(
                         "validation-runner-empty-response",
-                        "Внешний CLI validator не вернул JSON-ответ."
+                        "Внешний CLI validator не вернул JSON-ответ.",
+                        null,
+                        request.spec(),
+                        startedAt
                 );
             }
 
             CliValidationResponse response = OBJECT_MAPPER.readValue(stdout, CliValidationResponse.class);
             if (!"evaluated".equals(response.status())) {
-                throw new ValidationRunnerExecutionException(
+                throw runnerFailure(
                         "validation-runner-invalid-response",
-                        "Внешний CLI validator вернул неподдерживаемый статус: " + response.status()
+                        "Внешний CLI validator вернул неподдерживаемый статус: " + response.status(),
+                        null,
+                        request.spec(),
+                        startedAt
                 );
             }
 
-            return new SubmissionOutcome(
-                    response.status(),
-                    response.correctness(),
-                    response.code(),
-                    response.message()
+            return SubmissionValidationResult.evaluated(
+                    request.spec().specId(),
+                    request.spec().validatorType(),
+                    RUNNER_KIND,
+                    elapsedMillis(startedAt),
+                    new SubmissionOutcome(
+                            response.status(),
+                            response.correctness(),
+                            response.code(),
+                            response.message()
+                    )
             );
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new ValidationRunnerExecutionException(
+            throw runnerFailure(
                     "validation-runner-interrupted",
                     "Ожидание CLI validator было прервано.",
-                    exception
+                    exception,
+                    request.spec(),
+                    startedAt
             );
         } catch (IOException exception) {
-            throw new ValidationRunnerExecutionException(
+            throw runnerFailure(
                     "validation-runner-io-failed",
                     "Не удалось выполнить внешний CLI validator.",
-                    exception
+                    exception,
+                    request.spec(),
+                    startedAt
             );
         } finally {
             if (requestFile != null) {
@@ -157,5 +195,27 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
             return timeout;
         }
         return Duration.ofMillis(Math.min(timeout.toMillis(), spec.timeoutMs()));
+    }
+
+    private ValidationRunnerExecutionException runnerFailure(
+            String errorCode,
+            String message,
+            Throwable cause,
+            ScenarioValidationSpec spec,
+            long startedAt
+    ) {
+        return new ValidationRunnerExecutionException(
+                errorCode,
+                message,
+                cause,
+                spec.specId(),
+                spec.validatorType(),
+                RUNNER_KIND,
+                elapsedMillis(startedAt)
+        );
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND;
     }
 }

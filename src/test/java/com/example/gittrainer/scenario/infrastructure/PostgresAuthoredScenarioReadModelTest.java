@@ -105,15 +105,15 @@ class PostgresAuthoredScenarioReadModelTest {
         SubmissionOutcome correctOutcome = submissionAnswerValidator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status --short")
-        );
+        ).outcome();
         SubmissionOutcome incorrectOutcome = submissionAnswerValidator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git checkout main")
-        );
+        ).outcome();
         SubmissionOutcome missingRuleOutcome = submissionAnswerValidator.validate(
                 "unknown-scenario",
                 new SubmittedAnswer("command_text", "git status")
-        );
+        ).outcome();
 
         assertThat(correctOutcome.correctness()).isEqualTo("correct");
         assertThat(correctOutcome.code()).isEqualTo("expected-command");
