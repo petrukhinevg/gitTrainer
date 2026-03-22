@@ -25,4 +25,12 @@ class CliSubmissionAnswerValidatorTest {
                 new com.example.gittrainer.session.domain.SubmittedAnswer("command_text", "git branch --show-current")
         ).outcome().correctness()).isEqualTo("correct");
     }
+
+    @Test
+    void validatesRemoteSyncPreviewUsingRealGitRepoStateProbe() {
+        assertThat(submissionAnswerValidator.validate(
+                "remote-sync-preview",
+                new com.example.gittrainer.session.domain.SubmittedAnswer("command_text", "git fetch origin")
+        ).outcome().correctness()).isEqualTo("correct");
+    }
 }

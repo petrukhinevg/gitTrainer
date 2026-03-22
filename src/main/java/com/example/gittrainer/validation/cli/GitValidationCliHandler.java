@@ -19,6 +19,9 @@ public final class GitValidationCliHandler {
                     "CLI validator получил неполный request."
             );
         }
+        if (GitRepoStateProbeValidator.supports(request.spec().validatorType())) {
+            return GitRepoStateProbeValidator.handle(request);
+        }
         if (GitCommandProbeValidator.supports(request.spec().validatorType())) {
             return GitCommandProbeValidator.handle(request);
         }

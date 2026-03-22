@@ -25,6 +25,7 @@ import java.util.Map;
 public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
 
     private static final String BRANCH_SAFETY = "branch-safety";
+    private static final String REMOTE_SYNC_PREVIEW = "remote-sync-preview";
     private static final String DEFAULT_SOURCE_KEY = "default";
     private static final int DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000;
 
@@ -156,7 +157,7 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
         }
 
         String specId = validatorSpecId(scenarioSlug, "command_text");
-        String validatorType = BRANCH_SAFETY.equals(scenarioSlug) ? "git_command_probe" : "exact_command_match";
+        String validatorType = validatorType(scenarioSlug);
         jdbcClient.sql("""
                         INSERT INTO authored_scenario_validator_specs (
                             validator_spec_id,
@@ -270,40 +271,84 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
     }
 
     private String validatorConfigPayload(String scenarioSlug) {
-        if (!BRANCH_SAFETY.equals(scenarioSlug)) {
-            return "{}";
+        if (BRANCH_SAFETY.equals(scenarioSlug)) {
+            return jsonMapper.writeValue(Map.of(
+                    "expectedExitCode", 0,
+                    "expectedStdout", "release/hotfix-7",
+                    "workspaceTemplate", Map.of(
+                            "initialBranch", "main",
+                            "currentBranch", "release/hotfix-7",
+                            "branches", List.of("release/hotfix-7", "feature/menu-refresh", "main"),
+                            "committedFiles", List.of(
+                                    Map.of(
+                                            "path", "src/ui/header.css",
+                                            "content", ".header { padding: 8px; }\n"
+                                    ),
+                                    Map.of(
+                                            "path", "docs/release-checklist.md",
+                                            "content", "- verify deploy\n"
+                                    )
+                            ),
+                            "modifiedFiles", List.of(
+                                    Map.of(
+                                            "path", "src/ui/header.css",
+                                            "content", ".header { padding: 12px; }\n"
+                                    ),
+                                    Map.of(
+                                            "path", "docs/release-checklist.md",
+                                            "content", "- verify deploy\n- smoke test\n"
+                                    )
+                            ),
+                            "untrackedFiles", List.of()
+                    )
+            ));
+        }
+        if (REMOTE_SYNC_PREVIEW.equals(scenarioSlug)) {
+            return jsonMapper.writeValue(Map.of(
+                    "expectedExitCode", 0,
+                    "workspaceTemplate", Map.of(
+                            "initialBranch", "main",
+                            "remoteName", "origin",
+                            "localAheadCommitMessage", "local notes WIP",
+                            "remoteAheadCommitMessage", "remote hotfix ready",
+                            "baseFiles", List.of(
+                                    Map.of(
+                                            "path", "README.md",
+                                            "content", "# Git Trainer\n"
+                                    ),
+                                    Map.of(
+                                            "path", "docs/sync-playbook.md",
+                                            "content", "- inspect divergence\n"
+                                    )
+                            ),
+                            "localAheadFiles", List.of(
+                                    Map.of(
+                                            "path", "docs/local-notes.md",
+                                            "content", "- pending local integration\n"
+                                    )
+                            ),
+                            "remoteAheadFiles", List.of(
+                                    Map.of(
+                                            "path", "release/remote-hotfix.md",
+                                            "content", "- hotfix available upstream\n"
+                                    )
+                            )
+                    ),
+                    "expectedState", Map.of(
+                            "currentBranch", "main",
+                            "localHeadCommitMessage", "local notes WIP",
+                            "fetchHeadCommitMessage", "remote hotfix ready",
+                            "remoteTrackingRefs", List.of(
+                                    Map.of(
+                                            "ref", "refs/remotes/origin/main",
+                                            "commitMessage", "remote hotfix ready"
+                                    )
+                            )
+                    )
+            ));
         }
 
-        return jsonMapper.writeValue(Map.of(
-                "expectedExitCode", 0,
-                "expectedStdout", "release/hotfix-7",
-                "workspaceTemplate", Map.of(
-                        "initialBranch", "main",
-                        "currentBranch", "release/hotfix-7",
-                        "branches", List.of("release/hotfix-7", "feature/menu-refresh", "main"),
-                        "committedFiles", List.of(
-                                Map.of(
-                                        "path", "src/ui/header.css",
-                                        "content", ".header { padding: 8px; }\n"
-                                ),
-                                Map.of(
-                                        "path", "docs/release-checklist.md",
-                                        "content", "- verify deploy\n"
-                                )
-                        ),
-                        "modifiedFiles", List.of(
-                                Map.of(
-                                        "path", "src/ui/header.css",
-                                        "content", ".header { padding: 12px; }\n"
-                                ),
-                                Map.of(
-                                        "path", "docs/release-checklist.md",
-                                        "content", "- verify deploy\n- smoke test\n"
-                                )
-                        ),
-                        "untrackedFiles", List.of()
-                )
-        ));
+        return "{}";
     }
 
     private List<ScenarioValidationRule> validatorRules(String scenarioSlug, List<String> acceptedAnswers) {
@@ -328,5 +373,15 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
                         "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
                 ))
                 .toList();
+    }
+
+    private String validatorType(String scenarioSlug) {
+        if (BRANCH_SAFETY.equals(scenarioSlug)) {
+            return "git_command_probe";
+        }
+        if (REMOTE_SYNC_PREVIEW.equals(scenarioSlug)) {
+            return "git_repo_state_probe";
+        }
+        return "exact_command_match";
     }
 }

@@ -83,6 +83,14 @@ class PostgresAuthoredScenarioReadModelTest {
         Long validatorRuleCount = jdbcClient.sql("SELECT COUNT(*) FROM authored_scenario_validator_rules")
                 .query(Long.class)
                 .single();
+        String remoteSyncValidatorType = jdbcClient.sql("""
+                        SELECT validator_type
+                        FROM authored_scenario_validator_specs
+                        WHERE scenario_slug = 'remote-sync-preview'
+                          AND answer_type = 'command_text'
+                        """)
+                .query(String.class)
+                .single();
 
         assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("mvp-fixture");
         assertThat(catalog)
@@ -98,6 +106,7 @@ class PostgresAuthoredScenarioReadModelTest {
         assertThat(answerCount).isGreaterThanOrEqualTo(12);
         assertThat(validatorSpecCount).isGreaterThanOrEqualTo(4);
         assertThat(validatorRuleCount).isGreaterThanOrEqualTo(12);
+        assertThat(remoteSyncValidatorType).isEqualTo("git_repo_state_probe");
     }
 
     @Test

@@ -133,4 +133,92 @@ class GitValidationCliMainTest {
         assertThat(response.observations()).extracting(CliValidationObservation::code)
                 .contains("stdout", "workspace-branch");
     }
+
+    @Test
+    void writesJsonOutcomeForRealGitRepoStateProbe() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "remote-sync-preview",
+                new SubmittedAnswer("command_text", "git fetch origin"),
+                new ScenarioValidationSpec(
+                        "fixture:remote-sync-preview:command_text",
+                        "remote-sync-preview",
+                        "command_text",
+                        "git_repo_state_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "remoteName", "origin",
+                                        "localAheadCommitMessage", "local notes WIP",
+                                        "remoteAheadCommitMessage", "remote hotfix ready",
+                                        "baseFiles", List.of(
+                                                Map.of("path", "README.md", "content", "# Git Trainer\n"),
+                                                Map.of("path", "docs/sync-playbook.md", "content", "- inspect divergence\n")
+                                        ),
+                                        "localAheadFiles", List.of(
+                                                Map.of("path", "docs/local-notes.md", "content", "- pending local integration\n")
+                                        ),
+                                        "remoteAheadFiles", List.of(
+                                                Map.of("path", "release/remote-hotfix.md", "content", "- hotfix available upstream\n")
+                                        )
+                                ),
+                                "expectedState", Map.of(
+                                        "currentBranch", "main",
+                                        "localHeadCommitMessage", "local notes WIP",
+                                        "fetchHeadCommitMessage", "remote hotfix ready",
+                                        "remoteTrackingRefs", List.of(
+                                                Map.of("ref", "refs/remotes/origin/main", "commitMessage", "remote hotfix ready")
+                                        )
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git fetch",
+                                        "git fetch",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git fetch origin",
+                                        "git fetch origin",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git fetch --all --prune",
+                                        "git fetch --all --prune",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-state-probe-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("correct");
+        assertThat(response.code()).isEqualTo("expected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("current-branch", "local-head-commit", "fetch-head-commit", "remote-tracking-ref");
+    }
 }

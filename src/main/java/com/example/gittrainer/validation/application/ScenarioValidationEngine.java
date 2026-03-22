@@ -7,6 +7,7 @@ public final class ScenarioValidationEngine {
 
     private static final String EXACT_COMMAND_MATCH = "exact_command_match";
     private static final String GIT_COMMAND_PROBE = "git_command_probe";
+    private static final String GIT_REPO_STATE_PROBE = "git_repo_state_probe";
     private static final String EXACT_NORMALIZED_COMMAND = "exact_normalized_command";
 
     private ScenarioValidationEngine() {
@@ -14,7 +15,8 @@ public final class ScenarioValidationEngine {
 
     public static SubmissionOutcome validate(ScenarioValidationSpec spec, SubmittedAnswer answer) {
         if (!EXACT_COMMAND_MATCH.equals(spec.validatorType())
-                && !GIT_COMMAND_PROBE.equals(spec.validatorType())) {
+                && !GIT_COMMAND_PROBE.equals(spec.validatorType())
+                && !GIT_REPO_STATE_PROBE.equals(spec.validatorType())) {
             throw new ValidationRunnerExecutionException(
                     "validation-runner-unsupported-spec",
                     "CLI validator пока не поддерживает тип проверки: " + spec.validatorType()

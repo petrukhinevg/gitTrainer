@@ -17,6 +17,7 @@ public class FixtureScenarioValidationSpecSource implements ScenarioValidationSp
 
     private static final long DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000L;
     private static final String BRANCH_SAFETY = "branch-safety";
+    private static final String REMOTE_SYNC_PREVIEW = "remote-sync-preview";
     private static final Map<String, List<String>> RULES = FixtureSubmissionRuleLoader.loadRules();
 
     @Override
@@ -27,6 +28,9 @@ public class FixtureScenarioValidationSpecSource implements ScenarioValidationSp
         }
         if (BRANCH_SAFETY.equals(scenarioSlug)) {
             return Optional.of(branchSafetySpec(answerType));
+        }
+        if (REMOTE_SYNC_PREVIEW.equals(scenarioSlug)) {
+            return Optional.of(remoteSyncPreviewSpec(answerType));
         }
 
         List<ScenarioValidationRule> rules = commands.stream()
@@ -96,6 +100,69 @@ public class FixtureScenarioValidationSpecSource implements ScenarioValidationSp
                         "expected-command",
                         "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
                 ))
+        );
+    }
+
+    private ScenarioValidationSpec remoteSyncPreviewSpec(String answerType) {
+        return new ScenarioValidationSpec(
+                "fixture:remote-sync-preview:" + answerType,
+                REMOTE_SYNC_PREVIEW,
+                answerType,
+                "git_repo_state_probe",
+                DEFAULT_VALIDATOR_TIMEOUT_MS,
+                Map.of(
+                        "expectedExitCode", 0,
+                        "workspaceTemplate", Map.of(
+                                "initialBranch", "main",
+                                "remoteName", "origin",
+                                "localAheadCommitMessage", "local notes WIP",
+                                "remoteAheadCommitMessage", "remote hotfix ready",
+                                "baseFiles", List.of(
+                                        Map.of(
+                                                "path", "README.md",
+                                                "content", "# Git Trainer\n"
+                                        ),
+                                        Map.of(
+                                                "path", "docs/sync-playbook.md",
+                                                "content", "- inspect divergence\n"
+                                        )
+                                ),
+                                "localAheadFiles", List.of(
+                                        Map.of(
+                                                "path", "docs/local-notes.md",
+                                                "content", "- pending local integration\n"
+                                        )
+                                ),
+                                "remoteAheadFiles", List.of(
+                                        Map.of(
+                                                "path", "release/remote-hotfix.md",
+                                                "content", "- hotfix available upstream\n"
+                                        )
+                                )
+                        ),
+                        "expectedState", Map.of(
+                                "currentBranch", "main",
+                                "localHeadCommitMessage", "local notes WIP",
+                                "fetchHeadCommitMessage", "remote hotfix ready",
+                                "remoteTrackingRefs", List.of(
+                                        Map.of(
+                                                "ref", "refs/remotes/origin/main",
+                                                "commitMessage", "remote hotfix ready"
+                                        )
+                                )
+                        )
+                ),
+                RULES.getOrDefault(REMOTE_SYNC_PREVIEW, List.of()).stream()
+                        .map(command -> new ScenarioValidationRule(
+                                "exact_normalized_command",
+                                command,
+                                CommandTextNormalizer.normalize(command),
+                                "correct",
+                                "expected-command",
+                                "Отправленная команда совпадает "
+                                        + "с ожидаемым безопасным следующим шагом для этого сценария."
+                        ))
+                        .toList()
         );
     }
 }
