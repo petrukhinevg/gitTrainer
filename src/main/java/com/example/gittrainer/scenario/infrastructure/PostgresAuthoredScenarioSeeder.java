@@ -8,6 +8,7 @@ import com.example.gittrainer.session.application.RetryHintTemplate;
 import com.example.gittrainer.session.domain.RetryGuidanceProfile;
 import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
 import com.example.gittrainer.session.infrastructure.RetryFeedbackJsonMapper;
+import com.example.gittrainer.validation.application.ScenarioValidationRule;
 import com.example.gittrainer.validation.infrastructure.FixtureSubmissionRuleLoader;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -23,6 +24,7 @@ import java.util.Map;
 @Profile("!test & !local-memory")
 public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
 
+    private static final String BRANCH_SAFETY = "branch-safety";
     private static final String DEFAULT_SOURCE_KEY = "default";
     private static final int DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000;
 
@@ -154,6 +156,7 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
         }
 
         String specId = validatorSpecId(scenarioSlug, "command_text");
+        String validatorType = BRANCH_SAFETY.equals(scenarioSlug) ? "git_command_probe" : "exact_command_match";
         jdbcClient.sql("""
                         INSERT INTO authored_scenario_validator_specs (
                             validator_spec_id,
@@ -161,22 +164,25 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
                             answer_type,
                             validator_type,
                             timeout_ms,
+                            config_payload,
                             enabled
                         )
-                        VALUES (?, ?, ?, ?, ?, TRUE)
+                        VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), TRUE)
                         ON CONFLICT (scenario_slug, answer_type) DO NOTHING
                         """)
                 .params(
                         specId,
                         scenarioSlug,
                         "command_text",
-                        "exact_command_match",
-                        DEFAULT_VALIDATOR_TIMEOUT_MS
+                        validatorType,
+                        DEFAULT_VALIDATOR_TIMEOUT_MS,
+                        validatorConfigPayload(scenarioSlug)
                 )
                 .update();
 
-        for (int index = 0; index < acceptedAnswers.size(); index++) {
-            String answer = acceptedAnswers.get(index);
+        List<ScenarioValidationRule> rules = validatorRules(scenarioSlug, acceptedAnswers);
+        for (int index = 0; index < rules.size(); index++) {
+            ScenarioValidationRule rule = rules.get(index);
             jdbcClient.sql("""
                             INSERT INTO authored_scenario_validator_rules (
                                 validator_spec_id,
@@ -194,12 +200,12 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
                     .params(
                             specId,
                             index + 1,
-                            "exact_normalized_command",
-                            answer,
-                            FixtureSubmissionRuleLoader.normalizeCommand(answer),
-                            "correct",
-                            "expected-command",
-                            "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
+                            rule.matchType(),
+                            rule.rawMatchValue(),
+                            rule.normalizedAnswerValue(),
+                            rule.correctness(),
+                            rule.code(),
+                            rule.message()
                     )
                     .update();
         }
@@ -261,5 +267,66 @@ public class PostgresAuthoredScenarioSeeder implements ApplicationRunner {
 
     private String validatorSpecId(String scenarioSlug, String answerType) {
         return "default:" + scenarioSlug + ":" + answerType;
+    }
+
+    private String validatorConfigPayload(String scenarioSlug) {
+        if (!BRANCH_SAFETY.equals(scenarioSlug)) {
+            return "{}";
+        }
+
+        return jsonMapper.writeValue(Map.of(
+                "expectedExitCode", 0,
+                "expectedStdout", "release/hotfix-7",
+                "workspaceTemplate", Map.of(
+                        "initialBranch", "main",
+                        "currentBranch", "release/hotfix-7",
+                        "branches", List.of("release/hotfix-7", "feature/menu-refresh", "main"),
+                        "committedFiles", List.of(
+                                Map.of(
+                                        "path", "src/ui/header.css",
+                                        "content", ".header { padding: 8px; }\n"
+                                ),
+                                Map.of(
+                                        "path", "docs/release-checklist.md",
+                                        "content", "- verify deploy\n"
+                                )
+                        ),
+                        "modifiedFiles", List.of(
+                                Map.of(
+                                        "path", "src/ui/header.css",
+                                        "content", ".header { padding: 12px; }\n"
+                                ),
+                                Map.of(
+                                        "path", "docs/release-checklist.md",
+                                        "content", "- verify deploy\n- smoke test\n"
+                                )
+                        ),
+                        "untrackedFiles", List.of()
+                )
+        ));
+    }
+
+    private List<ScenarioValidationRule> validatorRules(String scenarioSlug, List<String> acceptedAnswers) {
+        if (BRANCH_SAFETY.equals(scenarioSlug)) {
+            return List.of(new ScenarioValidationRule(
+                    "exact_normalized_command",
+                    "git branch --show-current",
+                    FixtureSubmissionRuleLoader.normalizeCommand("git branch --show-current"),
+                    "correct",
+                    "expected-command",
+                    "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
+            ));
+        }
+
+        return acceptedAnswers.stream()
+                .map(answer -> new ScenarioValidationRule(
+                        "exact_normalized_command",
+                        answer,
+                        FixtureSubmissionRuleLoader.normalizeCommand(answer),
+                        "correct",
+                        "expected-command",
+                        "Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария."
+                ))
+                .toList();
     }
 }

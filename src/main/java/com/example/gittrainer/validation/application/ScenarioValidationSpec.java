@@ -8,6 +8,7 @@ public record ScenarioValidationSpec(
         String answerType,
         String validatorType,
         long timeoutMs,
+        java.util.Map<String, Object> config,
         List<ScenarioValidationRule> rules
 ) {
 }

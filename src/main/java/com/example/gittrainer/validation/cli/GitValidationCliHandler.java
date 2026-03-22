@@ -19,6 +19,9 @@ public final class GitValidationCliHandler {
                     "CLI validator получил неполный request."
             );
         }
+        if (GitCommandProbeValidator.supports(request.spec().validatorType())) {
+            return GitCommandProbeValidator.handle(request);
+        }
 
         SubmissionOutcome outcome = ScenarioValidationEngine.validate(request.spec(), request.answer());
         String normalizedAnswer = CommandTextNormalizer.normalize(request.answer().value());

@@ -19,10 +19,10 @@ class CliSubmissionAnswerValidatorTest {
     private SubmissionAnswerValidator submissionAnswerValidator;
 
     @Test
-    void validatesKnownScenarioThroughExternalCliProcess() {
+    void validatesBranchSafetyUsingRealGitCommandProbe() {
         assertThat(submissionAnswerValidator.validate(
-                "status-basics",
-                new com.example.gittrainer.session.domain.SubmittedAnswer("command_text", "git status")
+                "branch-safety",
+                new com.example.gittrainer.session.domain.SubmittedAnswer("command_text", "git branch --show-current")
         ).outcome().correctness()).isEqualTo("correct");
     }
 }
