@@ -313,7 +313,6 @@ function renderNavigationTagConnections({
     syncFlowSubtaskLayoutStateBeforeMeasure({
         mapRoot,
         activeTag,
-        pinnedTag,
         secondarySide
     });
     const nextBranchStates = buildSecondaryBranchStates({
@@ -358,11 +357,7 @@ function renderNavigationTagConnections({
         branchPathByKey,
         nextBranchStates
     });
-    if (pinnedTag === activeTag) {
-        mapRoot.dataset.secondaryBranchSide = secondarySide;
-    } else {
-        clearSecondaryBranchSideState(mapRoot);
-    }
+    mapRoot.dataset.secondaryBranchSide = secondarySide;
     showCanvasSteady(canvas);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;
@@ -1115,7 +1110,6 @@ function syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates) {
 function syncFlowSubtaskLayoutStateBeforeMeasure({
     mapRoot,
     activeTag,
-    pinnedTag,
     secondarySide
 }) {
     if (!(mapRoot instanceof HTMLElement) || !activeTag) {
@@ -1124,16 +1118,9 @@ function syncFlowSubtaskLayoutStateBeforeMeasure({
         return;
     }
 
-    const shouldShiftSubtasks = pinnedTag === activeTag;
-    if (shouldShiftSubtasks) {
-        mapRoot.dataset.secondaryBranchSide = secondarySide;
-    } else {
-        clearSecondaryBranchSideState(mapRoot);
-    }
+    mapRoot.dataset.secondaryBranchSide = secondarySide;
 
-    const nextGroups = shouldShiftSubtasks
-        ? collectSubtaskGroupsForActiveTag(mapRoot, activeTag)
-        : new Set();
+    const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag);
 
     mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
         if (!(element instanceof HTMLElement)) {

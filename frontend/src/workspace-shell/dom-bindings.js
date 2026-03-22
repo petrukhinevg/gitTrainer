@@ -177,7 +177,8 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         return;
     }
 
-    const applyNavigationHighlight = (hoveredTag = null) => {
+    const applyNavigationHighlight = (hoveredTag = null, { animateShift = false } = {}) => {
+        const previousActiveTag = navigationLane.dataset.highlightTag ?? null;
         const activeTag = state.pinnedNavigationTag ?? hoveredTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
@@ -189,6 +190,10 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
             navigationLane.dataset.pinnedTag = state.pinnedNavigationTag;
         } else {
             delete navigationLane.dataset.pinnedTag;
+        }
+
+        if (animateShift && previousActiveTag !== activeTag) {
+            triggerPinnedTagShiftAnimation();
         }
 
         redrawNavigationTagConnections(appRoot);
@@ -233,22 +238,21 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
 
         button.dataset.tagLegendBound = "true";
         button.addEventListener("mouseenter", () => {
-            applyNavigationHighlight(tag);
+            applyNavigationHighlight(tag, { animateShift: true });
         });
         button.addEventListener("mouseleave", () => {
-            applyNavigationHighlight();
+            applyNavigationHighlight(null, { animateShift: true });
         });
         button.addEventListener("focus", () => {
-            applyNavigationHighlight(tag);
+            applyNavigationHighlight(tag, { animateShift: true });
         });
         button.addEventListener("blur", () => {
-            applyNavigationHighlight();
+            applyNavigationHighlight(null, { animateShift: true });
         });
         button.addEventListener("click", (event) => {
             event.preventDefault();
             state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
-            triggerPinnedTagShiftAnimation();
-            applyNavigationHighlight();
+            applyNavigationHighlight(null, { animateShift: true });
             syncNavigationLegendState();
         });
     });
