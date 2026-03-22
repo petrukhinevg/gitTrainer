@@ -1168,6 +1168,7 @@ function syncFlowBlockActiveTagState({
         clearFlowSubtaskActiveTagState(mapRoot);
     }
     const nextActiveElements = new Set();
+    const preservedActiveElements = collectPreservedFlowBlockActiveElements(mapRoot, activeTag);
 
     targetEntries.forEach((entry, index) => {
         if (!(entry.element instanceof HTMLElement)) {
@@ -1192,6 +1193,10 @@ function syncFlowBlockActiveTagState({
                 nextActiveElements.add(element);
             }
         });
+    });
+
+    preservedActiveElements.forEach((element) => {
+        nextActiveElements.add(element);
     });
 
     applyFlowBlockTagState(mapRoot, activeTag, nextActiveElements);
@@ -1378,6 +1383,18 @@ function clearFlowBlockActiveTagState(mapRoot) {
 
         delete element.dataset.flowBlockActiveTag;
     });
+}
+
+function collectPreservedFlowBlockActiveElements(mapRoot, activeTag) {
+    if (!(mapRoot instanceof HTMLElement) || !activeTag) {
+        return new Set();
+    }
+
+    return new Set(
+        Array.from(
+            mapRoot.querySelectorAll(`[data-flow-block-active-tag="${escapeSelectorValue(activeTag)}"]`)
+        ).filter((element) => element instanceof HTMLElement)
+    );
 }
 
 function applyFlowBlockTagState(mapRoot, activeTag, nextActiveElements) {
