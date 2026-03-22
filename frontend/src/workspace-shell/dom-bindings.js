@@ -329,13 +329,13 @@ function bindNavigationControls({
             releaseTagHold(tag);
         });
         button.addEventListener("click", (event) => {
+            event.preventDefault();
+
             if (tagHoldState.suppressClickTag === tag) {
                 tagHoldState.suppressClickTag = null;
-                event.preventDefault();
                 return;
             }
 
-            event.preventDefault();
             state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
             applyNavigationHighlight(null);
             syncNavigationLegendState();
