@@ -162,6 +162,51 @@ test("не включает layout-смещение подзадач тольк�
     }
 });
 
+test("после hover-подсветки перестраивает точки на следующем кадре под актуальную геометрию блока", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const canvas = appRoot.querySelector("[data-tag-connection-canvas]");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+
+        navigationLane.dataset.highlightTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+
+        assignRect(childBlock, createRect(40, 252, 204, 46));
+        stepRafQueue();
+        stepRafQueue();
+
+        const updatedTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+        assert.equal(
+            updatedTargetDot?.getAttribute("cy"),
+            "275",
+            "На следующем кадре линия должна подстроиться под фактическое положение блока"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("вторичные ветки могут делить одну вертикаль без горизонтального разъезда", () => {
     const firstGeometry = buildAnchoredConnectionGeometry({
         rootRect: createRect(0, 0, 320, 640),
@@ -353,6 +398,113 @@ test("не скрывает вторичную линию, когда дочер
     }
 });
 
+test("рисует точки secondary branch у родительского и дочернего блока", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const canvas = appRoot.querySelector("[data-tag-connection-canvas]");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+
+        navigationLane.dataset.highlightTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot, { instant: true });
+        flushRafQueue();
+
+        const branchStartDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="start"]'
+        );
+        const branchTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+
+        assert.ok(branchStartDot, "У secondary branch должна быть точка у родительского блока");
+        assert.ok(branchTargetDot, "У secondary branch должна быть точка у дочернего блока");
+        assert.match(branchStartDot.getAttribute("class") ?? "", /\btag-connection-map__dot--visible\b/);
+        assert.match(branchTargetDot.getAttribute("class") ?? "", /\btag-connection-map__dot--visible\b/);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("во время shift-анимации pinned-состояния secondary branch перестраивается вместе с блоком", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const canvas = appRoot.querySelector("[data-tag-connection-canvas]");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+        const subtaskPanel = appRoot.querySelector("[data-scenario-panel]");
+        const subtaskGroup = dom.window.document.createElement("div");
+
+        subtaskGroup.className = "flow-subtask-group";
+        childBlock.replaceWith(subtaskGroup);
+        subtaskGroup.append(childBlock);
+
+        navigationLane.dataset.highlightTag = "branching";
+        navigationLane.dataset.pinnedTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+        advanceAnimationFrames(4);
+
+        const initialBranchTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+        assert.equal(initialBranchTargetDot?.getAttribute("cy"), "227");
+        assert.equal(
+            subtaskPanel.querySelector(".flow-subtask-group")?.dataset.flowSubtaskShiftAnimating,
+            "true",
+            "Pinned-подсветка должна запускать shift-анимацию группы"
+        );
+
+        assignRect(childBlock, createRect(56, 204, 204, 46));
+        stepRafQueue();
+        stepRafQueue();
+
+        const updatedBranchTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+        assert.equal(
+            updatedBranchTargetDot?.getAttribute("cx"),
+            "260",
+            "Во время shift-анимации secondary branch должна перестраиваться за движением блока"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("анимация появления вторичной линии повторяет дорисовку первичной", () => {
     const dom = new JSDOM(createOverlayFixture());
     const restoreGlobals = installDomGlobals(dom.window);
@@ -390,6 +542,60 @@ test("анимация появления вторичной линии повт
         assert.ok(
             initialPathData.length < completedPathData.length,
             "Вторичная линия должна дорисовываться по длине, как первичная"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("точка у дочернего блока secondary branch появляется только после завершения дорисовки до него", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const canvas = appRoot.querySelector("[data-tag-connection-canvas]");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+
+        navigationLane.dataset.highlightTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+        advanceAnimationFrames(4);
+
+        const initialTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+
+        assert.doesNotMatch(
+            initialTargetDot?.getAttribute("class") ?? "",
+            /\btag-connection-map__dot--visible\b/,
+            "Точка у дочернего блока не должна появляться до завершения дорисовки ветки"
+        );
+
+        advanceAnimationFrames(12);
+
+        const completedTargetDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+        assert.match(
+            completedTargetDot?.getAttribute("class") ?? "",
+            /\btag-connection-map__dot--visible\b/,
+            "Точка у дочернего блока должна появиться после завершения дорисовки ветки"
         );
     } finally {
         restoreGlobals();
@@ -484,7 +690,11 @@ test("закрывает вторичную линию снизу вверх п�
         stepRafQueue();
 
         const removingBranchPath = canvas.querySelector(".tag-connection-map__path--branch");
+        const removingBranchDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
         assert.ok(removingBranchPath?.isConnected, "Ветка не должна удаляться мгновенно");
+        assert.ok(removingBranchDot?.isConnected, "Точка ветки не должна удаляться мгновенно");
         const fullPathData = removingBranchPath.getAttribute("d") ?? "";
 
         advanceAnimationFrames(4);
@@ -500,6 +710,18 @@ test("закрывает вторичную линию снизу вверх п�
             canvas.querySelector(".tag-connection-map__path--branch"),
             null,
             "После завершения анимации ветка должна удаляться"
+        );
+        const hiddenBranchDot = canvas.querySelector(
+            '[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'
+        );
+        assert.ok(hiddenBranchDot?.isConnected, "После shrink-анимации точка должна сначала плавно скрываться");
+        assert.doesNotMatch(hiddenBranchDot?.getAttribute("class") ?? "", /\btag-connection-map__dot--visible\b/);
+
+        flushTimerQueue();
+        assert.equal(
+            canvas.querySelector('[data-branch-dot-key="branch-safety"][data-branch-dot-role="target"][data-branch-dot-index="0"]'),
+            null,
+            "После завершения transition точка должна удаляться из DOM"
         );
     } finally {
         restoreGlobals();

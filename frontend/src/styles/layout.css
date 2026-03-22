@@ -30,7 +30,7 @@ body {
 }
 
 .lesson-layout {
-    --navigation-lane-width: 320px;
+    --navigation-lane-width: 340px;
     --navigation-lane-current-width: var(--navigation-lane-width);
     --navigation-toolbar-height: 24px;
     --navigation-collapse-duration: 500ms;

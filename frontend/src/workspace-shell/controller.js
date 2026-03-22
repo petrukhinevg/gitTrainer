@@ -388,6 +388,9 @@ export function createCatalogWorkspaceController({
         const preservedNavigationTagState = surfaceName === "navigation"
             ? captureNavigationFlowBlockTagState(target)
             : [];
+        const preservedNavigationSubtaskGroupTagState = surfaceName === "navigation"
+            ? captureNavigationSubtaskGroupTagState(target)
+            : [];
         const previousLaneBody = target.querySelector(".lesson-lane__body");
         const preservedLaneScroll = previousLaneBody
             ? {
@@ -399,6 +402,7 @@ export function createCatalogWorkspaceController({
         target.innerHTML = nextMarkup;
         if (surfaceName === "navigation") {
             restoreNavigationFlowBlockTagState(target, preservedNavigationTagState);
+            restoreNavigationSubtaskGroupTagState(target, preservedNavigationSubtaskGroupTagState);
             syncNavigationSurfaceActiveState(target, state);
         }
         const nextLaneBody = target.querySelector(".lesson-lane__body");
@@ -1005,6 +1009,50 @@ export function restoreNavigationFlowBlockTagState(surfaceRoot, entries) {
     });
 }
 
+export function captureNavigationSubtaskGroupTagState(surfaceRoot) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return [];
+    }
+
+    return Array.from(surfaceRoot.querySelectorAll(".flow-subtask-group[data-flow-subtask-active-tag]"))
+        .map((element) => {
+            if (!(element instanceof HTMLElement)) {
+                return null;
+            }
+
+            const tag = element.dataset.flowSubtaskActiveTag;
+            const panel = element.closest("[data-scenario-panel]");
+            const panelKey = panel instanceof HTMLElement ? panel.dataset.scenarioPanel : null;
+            if (!tag || !panelKey) {
+                return null;
+            }
+
+            return {
+                panelKey,
+                tag
+            };
+        })
+        .filter(Boolean);
+}
+
+export function restoreNavigationSubtaskGroupTagState(surfaceRoot, entries) {
+    if (!(surfaceRoot instanceof HTMLElement) || !Array.isArray(entries) || entries.length === 0) {
+        return;
+    }
+
+    entries.forEach((entry) => {
+        if (!entry?.panelKey || !entry.tag) {
+            return;
+        }
+
+        const group = surfaceRoot
+            .querySelector(`[data-scenario-panel="${escapeSelectorValue(entry.panelKey)}"] .flow-subtask-group`);
+        if (group instanceof HTMLElement) {
+            group.dataset.flowSubtaskActiveTag = entry.tag;
+        }
+    });
+}
+
 function canRetainNavigationSurface(surfaceRoot, nextMarkup) {
     if (!(surfaceRoot instanceof HTMLElement)) {
         return false;
@@ -1059,10 +1107,12 @@ function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
     }
 
     const preservedNavigationTagState = captureNavigationFlowBlockTagState(surfaceRoot);
+    const preservedSubtaskGroupTagState = captureNavigationSubtaskGroupTagState(surfaceRoot);
     diffEntries.forEach(({ currentNode, nextNode }) => {
         currentNode.replaceWith(nextNode.cloneNode(true));
     });
     restoreNavigationFlowBlockTagState(surfaceRoot, preservedNavigationTagState);
+    restoreNavigationSubtaskGroupTagState(surfaceRoot, preservedSubtaskGroupTagState);
 
     return true;
 }

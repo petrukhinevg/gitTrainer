@@ -10,6 +10,7 @@ const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
 const CONNECTION_MIN_ANIMATION_MS = 4;
 const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
 const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
+const BRANCH_DOT_REMOVAL_MS = 320;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
@@ -282,6 +283,7 @@ function renderNavigationTagConnections({
         geometry,
         targetEntries.map((entry, index) => resolveTargetKey(entry.element, index))
     );
+    nextState.pinnedTag = pinnedTag;
     const previousVisibleLength = readVisibleLengthForState(canvas, previousState);
     const renderState = resolveRenderState({
         canvas,
@@ -312,6 +314,7 @@ function renderNavigationTagConnections({
         "tag-connection-map__path tag-connection-map__path--lead"
     );
     const secondarySide = nextState.side === "left" ? "right" : "left";
+    const shouldHighlightSubtaskGroups = pinnedTag === activeTag;
     const revealedTargetKeys = createRevealedTargetKeySet({
         nextState,
         visibleLength: renderState.visibleLength,
@@ -319,13 +322,18 @@ function renderNavigationTagConnections({
         previousVisibleLength,
         stickyRevealedTargetKeys: previousState?.revealedTargetKeys ?? []
     });
-    syncFlowSubtaskLayoutStateBeforeMeasure({
-        mapRoot,
-        activeTag,
-        secondarySide,
-        revealedTargetKeys,
-        animateShift: !instant
-    });
+    if (shouldHighlightSubtaskGroups) {
+        syncFlowSubtaskLayoutStateBeforeMeasure({
+            mapRoot,
+            activeTag,
+            secondarySide,
+            revealedTargetKeys,
+            animateShift: !instant
+        });
+    } else {
+        clearFlowSubtaskActiveTagState(mapRoot, { animateShift: !instant });
+        clearSecondaryBranchSideState(mapRoot);
+    }
     const nextBranchStates = buildSecondaryBranchStates({
         activeTag,
         layoutRoot,
@@ -367,16 +375,33 @@ function renderNavigationTagConnections({
         targetRevealLengths: nextState.targetRevealLengths,
         visibleLength: renderState.visibleLength,
         revealedTargetKeys,
+        highlightSubtaskGroups: shouldHighlightSubtaskGroups,
         branchPathByKey,
         nextBranchStates
     });
-    mapRoot.dataset.secondaryBranchSide = secondarySide;
+    if (shouldHighlightSubtaskGroups) {
+        mapRoot.dataset.secondaryBranchSide = secondarySide;
+    } else {
+        clearSecondaryBranchSideState(mapRoot);
+    }
     showCanvasSteady(canvas);
     nextState.revealedTargetKeys = Array.from(revealedTargetKeys);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;
 
-    if (renderState.isAnimating || hasActiveBranchAnimation(branchLayer)) {
+    const shouldScheduleSettledLayoutRedraw = !instant
+        && !preserveAnimation
+        && (
+            previousState?.activeTag !== activeTag
+            || previousState?.pinnedTag !== pinnedTag
+        );
+
+    if (
+        renderState.isAnimating
+        || hasActiveBranchAnimation(branchLayer)
+        || hasActiveFlowSubtaskShiftAnimation(mapRoot)
+        || shouldScheduleSettledLayoutRedraw
+    ) {
         scheduleCanvasAnimationFrame(canvas, navigationLane);
     } else {
         clearCanvasAnimationFrame(canvas);
@@ -407,24 +432,30 @@ function buildContinuousConnectionPolyline(geometry) {
     const points = [copyPoint(geometry.start)];
     const targetPoints = [];
     const targetRevealLengths = [];
+    const targetSegmentLengths = [];
     let pathLength = 0;
     const carryX = geometry.trunkX;
 
-    pathLength += pushPolylinePoint(points, { x: carryX, y: geometry.start.y });
+    const startSegmentLength = pushPolylinePoint(points, { x: carryX, y: geometry.start.y });
+    pathLength += startSegmentLength;
 
     geometry.targets.forEach((target) => {
         pathLength += pushPolylinePoint(points, { x: carryX, y: target.y });
-        pathLength += pushPolylinePoint(points, target);
+        const targetSegmentLength = pushPolylinePoint(points, target);
+        pathLength += targetSegmentLength;
         targetPoints.push(copyPoint(target));
         targetRevealLengths.push(pathLength);
+        targetSegmentLengths.push(targetSegmentLength);
         pathLength += pushPolylinePoint(points, { x: carryX, y: target.y });
     });
 
     return {
         points,
         length: pathLength || 1,
+        startSegmentLength,
         targetPoints,
-        targetRevealLengths
+        targetRevealLengths,
+        targetSegmentLengths
     };
 }
 
@@ -543,20 +574,17 @@ function resolveRenderState({ canvas, instant, preserveAnimation, previousState,
         };
     }
 
-    const isShrinking = isPathPrefix(nextState.pathData, previousState.pathData);
-    const renderSourceState = isShrinking ? previousState : nextState;
-
     if (
         preserveAnimation
         || hasActiveAnimation(canvas)
         || isPathPrefix(previousState.pathData, nextState.pathData)
-        || isShrinking
+        || isPathPrefix(nextState.pathData, previousState.pathData)
     ) {
         return createAnimatedRenderState(canvas, {
             activeTag: nextState.activeTag,
             fromLength: clampNumber(currentVisibleLength, 0, Math.max(previousState.pathLength, nextState.pathLength)),
             toLength: nextState.pathLength,
-            renderSourceState,
+            renderSourceState: nextState,
             now
         });
     }
@@ -657,9 +685,6 @@ function buildSecondaryBranchStates({
 
         const parentBlock = node.querySelector("[data-scenario-toggle]");
         const branchKey = resolveTargetKey(parentBlock, index);
-        if (revealedTargetKeys instanceof Set && !revealedTargetKeys.has(branchKey)) {
-            return [];
-        }
 
         const parentRect = getRenderableElementRect(parentBlock);
         const childBlocks = Array.from(node.querySelectorAll("[data-tag-branch-target]"))
@@ -705,6 +730,10 @@ function buildSecondaryBranchStates({
                 pathData: buildPathDataFromPoints(polyline.points),
                 pathLength: polyline.length,
                 points: polyline.points,
+                startPoint: copyPoint(polyline.points[0]),
+                startSegmentLength: polyline.startSegmentLength,
+                targetPoints: polyline.targetPoints,
+                targetSegmentLengths: polyline.targetSegmentLengths,
                 revealLength: revealLengthByKey.get(branchKey) ?? 0,
                 targetElements: childBlocks.map((entry) => entry.element),
                 targetRevealLengths: polyline.targetRevealLengths
@@ -865,6 +894,7 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
 
         const previousState = path.__branchStateData;
         if (!previousState) {
+            removeBranchDots(branchLayer, branchKey);
             path.remove();
             return;
         }
@@ -877,11 +907,19 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
         });
         if (renderState.shouldRemove) {
             clearBranchAnimation(path);
+            removeBranchDots(branchLayer, branchKey);
             path.remove();
             return;
         }
 
         applyBranchRenderState(path, accent, renderState);
+        syncBranchDots({
+            branchLayer,
+            branchKey,
+            accent,
+            branchState: renderState.nextState,
+            visibleLength: renderState.visibleLength
+        });
     });
 
     const branchPathByKey = new Map();
@@ -908,10 +946,203 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
             instant
         });
         applyBranchRenderState(path, accent, renderState);
+        syncBranchDots({
+            branchLayer,
+            branchKey: branch.key,
+            accent,
+            branchState: renderState.nextState,
+            visibleLength: renderState.visibleLength
+        });
         branchPathByKey.set(branch.key, path);
     });
 
+    removeOrphanBranchDots(branchLayer, nextBranchKeySet);
+
     return branchPathByKey;
+}
+
+function syncBranchDots({ branchLayer, branchKey, accent, branchState, visibleLength }) {
+    if (!(branchLayer instanceof SVGGElement) || !branchKey || !branchState) {
+        return;
+    }
+
+    const currentVisibleLength = Math.max(0, visibleLength);
+    const startPoint = branchState.startPoint ?? branchState.points?.[0];
+    if (!startPoint) {
+        removeBranchDots(branchLayer, branchKey);
+        return;
+    }
+
+    const startDot = getOrCreateBranchDot(branchLayer, branchKey, "start");
+    applyBranchDotState(startDot, {
+        point: startPoint,
+        accent,
+        isVisible: currentVisibleLength > 0.5,
+        transitionTiming: resolveBranchDotTransitionTiming({
+            isVisible: currentVisibleLength > 0.5,
+            segmentLength: branchState.startSegmentLength
+        })
+    });
+
+    const targetPoints = Array.isArray(branchState.targetPoints) ? branchState.targetPoints : [];
+    targetPoints.forEach((targetPoint, index) => {
+        const targetDot = getOrCreateBranchDot(branchLayer, branchKey, "target", index);
+        applyBranchDotState(targetDot, {
+            point: targetPoint,
+            accent,
+            isVisible: (branchState.targetRevealLengths?.[index] ?? Number.POSITIVE_INFINITY) <= currentVisibleLength + 0.5,
+            transitionTiming: resolveBranchDotTransitionTiming({
+                isVisible: (branchState.targetRevealLengths?.[index] ?? Number.POSITIVE_INFINITY) <= currentVisibleLength + 0.5,
+                segmentLength: branchState.targetSegmentLengths?.[index]
+            })
+        });
+    });
+
+    Array.from(
+        branchLayer.querySelectorAll(
+            `[data-branch-dot-key="${escapeSelectorValue(branchKey)}"][data-branch-dot-role="target"]`
+        )
+    ).forEach((element) => {
+        if (!isSvgTagName(element, "circle")) {
+            return;
+        }
+
+        const dotIndex = Number(element.dataset.branchDotIndex ?? Number.NaN);
+        if (!Number.isFinite(dotIndex) || dotIndex < targetPoints.length) {
+            return;
+        }
+
+        scheduleBranchDotRemoval(element);
+    });
+}
+
+function getOrCreateBranchDot(branchLayer, branchKey, role, index = null) {
+    const selector = index === null
+        ? `[data-branch-dot-key="${escapeSelectorValue(branchKey)}"][data-branch-dot-role="${role}"]`
+        : `[data-branch-dot-key="${escapeSelectorValue(branchKey)}"][data-branch-dot-role="${role}"][data-branch-dot-index="${index}"]`;
+    let dot = branchLayer.querySelector(selector);
+
+    if (!isSvgTagName(dot, "circle")) {
+        dot = document.createElementNS(SVG_NAMESPACE, "circle");
+        dot.setAttribute("r", "2.5");
+        dot.dataset.branchDotKey = branchKey;
+        dot.dataset.branchDotRole = role;
+        if (index !== null) {
+            dot.dataset.branchDotIndex = String(index);
+        }
+        branchLayer.append(dot);
+    }
+
+    clearBranchDotRemovalTimer(dot);
+    return dot;
+}
+
+function applyBranchDotState(dot, { point, accent, isVisible, transitionTiming = null }) {
+    clearBranchDotRemovalTimer(dot);
+    dot.setAttribute("cx", String(point.x));
+    dot.setAttribute("cy", String(point.y));
+    dot.setAttribute("class", `tag-connection-map__dot${isVisible ? " tag-connection-map__dot--visible" : ""}`);
+    dot.style.setProperty("--tag-connection-accent", accent);
+    applyBranchDotTransitionTiming(dot, transitionTiming);
+}
+
+function removeBranchDots(branchLayer, branchKey) {
+    if (!(branchLayer instanceof SVGGElement) || !branchKey) {
+        return;
+    }
+
+    branchLayer.querySelectorAll(`[data-branch-dot-key="${escapeSelectorValue(branchKey)}"]`).forEach((element) => {
+        scheduleBranchDotRemoval(element);
+    });
+}
+
+function removeOrphanBranchDots(branchLayer, nextBranchKeySet) {
+    if (!(branchLayer instanceof SVGGElement)) {
+        return;
+    }
+
+    branchLayer.querySelectorAll("[data-branch-dot-key]").forEach((element) => {
+        if (!isSvgTagName(element, "circle")) {
+            return;
+        }
+
+        const branchKey = element.dataset.branchDotKey;
+        if (branchKey && nextBranchKeySet.has(branchKey)) {
+            return;
+        }
+
+        if (branchLayer.querySelector(`[data-branch-key="${escapeSelectorValue(branchKey ?? "")}"]`)) {
+            return;
+        }
+
+        scheduleBranchDotRemoval(element);
+    });
+}
+
+function scheduleBranchDotRemoval(dot) {
+    if (!isSvgTagName(dot, "circle")) {
+        return;
+    }
+
+    dot.setAttribute("class", "tag-connection-map__dot");
+    clearBranchDotRemovalTimer(dot);
+    dot.__branchDotRemovalTimerId = window.setTimeout(() => {
+        dot.__branchDotRemovalTimerId = 0;
+        dot.remove();
+    }, resolveBranchDotRemovalDelay(dot));
+}
+
+function clearBranchDotRemovalTimer(dot) {
+    if (!isSvgTagName(dot, "circle")) {
+        return;
+    }
+
+    if (typeof dot.__branchDotRemovalTimerId === "number" && dot.__branchDotRemovalTimerId) {
+        window.clearTimeout(dot.__branchDotRemovalTimerId);
+        dot.__branchDotRemovalTimerId = 0;
+    }
+}
+
+function resolveBranchDotTransitionTiming({ isVisible, segmentLength }) {
+    if (isVisible) {
+        return {
+            opacityDurationMs: 180,
+            transformDurationMs: 240,
+            delayMs: 60
+        };
+    }
+
+    const shrinkDurationMs = resolveSecondaryBranchAnimationDuration(Math.max(1, segmentLength ?? 0), {
+        isShrinking: true
+    });
+    return {
+        opacityDurationMs: shrinkDurationMs,
+        transformDurationMs: shrinkDurationMs,
+        delayMs: 0
+    };
+}
+
+function applyBranchDotTransitionTiming(dot, transitionTiming) {
+    const timing = transitionTiming ?? resolveBranchDotTransitionTiming({
+        isVisible: dot.classList.contains("tag-connection-map__dot--visible"),
+        segmentLength: 0
+    });
+
+    dot.style.setProperty("--tag-connection-dot-opacity-duration", `${timing.opacityDurationMs}ms`);
+    dot.style.setProperty("--tag-connection-dot-transform-duration", `${timing.transformDurationMs}ms`);
+    dot.style.setProperty("--tag-connection-dot-delay", `${timing.delayMs}ms`);
+    dot.__branchDotRemovalDelayMs = Math.max(
+        timing.opacityDurationMs,
+        timing.transformDurationMs
+    ) + timing.delayMs + 40;
+}
+
+function resolveBranchDotRemovalDelay(dot) {
+    if (!isSvgTagName(dot, "circle")) {
+        return BRANCH_DOT_REMOVAL_MS;
+    }
+
+    return dot.__branchDotRemovalDelayMs ?? BRANCH_DOT_REMOVAL_MS;
 }
 
 function syncFlowBlockActiveTagState({
@@ -921,17 +1152,22 @@ function syncFlowBlockActiveTagState({
     targetRevealLengths,
     visibleLength,
     revealedTargetKeys,
+    highlightSubtaskGroups,
     branchPathByKey,
     nextBranchStates
 }) {
-    clearFlowBlockActiveTagState(mapRoot);
-
     if (!(mapRoot instanceof HTMLElement) || !activeTag) {
+        clearFlowBlockActiveTagState(mapRoot);
         clearFlowSubtaskActiveTagState(mapRoot);
         return;
     }
 
-    syncFlowSubtaskActiveTagState(mapRoot, activeTag, revealedTargetKeys);
+    if (highlightSubtaskGroups) {
+        syncFlowSubtaskActiveTagState(mapRoot, activeTag, revealedTargetKeys);
+    } else {
+        clearFlowSubtaskActiveTagState(mapRoot);
+    }
+    const nextActiveElements = new Set();
 
     targetEntries.forEach((entry, index) => {
         if (!(entry.element instanceof HTMLElement)) {
@@ -939,7 +1175,7 @@ function syncFlowBlockActiveTagState({
         }
 
         if ((targetRevealLengths[index] ?? Number.POSITIVE_INFINITY) <= visibleLength + 0.5) {
-            entry.element.dataset.flowBlockActiveTag = activeTag;
+            nextActiveElements.add(entry.element);
         }
     });
 
@@ -953,10 +1189,12 @@ function syncFlowBlockActiveTagState({
             }
 
             if ((branch.targetRevealLengths?.[index] ?? Number.POSITIVE_INFINITY) <= currentVisibleLength + 0.5) {
-                element.dataset.flowBlockActiveTag = activeTag;
+                nextActiveElements.add(element);
             }
         });
     });
+
+    applyFlowBlockTagState(mapRoot, activeTag, nextActiveElements);
 }
 
 function resolveBranchRenderState({ path, nextState, targetVisibleLength, instant = false }) {
@@ -975,7 +1213,8 @@ function resolveBranchRenderState({ path, nextState, targetVisibleLength, instan
 
     if (!previousState || shouldResetForTagSwitch) {
         if (nextVisibleLength <= 0.5) {
-            return finalizeBranchRenderState(nextState, 0, false, { shouldRemove: true });
+            clearBranchAnimation(path);
+            return finalizeBranchRenderState(nextState, 0, false);
         }
 
         return createBranchAnimatedRenderState(path, {
@@ -1086,6 +1325,11 @@ function hasActiveAnimation(canvas) {
     return Boolean(canvas.__tagConnectionAnimation);
 }
 
+function hasActiveFlowSubtaskShiftAnimation(mapRoot) {
+    return mapRoot instanceof HTMLElement
+        && Boolean(mapRoot.querySelector('[data-flow-subtask-shift-animating="true"]'));
+}
+
 function scheduleCanvasAnimationFrame(canvas, navigationLane) {
     if (canvas.__tagConnectionAnimationFrame) {
         return;
@@ -1133,6 +1377,32 @@ function clearFlowBlockActiveTagState(mapRoot) {
         }
 
         delete element.dataset.flowBlockActiveTag;
+    });
+}
+
+function applyFlowBlockTagState(mapRoot, activeTag, nextActiveElements) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    mapRoot.querySelectorAll("[data-flow-block-active-tag]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (!nextActiveElements.has(element) || element.dataset.flowBlockActiveTag !== activeTag) {
+            delete element.dataset.flowBlockActiveTag;
+        }
+    });
+
+    nextActiveElements.forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (element.dataset.flowBlockActiveTag !== activeTag) {
+            element.dataset.flowBlockActiveTag = activeTag;
+        }
     });
 }
 
