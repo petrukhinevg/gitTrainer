@@ -216,6 +216,7 @@ function renderNavigationTagConnections({
     if (!shouldRenderNavigationConnections(layoutRoot)) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
+        clearSecondaryBranchSideState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -224,6 +225,7 @@ function renderNavigationTagConnections({
     if (!activeTag) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
+        clearSecondaryBranchSideState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -246,6 +248,7 @@ function renderNavigationTagConnections({
     if (!buttonRect || targetEntries.length === 0) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
+        clearSecondaryBranchSideState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -262,6 +265,7 @@ function renderNavigationTagConnections({
     if (!geometry) {
         navigationLane.__tagConnectionState = null;
         clearFlowBlockActiveTagState(mapRoot);
+        clearSecondaryBranchSideState(mapRoot);
         hideCanvas(canvas);
         return;
     }
@@ -300,12 +304,13 @@ function renderNavigationTagConnections({
         accent,
         "tag-connection-map__path tag-connection-map__path--lead"
     );
+    const secondarySide = nextState.side === "left" ? "right" : "left";
     const nextBranchStates = buildSecondaryBranchStates({
         activeTag,
         layoutRoot,
         navigationBody,
         mapRoot,
-        secondarySide: nextState.side === "left" ? "right" : "left",
+        secondarySide,
         revealLengthByKey: createRevealLengthMap(nextState),
         previousBranchStateByKey
     });
@@ -342,6 +347,7 @@ function renderNavigationTagConnections({
         branchPathByKey,
         nextBranchStates
     });
+    mapRoot.dataset.secondaryBranchSide = secondarySide;
     showCanvasSteady(canvas);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;
@@ -1044,6 +1050,14 @@ function clearFlowBlockActiveTagState(mapRoot) {
 
         delete element.dataset.flowBlockActiveTag;
     });
+}
+
+function clearSecondaryBranchSideState(mapRoot) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    delete mapRoot.dataset.secondaryBranchSide;
 }
 
 function resolveAccentColor(element) {
