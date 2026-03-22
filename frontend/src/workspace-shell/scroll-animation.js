@@ -95,11 +95,15 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
         return Promise.resolve();
     }
 
+    const flowNode = panel.closest(".flow-node");
+    const flowNodeGap = readFlowNodeGap(flowNode);
+
     delete panel.dataset.tagConnectionCollapsing;
     panel.style.height = "0px";
     panel.style.opacity = "0";
     panel.style.overflow = "hidden";
     panel.style.willChange = "height, opacity";
+    prepareFlowNodeExpansion(flowNode, flowNodeGap);
 
     return new Promise((resolve) => {
         let observer = null;
@@ -118,6 +122,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
             panel.style.transition = createScenarioPanelTransition();
             panel.style.height = `${panel.scrollHeight}px`;
             panel.style.opacity = "1";
+            startFlowNodeGapExpansion(flowNode, flowNodeGap);
 
             void waitForScenarioAnimation(panel, () => {
                 stopFrameTracking();
@@ -127,6 +132,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
                 panel.style.removeProperty("overflow");
                 panel.style.removeProperty("transition");
                 panel.style.removeProperty("will-change");
+                releaseFlowNodeGapStyles(flowNode);
                 onFrame?.();
                 resolve();
             });
@@ -150,16 +156,20 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
 
     const navigationBody = appRoot.querySelector(".lesson-lane--navigation .lesson-lane__body");
     const scrollStabilizer = createNavigationCollapseScrollStabilizer(panel, navigationBody);
+    const flowNode = panel.closest(".flow-node");
+    const flowNodeGap = readFlowNodeGap(flowNode);
 
     panel.dataset.tagConnectionCollapsing = "true";
     panel.style.height = `${panel.getBoundingClientRect().height}px`;
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
+    prepareFlowNodeCollapse(flowNode, flowNodeGap);
     panel.getBoundingClientRect();
 
     panel.style.transition = createScenarioPanelTransition();
     panel.style.height = "0px";
     panel.style.opacity = "0";
+    startFlowNodeGapCollapse(flowNode, flowNodeGap);
 
     const stopFrameTracking = startAnimationFrameTracking(() => {
         scrollStabilizer?.update();
@@ -170,8 +180,16 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         scrollStabilizer?.cleanup();
         panel.style.removeProperty("transition");
         delete panel.dataset.tagConnectionCollapsing;
+        freezeCollapsedFlowNodeGap(flowNode);
         onFrame?.();
     });
+}
+
+export function releaseCollapsedScenarioGap(appRoot, slug) {
+    const flowNode = appRoot
+        .querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`)
+        ?.closest(".flow-node");
+    releaseFlowNodeGapStyles(flowNode);
 }
 
 export function createNavigationCollapseScrollStabilizer(panel, navigationBody) {
@@ -253,6 +271,79 @@ function createScenarioPanelTransition() {
         `height ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
         `opacity ${Math.round(NAVIGATION_TOGGLE_ANIMATION_MS * 0.7)}ms ease`
     ].join(", ");
+}
+
+function createFlowNodeGapTransition() {
+    return `row-gap ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+}
+
+function readFlowNodeGap(flowNode) {
+    if (!(flowNode instanceof HTMLElement)) {
+        return null;
+    }
+
+    const computedStyle = window.getComputedStyle(flowNode);
+    const rowGap = computedStyle.rowGap || computedStyle.gap;
+    if (!rowGap || rowGap === "normal" || rowGap === "0px") {
+        return null;
+    }
+
+    return rowGap;
+}
+
+function prepareFlowNodeExpansion(flowNode, flowNodeGap) {
+    if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
+        return;
+    }
+
+    flowNode.style.rowGap = "0px";
+    flowNode.style.willChange = "row-gap";
+}
+
+function startFlowNodeGapExpansion(flowNode, flowNodeGap) {
+    if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
+        return;
+    }
+
+    flowNode.style.transition = createFlowNodeGapTransition();
+    flowNode.style.rowGap = flowNodeGap;
+}
+
+function prepareFlowNodeCollapse(flowNode, flowNodeGap) {
+    if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
+        return;
+    }
+
+    flowNode.style.rowGap = flowNodeGap;
+    flowNode.style.willChange = "row-gap";
+}
+
+function startFlowNodeGapCollapse(flowNode, flowNodeGap) {
+    if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
+        return;
+    }
+
+    flowNode.style.transition = createFlowNodeGapTransition();
+    flowNode.style.rowGap = "0px";
+}
+
+function freezeCollapsedFlowNodeGap(flowNode) {
+    if (!(flowNode instanceof HTMLElement)) {
+        return;
+    }
+
+    flowNode.style.removeProperty("transition");
+    flowNode.style.removeProperty("will-change");
+}
+
+function releaseFlowNodeGapStyles(flowNode) {
+    if (!(flowNode instanceof HTMLElement)) {
+        return;
+    }
+
+    flowNode.style.removeProperty("row-gap");
+    flowNode.style.removeProperty("transition");
+    flowNode.style.removeProperty("will-change");
 }
 
 function startAnimationFrameTracking(onFrame) {

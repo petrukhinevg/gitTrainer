@@ -15,8 +15,9 @@ import {
     animateScenarioExpansion,
     bindSmoothScrollContainers,
     captureLaneScrollPositions,
-    NAVIGATION_TOGGLE_ANIMATION_MS,
     captureSurfaceScrollState,
+    NAVIGATION_TOGGLE_ANIMATION_MS,
+    releaseCollapsedScenarioGap,
     resetLaneScrollPosition,
     restoreLaneScrollPositions,
     restoreSurfaceScrollState
@@ -828,6 +829,7 @@ export function createCatalogWorkspaceController({
         }
 
         appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`)?.remove();
+        releaseCollapsedScenarioGap(appRoot, slug);
         syncNavigationSurfaceCacheFromDom();
     }
 

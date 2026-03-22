@@ -432,7 +432,7 @@
     box-sizing: border-box;
 }
 
-.tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group {
+.flow-subtask-group[data-flow-subtask-shift-animating="true"] {
     transition:
         padding-left 220ms cubic-bezier(0.22, 1, 0.36, 1),
         padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -448,8 +448,8 @@
     pointer-events: none;
 }
 
-.tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group::before,
-.tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group::after {
+.flow-subtask-group[data-flow-subtask-shift-animating="true"]::before,
+.flow-subtask-group[data-flow-subtask-shift-animating="true"]::after {
     transition:
         left 220ms cubic-bezier(0.22, 1, 0.36, 1),
         right 220ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -564,9 +564,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group,
-    .tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group::before,
-    .tag-connection-map[data-flow-subtask-shift-animating="true"] .flow-subtask-group::after {
+    .flow-subtask-group[data-flow-subtask-shift-animating="true"],
+    .flow-subtask-group[data-flow-subtask-shift-animating="true"]::before,
+    .flow-subtask-group[data-flow-subtask-shift-animating="true"]::after {
         transition: none;
     }
 

@@ -9,6 +9,7 @@ const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
 const CONNECTION_MIN_ANIMATION_MS = 20;
 const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
+const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
@@ -281,6 +282,7 @@ function renderNavigationTagConnections({
         geometry,
         targetEntries.map((entry, index) => resolveTargetKey(entry.element, index))
     );
+    const previousVisibleLength = readVisibleLengthForState(canvas, previousState);
     const renderState = resolveRenderState({
         canvas,
         instant,
@@ -310,10 +312,19 @@ function renderNavigationTagConnections({
         "tag-connection-map__path tag-connection-map__path--lead"
     );
     const secondarySide = nextState.side === "left" ? "right" : "left";
+    const revealedTargetKeys = createRevealedTargetKeySet({
+        nextState,
+        visibleLength: renderState.visibleLength,
+        previousState,
+        previousVisibleLength,
+        stickyRevealedTargetKeys: previousState?.revealedTargetKeys ?? []
+    });
     syncFlowSubtaskLayoutStateBeforeMeasure({
         mapRoot,
         activeTag,
-        secondarySide
+        secondarySide,
+        revealedTargetKeys,
+        animateShift: !instant
     });
     const nextBranchStates = buildSecondaryBranchStates({
         activeTag,
@@ -321,6 +332,7 @@ function renderNavigationTagConnections({
         navigationBody,
         mapRoot,
         secondarySide,
+        revealedTargetKeys,
         revealLengthByKey: createRevealLengthMap(nextState),
         previousBranchStateByKey
     });
@@ -354,11 +366,13 @@ function renderNavigationTagConnections({
         targetEntries,
         targetRevealLengths: nextState.targetRevealLengths,
         visibleLength: renderState.visibleLength,
+        revealedTargetKeys,
         branchPathByKey,
         nextBranchStates
     });
     mapRoot.dataset.secondaryBranchSide = secondarySide;
     showCanvasSteady(canvas);
+    nextState.revealedTargetKeys = Array.from(revealedTargetKeys);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;
 
@@ -627,6 +641,7 @@ function buildSecondaryBranchStates({
     navigationBody,
     mapRoot,
     secondarySide,
+    revealedTargetKeys,
     revealLengthByKey,
     previousBranchStateByKey
 }) {
@@ -642,6 +657,10 @@ function buildSecondaryBranchStates({
 
         const parentBlock = node.querySelector("[data-scenario-toggle]");
         const branchKey = resolveTargetKey(parentBlock, index);
+        if (revealedTargetKeys instanceof Set && !revealedTargetKeys.has(branchKey)) {
+            return [];
+        }
+
         const parentRect = getRenderableElementRect(parentBlock);
         const childBlocks = Array.from(node.querySelectorAll("[data-tag-branch-target]"))
             .map((element) => ({
@@ -717,6 +736,57 @@ function createRevealLengthMap(connectionState) {
         revealLengthByKey.set(key, connectionState.targetRevealLengths[index] ?? 0);
     });
     return revealLengthByKey;
+}
+
+function createRevealedTargetKeySet({
+    nextState,
+    visibleLength,
+    previousState = null,
+    previousVisibleLength = 0,
+    stickyRevealedTargetKeys = []
+}) {
+    const revealedTargetKeys = new Set();
+    if (!nextState) {
+        return revealedTargetKeys;
+    }
+
+    nextState.targetKeys.forEach((key, index) => {
+        if (!key) {
+            return;
+        }
+
+        if ((nextState.targetRevealLengths[index] ?? Number.POSITIVE_INFINITY) <= visibleLength + 0.5) {
+            revealedTargetKeys.add(key);
+        }
+    });
+
+    stickyRevealedTargetKeys.forEach((key) => {
+        if (key) {
+            revealedTargetKeys.add(key);
+        }
+    });
+
+    if (previousState?.activeTag === nextState.activeTag) {
+        previousState.targetKeys.forEach((key, index) => {
+            if (!key || revealedTargetKeys.has(key)) {
+                return;
+            }
+
+            if ((previousState.targetRevealLengths[index] ?? Number.POSITIVE_INFINITY) <= previousVisibleLength + 0.5) {
+                revealedTargetKeys.add(key);
+            }
+        });
+    }
+
+    return revealedTargetKeys;
+}
+
+function readVisibleLengthForState(canvas, connectionState) {
+    if (!connectionState) {
+        return 0;
+    }
+
+    return readAnimatedVisibleLength(canvas, connectionState.pathLength ?? 0);
 }
 
 function createBranchStateMap(branchStates) {
@@ -850,6 +920,7 @@ function syncFlowBlockActiveTagState({
     targetEntries,
     targetRevealLengths,
     visibleLength,
+    revealedTargetKeys,
     branchPathByKey,
     nextBranchStates
 }) {
@@ -860,7 +931,7 @@ function syncFlowBlockActiveTagState({
         return;
     }
 
-    syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates);
+    syncFlowSubtaskActiveTagState(mapRoot, activeTag, revealedTargetKeys);
 
     targetEntries.forEach((entry, index) => {
         if (!(entry.element instanceof HTMLElement)) {
@@ -1065,52 +1136,25 @@ function clearFlowBlockActiveTagState(mapRoot) {
     });
 }
 
-function syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates) {
+function syncFlowSubtaskActiveTagState(mapRoot, activeTag, revealedTargetKeys) {
     if (!(mapRoot instanceof HTMLElement) || !activeTag) {
         clearFlowSubtaskActiveTagState(mapRoot);
         return;
     }
 
-    const nextGroups = new Set();
-
-    nextBranchStates.forEach((branch) => {
-        branch.targetElements?.forEach((element) => {
-            if (!(element instanceof HTMLElement)) {
-                return;
-            }
-
-            const subtaskGroup = element.closest(".flow-subtask-group");
-            if (subtaskGroup instanceof HTMLElement) {
-                nextGroups.add(subtaskGroup);
-            }
-        });
-    });
-
-    mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
-        if (!(element instanceof HTMLElement)) {
-            return;
-        }
-
-        if (isCollapsingSubtaskGroup(element)) {
-            return;
-        }
-
-        if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
-            delete element.dataset.flowSubtaskActiveTag;
-        }
-    });
-
-    nextGroups.forEach((element) => {
-        if (element.dataset.flowSubtaskActiveTag !== activeTag) {
-            element.dataset.flowSubtaskActiveTag = activeTag;
-        }
+    syncFlowSubtaskState({
+        mapRoot,
+        activeTag,
+        revealedTargetKeys
     });
 }
 
 function syncFlowSubtaskLayoutStateBeforeMeasure({
     mapRoot,
     activeTag,
-    secondarySide
+    secondarySide,
+    revealedTargetKeys,
+    animateShift = false
 }) {
     if (!(mapRoot instanceof HTMLElement) || !activeTag) {
         clearFlowSubtaskActiveTagState(mapRoot);
@@ -1120,41 +1164,46 @@ function syncFlowSubtaskLayoutStateBeforeMeasure({
 
     mapRoot.dataset.secondaryBranchSide = secondarySide;
 
-    const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag);
-
-    mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
-        if (!(element instanceof HTMLElement)) {
-            return;
-        }
-
-        if (isCollapsingSubtaskGroup(element)) {
-            return;
-        }
-
-        if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
-            delete element.dataset.flowSubtaskActiveTag;
-        }
-    });
-
-    nextGroups.forEach((element) => {
-        if (element.dataset.flowSubtaskActiveTag !== activeTag) {
-            element.dataset.flowSubtaskActiveTag = activeTag;
-        }
+    syncFlowSubtaskState({
+        mapRoot,
+        activeTag,
+        revealedTargetKeys,
+        animateShift
     });
 }
 
-function collectSubtaskGroupsForActiveTag(mapRoot, activeTag) {
+function syncFlowSubtaskState({
+    mapRoot,
+    activeTag,
+    revealedTargetKeys = null,
+    animateShift = false
+}) {
+    const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys);
+    const activatedGroups = applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups);
+
+    if (animateShift && activatedGroups.length) {
+        triggerFlowSubtaskShiftAnimation(activatedGroups);
+    }
+}
+
+function collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys = null) {
     const groups = new Set();
 
     Array.from(
         mapRoot.querySelectorAll(`.flow-node[data-tags~="${escapeSelectorValue(activeTag)}"]`)
-    ).forEach((node) => {
+    ).forEach((node, index) => {
         if (!(node instanceof HTMLElement)) {
             return;
         }
 
         const subtaskPanel = node.querySelector("[data-scenario-panel]");
         if (subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true") {
+            return;
+        }
+
+        const parentBlock = node.querySelector("[data-scenario-toggle]");
+        const branchKey = resolveTargetKey(parentBlock, index);
+        if (revealedTargetKeys instanceof Set && !revealedTargetKeys.has(branchKey)) {
             return;
         }
 
@@ -1165,6 +1214,61 @@ function collectSubtaskGroupsForActiveTag(mapRoot, activeTag) {
     });
 
     return groups;
+}
+
+function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return [];
+    }
+
+    const activatedGroups = [];
+
+    mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (isCollapsingSubtaskGroup(element)) {
+            return;
+        }
+
+        if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
+            delete element.dataset.flowSubtaskActiveTag;
+        }
+    });
+
+    nextGroups.forEach((element) => {
+        if (element.dataset.flowSubtaskActiveTag !== activeTag) {
+            element.dataset.flowSubtaskActiveTag = activeTag;
+            activatedGroups.push(element);
+        }
+    });
+
+    return activatedGroups;
+}
+
+function triggerFlowSubtaskShiftAnimation(groups) {
+    if (!Array.isArray(groups) || groups.length === 0) {
+        return;
+    }
+
+    groups.forEach((group) => {
+        if (!(group instanceof HTMLElement)) {
+            return;
+        }
+
+        if (typeof group.__flowSubtaskShiftAnimationTimeoutId === "number" && group.__flowSubtaskShiftAnimationTimeoutId) {
+            window.clearTimeout(group.__flowSubtaskShiftAnimationTimeoutId);
+        }
+
+        delete group.dataset.flowSubtaskShiftAnimating;
+        void group.offsetWidth;
+        group.dataset.flowSubtaskShiftAnimating = "true";
+        group.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
+            delete group.dataset.flowSubtaskShiftAnimating;
+            group.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }, FLOW_SUBTASK_SHIFT_ANIMATION_MS);
+    });
 }
 
 function isCollapsingSubtaskGroup(element) {
@@ -1187,6 +1291,19 @@ function clearFlowSubtaskActiveTagState(mapRoot) {
         }
 
         delete element.dataset.flowSubtaskActiveTag;
+    });
+
+    mapRoot.querySelectorAll("[data-flow-subtask-shift-animating]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (typeof element.__flowSubtaskShiftAnimationTimeoutId === "number" && element.__flowSubtaskShiftAnimationTimeoutId) {
+            window.clearTimeout(element.__flowSubtaskShiftAnimationTimeoutId);
+            element.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }
+
+        delete element.dataset.flowSubtaskShiftAnimating;
     });
 }
 

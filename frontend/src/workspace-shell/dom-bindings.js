@@ -179,8 +179,7 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         return;
     }
 
-    const applyNavigationHighlight = (hoveredTag = null, { animateShift = false } = {}) => {
-        const previousActiveTag = navigationLane.dataset.highlightTag ?? null;
+    const applyNavigationHighlight = (hoveredTag = null) => {
         const activeTag = state.pinnedNavigationTag ?? hoveredTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
@@ -192,10 +191,6 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
             navigationLane.dataset.pinnedTag = state.pinnedNavigationTag;
         } else {
             delete navigationLane.dataset.pinnedTag;
-        }
-
-        if (animateShift && previousActiveTag !== activeTag) {
-            triggerPinnedTagShiftAnimation();
         }
 
         redrawNavigationTagConnections(appRoot);
@@ -210,25 +205,6 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         });
     };
 
-    const triggerPinnedTagShiftAnimation = () => {
-        const mapRoot = navigationLane.querySelector("[data-tag-connection-map]");
-        if (!(mapRoot instanceof HTMLElement)) {
-            return;
-        }
-
-        if (typeof mapRoot.__flowSubtaskShiftAnimationTimeoutId === "number" && mapRoot.__flowSubtaskShiftAnimationTimeoutId) {
-            window.clearTimeout(mapRoot.__flowSubtaskShiftAnimationTimeoutId);
-        }
-
-        delete mapRoot.dataset.flowSubtaskShiftAnimating;
-        void mapRoot.offsetWidth;
-        mapRoot.dataset.flowSubtaskShiftAnimating = "true";
-        mapRoot.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
-            delete mapRoot.dataset.flowSubtaskShiftAnimating;
-            mapRoot.__flowSubtaskShiftAnimationTimeoutId = 0;
-        }, 260);
-    };
-
     applyNavigationHighlight();
     syncNavigationLegendState();
 
@@ -240,21 +216,21 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
 
         button.dataset.tagLegendBound = "true";
         button.addEventListener("mouseenter", () => {
-            applyNavigationHighlight(tag, { animateShift: true });
+            applyNavigationHighlight(tag);
         });
         button.addEventListener("mouseleave", () => {
-            applyNavigationHighlight(null, { animateShift: true });
+            applyNavigationHighlight(null);
         });
         button.addEventListener("focus", () => {
-            applyNavigationHighlight(tag, { animateShift: true });
+            applyNavigationHighlight(tag);
         });
         button.addEventListener("blur", () => {
-            applyNavigationHighlight(null, { animateShift: true });
+            applyNavigationHighlight(null);
         });
         button.addEventListener("click", (event) => {
             event.preventDefault();
             state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
-            applyNavigationHighlight(null, { animateShift: true });
+            applyNavigationHighlight(null);
             syncNavigationLegendState();
         });
     });

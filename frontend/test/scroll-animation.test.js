@@ -4,6 +4,7 @@ import { JSDOM } from "jsdom";
 
 import {
     createNavigationCollapseScrollStabilizer,
+    releaseCollapsedScenarioGap,
     shouldStabilizeCollapseScroll
 } from "../src/workspace-shell/scroll-animation.js";
 
@@ -105,6 +106,39 @@ test("стабилизатор удерживает scrollTop во время co
 
         assert.equal(dom.window.document.querySelector("[data-collapse-scroll-spacer]"), null);
         assert.equal(navigationBody.scrollTop, 220);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("очистка collapsed gap снимает временный row-gap у flow-node после удаления панели", () => {
+    const dom = new JSDOM(`
+        <!doctype html>
+        <html>
+            <body>
+                <div id="app">
+                    <section class="flow-node" style="row-gap: 0px;">
+                        <button data-scenario-toggle="remote-sync-preview" type="button"></button>
+                    </section>
+                </div>
+            </body>
+        </html>
+    `);
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.getElementById("app");
+        const flowNode = dom.window.document.querySelector(".flow-node");
+
+        flowNode.style.transition = "row-gap 240ms ease";
+        flowNode.style.willChange = "row-gap";
+
+        releaseCollapsedScenarioGap(appRoot, "remote-sync-preview");
+
+        assert.equal(flowNode.style.rowGap, "");
+        assert.equal(flowNode.style.transition, "");
+        assert.equal(flowNode.style.willChange, "");
     } finally {
         restoreGlobals();
         dom.window.close();
