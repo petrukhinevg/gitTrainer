@@ -147,7 +147,14 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 id="flow-subtasks-${encodeHashSegment(item.slug)}"
                 data-scenario-panel="${escapeHtml(item.slug)}"
             >
-                ${renderExpandedScenarioContent(item.slug, navigationDetail, selectedFocus, isActive, tagTokens)}
+                ${renderExpandedScenarioContent(
+                    item.slug,
+                    navigationDetail,
+                    selectedFocus,
+                    isActive,
+                    tagTokens,
+                    state.pinnedNavigationTag
+                )}
             </div>
         `
         : "";
@@ -159,6 +166,7 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
                 type="button"
                 data-scenario-toggle="${encodeHashSegment(item.slug)}"
                 data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
+                ${renderFlowBlockActiveTagAttribute(state.pinnedNavigationTag, tagTokens)}
                 aria-expanded="${isExpanded ? "true" : "false"}"
                 aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
             >
@@ -174,7 +182,14 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
     `;
 }
 
-function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, isActiveScenario, tagTokens) {
+function renderExpandedScenarioContent(
+    slug,
+    navigationDetail,
+    selectedFocus,
+    isActiveScenario,
+    tagTokens,
+    pinnedNavigationTag
+) {
     if (!navigationDetail || navigationDetail.status === "idle" || navigationDetail.status === "loading") {
         return `
             <div class="flow-subtask-group">
@@ -201,9 +216,9 @@ function renderExpandedScenarioContent(slug, navigationDetail, selectedFocus, is
 
     return `
         <div class="flow-subtask-group">
-            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens)}
+            ${renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag)}
             ${navigationDetail.data.workspace.task.steps.map((step) => (
-                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens)
+                renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag)
             )).join("")}
         </div>
     `;
@@ -225,13 +240,14 @@ function resolveNavigationDetail(state, slug) {
     };
 }
 
-function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens) {
+function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag) {
     const focusId = "overview";
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && (selectedFocus === null || selectedFocus === focusId)) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${focusId}"
             data-tag-branch-target="true"
+            ${renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens)}
         >
             <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
@@ -239,13 +255,14 @@ function renderOverviewFlowBlock(slug, selectedFocus, isActiveScenario, tagToken
     `;
 }
 
-function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens) {
+function renderSubtaskFlowBlock(slug, step, selectedFocus, isActiveScenario, tagTokens, pinnedNavigationTag) {
     const focusId = `step-${step.position}`;
     return `
         <a
             class="flow-block flow-block--subtask ${(isActiveScenario && selectedFocus === focusId) ? "flow-block--active" : ""}"
             href="#/exercise/${encodeHashSegment(slug)}?focus=${encodeHashSegment(focusId)}"
             data-tag-branch-target="true"
+            ${renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens)}
         >
             <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
@@ -280,6 +297,14 @@ function renderScenarioTagAccessibilityText(tags) {
     }
 
     return `<span class="flow-block__sr-tags">Теги: ${escapeHtml(formattedTags)}</span>`;
+}
+
+function renderFlowBlockActiveTagAttribute(pinnedNavigationTag, tagTokens) {
+    if (!pinnedNavigationTag || !tagTokens.includes(pinnedNavigationTag)) {
+        return "";
+    }
+
+    return `data-flow-block-active-tag="${escapeHtml(pinnedNavigationTag)}"`;
 }
 
 function toTagToken(tag) {

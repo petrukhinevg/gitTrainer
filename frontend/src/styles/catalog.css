@@ -19,9 +19,6 @@
     padding-top: 1px;
     padding-bottom: 12px;
     margin-bottom: 10px;
-    background:
-        linear-gradient(180deg, rgba(255, 250, 241, 0.98) 0%, rgba(255, 250, 241, 0.92) 78%, rgba(255, 250, 241, 0) 100%);
-    backdrop-filter: blur(8px);
 }
 
 .scenario-legend__tags {
@@ -92,6 +89,7 @@
 }
 
 .tag-connection-map {
+    --flow-block-active-accent: #395979;
     position: relative;
     display: grid;
     gap: 0;
@@ -230,11 +228,51 @@
         box-shadow 180ms ease;
 }
 
+.flow-block[data-flow-block-active-tag="status"] {
+    --flow-block-active-accent: #4c7b67;
+}
+
+.flow-block[data-flow-block-active-tag="working-tree"] {
+    --flow-block-active-accent: #6b8f4e;
+}
+
+.flow-block[data-flow-block-active-tag="basics"] {
+    --flow-block-active-accent: #c48a3a;
+}
+
+.flow-block[data-flow-block-active-tag="branching"] {
+    --flow-block-active-accent: #456d9a;
+}
+
+.flow-block[data-flow-block-active-tag="navigation"] {
+    --flow-block-active-accent: #8e5aa8;
+}
+
+.flow-block[data-flow-block-active-tag="history"] {
+    --flow-block-active-accent: #9a5f45;
+}
+
+.flow-block[data-flow-block-active-tag="cleanup"] {
+    --flow-block-active-accent: #b65b5b;
+}
+
+.flow-block[data-flow-block-active-tag="planning"] {
+    --flow-block-active-accent: #5179a4;
+}
+
+.flow-block[data-flow-block-active-tag="remote"] {
+    --flow-block-active-accent: #2d7f8c;
+}
+
+.flow-block[data-flow-block-active-tag="inspection"] {
+    --flow-block-active-accent: #7a7d39;
+}
+
 .flow-block--active {
-    color: var(--accent);
+    color: color-mix(in srgb, var(--flow-block-active-accent) 88%, #10202d);
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(57, 89, 121, 0.37);
-    box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
+    background: color-mix(in srgb, var(--flow-block-active-accent) 38%, rgba(255, 250, 241, 0.68));
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--flow-block-active-accent) 16%, transparent);
 }
 
 .flow-block--toggle {
@@ -249,8 +287,8 @@
 
 .flow-block--subtask.flow-block--active {
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(57, 89, 121, 0.37);
-    box-shadow: 0 10px 22px rgba(22, 46, 56, 0.08);
+    background: color-mix(in srgb, var(--flow-block-active-accent) 38%, rgba(255, 250, 241, 0.68));
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--flow-block-active-accent) 16%, transparent);
 }
 
 .flow-block:hover {
@@ -261,12 +299,12 @@
 
 .flow-block--active:hover {
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(100, 145, 189, 0.37);
+    background: color-mix(in srgb, var(--flow-block-active-accent) 48%, rgba(255, 250, 241, 0.68));
 }
 
 .flow-block--subtask.flow-block--active:hover {
     border-color: rgba(9, 25, 31, 0.18);
-    background: rgba(100, 145, 189, 0.37);
+    background: color-mix(in srgb, var(--flow-block-active-accent) 48%, rgba(255, 250, 241, 0.68));
 }
 
 .flow-subtask-group {
