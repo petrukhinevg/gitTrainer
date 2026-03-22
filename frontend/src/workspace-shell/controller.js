@@ -23,6 +23,7 @@ import {
     restoreSurfaceScrollState
 } from "./scroll-animation.js";
 import { redrawNavigationActiveMarker } from "./navigation-active-marker.js";
+import { syncNavigationMarkerTarget } from "./navigation-active-marker.js";
 import { redrawNavigationTagConnections } from "./tag-connection-overlay.js";
 import {
     renderCatalogWorkspace,
@@ -46,6 +47,9 @@ const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-active-tag",
     "data-flow-subtask-shift-animating",
     "data-flow-block-active-tag",
+    "data-navigation-marker-target",
+    "data-scenario-animating",
+    "data-tag-connection-collapsing",
     "data-tag-legend-bound",
     "data-navigation-toggle-bound",
     "data-route-link-bound"
@@ -65,7 +69,7 @@ export function createCatalogWorkspaceController({
         selectedScenarioSlug: null,
         selectedFocus: null,
         expandedScenarioSlugs: [],
-        expandingScenarioSlug: null,
+        expandingScenarioSlugs: [],
         isNavigationCollapsed: false,
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
@@ -94,7 +98,7 @@ export function createCatalogWorkspaceController({
     let latestSessionBootstrapRequestId = 0;
     let latestSubmissionRequestId = 0;
     const sessionProviders = new Map();
-    let navigationAnimationInProgress = false;
+    const activeNavigationAnimationSlugs = new Set();
     let navigationRevealTimeoutId = 0;
     let navigationCollapseTimeoutId = 0;
     let cleanupPendingNavigationReveal = null;
@@ -815,9 +819,7 @@ export function createCatalogWorkspaceController({
 
     function collapseScenario(slug) {
         state.expandedScenarioSlugs = state.expandedScenarioSlugs.filter((item) => item !== slug);
-        if (state.expandingScenarioSlug === slug) {
-            state.expandingScenarioSlug = null;
-        }
+        state.expandingScenarioSlugs = state.expandingScenarioSlugs.filter((item) => item !== slug);
     }
 
     function syncNavigationSurfaceCacheFromDom() {
@@ -863,12 +865,12 @@ export function createCatalogWorkspaceController({
     }
 
     async function toggleScenarioExpansion(slug) {
-        if (navigationAnimationInProgress) {
+        if (!slug || activeNavigationAnimationSlugs.has(slug)) {
             return;
         }
 
         if (state.expandedScenarioSlugs.includes(slug)) {
-            navigationAnimationInProgress = true;
+            activeNavigationAnimationSlugs.add(slug);
 
             try {
                 await animateScenarioCollapse(appRoot, slug, {
@@ -881,14 +883,16 @@ export function createCatalogWorkspaceController({
                 syncCollapsedScenarioNavigationNode(slug);
                 redrawNavigationTagConnections(appRoot);
             } finally {
-                navigationAnimationInProgress = false;
+                activeNavigationAnimationSlugs.delete(slug);
             }
 
             return;
         }
 
-        navigationAnimationInProgress = true;
-        state.expandingScenarioSlug = slug;
+        activeNavigationAnimationSlugs.add(slug);
+        if (!state.expandingScenarioSlugs.includes(slug)) {
+            state.expandingScenarioSlugs = [...state.expandingScenarioSlugs, slug];
+        }
         expandScenario(slug, { loadDetail: false });
         render();
 
@@ -904,11 +908,9 @@ export function createCatalogWorkspaceController({
             ]);
             redrawNavigationTagConnections(appRoot);
         } finally {
-            if (state.expandingScenarioSlug === slug) {
-                state.expandingScenarioSlug = null;
-            }
+            state.expandingScenarioSlugs = state.expandingScenarioSlugs.filter((item) => item !== slug);
             clearScenarioSubtaskEnterState(slug);
-            navigationAnimationInProgress = false;
+            activeNavigationAnimationSlugs.delete(slug);
         }
     }
 
@@ -1094,6 +1096,10 @@ function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
             return false;
         }
 
+        if (currentNode.querySelector('[data-scenario-animating="true"]')) {
+            continue;
+        }
+
         if (serializeNormalizedNavigationMarkup(currentNode.outerHTML) !== serializeNormalizedNavigationMarkup(nextNode.outerHTML)) {
             diffEntries.push({
                 currentNode,
@@ -1141,6 +1147,10 @@ function normalizeNavigationMarkup(root) {
             element.removeAttribute(attributeName);
         });
 
+        if (element.matches("[data-scenario-panel]") && element.getAttribute("style")?.trim()) {
+            element.removeAttribute("style");
+        }
+
         if (element.style.getPropertyValue("--flow-subtask-enter-index")) {
             element.style.removeProperty("--flow-subtask-enter-index");
             if (!element.getAttribute("style")?.trim()) {
@@ -1158,6 +1168,12 @@ function syncNavigationSurfaceActiveState(surfaceRoot, state) {
     syncNavigationRouteShortcutState(surfaceRoot, state);
     syncNavigationScenarioToggleState(surfaceRoot, state);
     syncNavigationScenarioPanelActiveState(surfaceRoot, state);
+    syncNavigationMarkerTarget({
+        mapRoot: surfaceRoot.querySelector("[data-tag-connection-map]"),
+        route: state.route,
+        selectedScenarioSlug: state.selectedScenarioSlug,
+        selectedFocus: state.selectedFocus
+    });
 }
 
 function syncNavigationRouteShortcutState(surfaceRoot, state) {

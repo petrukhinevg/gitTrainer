@@ -50,10 +50,20 @@ function renderSurfaceLaneShell(name) {
         <section class="lesson-lane lesson-lane--${name} panel">
             <div class="lesson-lane__body">
                 <div class="lesson-lane__scroll-content">
+                    ${name === "navigation" ? renderNavigationMarkerShell() : ""}
                     ${renderSurfaceSlot(name)}
                 </div>
             </div>
         </section>
+    `;
+}
+
+function renderNavigationMarkerShell() {
+    return `
+        <div class="navigation-flow-rail navigation-flow-rail--shell" data-navigation-active-marker-shell aria-hidden="true">
+            <span class="navigation-flow-rail__line"></span>
+            <span class="navigation-flow-rail__marker" data-navigation-active-marker></span>
+        </div>
     `;
 }
 

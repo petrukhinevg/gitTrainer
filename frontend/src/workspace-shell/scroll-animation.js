@@ -100,6 +100,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
     const flowNodeGap = readFlowNodeGap(flowNode);
 
     delete panel.dataset.tagConnectionCollapsing;
+    panel.dataset.scenarioAnimating = "true";
     panel.style.height = "0px";
     panel.style.opacity = "0";
     panel.style.overflow = "hidden";
@@ -133,6 +134,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
                 panel.style.removeProperty("overflow");
                 panel.style.removeProperty("transition");
                 panel.style.removeProperty("will-change");
+                delete panel.dataset.scenarioAnimating;
                 releaseFlowNodeGapStyles(flowNode);
                 onFrame?.();
                 resolve();
@@ -161,6 +163,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
     const flowNodeGap = readFlowNodeGap(flowNode);
 
     panel.dataset.tagConnectionCollapsing = "true";
+    panel.dataset.scenarioAnimating = "true";
     panel.style.height = `${panel.getBoundingClientRect().height}px`;
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
@@ -181,6 +184,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         scrollStabilizer?.cleanup();
         panel.style.removeProperty("transition");
         delete panel.dataset.tagConnectionCollapsing;
+        delete panel.dataset.scenarioAnimating;
         freezeCollapsedFlowNodeGap(flowNode);
         onFrame?.();
     });

@@ -234,6 +234,7 @@ body {
 
 .lesson-lane--navigation .lesson-lane__scroll-content {
     direction: ltr;
+    position: relative;
     width: 100%;
     min-width: 0;
     padding-left: 18px;

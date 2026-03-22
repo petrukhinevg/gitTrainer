@@ -1,3 +1,5 @@
+import { escapeSelectorValue } from "./dom-helpers.js";
+
 export function bindNavigationActiveMarker({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
     const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
@@ -9,7 +11,7 @@ export function bindNavigationActiveMarker({ appRoot }) {
 
     const navigationBody = navigationLane.querySelector(".lesson-lane__body");
     const mapRoot = navigationLane.querySelector("[data-tag-connection-map]");
-    const marker = mapRoot?.querySelector("[data-navigation-active-marker]");
+    const marker = navigationLane.querySelector("[data-navigation-active-marker]");
     if (!(mapRoot instanceof HTMLElement) || !(marker instanceof HTMLElement)) {
         navigationLane.__redrawNavigationActiveMarker = null;
         navigationLane.__navigationActiveMarkerCleanup = null;
@@ -108,10 +110,82 @@ export function resolveNavigationActiveMarkerTarget(mapRoot) {
     }
 
     return (
-        mapRoot.querySelector(".flow-block--subtask.flow-block--active")
+        mapRoot.querySelector('[data-navigation-marker-target="true"]')
+        ?? mapRoot.querySelector(".flow-block--subtask.flow-block--active")
         ?? mapRoot.querySelector("[data-scenario-toggle].flow-block--active")
         ?? mapRoot.querySelector(".flow-block--active")
     );
+}
+
+export function syncNavigationMarkerTarget({
+    mapRoot,
+    route,
+    selectedScenarioSlug,
+    selectedFocus
+}) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    Array.from(mapRoot.querySelectorAll("[data-navigation-marker-target]")).forEach((element) => {
+        if (element instanceof HTMLElement) {
+            delete element.dataset.navigationMarkerTarget;
+        }
+    });
+
+    const target = resolveNavigationMarkerTargetElement({
+        mapRoot,
+        route,
+        selectedScenarioSlug,
+        selectedFocus
+    });
+
+    if (target instanceof HTMLElement) {
+        target.dataset.navigationMarkerTarget = "true";
+    }
+}
+
+function resolveNavigationMarkerTargetElement({
+    mapRoot,
+    route,
+    selectedScenarioSlug,
+    selectedFocus
+}) {
+    if (route === "catalog" || route === "progress") {
+        return mapRoot.querySelector(`[href="#/${escapeSelectorValue(route)}"]`);
+    }
+
+    if (!selectedScenarioSlug) {
+        return null;
+    }
+
+    const scenarioPanel = mapRoot.querySelector(
+        `[data-scenario-panel="${escapeSelectorValue(selectedScenarioSlug)}"]`
+    );
+    const normalizedFocus = normalizeOptionalValue(selectedFocus);
+
+    if (scenarioPanel instanceof HTMLElement) {
+        if (normalizedFocus) {
+            const focusedSubtask = scenarioPanel.querySelector(
+                `[data-scenario-focus="${escapeSelectorValue(normalizedFocus)}"]`
+            );
+            if (focusedSubtask instanceof HTMLElement) {
+                return focusedSubtask;
+            }
+        }
+
+        const overviewLink = scenarioPanel.querySelector('[data-scenario-focus="overview"]');
+        if (overviewLink instanceof HTMLElement) {
+            return overviewLink;
+        }
+    }
+
+    return mapRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(selectedScenarioSlug)}"]`);
+}
+
+function normalizeOptionalValue(value) {
+    const normalized = String(value ?? "").trim();
+    return normalized.length ? normalized : null;
 }
 
 export function measureNavigationActiveMarkerOffset({ mapRoot, target }) {

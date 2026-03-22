@@ -1407,7 +1407,7 @@ function applyFlowBlockTagState(mapRoot, activeTag, nextActiveElements) {
             return;
         }
 
-        if (!nextActiveElements.has(element) || element.dataset.flowBlockActiveTag !== activeTag) {
+        if (element.dataset.flowBlockActiveTag !== activeTag) {
             delete element.dataset.flowBlockActiveTag;
         }
     });

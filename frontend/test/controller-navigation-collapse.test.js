@@ -7,6 +7,7 @@ import { createBackendApiDetailProvider } from "../src/detail/detail-provider.js
 import { createBackendApiProgressProvider } from "../src/progress/progress-provider.js";
 import { createBackendApiSessionProvider } from "../src/session/session-provider.js";
 import { createCatalogWorkspaceController } from "../src/workspace-shell/controller.js";
+import { NAVIGATION_TOGGLE_ANIMATION_MS } from "../src/workspace-shell/scroll-animation.js";
 
 test("при сворачивании сценария левая панель не пересобирает соседние блоки", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
@@ -239,6 +240,101 @@ test("при выборе дочернего блока уже открытые 
         assert.ok(stepLinkAfterSelection.classList.contains("flow-block--active"));
         assert.ok(!overviewLinkAfterSelection.classList.contains("flow-block--active"));
     } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("можно запустить раскрытие следующего родителя, не дожидаясь завершения предыдущей анимации", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    dom.window.matchMedia = () => ({
+        matches: false,
+        media: "(prefers-reduced-motion: no-preference)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+    const restoreAsyncRaf = installAsyncRaf(dom.window);
+
+    const appRoot = dom.window.document.querySelector("#app");
+    const fetchImpl = async (url) => {
+        const requestUrl = new URL(url);
+
+        if (requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/history-scan") {
+            return jsonResponse(createHistoryScanDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/progress") {
+            return jsonResponse({
+                items: [],
+                recentActivity: [],
+                recommendations: null,
+                meta: { source: "mvp-fixture" }
+            });
+        }
+
+        throw new Error(`Unexpected request: ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork(1);
+
+        const firstButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const secondButton = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        assert.ok(firstButton, "Первая кнопка сценария должна быть доступна");
+        assert.ok(secondButton, "Вторая кнопка сценария должна быть доступна");
+
+        firstButton.click();
+        secondButton.click();
+
+        await waitForTimers(NAVIGATION_TOGGLE_ANIMATION_MS + 180);
+        await flushAsyncWork();
+
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="branch-safety"]'),
+            "Первый родитель должен остаться раскрытым"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'),
+            "Второй родитель должен раскрыться, даже если первая анимация ещё шла"
+        );
+    } finally {
+        restoreAsyncRaf();
         restoreGlobals();
         dom.window.close();
     }
@@ -806,4 +902,51 @@ function installDomGlobals(windowLike) {
             globalThis[key] = previousValue;
         });
     };
+}
+
+function installAsyncRaf(windowLike) {
+    const previousRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const previousCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const frameTimers = new Map();
+    let nextFrameId = 0;
+
+    const requestAnimationFrame = (callback) => {
+        const frameId = ++nextFrameId;
+        const timerId = windowLike.setTimeout(() => {
+            frameTimers.delete(frameId);
+            callback(Date.now());
+        }, 16);
+        frameTimers.set(frameId, timerId);
+        return frameId;
+    };
+
+    const cancelAnimationFrame = (frameId) => {
+        const timerId = frameTimers.get(frameId);
+        if (!timerId) {
+            return;
+        }
+
+        frameTimers.delete(frameId);
+        windowLike.clearTimeout(timerId);
+    };
+
+    globalThis.requestAnimationFrame = requestAnimationFrame;
+    globalThis.cancelAnimationFrame = cancelAnimationFrame;
+    windowLike.requestAnimationFrame = requestAnimationFrame;
+    windowLike.cancelAnimationFrame = cancelAnimationFrame;
+
+    return () => {
+        frameTimers.forEach((timerId) => {
+            windowLike.clearTimeout(timerId);
+        });
+        frameTimers.clear();
+        globalThis.requestAnimationFrame = previousRequestAnimationFrame;
+        globalThis.cancelAnimationFrame = previousCancelAnimationFrame;
+        windowLike.requestAnimationFrame = previousRequestAnimationFrame ?? (() => 0);
+        windowLike.cancelAnimationFrame = previousCancelAnimationFrame ?? (() => {});
+    };
+}
+
+async function waitForTimers(durationMs) {
+    await new Promise((resolve) => setTimeout(resolve, durationMs));
 }

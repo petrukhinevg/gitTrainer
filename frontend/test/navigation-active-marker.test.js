@@ -2,20 +2,22 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 
+import { renderCatalogWorkspaceShell } from "../src/workspace-shell/view.js";
 import { renderSidebarPanelContent } from "../src/workspace-shell/view/sidebar-panel.js";
 import {
     bindNavigationActiveMarker,
     redrawNavigationActiveMarker,
-    resolveNavigationActiveMarkerTarget
+    resolveNavigationActiveMarkerTarget,
+    syncNavigationMarkerTarget
 } from "../src/workspace-shell/navigation-active-marker.js";
 
 test("навигационная панель рендерит rail для активного маркера", () => {
-    const markup = renderSidebarPanelContent(createReadyState(), null, ["branching", "navigation"]);
+    const markup = renderCatalogWorkspaceShell();
     const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
 
     try {
         const document = dom.window.document;
-        assert.ok(document.querySelector(".navigation-flow-rail"));
+        assert.ok(document.querySelector("[data-navigation-active-marker-shell]"));
         assert.ok(document.querySelector("[data-navigation-active-marker]"));
     } finally {
         dom.window.close();
@@ -51,6 +53,55 @@ test("маркер выбирает активную подзадачу прио
 
         assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), scenarioToggle);
         assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "106px");
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("маркер следует за явно выбранной целью и не зависит от active-классов", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const activeSubtaskLink = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(activeSubtaskLink, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "branch-safety",
+            selectedFocus: "step-1"
+        });
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "219px");
+
+        activeSubtaskLink.classList.remove("flow-block--active");
+        remoteScenarioToggle.classList.add("flow-block--active");
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "branch-safety",
+            selectedFocus: "step-1"
+        });
+        redrawNavigationActiveMarker(appRoot);
+        flushRafQueue(window);
+
+        assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), activeSubtaskLink);
+        assert.equal(marker.dataset.visible, "true");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-y"), "219px");
+        assert.equal(activeSubtaskLink.dataset.navigationMarkerTarget, "true");
+        assert.equal(remoteScenarioToggle.hasAttribute("data-navigation-marker-target"), false);
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -149,6 +200,63 @@ function createMarkerFixture() {
                                                         </a>
                                                     </div>
                                                 </div>
+                                            </section>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </section>
+                </div>
+            </body>
+        </html>
+    `;
+}
+
+function createMarkerFixtureWithSiblingScenario() {
+    return `
+        <!doctype html>
+        <html>
+            <body>
+                <div data-app-root>
+                    <section class="lesson-layout lesson-layout--exercise">
+                        <section class="lesson-lane lesson-lane--navigation">
+                            <div class="lesson-lane__body">
+                                <div class="lesson-lane__scroll-content">
+                                    <div class="tag-connection-map" data-tag-connection-map>
+                                        <div class="navigation-flow-rail" aria-hidden="true">
+                                            <span class="navigation-flow-rail__line"></span>
+                                            <span class="navigation-flow-rail__marker" data-navigation-active-marker></span>
+                                        </div>
+                                        <div class="flow-block-list" data-flow-block-list>
+                                            <section class="flow-node">
+                                                <button
+                                                    class="flow-block flow-block--toggle flow-block--active"
+                                                    type="button"
+                                                    data-scenario-toggle="branch-safety"
+                                                >
+                                                    <strong class="flow-block__title">Сценарий 1</strong>
+                                                </button>
+                                                <div class="flow-subtask-region" data-scenario-panel="branch-safety">
+                                                    <div class="flow-subtask-group">
+                                                        <a
+                                                            class="flow-block flow-block--subtask flow-block--active"
+                                                            href="#/exercise/branch-safety?focus=step-1"
+                                                            data-scenario-focus="step-1"
+                                                        >
+                                                            <strong class="flow-block__title">Подзадача</strong>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <section class="flow-node">
+                                                <button
+                                                    class="flow-block flow-block--toggle"
+                                                    type="button"
+                                                    data-scenario-toggle="remote-sync-preview"
+                                                >
+                                                    <strong class="flow-block__title">Сценарий 2</strong>
+                                                </button>
                                             </section>
                                         </div>
                                     </div>

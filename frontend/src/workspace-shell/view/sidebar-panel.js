@@ -55,12 +55,6 @@ function renderTrainingFlow(state, tagOptions) {
 
     return `
         <div class="tag-connection-map" data-tag-connection-map>
-            <div class="navigation-flow-rail" aria-hidden="true">
-                <span class="navigation-flow-rail__line"></span>
-                <span class="navigation-flow-rail__marker" data-navigation-active-marker>                 
-                    </a> "sadasdasd" </a>
-                </span>
-            </div>
             <div class="scenario-legend">
                 <div class="scenario-legend__tags">
                     ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag)}
@@ -144,7 +138,7 @@ function renderProgressFlowBlock(state) {
 
 function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
-    const shouldAnimateSubtasks = state.expandingScenarioSlug === item.slug;
+    const shouldAnimateSubtasks = resolveExpandingScenarioSlugs(state).includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
     const subtaskBlocks = isExpanded
@@ -185,6 +179,14 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
             ${subtaskBlocks}
         </section>
     `;
+}
+
+function resolveExpandingScenarioSlugs(state) {
+    if (Array.isArray(state.expandingScenarioSlugs)) {
+        return state.expandingScenarioSlugs;
+    }
+
+    return state.expandingScenarioSlug ? [state.expandingScenarioSlug] : [];
 }
 
 function renderExpandedScenarioContent(
