@@ -36,7 +36,7 @@
 }
 
 .scenario-legend__tag {
-    --tag-accent: rgba(57, 89, 121, 0.8);
+    --tag-accent: var(--tag-color-default);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -46,7 +46,7 @@
     max-width: 100%;
     min-height: 24px;
     padding: 0 8px;
-    border: 1px solid rgba(31, 23, 32, 0.08);
+    border: 1px solid rgba(31, 23, 32, 0.3);
     border-radius: 999px;
     background: rgba(255, 250, 241, 0.68);
     color: var(--ink-soft);
@@ -89,7 +89,18 @@
 }
 
 .tag-connection-map {
-    --flow-block-active-accent: #395979;
+    --tag-color-default: #395979;
+    --tag-color-status: #498877;
+    --tag-color-working-tree: #709a4e;
+    --tag-color-basics: #c48a3a;
+    --tag-color-branching: #456d9a;
+    --tag-color-navigation: #8549a2;
+    --tag-color-history: #9a5f45;
+    --tag-color-cleanup: #b65b5b;
+    --tag-color-planning: #ffde6f;
+    --tag-color-remote: #af3aad;
+    --tag-color-inspection: #7a7d39;
+    --flow-block-active-accent: var(--tag-color-default);
     position: relative;
     display: grid;
     gap: 0;
@@ -208,7 +219,7 @@
 }
 
 .flow-block {
-    --flow-block-active-accent: #6491bd;
+    --flow-block-active-accent: var(--tag-color-default);
     position: relative;
     display: grid;
     gap: 4px;
@@ -216,7 +227,7 @@
     min-width: 0;
     box-sizing: border-box;
     padding: 6px 8px;
-    border: 1px solid rgba(31, 23, 32, 0.1);
+    border: 1px solid rgba(31, 23, 32, 0.3);
     border-radius: 12px;
     background: rgba(211, 207, 199, 0.68);
     color: #111;
@@ -230,44 +241,69 @@
         box-shadow 180ms ease;
 }
 
-.flow-block[data-flow-block-active-tag="status"] {
-    --flow-block-active-accent: #4c7b67;
+.flow-block--toggle,
+.flow-block--subtask {
+    border-color: rgba(31, 23, 32, 0.3);
 }
 
-.flow-block[data-flow-block-active-tag="working-tree"] {
-    --flow-block-active-accent: #6b8f4e;
+.flow-block[data-flow-block-active-tag="status"],
+.flow-subtask-group[data-flow-subtask-active-tag="status"] {
+    --flow-block-active-accent: var(--tag-color-status);
+    --flow-subtask-rail-accent: var(--tag-color-status);
 }
 
-.flow-block[data-flow-block-active-tag="basics"] {
-    --flow-block-active-accent: #c48a3a;
+.flow-block[data-flow-block-active-tag="working-tree"],
+.flow-subtask-group[data-flow-subtask-active-tag="working-tree"] {
+    --flow-block-active-accent: var(--tag-color-working-tree);
+    --flow-subtask-rail-accent: var(--tag-color-working-tree);
 }
 
-.flow-block[data-flow-block-active-tag="branching"] {
-    --flow-block-active-accent: #456d9a;
+.flow-block[data-flow-block-active-tag="basics"],
+.flow-subtask-group[data-flow-subtask-active-tag="basics"] {
+    --flow-block-active-accent: var(--tag-color-basics);
+    --flow-subtask-rail-accent: var(--tag-color-basics);
 }
 
-.flow-block[data-flow-block-active-tag="navigation"] {
-    --flow-block-active-accent: #8e5aa8;
+.flow-block[data-flow-block-active-tag="branching"],
+.flow-subtask-group[data-flow-subtask-active-tag="branching"] {
+    --flow-block-active-accent: var(--tag-color-branching);
+    --flow-subtask-rail-accent: var(--tag-color-branching);
 }
 
-.flow-block[data-flow-block-active-tag="history"] {
-    --flow-block-active-accent: #9a5f45;
+.flow-block[data-flow-block-active-tag="navigation"],
+.flow-subtask-group[data-flow-subtask-active-tag="navigation"] {
+    --flow-block-active-accent: var(--tag-color-navigation);
+    --flow-subtask-rail-accent: var(--tag-color-navigation);
 }
 
-.flow-block[data-flow-block-active-tag="cleanup"] {
-    --flow-block-active-accent: #b65b5b;
+.flow-block[data-flow-block-active-tag="history"],
+.flow-subtask-group[data-flow-subtask-active-tag="history"] {
+    --flow-block-active-accent: var(--tag-color-history);
+    --flow-subtask-rail-accent: var(--tag-color-history);
 }
 
-.flow-block[data-flow-block-active-tag="planning"] {
-    --flow-block-active-accent: #5179a4;
+.flow-block[data-flow-block-active-tag="cleanup"],
+.flow-subtask-group[data-flow-subtask-active-tag="cleanup"] {
+    --flow-block-active-accent: var(--tag-color-cleanup);
+    --flow-subtask-rail-accent: var(--tag-color-cleanup);
 }
 
-.flow-block[data-flow-block-active-tag="remote"] {
-    --flow-block-active-accent: #2d7f8c;
+.flow-block[data-flow-block-active-tag="planning"],
+.flow-subtask-group[data-flow-subtask-active-tag="planning"] {
+    --flow-block-active-accent: var(--tag-color-planning);
+    --flow-subtask-rail-accent: var(--tag-color-planning);
 }
 
-.flow-block[data-flow-block-active-tag="inspection"] {
-    --flow-block-active-accent: #7a7d39;
+.flow-block[data-flow-block-active-tag="remote"],
+.flow-subtask-group[data-flow-subtask-active-tag="remote"] {
+    --flow-block-active-accent: var(--tag-color-remote);
+    --flow-subtask-rail-accent: var(--tag-color-remote);
+}
+
+.flow-block[data-flow-block-active-tag="inspection"],
+.flow-subtask-group[data-flow-subtask-active-tag="inspection"] {
+    --flow-block-active-accent: var(--tag-color-inspection);
+    --flow-subtask-rail-accent: var(--tag-color-inspection);
 }
 
 .flow-block--active {
@@ -315,6 +351,7 @@
 .flow-subtask-group {
     --flow-subtask-leading-space: 14px;
     --flow-subtask-trailing-space: 14px;
+    --flow-subtask-rail-accent: transparent;
     --flow-subtask-rail-left-color: transparent;
     --flow-subtask-rail-right-color: transparent;
     --flow-subtask-rail-left-offset: 0px;
@@ -354,14 +391,14 @@
     --flow-subtask-leading-space: 6px;
     --flow-subtask-trailing-space: 22px;
     --flow-subtask-rail-right-offset: 10px;
-    --flow-subtask-rail-right-color: rgba(31, 23, 32, 0.08);
+    --flow-subtask-rail-right-color: var(--flow-subtask-rail-accent);
 }
 
 .tag-connection-map[data-secondary-branch-side="right"] .flow-subtask-group[data-flow-subtask-active-tag] {
     --flow-subtask-leading-space: 22px;
     --flow-subtask-trailing-space: 6px;
     --flow-subtask-rail-left-offset: 10px;
-    --flow-subtask-rail-left-color: rgba(31, 23, 32, 0.08);
+    --flow-subtask-rail-left-color: var(--flow-subtask-rail-accent);
 }
 
 .flow-subtask-group > [data-flow-subtask-enter="true"] {
@@ -407,7 +444,7 @@
 .flow-subtask-placeholder {
     box-sizing: border-box;
     padding: 8px 10px;
-    border: 1px dashed rgba(31, 23, 32, 0.14);
+    border: 1px dashed rgba(31, 23, 32, 0.3);
     border-radius: 12px;
     background: rgba(255, 250, 241, 0.46);
 }
@@ -455,43 +492,43 @@
 }
 
 .scenario-legend__tag--status {
-    --tag-accent: #4c7b67;
+    --tag-accent: var(--tag-color-status);
 }
 
 .scenario-legend__tag--working-tree {
-    --tag-accent: #6b8f4e;
+    --tag-accent: var(--tag-color-working-tree);
 }
 
 .scenario-legend__tag--basics {
-    --tag-accent: #c48a3a;
+    --tag-accent: var(--tag-color-basics);
 }
 
 .scenario-legend__tag--branching {
-    --tag-accent: #456d9a;
+    --tag-accent: var(--tag-color-branching);
 }
 
 .scenario-legend__tag--navigation {
-    --tag-accent: #8e5aa8;
+    --tag-accent: var(--tag-color-navigation);
 }
 
 .scenario-legend__tag--history {
-    --tag-accent: #9a5f45;
+    --tag-accent: var(--tag-color-history);
 }
 
 .scenario-legend__tag--cleanup {
-    --tag-accent: #b65b5b;
+    --tag-accent: var(--tag-color-cleanup);
 }
 
 .scenario-legend__tag--planning {
-    --tag-accent: #5179a4;
+    --tag-accent: var(--tag-color-planning);
 }
 
 .scenario-legend__tag--remote {
-    --tag-accent: #2d7f8c;
+    --tag-accent: var(--tag-color-remote);
 }
 
 .scenario-legend__tag--inspection {
-    --tag-accent: #7a7d39;
+    --tag-accent: var(--tag-color-inspection);
 }
 
 @media (max-width: 960px) {

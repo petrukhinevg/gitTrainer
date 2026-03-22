@@ -2,8 +2,8 @@ import { escapeSelectorValue } from "./dom-helpers.js";
 import { NAVIGATION_TOGGLE_ANIMATION_MS } from "./scroll-animation.js";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-const EDGE_PADDING_PX = 0;
-const TARGET_OFFSET_PX = 0;
+const EDGE_PADDING_PX = 10;
+const TARGET_OFFSET_PX = 2;
 const TRUNK_OFFSET_PX = 10;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
