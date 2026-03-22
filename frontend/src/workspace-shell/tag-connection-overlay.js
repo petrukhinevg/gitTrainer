@@ -1090,6 +1090,10 @@ function syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates) {
             return;
         }
 
+        if (isCollapsingSubtaskGroup(element)) {
+            return;
+        }
+
         if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
             delete element.dataset.flowSubtaskActiveTag;
         }
@@ -1100,6 +1104,15 @@ function syncFlowSubtaskActiveTagState(mapRoot, activeTag, nextBranchStates) {
             element.dataset.flowSubtaskActiveTag = activeTag;
         }
     });
+}
+
+function isCollapsingSubtaskGroup(element) {
+    if (!(element instanceof HTMLElement)) {
+        return false;
+    }
+
+    const subtaskPanel = element.closest("[data-scenario-panel]");
+    return subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true";
 }
 
 function clearFlowSubtaskActiveTagState(mapRoot) {
