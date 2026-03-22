@@ -41,6 +41,7 @@ const DEFAULT_QUERY = Object.freeze({
 });
 const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-enter",
+    "data-flow-subtask-active-tag",
     "data-flow-block-active-tag",
     "data-tag-legend-bound",
     "data-navigation-toggle-bound",

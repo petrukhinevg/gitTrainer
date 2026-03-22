@@ -317,6 +317,9 @@
     --flow-subtask-trailing-space: 14px;
     --flow-subtask-rail-left-color: transparent;
     --flow-subtask-rail-right-color: transparent;
+    --flow-subtask-rail-left-offset: 0px;
+    --flow-subtask-rail-right-offset: 0px;
+    position: relative;
     display: grid;
     gap: 4px;
     padding-top: 1px;
@@ -325,24 +328,39 @@
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    border-left: 1px solid var(--flow-subtask-rail-left-color);
-    border-right: 1px solid var(--flow-subtask-rail-right-color);
-    transition:
-        padding-left 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        border-left-color 180ms ease,
-        border-right-color 180ms ease;
 }
 
-.tag-connection-map[data-secondary-branch-side="left"] .flow-subtask-group {
+.flow-subtask-group::before,
+.flow-subtask-group::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    pointer-events: none;
+}
+
+.flow-subtask-group::before {
+    left: var(--flow-subtask-rail-left-offset);
+    background: var(--flow-subtask-rail-left-color);
+}
+
+.flow-subtask-group::after {
+    right: var(--flow-subtask-rail-right-offset);
+    background: var(--flow-subtask-rail-right-color);
+}
+
+.tag-connection-map[data-secondary-branch-side="left"] .flow-subtask-group[data-flow-subtask-active-tag] {
     --flow-subtask-leading-space: 6px;
     --flow-subtask-trailing-space: 22px;
+    --flow-subtask-rail-right-offset: 10px;
     --flow-subtask-rail-right-color: rgba(31, 23, 32, 0.08);
 }
 
-.tag-connection-map[data-secondary-branch-side="right"] .flow-subtask-group {
+.tag-connection-map[data-secondary-branch-side="right"] .flow-subtask-group[data-flow-subtask-active-tag] {
     --flow-subtask-leading-space: 22px;
     --flow-subtask-trailing-space: 6px;
+    --flow-subtask-rail-left-offset: 10px;
     --flow-subtask-rail-left-color: rgba(31, 23, 32, 0.08);
 }
 
@@ -430,10 +448,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .flow-subtask-group {
-        transition: none;
-    }
-
     .flow-subtask-group > [data-flow-subtask-enter="true"] {
         animation: none;
         will-change: auto;
