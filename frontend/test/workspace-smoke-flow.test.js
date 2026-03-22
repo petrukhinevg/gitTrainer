@@ -140,6 +140,99 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
     }
 });
 
+test("отправляет ответ по Enter в поле команды", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    const requests = [];
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+        requests.push(`${method} ${requestUrl.pathname}`);
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            return jsonResponse(createStartSessionPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions/session-1/submissions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+            assert.deepEqual(payload, {
+                answerType: "command_text",
+                answer: "git branch --show-current"
+            });
+            return jsonResponse(createSubmissionPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
+        assert.ok(answerField, "Поле ввода ответа должно быть доступно");
+        answerField.value = "git branch --show-current";
+        answerField.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+        await flushAsyncWork();
+
+        const currentAnswerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
+        currentAnswerField.dispatchEvent(new dom.window.KeyboardEvent("keydown", {
+            key: "Enter",
+            bubbles: true,
+            cancelable: true
+        }));
+        await flushAsyncWork();
+
+        assert.ok(
+            requests.includes("POST /api/sessions/session-1/submissions"),
+            "Нажатие Enter должно запускать отправку ответа"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-retry-feedback-panel][data-retry-feedback-status="resolved"]'),
+            "После Enter-submit должен появиться resolved retry feedback"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function createCatalogPayload() {
     return {
         items: [
