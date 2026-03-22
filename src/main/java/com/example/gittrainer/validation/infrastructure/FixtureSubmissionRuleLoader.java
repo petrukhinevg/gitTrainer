@@ -1,5 +1,6 @@
 package com.example.gittrainer.validation.infrastructure;
 
+import com.example.gittrainer.validation.application.CommandTextNormalizer;
 import org.springframework.boot.json.JsonParser;
 import org.springframework.boot.json.JsonParserFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -40,6 +41,6 @@ public final class FixtureSubmissionRuleLoader {
     }
 
     public static String normalizeCommand(String value) {
-        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase();
+        return CommandTextNormalizer.normalize(value);
     }
 }

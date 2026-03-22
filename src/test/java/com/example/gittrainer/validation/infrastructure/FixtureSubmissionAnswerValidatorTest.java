@@ -8,7 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FixtureSubmissionAnswerValidatorTest {
 
-    private final FixtureSubmissionAnswerValidator validator = new FixtureSubmissionAnswerValidator();
+    private final FixtureSubmissionAnswerValidator validator =
+            new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource());
 
     @Test
     void marksMatchingCommandAsCorrect() {

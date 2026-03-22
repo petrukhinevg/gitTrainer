@@ -6,6 +6,7 @@ import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableExce
 import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
+import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
@@ -79,6 +80,17 @@ final class ApiProblemDetailFactory {
                 "scenario-repository-context-not-authored",
                 "terminal",
                 false
+        );
+    }
+
+    static ProblemDetail validationRunnerUnavailable(ValidationRunnerExecutionException exception) {
+        return createProblem(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Проверка сценария временно недоступна",
+                exception.getMessage(),
+                exception.errorCode(),
+                "retryable",
+                true
         );
     }
 
