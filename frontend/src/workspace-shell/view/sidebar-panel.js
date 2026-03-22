@@ -53,17 +53,19 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
+    const visibleCatalogItems = resolveVisibleCatalogItems(state);
+
     return `
         <div class="tag-connection-map" data-tag-connection-map>
             <div class="scenario-legend">
                 <div class="scenario-legend__tags">
-                    ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag)}
+                    ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag, state.heldNavigationTag)}
                 </div>
             </div>
             <div class="flow-block-list" data-flow-block-list>
                 ${renderWelcomeFlowBlock(state)}
                 ${renderProgressFlowBlock(state)}
-                ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
+                ${visibleCatalogItems.map((item, index) => renderScenarioFlowBlock({
                     state,
                     item,
                     index,
@@ -75,14 +77,23 @@ function renderTrainingFlow(state, tagOptions) {
     `;
 }
 
-function renderLegendTagRows(tagOptions, pinnedNavigationTag) {
+function renderLegendTagRows(tagOptions, pinnedNavigationTag, heldNavigationTag) {
     const rows = resolveLegendTagRows(tagOptions);
 
     return rows.map((row) => `
         <div class="scenario-legend__row">
-            ${row.map((tag) => renderLegendTag(tag, pinnedNavigationTag)).join("")}
+            ${row.map((tag) => renderLegendTag(tag, pinnedNavigationTag, heldNavigationTag)).join("")}
         </div>
     `).join("");
+}
+
+function resolveVisibleCatalogItems(state) {
+    const heldTag = toTagToken(state.heldNavigationTag);
+    if (!heldTag) {
+        return state.catalog.items;
+    }
+
+    return state.catalog.items.filter((item) => item.tags.map(toTagToken).includes(heldTag));
 }
 
 function resolveLegendTagRows(tagOptions) {
@@ -305,15 +316,16 @@ function renderSubtaskFlowBlock(
     `;
 }
 
-function renderLegendTag(tag, pinnedNavigationTag) {
+function renderLegendTag(tag, pinnedNavigationTag, heldNavigationTag) {
     const token = toTagToken(tag);
     const isPinned = pinnedNavigationTag === token;
+    const isHeld = heldNavigationTag === token;
     return `
         <button
-            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)} ${isPinned ? "scenario-legend__tag--active" : ""}"
+            class="scenario-legend__tag scenario-legend__tag--${escapeHtml(token)} ${(isPinned || isHeld) ? "scenario-legend__tag--active" : ""}"
             type="button"
             data-tag-legend-control="${escapeHtml(token)}"
-            aria-pressed="${isPinned ? "true" : "false"}"
+            aria-pressed="${(isPinned || isHeld) ? "true" : "false"}"
         >
             <span class="scenario-legend__swatch" aria-hidden="true"></span>
             <span>${escapeHtml(formatTag(tag))}</span>

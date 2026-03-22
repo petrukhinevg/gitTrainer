@@ -13,6 +13,8 @@ export function bindWorkspaceShellDom({
     resetCatalogControls,
     toggleNavigationVisibility,
     toggleScenarioExpansion,
+    beginNavigationTagHold,
+    endNavigationTagHold,
     ensureExerciseSession,
     retryLastSubmission,
     restartExerciseSession,
@@ -24,7 +26,13 @@ export function bindWorkspaceShellDom({
     bindCatalogControls({ applyCatalogControls, resetCatalogControls });
     bindRouteLinks(handleRouteChange);
     bindNavigationVisibilityControl({ appRoot, toggleNavigationVisibility });
-    bindNavigationControls({ appRoot, state, toggleScenarioExpansion });
+    bindNavigationControls({
+        appRoot,
+        state,
+        toggleScenarioExpansion,
+        beginNavigationTagHold,
+        endNavigationTagHold
+    });
     bindPracticeSurfaceControls({
         ensureExerciseSession,
         retryLastSubmission,
@@ -157,7 +165,22 @@ function bindNavigationVisibilityControl({ appRoot, toggleNavigationVisibility }
     });
 }
 
-function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
+function bindNavigationControls({
+    appRoot,
+    state,
+    toggleScenarioExpansion,
+    beginNavigationTagHold,
+    endNavigationTagHold
+}) {
+    const TAG_HOLD_DELAY_MS = 180;
+    const tagHoldState = appRoot.__tagLegendHoldState ?? {
+        timerId: 0,
+        pendingTag: null,
+        activeTag: null,
+        suppressClickTag: null
+    };
+    appRoot.__tagLegendHoldState = tagHoldState;
+
     document.querySelectorAll("[data-scenario-toggle]").forEach((button) => {
         if (button.dataset.navigationToggleBound === "true") {
             return;
@@ -180,14 +203,16 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
     }
 
     const applyNavigationHighlight = (hoveredTag = null) => {
-        const activeTag = state.pinnedNavigationTag ?? hoveredTag;
+        const activeTag = state.heldNavigationTag ?? state.pinnedNavigationTag ?? hoveredTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
         } else {
             delete navigationLane.dataset.highlightTag;
         }
 
-        if (state.pinnedNavigationTag) {
+        if (state.heldNavigationTag) {
+            navigationLane.dataset.pinnedTag = state.heldNavigationTag;
+        } else if (state.pinnedNavigationTag) {
             navigationLane.dataset.pinnedTag = state.pinnedNavigationTag;
         } else {
             delete navigationLane.dataset.pinnedTag;
@@ -200,13 +225,69 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
         document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
             const tag = button.dataset.tagLegendControl;
             const isPinned = Boolean(tag) && state.pinnedNavigationTag === tag;
-            button.classList.toggle("scenario-legend__tag--active", isPinned);
-            button.setAttribute("aria-pressed", isPinned ? "true" : "false");
+            const isHeld = Boolean(tag) && state.heldNavigationTag === tag;
+            button.classList.toggle("scenario-legend__tag--active", isPinned || isHeld);
+            button.setAttribute("aria-pressed", isPinned || isHeld ? "true" : "false");
         });
+    };
+
+    const cancelPendingTagHold = () => {
+        if (!tagHoldState.timerId) {
+            return;
+        }
+
+        window.clearTimeout(tagHoldState.timerId);
+        tagHoldState.timerId = 0;
+    };
+
+    const releaseTagHold = (tag = tagHoldState.activeTag ?? tagHoldState.pendingTag) => {
+        const normalizedTag = typeof tag === "string" ? tag : null;
+        const wasHeld = Boolean(normalizedTag) && tagHoldState.activeTag === normalizedTag;
+
+        cancelPendingTagHold();
+        if (normalizedTag && tagHoldState.pendingTag === normalizedTag) {
+            tagHoldState.pendingTag = null;
+        }
+
+        if (!wasHeld) {
+            return;
+        }
+
+        tagHoldState.activeTag = null;
+        tagHoldState.suppressClickTag = normalizedTag;
+        endNavigationTagHold(normalizedTag);
+        applyNavigationHighlight();
+        syncNavigationLegendState();
+    };
+
+    const armTagHold = (tag) => {
+        if (!tag) {
+            return;
+        }
+
+        if (tagHoldState.pendingTag && tagHoldState.pendingTag !== tag) {
+            releaseTagHold(tagHoldState.pendingTag);
+        }
+
+        tagHoldState.pendingTag = tag;
+        cancelPendingTagHold();
+        tagHoldState.timerId = window.setTimeout(() => {
+            tagHoldState.timerId = 0;
+            if (tagHoldState.pendingTag !== tag) {
+                return;
+            }
+
+            tagHoldState.pendingTag = null;
+            tagHoldState.activeTag = tag;
+            beginNavigationTagHold(tag);
+            applyNavigationHighlight();
+            syncNavigationLegendState();
+        }, TAG_HOLD_DELAY_MS);
     };
 
     applyNavigationHighlight();
     syncNavigationLegendState();
+    appRoot.__releaseTagLegendHold = releaseTagHold;
 
     document.querySelectorAll("[data-tag-legend-control]").forEach((button) => {
         const tag = button.dataset.tagLegendControl;
@@ -219,21 +300,60 @@ function bindNavigationControls({ appRoot, state, toggleScenarioExpansion }) {
             applyNavigationHighlight(tag);
         });
         button.addEventListener("mouseleave", () => {
-            applyNavigationHighlight(null);
+            if (!tagHoldState.activeTag) {
+                applyNavigationHighlight(null);
+            }
         });
         button.addEventListener("focus", () => {
             applyNavigationHighlight(tag);
         });
         button.addEventListener("blur", () => {
-            applyNavigationHighlight(null);
+            if (!tagHoldState.activeTag) {
+                applyNavigationHighlight(null);
+            }
+        });
+        button.addEventListener("mousedown", (event) => {
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            armTagHold(tag);
+        });
+        button.addEventListener("touchstart", () => {
+            armTagHold(tag);
+        }, { passive: true });
+        button.addEventListener("touchend", () => {
+            releaseTagHold(tag);
+        });
+        button.addEventListener("touchcancel", () => {
+            releaseTagHold(tag);
         });
         button.addEventListener("click", (event) => {
+            if (tagHoldState.suppressClickTag === tag) {
+                tagHoldState.suppressClickTag = null;
+                event.preventDefault();
+                return;
+            }
+
             event.preventDefault();
             state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
             applyNavigationHighlight(null);
             syncNavigationLegendState();
         });
     });
+
+    if (appRoot.__tagLegendHoldReleaseBound !== true) {
+        appRoot.__tagLegendHoldReleaseBound = true;
+        window.addEventListener("mouseup", () => {
+            appRoot.__releaseTagLegendHold?.();
+        });
+        window.addEventListener("touchend", () => {
+            appRoot.__releaseTagLegendHold?.();
+        });
+        window.addEventListener("touchcancel", () => {
+            appRoot.__releaseTagLegendHold?.();
+        });
+    }
 }
 
 function bindPracticeSurfaceControls({

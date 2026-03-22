@@ -75,6 +75,8 @@ export function createCatalogWorkspaceController({
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
         pinnedNavigationTag: null,
+        heldNavigationTag: null,
+        heldNavigationTagExpandedSnapshot: null,
         providerName: defaultProviderName,
         submissionDraft: createInitialSubmissionDraftState(),
         session: createInitialSessionState(),
@@ -228,6 +230,8 @@ export function createCatalogWorkspaceController({
             resetCatalogControls,
             toggleNavigationVisibility,
             toggleScenarioExpansion,
+            beginNavigationTagHold,
+            endNavigationTagHold,
             ensureExerciseSession,
             retryLastSubmission,
             restartExerciseSession,
@@ -953,6 +957,61 @@ export function createCatalogWorkspaceController({
             navigationToggle.focus({ preventScroll: true });
         }
     }
+
+    function beginNavigationTagHold(tag) {
+        const normalizedTag = normalizeNavigationTagToken(tag);
+        if (!normalizedTag || state.heldNavigationTag === normalizedTag) {
+            return;
+        }
+
+        const matchingSlugs = state.catalog.items
+            .filter((item) => Array.isArray(item.tags) && item.tags.some((entry) => normalizeNavigationTagToken(entry) === normalizedTag))
+            .map((item) => item.slug)
+            .filter(Boolean);
+
+        if (!matchingSlugs.length) {
+            return;
+        }
+
+        state.heldNavigationTagExpandedSnapshot = {
+            expandedScenarioSlugs: [...state.expandedScenarioSlugs],
+            expandingScenarioSlugs: [...state.expandingScenarioSlugs]
+        };
+        state.heldNavigationTag = normalizedTag;
+        state.expandedScenarioSlugs = Array.from(new Set([
+            ...state.expandedScenarioSlugs,
+            ...matchingSlugs
+        ]));
+        state.expandingScenarioSlugs = [];
+        render();
+
+        matchingSlugs.forEach((slug) => {
+            void dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false });
+        });
+    }
+
+    function endNavigationTagHold(tag) {
+        const normalizedTag = normalizeNavigationTagToken(tag);
+        if (!normalizedTag || state.heldNavigationTag !== normalizedTag) {
+            return;
+        }
+
+        const snapshot = state.heldNavigationTagExpandedSnapshot;
+        state.heldNavigationTag = null;
+        state.heldNavigationTagExpandedSnapshot = null;
+        state.expandedScenarioSlugs = snapshot?.expandedScenarioSlugs
+            ? [...snapshot.expandedScenarioSlugs]
+            : [];
+        state.expandingScenarioSlugs = snapshot?.expandingScenarioSlugs
+            ? [...snapshot.expandingScenarioSlugs]
+            : [];
+        render();
+    }
+}
+
+function normalizeNavigationTagToken(tag) {
+    const normalizedTag = String(tag ?? "").trim().toLowerCase();
+    return normalizedTag.length ? normalizedTag : null;
 }
 
 export function captureNavigationFlowBlockTagState(surfaceRoot) {

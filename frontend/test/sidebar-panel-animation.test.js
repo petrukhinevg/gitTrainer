@@ -106,9 +106,46 @@ test("раскрытая соседняя группа берёт подзада
     }
 });
 
+test("при удержании тега в рендере остаются только подходящие сценарии и они считаются раскрытыми", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            heldNavigationTag: "branching",
+            expandedScenarioSlugs: ["branch-safety", "remote-sync-preview"],
+            catalogItems: [
+                {
+                    slug: "branch-safety",
+                    title: "Подтверди текущую ветку",
+                    tags: ["branching", "navigation"]
+                },
+                {
+                    slug: "remote-sync-preview",
+                    title: "Синхронизируй удалённое состояние",
+                    tags: ["remote", "planning"]
+                }
+            ],
+            detailCache: {
+                "branch-safety": createDetailCacheEntry(["Проверь ветку", "Сверь изменения"]),
+                "remote-sync-preview": createDetailCacheEntry(["Сделай fetch", "Проверь ahead/behind"])
+            }
+        }),
+        null,
+        ["branching", "navigation", "remote", "planning"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+
+    try {
+        assert.ok(dom.window.document.querySelector('[data-scenario-toggle="branch-safety"]'));
+        assert.equal(dom.window.document.querySelector('[data-scenario-toggle="remote-sync-preview"]'), null);
+        assert.ok(dom.window.document.querySelector('[data-scenario-panel="branch-safety"]'));
+    } finally {
+        dom.window.close();
+    }
+});
+
 function createReadyState({
     expandingScenarioSlug = null,
     expandedScenarioSlugs = ["branch-safety"],
+    heldNavigationTag = null,
     catalogItems = [
         {
             slug: "branch-safety",
@@ -134,6 +171,7 @@ function createReadyState({
         selectedScenarioSlug,
         selectedFocus: null,
         pinnedNavigationTag: null,
+        heldNavigationTag,
         detail,
         detailCache
     };
