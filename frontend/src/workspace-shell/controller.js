@@ -16,7 +16,7 @@ import {
     bindSmoothScrollContainers,
     captureLaneScrollPositions,
     captureSurfaceScrollState,
-    NAVIGATION_TOGGLE_ANIMATION_MS,
+    NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS,
     releaseCollapsedScenarioGap,
     resetLaneScrollPosition,
     restoreLaneScrollPositions,
@@ -335,7 +335,7 @@ export function createCatalogWorkspaceController({
         };
         navigationRevealTimeoutId = window.setTimeout(
             finishNavigationReveal,
-            NAVIGATION_TOGGLE_ANIMATION_MS + 40
+            NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS + 40
         );
     }
 
@@ -347,7 +347,7 @@ export function createCatalogWorkspaceController({
             syncLayoutChrome();
             redrawNavigationActiveMarker(appRoot, { instant: true });
             redrawNavigationTagConnections(appRoot);
-        }, NAVIGATION_TOGGLE_ANIMATION_MS + 40);
+        }, NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS + 40);
     }
 
     function renderWorkspaceSurfaces(selectedCatalogScenario) {

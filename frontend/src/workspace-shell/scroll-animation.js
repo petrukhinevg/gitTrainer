@@ -1,6 +1,7 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
 
 export const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
+export const NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS = 500;
 
 export function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
     const excludedLaneNameSet = new Set(excludedLaneNames);

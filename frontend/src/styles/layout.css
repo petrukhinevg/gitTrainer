@@ -33,7 +33,7 @@ body {
     --navigation-lane-width: 320px;
     --navigation-lane-current-width: var(--navigation-lane-width);
     --navigation-toolbar-height: 24px;
-    --navigation-collapse-duration: 180ms;
+    --navigation-collapse-duration: 500ms;
     --navigation-collapse-easing: cubic-bezier(0.22, 1, 0.36, 1);
     --lesson-lane-width: 37.5%;
     --lesson-lane-min-width: 320px;
@@ -88,9 +88,11 @@ body {
     z-index: 4;
     transform: translateX(0);
     opacity: 1;
+    filter: blur(0);
     transition:
-        opacity 120ms ease,
-        transform 180ms ease;
+        opacity calc(var(--navigation-collapse-duration) * 0.9) ease,
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        filter calc(var(--navigation-collapse-duration) * 0.9) ease;
 }
 
 .lesson-layout__navigation-toggle {
@@ -268,6 +270,7 @@ body {
 .lesson-layout--navigation-collapsed:not(.lesson-layout--navigation-collapsing) .lesson-layout__tag-connection-overlay,
 .lesson-layout--navigation-transitioning .lesson-layout__tag-connection-overlay {
     opacity: 0;
+    filter: blur(1px);
 }
 
 .lesson-layout--navigation-collapsed .lesson-layout__tag-connection-overlay {
@@ -275,7 +278,8 @@ body {
 }
 
 .lesson-layout--navigation-collapsed.lesson-layout--navigation-collapsing .lesson-layout__tag-connection-overlay {
-    opacity: 1;
+    opacity: 0;
+    filter: blur(1px);
 }
 
 .lesson-layout--navigation-collapsed .lesson-lane--navigation {

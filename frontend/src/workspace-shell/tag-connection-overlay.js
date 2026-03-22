@@ -1179,11 +1179,11 @@ function syncFlowSubtaskState({
     animateShift = false
 }) {
     const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys);
-    const activatedGroups = applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups);
-
-    if (animateShift && activatedGroups.length) {
-        triggerFlowSubtaskShiftAnimation(activatedGroups);
+    if (animateShift) {
+        triggerFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, nextGroups));
     }
+
+    applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups);
 }
 
 function collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys = null) {
@@ -1216,12 +1216,34 @@ function collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys
     return groups;
 }
 
-function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
+function collectImpactedFlowSubtaskGroups(mapRoot, nextGroups) {
     if (!(mapRoot instanceof HTMLElement)) {
         return [];
     }
 
-    const activatedGroups = [];
+    const impactedGroups = new Set();
+
+    mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
+        if (!(element instanceof HTMLElement) || isCollapsingSubtaskGroup(element)) {
+            return;
+        }
+
+        impactedGroups.add(element);
+    });
+
+    nextGroups.forEach((element) => {
+        if (element instanceof HTMLElement) {
+            impactedGroups.add(element);
+        }
+    });
+
+    return Array.from(impactedGroups);
+}
+
+function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
 
     mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
         if (!(element instanceof HTMLElement)) {
@@ -1240,11 +1262,8 @@ function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
     nextGroups.forEach((element) => {
         if (element.dataset.flowSubtaskActiveTag !== activeTag) {
             element.dataset.flowSubtaskActiveTag = activeTag;
-            activatedGroups.push(element);
         }
     });
-
-    return activatedGroups;
 }
 
 function triggerFlowSubtaskShiftAnimation(groups) {
@@ -1259,11 +1278,13 @@ function triggerFlowSubtaskShiftAnimation(groups) {
 
         if (typeof group.__flowSubtaskShiftAnimationTimeoutId === "number" && group.__flowSubtaskShiftAnimationTimeoutId) {
             window.clearTimeout(group.__flowSubtaskShiftAnimationTimeoutId);
+            group.__flowSubtaskShiftAnimationTimeoutId = 0;
         }
 
-        delete group.dataset.flowSubtaskShiftAnimating;
-        void group.offsetWidth;
-        group.dataset.flowSubtaskShiftAnimating = "true";
+        if (group.dataset.flowSubtaskShiftAnimating !== "true") {
+            group.dataset.flowSubtaskShiftAnimating = "true";
+        }
+
         group.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
             delete group.dataset.flowSubtaskShiftAnimating;
             group.__flowSubtaskShiftAnimationTimeoutId = 0;
