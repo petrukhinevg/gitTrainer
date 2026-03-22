@@ -445,7 +445,7 @@
 
 .flow-subtask-group::before,
 .flow-subtask-group::after {
-    content: "";
+    content: none;
     position: absolute;
     top: 0;
     bottom: 0;
