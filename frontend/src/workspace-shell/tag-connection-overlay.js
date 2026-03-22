@@ -7,7 +7,7 @@ const TARGET_OFFSET_PX = 0;
 const TRUNK_OFFSET_PX = 10;
 const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
 const CONNECTION_DRAW_SPEED_PX_PER_MS = 2;
-const CONNECTION_MIN_ANIMATION_MS = 20;
+const CONNECTION_MIN_ANIMATION_MS = 4;
 const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
 const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
 let nextCanvasClipPathId = 0;
@@ -1180,7 +1180,7 @@ function syncFlowSubtaskState({
 }) {
     const nextGroups = collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys);
     if (animateShift) {
-        prepareFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, nextGroups));
+        prepareFlowSubtaskShiftAnimation(collectChangedFlowSubtaskGroups(mapRoot, activeTag, nextGroups));
     }
 
     applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups);
@@ -1216,28 +1216,34 @@ function collectSubtaskGroupsForActiveTag(mapRoot, activeTag, revealedTargetKeys
     return groups;
 }
 
-function collectImpactedFlowSubtaskGroups(mapRoot, nextGroups) {
+function collectChangedFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
     if (!(mapRoot instanceof HTMLElement)) {
         return [];
     }
 
-    const impactedGroups = new Set();
+    const changedGroups = new Set();
 
     mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {
         if (!(element instanceof HTMLElement) || isCollapsingSubtaskGroup(element)) {
             return;
         }
 
-        impactedGroups.add(element);
-    });
-
-    nextGroups.forEach((element) => {
-        if (element instanceof HTMLElement) {
-            impactedGroups.add(element);
+        if (!nextGroups.has(element) || element.dataset.flowSubtaskActiveTag !== activeTag) {
+            changedGroups.add(element);
         }
     });
 
-    return Array.from(impactedGroups);
+    nextGroups.forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        if (element.dataset.flowSubtaskActiveTag !== activeTag) {
+            changedGroups.add(element);
+        }
+    });
+
+    return Array.from(changedGroups);
 }
 
 function applyFlowSubtaskGroups(mapRoot, activeTag, nextGroups) {
@@ -1324,7 +1330,10 @@ function clearFlowSubtaskActiveTagState(mapRoot, { animateShift = false } = {}) 
     }
 
     if (animateShift) {
-        prepareFlowSubtaskShiftAnimation(collectImpactedFlowSubtaskGroups(mapRoot, new Set()));
+        prepareFlowSubtaskShiftAnimation(
+            Array.from(mapRoot.querySelectorAll("[data-flow-subtask-active-tag]"))
+                .filter((element) => element instanceof HTMLElement && !isCollapsingSubtaskGroup(element))
+        );
     }
 
     mapRoot.querySelectorAll("[data-flow-subtask-active-tag]").forEach((element) => {

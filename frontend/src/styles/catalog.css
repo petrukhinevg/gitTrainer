@@ -268,6 +268,7 @@
 
 .flow-block {
     --flow-block-active-accent: var(--tag-color-default);
+    --flow-block-active-text-color: color-mix(in srgb, var(--flow-block-active-accent) 72%, #101418 28%);
     position: relative;
     display: grid;
     gap: 4px;
@@ -355,7 +356,7 @@
 }
 
 .flow-block[data-flow-block-active-tag] {
-    color: var(--flow-block-active-accent);
+    color: var(--flow-block-active-text-color);
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 56%, transparent);
     background: color-mix(in srgb, var(--flow-block-active-accent) 10%, transparent);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 10%, transparent);
@@ -364,7 +365,7 @@
 .flow-block[data-flow-block-active-tag]:hover,
 .flow-block[data-flow-block-active-tag].flow-block--active,
 .flow-block[data-flow-block-active-tag].flow-block--active:hover {
-    color: var(--flow-block-active-accent);
+    color: var(--flow-block-active-text-color);
 }
 
 .flow-block--active {

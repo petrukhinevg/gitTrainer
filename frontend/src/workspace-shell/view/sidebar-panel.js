@@ -276,7 +276,6 @@ function renderOverviewFlowBlock(
             data-tag-branch-target="true"
             ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >
-            <span class="flow-block__eyebrow">Страница задания</span>
             <strong class="flow-block__title">Обзор</strong>
         </a>
     `;
@@ -299,7 +298,6 @@ function renderSubtaskFlowBlock(
             data-tag-branch-target="true"
             ${renderFlowSubtaskEnterStyle(enterIndex, shouldAnimateSubtasks)}
         >
-            <span class="flow-block__eyebrow">Подзадача ${step.position}</span>
             <strong class="flow-block__title">${escapeHtml(step.title)}</strong>
         </a>
     `;
