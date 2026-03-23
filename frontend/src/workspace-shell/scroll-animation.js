@@ -98,8 +98,8 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
         return Promise.resolve();
     }
 
-    const flowNode = panel.closest(".flow-node");
-    const flowNodeGap = readFlowNodeGap(flowNode);
+    const flowNodeBody = resolveScenarioGapContainer(panel);
+    const flowNodeGap = readFlowNodeGap(flowNodeBody);
     const expansionDuration = resolveScenarioExpansionDuration(panel);
 
     delete panel.dataset.tagConnectionCollapsing;
@@ -108,7 +108,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
     panel.style.opacity = "0";
     panel.style.overflow = "hidden";
     panel.style.willChange = "height, opacity";
-    prepareFlowNodeExpansion(flowNode, flowNodeGap);
+    prepareFlowNodeExpansion(flowNodeBody, flowNodeGap);
 
     return new Promise((resolve) => {
         let observer = null;
@@ -129,7 +129,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
             void panel.offsetHeight;
             panel.style.height = formatPixelValue(targetHeight);
             panel.style.opacity = "1";
-            startFlowNodeGapExpansion(flowNode, flowNodeGap, expansionDuration);
+            startFlowNodeGapExpansion(flowNodeBody, flowNodeGap, expansionDuration);
 
             void waitForScenarioAnimation(panel, expansionDuration, () => {
                 stopFrameTracking();
@@ -140,7 +140,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
                 panel.style.removeProperty("transition");
                 panel.style.removeProperty("will-change");
                 delete panel.dataset.scenarioAnimating;
-                releaseFlowNodeGapStyles(flowNode);
+                releaseFlowNodeGapStyles(flowNodeBody);
                 onFrame?.();
                 resolve();
             });
@@ -164,21 +164,21 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
 
     const navigationBody = appRoot.querySelector(".lesson-lane--navigation .lesson-lane__body");
     const scrollStabilizer = createNavigationCollapseScrollStabilizer(panel, navigationBody);
-    const flowNode = panel.closest(".flow-node");
-    const flowNodeGap = readFlowNodeGap(flowNode);
+    const flowNodeBody = resolveScenarioGapContainer(panel);
+    const flowNodeGap = readFlowNodeGap(flowNodeBody);
 
     panel.dataset.tagConnectionCollapsing = "true";
     panel.dataset.scenarioAnimating = "true";
     panel.style.height = formatPixelValue(panel.getBoundingClientRect().height);
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
-    prepareFlowNodeCollapse(flowNode, flowNodeGap);
+    prepareFlowNodeCollapse(flowNodeBody, flowNodeGap);
     panel.getBoundingClientRect();
 
     panel.style.transition = createScenarioPanelTransition(NAVIGATION_TOGGLE_ANIMATION_MS);
     panel.style.height = "0px";
     panel.style.opacity = "0";
-    startFlowNodeGapCollapse(flowNode, flowNodeGap, NAVIGATION_TOGGLE_ANIMATION_MS);
+    startFlowNodeGapCollapse(flowNodeBody, flowNodeGap, NAVIGATION_TOGGLE_ANIMATION_MS);
 
     const stopFrameTracking = startAnimationFrameTracking(() => {
         scrollStabilizer?.update();
@@ -190,16 +190,16 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         panel.style.removeProperty("transition");
         delete panel.dataset.tagConnectionCollapsing;
         delete panel.dataset.scenarioAnimating;
-        freezeCollapsedFlowNodeGap(flowNode);
+        freezeCollapsedFlowNodeGap(flowNodeBody);
         onFrame?.();
     });
 }
 
 export function releaseCollapsedScenarioGap(appRoot, slug) {
-    const flowNode = appRoot
+    const flowNodeBody = appRoot
         .querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`)
-        ?.closest(".flow-node");
-    releaseFlowNodeGapStyles(flowNode);
+        ?.closest(".flow-node__body, .flow-node");
+    releaseFlowNodeGapStyles(flowNodeBody);
 }
 
 export function createNavigationCollapseScrollStabilizer(panel, navigationBody) {
@@ -274,6 +274,14 @@ function resolveSurfaceScrollElement(surfaceRoot, key) {
 
 function findScenarioPanel(appRoot, slug) {
     return appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`);
+}
+
+function resolveScenarioGapContainer(panel) {
+    if (!(panel instanceof HTMLElement)) {
+        return null;
+    }
+
+    return panel.closest(".flow-node__body") ?? panel.closest(".flow-node");
 }
 
 export function resolveScenarioSubtaskEnterAnimationMs(appRoot, slug) {

@@ -102,6 +102,7 @@
     --tag-color-remote: #875ed3;
     --tag-color-inspection: #7a7d39;
     --flow-block-active-accent: var(--tag-color-default);
+    --navigation-flow-stack-gap: 6px;
     position: relative;
     display: grid;
     gap: 0;
@@ -292,9 +293,19 @@
 
 .flow-block-list {
     display: grid;
-    gap: 6px;
+    gap: 0;
     width: 100%;
     min-width: 0;
+}
+
+.flow-block-list > .flow-block,
+.flow-block-list > .flow-node {
+    margin-top: var(--navigation-flow-stack-gap);
+}
+
+.flow-block-list > .flow-block:first-child,
+.flow-block-list > .flow-node:first-child {
+    margin-top: 0;
 }
 
 .flow-node,
@@ -318,7 +329,8 @@
     transition:
         grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1),
         opacity 220ms ease,
-        transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+        transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+        margin-top 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .flow-node__body {
@@ -337,6 +349,7 @@
 }
 
 .flow-node[data-flow-node-filtered="true"] {
+    margin-top: 0;
     grid-template-rows: 0fr;
     opacity: 0;
     transform: translateY(-10px);
@@ -369,7 +382,6 @@
         color 160ms ease,
         background-color 160ms ease,
         border-color 160ms ease,
-        transform 180ms ease,
         box-shadow 180ms ease;
 }
 
@@ -383,7 +395,6 @@
         color 0ms,
         background-color 0ms,
         border-color 0ms,
-        transform 180ms ease,
         box-shadow 0ms;
 }
 
@@ -488,10 +499,10 @@
 }
 
 .flow-block:hover {
-    transform: translateX(2px);
     color: #111;
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 46%, transparent);
     background: color-mix(in srgb, var(--flow-block-active-accent) 12%, transparent);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--flow-block-active-accent) 10%, transparent);
 }
 
 .flow-block--active:hover {

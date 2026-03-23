@@ -244,6 +244,7 @@ export function createCatalogWorkspaceController({
             resetCatalogControls,
             toggleNavigationVisibility,
             toggleScenarioExpansion,
+            toggleNavigationTagPin,
             beginNavigationTagHold,
             endNavigationTagHold,
             ensureExerciseSession,
@@ -1043,6 +1044,7 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        state.pinnedNavigationTag = null;
         state.heldNavigationTagExpandedSnapshot = {
             expandedScenarioSlugs: [...state.expandedScenarioSlugs],
             expandingScenarioSlugs: [...state.expandingScenarioSlugs]
@@ -1066,6 +1068,28 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        restoreNavigationTagHoldSnapshot();
+        render();
+    }
+
+    function toggleNavigationTagPin(tag) {
+        const normalizedTag = normalizeNavigationTagToken(tag);
+        if (!normalizedTag) {
+            return;
+        }
+
+        const pinningFromHeldFilter = state.heldNavigationTag === normalizedTag;
+        if (state.heldNavigationTag) {
+            restoreNavigationTagHoldSnapshot();
+        }
+
+        state.pinnedNavigationTag = pinningFromHeldFilter
+            ? normalizedTag
+            : (state.pinnedNavigationTag === normalizedTag ? null : normalizedTag);
+        render();
+    }
+
+    function restoreNavigationTagHoldSnapshot() {
         const snapshot = state.heldNavigationTagExpandedSnapshot;
         state.heldNavigationTag = null;
         state.heldNavigationTagExpandedSnapshot = null;
@@ -1075,7 +1099,6 @@ export function createCatalogWorkspaceController({
         state.expandingScenarioSlugs = snapshot?.expandingScenarioSlugs
             ? [...snapshot.expandingScenarioSlugs]
             : [];
-        render();
     }
 
     function handleNavigationMarkerDragStart() {

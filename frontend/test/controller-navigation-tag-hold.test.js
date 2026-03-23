@@ -163,6 +163,207 @@ test("средняя кнопка на теге фиксирует выбор и
     }
 });
 
+test("средняя кнопка на новом теге сбрасывает закрепление, поставленное левой кнопкой", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    dom.window.matchMedia = () => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+
+    const fetchImpl = createFetchImpl();
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.click();
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-tag-legend-control="branching"]')?.getAttribute("aria-pressed"),
+            "true",
+            "После левого клика тег должен перейти в закреплённое состояние"
+        );
+
+        appRoot.querySelector('[data-tag-legend-control="remote"]')?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-tag-legend-control="branching"]')?.getAttribute("aria-pressed"),
+            "false",
+            "Middle-click должен снять предыдущее закрепление левой кнопкой"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-tag-legend-control="remote"]')?.getAttribute("aria-pressed"),
+            "true",
+            "Новый тег должен стать активным после middle-click"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="branch-safety"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "true",
+            "После middle-click должен остаться только фильтр нового тега"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("левый клик по активному middle-фильтру сразу снимает его и оставляет тег закреплённым", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    dom.window.matchMedia = () => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+
+    const fetchImpl = createFetchImpl();
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "true",
+            "Перед левым кликом фильтр middle-click должен скрывать неподходящий сценарий"
+        );
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.click();
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "false",
+            "Левый клик должен снять middle-фильтр и вернуть все сценарии"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-tag-legend-control="branching"]')?.getAttribute("aria-pressed"),
+            "true",
+            "Тот же левый клик должен сразу оставить тег закреплённым"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+function createFetchImpl() {
+    return async (url) => {
+        const requestUrl = new URL(url);
+
+        if (requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse({
+                items: [
+                    {
+                        id: "branch-safety",
+                        slug: "branch-safety",
+                        title: "Подтверди текущую ветку",
+                        summary: "Тестовый сценарий по веткам.",
+                        difficulty: "beginner",
+                        tags: ["branching", "navigation"]
+                    },
+                    {
+                        id: "remote-sync-preview",
+                        slug: "remote-sync-preview",
+                        title: "Сделай fetch первым",
+                        summary: "Тестовый сценарий по удалённому состоянию.",
+                        difficulty: "intermediate",
+                        tags: ["remote", "planning"]
+                    }
+                ],
+                meta: {
+                    source: "mvp-fixture",
+                    query: {}
+                }
+            });
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createDetailPayload("Подтверди ветку", ["Проверь ветку", "Сверь контекст"]));
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createDetailPayload("Сделай fetch первым", ["Обнови refs", "Проверь divergence"]));
+        }
+
+        if (requestUrl.pathname === "/api/progress") {
+            return jsonResponse({
+                items: [],
+                recentActivity: [],
+                recommendations: null,
+                meta: { source: "mvp-fixture" }
+            });
+        }
+
+        throw new Error(`Unexpected request: ${requestUrl.pathname}`);
+    };
+}
+
 function createDetailPayload(title, stepTitles) {
     return {
         slug: title,

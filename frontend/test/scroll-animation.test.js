@@ -112,14 +112,16 @@ test("стабилизатор удерживает scrollTop во время co
     }
 });
 
-test("очистка collapsed gap снимает временный row-gap у flow-node после удаления панели", () => {
+test("очистка collapsed gap снимает временный row-gap у flow-node__body после удаления панели", () => {
     const dom = new JSDOM(`
         <!doctype html>
         <html>
             <body>
                 <div id="app">
-                    <section class="flow-node" style="row-gap: 0px;">
-                        <button data-scenario-toggle="remote-sync-preview" type="button"></button>
+                    <section class="flow-node">
+                        <div class="flow-node__body" style="row-gap: 0px;">
+                            <button data-scenario-toggle="remote-sync-preview" type="button"></button>
+                        </div>
                     </section>
                 </div>
             </body>
@@ -129,16 +131,16 @@ test("очистка collapsed gap снимает временный row-gap у 
 
     try {
         const appRoot = dom.window.document.getElementById("app");
-        const flowNode = dom.window.document.querySelector(".flow-node");
+        const flowNodeBody = dom.window.document.querySelector(".flow-node__body");
 
-        flowNode.style.transition = "row-gap 240ms ease";
-        flowNode.style.willChange = "row-gap";
+        flowNodeBody.style.transition = "row-gap 240ms ease";
+        flowNodeBody.style.willChange = "row-gap";
 
         releaseCollapsedScenarioGap(appRoot, "remote-sync-preview");
 
-        assert.equal(flowNode.style.rowGap, "");
-        assert.equal(flowNode.style.transition, "");
-        assert.equal(flowNode.style.willChange, "");
+        assert.equal(flowNodeBody.style.rowGap, "");
+        assert.equal(flowNodeBody.style.transition, "");
+        assert.equal(flowNodeBody.style.willChange, "");
     } finally {
         restoreGlobals();
         dom.window.close();

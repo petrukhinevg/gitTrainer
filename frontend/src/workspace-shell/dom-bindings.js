@@ -16,6 +16,7 @@ export function bindWorkspaceShellDom({
     resetCatalogControls,
     toggleNavigationVisibility,
     toggleScenarioExpansion,
+    toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold,
     ensureExerciseSession,
@@ -33,6 +34,7 @@ export function bindWorkspaceShellDom({
         appRoot,
         state,
         toggleScenarioExpansion,
+        toggleNavigationTagPin,
         beginNavigationTagHold,
         endNavigationTagHold
     });
@@ -177,6 +179,7 @@ function bindNavigationControls({
     appRoot,
     state,
     toggleScenarioExpansion,
+    toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold
 }) {
@@ -383,9 +386,11 @@ function bindNavigationControls({
                 return;
             }
 
-            state.pinnedNavigationTag = state.pinnedNavigationTag === tag ? null : tag;
-            applyNavigationHighlight(null);
-            syncNavigationLegendState();
+            cancelPendingTagHold();
+            tagHoldState.pendingTag = null;
+            tagHoldState.activeTag = null;
+            tagHoldState.suppressClickTag = null;
+            toggleNavigationTagPin(tag);
         });
     });
 
