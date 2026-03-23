@@ -340,6 +340,15 @@
     border-color: rgba(31, 23, 32, 0.3);
 }
 
+.flow-block[data-flow-block-tag-state-restored="true"] {
+    transition:
+        color 0ms,
+        background-color 0ms,
+        border-color 0ms,
+        transform 180ms ease,
+        box-shadow 0ms;
+}
+
 .flow-block[data-flow-block-active-tag="status"],
 .flow-subtask-group[data-flow-subtask-active-tag="status"] {
     --flow-block-active-accent: var(--tag-color-status);
@@ -512,6 +521,12 @@
     transition:
         padding-left 220ms cubic-bezier(0.22, 1, 0.36, 1),
         padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.flow-subtask-group[data-flow-subtask-tag-state-restored="true"],
+.flow-subtask-group[data-flow-subtask-tag-state-restored="true"]::before,
+.flow-subtask-group[data-flow-subtask-tag-state-restored="true"]::after {
+    transition: none;
 }
 
 .flow-subtask-group::before,

@@ -48,8 +48,10 @@ const DEFAULT_QUERY = Object.freeze({
 const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-enter",
     "data-flow-subtask-active-tag",
+    "data-flow-subtask-tag-state-restored",
     "data-flow-subtask-shift-animating",
     "data-flow-block-active-tag",
+    "data-flow-block-tag-state-restored",
     "data-navigation-marker-target",
     "data-scenario-animating",
     "data-tag-connection-collapsing",
@@ -57,6 +59,8 @@ const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-navigation-toggle-bound",
     "data-route-link-bound"
 ]);
+const FLOW_BLOCK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-block-tag-state-restored";
+const FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-subtask-tag-state-restored";
 
 export function createCatalogWorkspaceController({
     appRoot,
@@ -422,6 +426,7 @@ export function createCatalogWorkspaceController({
         if (surfaceName === "navigation") {
             restoreNavigationFlowBlockTagState(target, preservedNavigationTagState);
             restoreNavigationSubtaskGroupTagState(target, preservedNavigationSubtaskGroupTagState);
+            scheduleNavigationTagStateRestoreCleanup(target);
             syncNavigationSurfaceActiveState(target, state);
         }
         const nextLaneBody = target.querySelector(".lesson-lane__body");
@@ -1204,6 +1209,7 @@ export function restoreNavigationFlowBlockTagState(surfaceRoot, entries) {
 
         if (element instanceof HTMLElement) {
             element.dataset.flowBlockActiveTag = entry.tag;
+            element.setAttribute(FLOW_BLOCK_TAG_STATE_RESTORED_ATTRIBUTE, "true");
         }
     });
 }
@@ -1248,7 +1254,41 @@ export function restoreNavigationSubtaskGroupTagState(surfaceRoot, entries) {
             .querySelector(`[data-scenario-panel="${escapeSelectorValue(entry.panelKey)}"] .flow-subtask-group`);
         if (group instanceof HTMLElement) {
             group.dataset.flowSubtaskActiveTag = entry.tag;
+            group.setAttribute(FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE, "true");
         }
+    });
+}
+
+function scheduleNavigationTagStateRestoreCleanup(surfaceRoot) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    if (typeof surfaceRoot.__flowTagStateRestoreCleanupFrameId === "number" && surfaceRoot.__flowTagStateRestoreCleanupFrameId) {
+        window.cancelAnimationFrame(surfaceRoot.__flowTagStateRestoreCleanupFrameId);
+        surfaceRoot.__flowTagStateRestoreCleanupFrameId = 0;
+    }
+
+    if (typeof surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId === "number" && surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId) {
+        window.cancelAnimationFrame(surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId);
+        surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId = 0;
+    }
+
+    surfaceRoot.__flowTagStateRestoreCleanupFrameId = window.requestAnimationFrame(() => {
+        surfaceRoot.__flowTagStateRestoreCleanupFrameId = 0;
+        surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId = window.requestAnimationFrame(() => {
+            surfaceRoot.__flowTagStateRestoreCleanupCommitFrameId = 0;
+            surfaceRoot.querySelectorAll(`[${FLOW_BLOCK_TAG_STATE_RESTORED_ATTRIBUTE}]`).forEach((element) => {
+                if (element instanceof HTMLElement) {
+                    element.removeAttribute(FLOW_BLOCK_TAG_STATE_RESTORED_ATTRIBUTE);
+                }
+            });
+            surfaceRoot.querySelectorAll(`[${FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE}]`).forEach((element) => {
+                if (element instanceof HTMLElement) {
+                    element.removeAttribute(FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE);
+                }
+            });
+        });
     });
 }
 
@@ -1316,6 +1356,7 @@ function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
     });
     restoreNavigationFlowBlockTagState(surfaceRoot, preservedNavigationTagState);
     restoreNavigationSubtaskGroupTagState(surfaceRoot, preservedSubtaskGroupTagState);
+    scheduleNavigationTagStateRestoreCleanup(surfaceRoot);
 
     return true;
 }
