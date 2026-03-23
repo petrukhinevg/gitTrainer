@@ -8,6 +8,7 @@ import { escapeSelectorValue } from "./dom-helpers.js";
 import { createWorkspaceDataOrchestrator } from "./data-orchestration.js";
 import {
     createWorkspaceRouteOrchestrator,
+    parseWorkspaceRoute,
     resetRouteScopedWorkspaceState
 } from "./route-orchestration.js";
 import {
@@ -43,6 +44,7 @@ const DEFAULT_QUERY = Object.freeze({
     tags: [],
     sort: null
 });
+const NAVIGATION_MARKER_DRAG_PREVIEW_DELAY_MS = 500;
 const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-enter",
     "data-flow-subtask-active-tag",
@@ -109,11 +111,18 @@ export function createCatalogWorkspaceController({
     let pendingLessonScrollReset = false;
     let pendingNavigationSelectionSyncOnly = false;
     let renderedRouteKind = null;
+    let navigationMarkerDragOperation = Promise.resolve();
     const renderedSurfaceCache = {
         navigation: null,
         lesson: null,
         practiceViewer: null,
         practiceSurface: null
+    };
+    const navigationMarkerDragState = {
+        active: false,
+        transientExpandedSlugs: new Set(),
+        previewDelayTimeoutId: 0,
+        pendingTargetMeta: null
     };
     const providerOptions = resolveSharedProviderOptions({
         catalogProviderFactories,
@@ -226,6 +235,9 @@ export function createCatalogWorkspaceController({
             appRoot,
             state,
             handleRouteChange,
+            handleNavigationMarkerDragStart,
+            handleNavigationMarkerDragSelection,
+            handleNavigationMarkerDragEnd,
             applyCatalogControls,
             resetCatalogControls,
             toggleNavigationVisibility,
@@ -811,6 +823,11 @@ export function createCatalogWorkspaceController({
         bootstrap
     };
 
+    function queueNavigationMarkerDragOperation(operation) {
+        navigationMarkerDragOperation = navigationMarkerDragOperation.then(operation, operation);
+        return navigationMarkerDragOperation;
+    }
+
     function expandScenario(slug, { loadDetail = true } = {}) {
         if (!slug || state.expandedScenarioSlugs.includes(slug)) {
             return;
@@ -875,25 +892,18 @@ export function createCatalogWorkspaceController({
         }
 
         if (state.expandedScenarioSlugs.includes(slug)) {
-            activeNavigationAnimationSlugs.add(slug);
+            await collapseScenarioWithAnimation(slug);
+            return;
+        }
 
-            try {
-                prepareNavigationMarkerForScenarioCollapse(appRoot, slug);
-                redrawNavigationActiveMarker(appRoot);
-                await animateScenarioCollapse(appRoot, slug, {
-                    onFrame: () => {
-                        redrawNavigationActiveMarker(appRoot);
-                        redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
-                    }
-                });
-                collapseScenario(slug);
-                syncCollapsedScenarioNavigationNode(slug);
-                redrawNavigationActiveMarker(appRoot);
-                redrawNavigationTagConnections(appRoot);
-            } finally {
-                activeNavigationAnimationSlugs.delete(slug);
+        await expandScenarioWithAnimation(slug, { loadDetail: true });
+    }
+
+    async function expandScenarioWithAnimation(slug, { loadDetail = true } = {}) {
+        if (!slug || state.expandedScenarioSlugs.includes(slug) || activeNavigationAnimationSlugs.has(slug)) {
+            if (loadDetail && slug) {
+                await dataOrchestrator.loadScenarioDetail(slug, { syncSelected: false });
             }
-
             return;
         }
 
@@ -919,6 +929,31 @@ export function createCatalogWorkspaceController({
         } finally {
             state.expandingScenarioSlugs = state.expandingScenarioSlugs.filter((item) => item !== slug);
             clearScenarioSubtaskEnterState(slug);
+            activeNavigationAnimationSlugs.delete(slug);
+        }
+    }
+
+    async function collapseScenarioWithAnimation(slug) {
+        if (!slug || !state.expandedScenarioSlugs.includes(slug) || activeNavigationAnimationSlugs.has(slug)) {
+            return;
+        }
+
+        activeNavigationAnimationSlugs.add(slug);
+
+        try {
+            prepareNavigationMarkerForScenarioCollapse(appRoot, slug);
+            redrawNavigationActiveMarker(appRoot);
+            await animateScenarioCollapse(appRoot, slug, {
+                onFrame: () => {
+                    redrawNavigationActiveMarker(appRoot);
+                    redrawNavigationTagConnections(appRoot, { preserveAnimation: true });
+                }
+            });
+            collapseScenario(slug);
+            syncCollapsedScenarioNavigationNode(slug);
+            redrawNavigationActiveMarker(appRoot);
+            redrawNavigationTagConnections(appRoot);
+        } finally {
             activeNavigationAnimationSlugs.delete(slug);
         }
     }
@@ -1007,11 +1042,190 @@ export function createCatalogWorkspaceController({
             : [];
         render();
     }
+
+    function handleNavigationMarkerDragStart() {
+        navigationMarkerDragState.active = true;
+        navigationMarkerDragState.transientExpandedSlugs.clear();
+        cancelNavigationMarkerDragPreviewDelay();
+    }
+
+    async function handleNavigationMarkerDragSelection(target) {
+        await queueNavigationMarkerDragOperation(async () => {
+            if (!navigationMarkerDragState.active) {
+                return;
+            }
+
+            const targetMeta = resolveNavigationMarkerDragTargetMeta(target);
+            if (shouldDelayNavigationMarkerDragPreview(targetMeta, state)) {
+                scheduleNavigationMarkerDragPreview(targetMeta);
+                await collapseTransientNavigationMarkerExpansions(null);
+                return;
+            }
+
+            cancelNavigationMarkerDragPreviewDelay();
+            await ensureNavigationMarkerDragPreview(targetMeta);
+
+            if (targetMeta.hash && targetMeta.hash !== window.location.hash) {
+                window.history.pushState(null, "", targetMeta.hash);
+                await handleRouteChange();
+            }
+
+            await collapseTransientNavigationMarkerExpansions(targetMeta.scenarioSlug);
+        });
+    }
+
+    async function handleNavigationMarkerDragEnd(target) {
+        await queueNavigationMarkerDragOperation(async () => {
+            if (!navigationMarkerDragState.active) {
+                return;
+            }
+
+            const targetMeta = resolveNavigationMarkerDragTargetMeta(target);
+            navigationMarkerDragState.active = false;
+            cancelNavigationMarkerDragPreviewDelay();
+
+            if (targetMeta.scenarioSlug) {
+                navigationMarkerDragState.transientExpandedSlugs.delete(targetMeta.scenarioSlug);
+            }
+
+            await collapseTransientNavigationMarkerExpansions(targetMeta.scenarioSlug);
+            navigationMarkerDragState.transientExpandedSlugs.clear();
+        });
+    }
+
+    async function ensureNavigationMarkerDragPreview(targetMeta) {
+        const scenarioSlug = targetMeta.scenarioSlug;
+        if (!scenarioSlug) {
+            return;
+        }
+
+        if (state.expandedScenarioSlugs.includes(scenarioSlug)) {
+            return;
+        }
+
+        navigationMarkerDragState.transientExpandedSlugs.add(scenarioSlug);
+        await expandScenarioWithAnimation(scenarioSlug, { loadDetail: true });
+    }
+
+    async function collapseTransientNavigationMarkerExpansions(keepScenarioSlug = null) {
+        const transientSlugs = Array.from(navigationMarkerDragState.transientExpandedSlugs);
+
+        for (const slug of transientSlugs) {
+            if (slug === keepScenarioSlug) {
+                continue;
+            }
+
+            navigationMarkerDragState.transientExpandedSlugs.delete(slug);
+            await collapseScenarioWithAnimation(slug);
+        }
+    }
+
+    function scheduleNavigationMarkerDragPreview(targetMeta) {
+        if (
+            navigationMarkerDragState.pendingTargetMeta
+            && isSameNavigationMarkerDragTargetMeta(navigationMarkerDragState.pendingTargetMeta, targetMeta)
+        ) {
+            return;
+        }
+
+        cancelNavigationMarkerDragPreviewDelay();
+        navigationMarkerDragState.pendingTargetMeta = targetMeta;
+        navigationMarkerDragState.previewDelayTimeoutId = window.setTimeout(() => {
+            navigationMarkerDragState.previewDelayTimeoutId = 0;
+            const scheduledTargetMeta = navigationMarkerDragState.pendingTargetMeta;
+            navigationMarkerDragState.pendingTargetMeta = null;
+
+            if (!scheduledTargetMeta) {
+                return;
+            }
+
+            void queueNavigationMarkerDragOperation(async () => {
+                if (!navigationMarkerDragState.active) {
+                    return;
+                }
+
+                await ensureNavigationMarkerDragPreview(scheduledTargetMeta);
+
+                if (scheduledTargetMeta.hash && scheduledTargetMeta.hash !== window.location.hash) {
+                    window.history.pushState(null, "", scheduledTargetMeta.hash);
+                    await handleRouteChange();
+                }
+
+                await collapseTransientNavigationMarkerExpansions(scheduledTargetMeta.scenarioSlug);
+            });
+        }, NAVIGATION_MARKER_DRAG_PREVIEW_DELAY_MS);
+    }
+
+    function cancelNavigationMarkerDragPreviewDelay() {
+        if (navigationMarkerDragState.previewDelayTimeoutId) {
+            window.clearTimeout(navigationMarkerDragState.previewDelayTimeoutId);
+            navigationMarkerDragState.previewDelayTimeoutId = 0;
+        }
+
+        navigationMarkerDragState.pendingTargetMeta = null;
+    }
 }
 
 function normalizeNavigationTagToken(tag) {
     const normalizedTag = String(tag ?? "").trim().toLowerCase();
     return normalizedTag.length ? normalizedTag : null;
+}
+
+function resolveNavigationMarkerDragHash(target) {
+    if (!(target instanceof HTMLElement)) {
+        return null;
+    }
+
+    const href = target.getAttribute("href");
+    if (href?.startsWith("#/")) {
+        return href;
+    }
+
+    const scenarioSlug = normalizeOptionalValue(target.dataset.scenarioToggle);
+    if (!scenarioSlug) {
+        return null;
+    }
+
+    return `#/exercise/${encodeURIComponent(scenarioSlug)}`;
+}
+
+function resolveNavigationMarkerDragTargetMeta(target) {
+    if (!(target instanceof HTMLElement)) {
+        return {
+            hash: null,
+            scenarioSlug: null,
+            kind: null
+        };
+    }
+
+    const href = target.getAttribute("href");
+    if (href?.startsWith("#/")) {
+        const route = parseWorkspaceRoute(href);
+        return {
+            hash: href,
+            scenarioSlug: route.name === "exercise" ? route.scenarioSlug : null,
+            kind: "href"
+        };
+    }
+
+    const hash = resolveNavigationMarkerDragHash(target);
+    return {
+        hash,
+        scenarioSlug: normalizeOptionalValue(target.dataset.scenarioToggle),
+        kind: "scenario-toggle"
+    };
+}
+
+function shouldDelayNavigationMarkerDragPreview(targetMeta, state) {
+    return targetMeta.kind === "scenario-toggle"
+        && Boolean(targetMeta.scenarioSlug)
+        && !state.expandedScenarioSlugs.includes(targetMeta.scenarioSlug);
+}
+
+function isSameNavigationMarkerDragTargetMeta(left, right) {
+    return left?.hash === right?.hash
+        && left?.scenarioSlug === right?.scenarioSlug
+        && left?.kind === right?.kind;
 }
 
 export function captureNavigationFlowBlockTagState(surfaceRoot) {

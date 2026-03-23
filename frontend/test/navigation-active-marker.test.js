@@ -6,8 +6,10 @@ import { renderCatalogWorkspaceShell } from "../src/workspace-shell/view.js";
 import { renderSidebarPanelContent } from "../src/workspace-shell/view/sidebar-panel.js";
 import {
     bindNavigationActiveMarker,
+    describeNavigationMarkerTarget,
     redrawNavigationActiveMarker,
     resolveNavigationActiveMarkerMotionDuration,
+    resolveNavigationMarkerDragTarget,
     resolveNavigationActiveMarkerTarget,
     syncNavigationMarkerTarget
 } from "../src/workspace-shell/navigation-active-marker.js";
@@ -107,6 +109,121 @@ test("маркер следует за явно выбранной целью и
         assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "46px");
         assert.equal(activeSubtaskLink.dataset.navigationMarkerTarget, "true");
         assert.equal(remoteScenarioToggle.hasAttribute("data-navigation-marker-target"), false);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("drag-резолвер выбирает ближайший блок по вертикали, даже если курсор между карточками", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const firstScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const firstStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const secondScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(firstScenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(firstStep, createRect(40, 236, 204, 46));
+        assignRect(secondScenarioToggle, createRect(24, 320, 220, 52));
+
+        assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 150 }), firstScenarioToggle);
+        assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 274 }), firstStep);
+        assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 410 }), secondScenarioToggle);
+        assert.deepEqual(describeNavigationMarkerTarget(secondScenarioToggle), {
+            kind: "scenario-toggle",
+            key: "remote-sync-preview"
+        });
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("drag-резолвер удерживает выбор внутри текущего родителя, пока курсор не вышел из его блока", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const flowNodes = appRoot.querySelectorAll(".flow-node");
+        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const branchStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(flowNodes[0], createRect(16, 110, 240, 200));
+        assignRect(flowNodes[1], createRect(16, 320, 240, 80));
+        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(branchStep, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        const stickyTarget = resolveNavigationMarkerDragTarget({
+            mapRoot,
+            clientY: 300,
+            currentTargetDescriptor: {
+                kind: "href",
+                key: "#/exercise/branch-safety?focus=step-1"
+            }
+        });
+
+        const outsideStickyScopeTarget = resolveNavigationMarkerDragTarget({
+            mapRoot,
+            clientY: 346,
+            currentTargetDescriptor: {
+                kind: "href",
+                key: "#/exercise/branch-safety?focus=step-1"
+            }
+        });
+
+        assert.equal(stickyTarget, branchStep);
+        assert.equal(outsideStickyScopeTarget, remoteScenarioToggle);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("drag между сценариями оставляет анимацию маркера включенной", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const firstStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const secondScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(firstStep, createRect(40, 236, 204, 46));
+        assignRect(secondScenarioToggle, createRect(24, 320, 220, 52));
+
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        marker.dispatchEvent(new window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 250
+        }));
+        window.dispatchEvent(new window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 346
+        }));
+        flushRafQueue(window);
+
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "280px");
+        assert.equal(marker.classList.contains("navigation-flow-rail__marker--instant"), false);
     } finally {
         restoreGlobals();
         dom.window.close();

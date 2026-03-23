@@ -118,7 +118,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 1px;
+    width: 16px;
     pointer-events: none;
     z-index: 2;
 }
@@ -141,11 +141,14 @@
     --navigation-active-marker-motion-duration: 200ms;
     position: absolute;
     top: 0;
-    left: 2px;
-    width: 4px;
+    left: -4px;
+    width: 16px;
     height: max(var(--navigation-active-marker-height, 0px), 24px);
     transform: translate3d(0, var(--navigation-active-marker-top, 0px), 0);
     opacity: 0;
+    cursor: grab;
+    touch-action: none;
+    pointer-events: auto;
     filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--navigation-active-marker-accent) 18%, transparent));
     transition:
         transform var(--navigation-active-marker-motion-duration) cubic-bezier(0.2, 0.9, 0.25, 1),
@@ -162,7 +165,7 @@
 .navigation-flow-rail__marker::before {
     top: 0;
     bottom: 0;
-    left: 0;
+    left: 6px;
     width: 4px;
     border-radius: 999px;
     background: var(--navigation-active-marker-accent);
@@ -181,6 +184,10 @@
 
 .navigation-flow-rail__marker--instant {
     transition: none;
+}
+
+.navigation-flow-rail__marker--dragging {
+    cursor: grabbing;
 }
 
 .navigation-flow-rail__marker--instant::before,

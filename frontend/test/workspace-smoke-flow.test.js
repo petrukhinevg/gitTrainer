@@ -233,6 +233,461 @@ test("отправляет ответ по Enter в поле команды", as
     }
 });
 
+test("перетаскивание маркера навигации открывает соответствующий сценарий в центре", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    setReducedMotion(dom.window, true);
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assert.ok(mapRoot && marker && branchOverview && remoteScenarioToggle, "Навигационные элементы должны быть доступны");
+
+        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 250
+        }));
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 346
+        }));
+        await waitForDragPreviewDelay();
+        await flushAsyncWork();
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 346
+        }));
+        await flushAsyncWork();
+
+        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
+        assert.match(appRoot.textContent, /Сначала обнови удалённое состояние/);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("захват маркера сохраняется между переключениями карточек, пока кнопка мыши зажата", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    setReducedMotion(dom.window, true);
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        let marker = appRoot.querySelector("[data-navigation-active-marker]");
+        let branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
+        let remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 250
+        }));
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 346
+        }));
+        await waitForDragPreviewDelay();
+        await flushAsyncWork();
+
+        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
+
+        marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 146
+        }));
+        await flushAsyncWork();
+
+        assert.match(dom.window.location.hash, /^#\/exercise\/branch-safety(?:\?focus=overview)?$/);
+        assert.ok(marker.classList.contains("navigation-flow-rail__marker--dragging"));
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 146
+        }));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector("[data-navigation-active-marker]").classList.contains("navigation-flow-rail__marker--dragging"),
+            false
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("drag к закрытому родителю временно раскрывает его и скрывает обратно при уходе без mouseup", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    setReducedMotion(dom.window, true);
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
+        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 250
+        }));
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 346
+        }));
+        await waitForDragPreviewDelay();
+        await flushAsyncWork();
+
+        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.getAttribute("aria-expanded"),
+            "true"
+        );
+
+        const remoteToggleAfterOpen = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        const branchToggleAfterOpen = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        assignRect(remoteToggleAfterOpen, createRect(24, 320, 220, 52));
+        assignRect(branchToggleAfterOpen, createRect(24, 120, 220, 52));
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 146
+        }));
+        await flushAsyncWork();
+
+        assert.equal(dom.window.location.hash, "#/exercise/branch-safety");
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.getAttribute("aria-expanded"),
+            "false"
+        );
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 146
+        }));
+        await flushAsyncWork(12);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("если отпустить маркер на дочернем элементе временно раскрытого сценария, он остаётся раскрытым", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    setReducedMotion(dom.window, true);
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 250
+        }));
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 346
+        }));
+        await waitForDragPreviewDelay();
+        await flushAsyncWork();
+
+        const remoteOverview = appRoot.querySelector('[data-scenario-panel="remote-sync-preview"] [data-scenario-focus="overview"]');
+        assert.ok(remoteOverview, "Временно раскрытый сценарий должен показать дочерние блоки");
+        assignRect(remoteOverview, createRect(40, 404, 204, 46));
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
+            bubbles: true,
+            cancelable: true,
+            buttons: 1,
+            clientY: 426
+        }));
+        await flushAsyncWork();
+
+        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 426
+        }));
+        await flushAsyncWork(12);
+
+        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview?focus=overview");
+        assert.ok(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'));
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"] [data-scenario-focus="overview"]')
+                ?.classList.contains("flow-block--active")
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function createCatalogPayload() {
     return {
         items: [
@@ -326,12 +781,63 @@ function createBranchSafetyDetailPayload() {
     };
 }
 
-function createStartSessionPayload() {
+function createRemoteSyncDetailPayload() {
+    return {
+        id: "remote-sync-preview",
+        slug: "remote-sync-preview",
+        title: "Сначала обнови удалённое состояние",
+        summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
+        difficulty: "intermediate",
+        tags: ["remote", "planning"],
+        meta: {
+            source: "mvp-fixture",
+            stub: true
+        },
+        workspace: {
+            shell: {
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
+            },
+            task: {
+                status: "authored-fixture",
+                goal: "Сначала подтверди актуальность удалённых ссылок, а не запускай синхронизацию вслепую.",
+                instructions: [
+                    {
+                        id: "refresh-remote-first",
+                        text: "Начните с безопасной проверки удалённого состояния."
+                    }
+                ],
+                steps: [
+                    {
+                        position: 1,
+                        title: "Освежите удалённые ссылки",
+                        detail: "Перед анализом расхождений нужно обновить локальные ссылки на origin."
+                    }
+                ],
+                annotations: []
+            },
+            repositoryContext: {
+                status: "authored-fixture",
+                branches: [
+                    { name: "main", current: true }
+                ],
+                commits: [],
+                files: [],
+                annotations: []
+            }
+        }
+    };
+}
+
+function createStartSessionPayload(scenarioSlug = "branch-safety") {
     return {
         sessionId: "session-1",
         scenario: {
-            slug: "branch-safety",
-            title: "Подтверди текущую ветку перед правками",
+            slug: scenarioSlug,
+            title: scenarioSlug === "remote-sync-preview"
+                ? "Сначала обнови удалённое состояние"
+                : "Подтверди текущую ветку перед правками",
             source: "mvp-fixture"
         },
         lifecycle: {
@@ -518,6 +1024,26 @@ function jsonResponse(payload, { status = 200 } = {}) {
     };
 }
 
+function assignRect(element, rect) {
+    Object.defineProperty(element, "getBoundingClientRect", {
+        configurable: true,
+        value: () => rect
+    });
+}
+
+function createRect(left, top, width, height) {
+    return {
+        x: left,
+        y: top,
+        left,
+        top,
+        width,
+        height,
+        right: left + width,
+        bottom: top + height
+    };
+}
+
 async function navigateToHash(windowLike, nextHash) {
     windowLike.location.hash = nextHash;
     windowLike.dispatchEvent(new windowLike.HashChangeEvent("hashchange"));
@@ -529,6 +1055,10 @@ async function flushAsyncWork(iterations = 6) {
         await Promise.resolve();
         await new Promise((resolve) => setTimeout(resolve, 0));
     }
+}
+
+async function waitForDragPreviewDelay() {
+    await new Promise((resolve) => setTimeout(resolve, 540));
 }
 
 function installDomGlobals(windowLike) {
@@ -586,4 +1116,15 @@ function installDomGlobals(windowLike) {
             globalThis[key] = previousValue;
         });
     };
+}
+
+function setReducedMotion(windowLike, matches) {
+    windowLike.matchMedia = () => ({
+        matches,
+        media: matches ? "(prefers-reduced-motion: reduce)" : "(prefers-reduced-motion: no-preference)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
 }

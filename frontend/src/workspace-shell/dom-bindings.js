@@ -9,6 +9,9 @@ export function bindWorkspaceShellDom({
     appRoot,
     state,
     handleRouteChange,
+    handleNavigationMarkerDragStart,
+    handleNavigationMarkerDragSelection,
+    handleNavigationMarkerDragEnd,
     applyCatalogControls,
     resetCatalogControls,
     toggleNavigationVisibility,
@@ -42,7 +45,12 @@ export function bindWorkspaceShellDom({
         handleSubmissionDraftSubmit,
         resetSubmissionDraft
     });
-    bindNavigationActiveMarker({ appRoot });
+    bindNavigationActiveMarker({
+        appRoot,
+        onMarkerDragStart: handleNavigationMarkerDragStart,
+        onMarkerDragTargetChange: handleNavigationMarkerDragSelection,
+        onMarkerDragEnd: handleNavigationMarkerDragEnd
+    });
     bindNavigationTagConnections({ appRoot });
 }
 
