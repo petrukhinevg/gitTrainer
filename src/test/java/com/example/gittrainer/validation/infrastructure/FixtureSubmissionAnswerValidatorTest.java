@@ -22,15 +22,15 @@ class FixtureSubmissionAnswerValidatorTest {
             new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
 
     @Test
-    void marksMatchingCommandAsCorrect() {
+    void marksFullStatusCommandAsPartial() {
         SubmissionOutcome outcome = validator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status")
         ).outcome();
 
         assertEquals("evaluated", outcome.status());
-        assertEquals("correct", outcome.correctness());
-        assertEquals("expected-command", outcome.code());
+        assertEquals("partial", outcome.correctness());
+        assertEquals("working-tree-inspected", outcome.code());
     }
 
     @Test
@@ -58,6 +58,18 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
+    void marksHistoryListCommandAsPartial() {
+        SubmissionOutcome outcome = validator.validate(
+                "history-cleanup-preview",
+                new SubmittedAnswer("command_text", "git log --oneline --decorate")
+        ).outcome();
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("partial", outcome.correctness());
+        assertEquals("history-preview-opened", outcome.code());
+    }
+
+    @Test
     void marksFetchCommandAsCorrectForRemoteSyncPreview() {
         SubmissionOutcome outcome = validator.validate(
                 "remote-sync-preview",
@@ -70,10 +82,35 @@ class FixtureSubmissionAnswerValidatorTest {
     }
 
     @Test
-    void marksBranchReadingCommandAsCorrectForBranchSafety() {
+    void marksBranchReadingCommandAsPartialForBranchSafety() {
         SubmissionOutcome outcome = validator.validate(
                 "branch-safety",
                 new SubmittedAnswer("command_text", "git branch --show-current")
+        ).outcome();
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("partial", outcome.correctness());
+        assertEquals("branch-context-confirmed", outcome.code());
+    }
+
+    @Test
+    void marksBranchStatusAsCorrectAfterBranchReadingForBranchSafety(@TempDir Path tempDir) {
+        ScenarioValidationSpecSource specSource = new FixtureScenarioValidationSpecSource();
+        SessionWorkspaceManager workspaceManager =
+                new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
+                        tempDir.toString(),
+                        specSource
+                );
+        FixtureSubmissionAnswerValidator branchValidator =
+                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        String sessionId = "branch-session";
+        workspaceManager.initializeWorkspace(sessionId, "branch-safety");
+
+        SubmissionOutcome outcome = branchValidator.validate(
+                sessionId,
+                "branch-safety",
+                List.of(new SubmittedAnswer("command_text", "git branch --show-current")),
+                new SubmittedAnswer("command_text", "git status -sb")
         ).outcome();
 
         assertEquals("evaluated", outcome.status());
@@ -115,6 +152,18 @@ class FixtureSubmissionAnswerValidatorTest {
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
         assertEquals("unexpected-command", outcome.code());
+    }
+
+    @Test
+    void validatesTagPreviewUsingWorkspaceTags() {
+        SubmissionOutcome outcome = validator.validate(
+                "tag-checkpoint-preview",
+                new SubmittedAnswer("command_text", "git show-ref --tags")
+        ).outcome();
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
     }
 
     @Test
@@ -199,6 +248,38 @@ class FixtureSubmissionAnswerValidatorTest {
 
         assertEquals("partial", firstOutcome.correctness());
         assertEquals("git-repo-state-incomplete", firstOutcome.code());
+        assertEquals("correct", secondOutcome.correctness());
+        assertEquals("expected-command", secondOutcome.code());
+    }
+
+    @Test
+    void marksRealStashScenarioAsPartialBeforeCheckpointAndCorrectAfterCheckpoint(@TempDir Path tempDir) {
+        ScenarioValidationSpecSource specSource = new FixtureScenarioValidationSpecSource();
+        SessionWorkspaceManager workspaceManager =
+                new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
+                        tempDir.toString(),
+                        specSource
+                );
+        FixtureSubmissionAnswerValidator stashValidator =
+                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        String sessionId = "stash-session";
+        workspaceManager.initializeWorkspace(sessionId, "stash-checkpoint-draft");
+
+        SubmissionOutcome firstOutcome = stashValidator.validate(
+                sessionId,
+                "stash-checkpoint-draft",
+                List.of(),
+                new SubmittedAnswer("command_text", "git status -sb")
+        ).outcome();
+        SubmissionOutcome secondOutcome = stashValidator.validate(
+                sessionId,
+                "stash-checkpoint-draft",
+                List.of(new SubmittedAnswer("command_text", "git status -sb")),
+                new SubmittedAnswer("command_text", "git stash push -u")
+        ).outcome();
+
+        assertEquals("partial", firstOutcome.correctness());
+        assertEquals("workspace-inspected", firstOutcome.code());
         assertEquals("correct", secondOutcome.correctness());
         assertEquals("expected-command", secondOutcome.code());
     }

@@ -38,6 +38,13 @@
                   value=".*[\\/]src[\\/]integration[\\/]java[\\/].*$"/>
     </module>
 
+    <!-- Exclude Flyway Java migrations because versioned class names and JDBC index code
+         intentionally follow Flyway conventions rather than regular domain style. -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern"
+                  value=".*[\\/]src[\\/]main[\\/]java[\\/]db[\\/]migration[\\/].*$"/>
+    </module>
+
     <module name="FileTabCharacter"/>
     <module name="NewlineAtEndOfFile"/>
 

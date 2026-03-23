@@ -1,5 +1,7 @@
 package com.example.gittrainer.session.api;
 
+import com.example.gittrainer.session.application.SessionWorkspaceSnapshot;
+import com.example.gittrainer.session.application.SessionWorkspaceSnapshotReader;
 import com.example.gittrainer.session.application.StartSessionResult;
 import com.example.gittrainer.session.application.SubmitAnswerResult;
 import com.example.gittrainer.session.domain.TrainingSession;
@@ -12,9 +14,14 @@ import java.util.Locale;
 public class SessionResponseMapper {
 
     private final SessionRetryFeedbackFactory sessionRetryFeedbackFactory;
+    private final SessionWorkspaceSnapshotReader sessionWorkspaceSnapshotReader;
 
-    public SessionResponseMapper(SessionRetryFeedbackFactory sessionRetryFeedbackFactory) {
+    public SessionResponseMapper(
+            SessionRetryFeedbackFactory sessionRetryFeedbackFactory,
+            SessionWorkspaceSnapshotReader sessionWorkspaceSnapshotReader
+    ) {
         this.sessionRetryFeedbackFactory = sessionRetryFeedbackFactory;
+        this.sessionWorkspaceSnapshotReader = sessionWorkspaceSnapshotReader;
     }
 
     public SessionStartResponse toStartResponse(StartSessionResult result) {
@@ -35,7 +42,8 @@ public class SessionResponseMapper {
                                 result.placeholderOutcome(),
                                 null
                         )
-                )
+                ),
+                toWorkspaceResponse(result.session())
         );
     }
 
@@ -53,7 +61,8 @@ public class SessionResponseMapper {
                         result.retryGuidance(),
                         result.outcome(),
                         result.answer().value()
-                )
+                ),
+                toWorkspaceResponse(result.session())
         );
     }
 
@@ -72,6 +81,36 @@ public class SessionResponseMapper {
                 outcome.correctness(),
                 outcome.code(),
                 outcome.message()
+        );
+    }
+
+    private SessionWorkspaceResponse toWorkspaceResponse(TrainingSession session) {
+        return sessionWorkspaceSnapshotReader.read(session.sessionId())
+                .map(SessionResponseMapper::toWorkspaceResponse)
+                .orElse(null);
+    }
+
+    private static SessionWorkspaceResponse toWorkspaceResponse(SessionWorkspaceSnapshot snapshot) {
+        SessionWorkspaceSnapshot.RepositoryContext repositoryContext = snapshot.repositoryContext();
+        return new SessionWorkspaceResponse(
+                new SessionRepositoryContextResponse(
+                        repositoryContext.status(),
+                        repositoryContext.branches().stream()
+                                .map(branch -> new SessionRepositoryBranchResponse(branch.name(), branch.current()))
+                                .toList(),
+                        repositoryContext.commits().stream()
+                                .map(commit -> new SessionRepositoryCommitResponse(commit.id(), commit.summary()))
+                                .toList(),
+                        repositoryContext.files().stream()
+                                .map(file -> new SessionRepositoryFileResponse(file.path(), file.status()))
+                                .toList(),
+                        repositoryContext.annotations().stream()
+                                .map(annotation -> new SessionWorkspaceAnnotationResponse(
+                                        annotation.label(),
+                                        annotation.message()
+                                ))
+                                .toList()
+                )
         );
     }
 }

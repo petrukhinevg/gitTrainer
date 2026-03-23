@@ -1,0 +1,343 @@
+{
+  "definitions": [
+    {
+      "scenarioSlug": "status-basics",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "main",
+          "workingTreeClean": false
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "main",
+          "branches": ["docs/review-notes"],
+          "committedFiles": [
+            { "path": "README.md", "content": "# Git Trainer\n" },
+            { "path": "src/main.js", "content": "export const workspaceShell = 'stable';\n" }
+          ],
+          "modifiedFiles": [
+            { "path": "README.md", "content": "# Git Trainer\n\n- review draft\n" },
+            { "path": "src/main.js", "content": "export const workspaceShell = 'noisy';\n" }
+          ],
+          "untrackedFiles": [
+            { "path": "notes/status-checklist.md", "content": "- inspect modified files\n" }
+          ]
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git status",
+          "correctness": "partial",
+          "code": "working-tree-inspected",
+          "message": "Рабочее дерево просмотрено. Теперь можно выбрать более компактный статус."
+        },
+        {
+          "rawCommand": "git status --short",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Краткий статус корректно показывает tracked и untracked изменения."
+        },
+        {
+          "rawCommand": "git status -sb",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Краткий статус корректно показывает tracked и untracked изменения."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "branch-safety",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "release/hotfix-7",
+          "workingTreeClean": false
+        },
+        "requiredPriorCommandsByCommand": {
+          "git status -sb": ["git branch --show-current"],
+          "git status --short -b": ["git branch --show-current"]
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "release/hotfix-7",
+          "branches": ["release/hotfix-7", "feature/menu-refresh", "main"],
+          "committedFiles": [
+            { "path": "src/ui/header.css", "content": ".header { padding: 8px; }\n" },
+            { "path": "docs/release-checklist.md", "content": "- verify deploy\n" }
+          ],
+          "modifiedFiles": [
+            { "path": "src/ui/header.css", "content": ".header { padding: 12px; }\n" },
+            { "path": "docs/release-checklist.md", "content": "- verify deploy\n- smoke test\n" }
+          ],
+          "untrackedFiles": []
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git branch --show-current",
+          "correctness": "partial",
+          "code": "branch-context-confirmed",
+          "message": "Активная ветка подтверждена. Теперь соберите компактный статус незавершённых правок."
+        },
+        {
+          "rawCommand": "git status -sb",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Активная ветка и незавершённые правки подтверждены безопасными командами чтения."
+        },
+        {
+          "rawCommand": "git status --short -b",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Активная ветка и незавершённые правки подтверждены безопасными командами чтения."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "history-cleanup-preview",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "feature/history-cleanup",
+          "workingTreeClean": false
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "feature/history-cleanup",
+          "branches": ["feature/history-cleanup", "main"],
+          "committedFiles": [
+            { "path": "frontend/src/styles.css", "content": ".badge { padding: 4px; }\n" },
+            { "path": "frontend/src/workspace-shell/view.js", "content": "export const badge = 'shell';\n" }
+          ],
+          "modifiedFiles": [
+            { "path": "frontend/src/styles.css", "content": ".badge { padding: 6px; }\n" },
+            { "path": "frontend/src/workspace-shell/view.js", "content": "export const badge = 'shell-preview';\n" }
+          ],
+          "untrackedFiles": []
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git log --oneline --decorate",
+          "correctness": "partial",
+          "code": "history-preview-opened",
+          "message": "История просмотрена. Теперь можно открыть более наглядный граф перед cleanup."
+        },
+        {
+          "rawCommand": "git log --oneline --graph --decorate",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Компактный граф истории показал fixup и WIP-сигналы без переписывания коммитов."
+        },
+        {
+          "rawCommand": "git log --graph --oneline --decorate",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Компактный граф истории показал fixup и WIP-сигналы без переписывания коммитов."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "remote-sync-preview",
+      "validatorType": "git_repo_state_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "remoteName": "origin",
+          "localAheadCommitMessage": "local notes WIP",
+          "remoteAheadCommitMessage": "remote hotfix ready",
+          "baseFiles": [
+            { "path": "README.md", "content": "# Git Trainer\n" },
+            { "path": "docs/sync-playbook.md", "content": "- inspect divergence\n" }
+          ],
+          "localAheadFiles": [
+            { "path": "docs/local-notes.md", "content": "- pending local integration\n" }
+          ],
+          "remoteAheadFiles": [
+            { "path": "release/remote-hotfix.md", "content": "- hotfix available upstream\n" }
+          ]
+        },
+        "expectedState": {
+          "currentBranch": "main",
+          "localHeadCommitMessage": "local notes WIP",
+          "fetchHeadCommitMessage": "remote hotfix ready",
+          "remoteTrackingRefs": [
+            { "ref": "refs/remotes/origin/main", "commitMessage": "remote hotfix ready" }
+          ]
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git fetch",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Удалённое состояние обновлено отдельно от интеграции."
+        },
+        {
+          "rawCommand": "git fetch origin",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Удалённое состояние обновлено отдельно от интеграции."
+        },
+        {
+          "rawCommand": "git fetch --all --prune",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Удалённое состояние обновлено отдельно от интеграции."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "stash-checkpoint-draft",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "feature/test-stash-panel",
+          "workingTreeClean": true,
+          "stashEntryCount": 1
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "feature/test-stash-panel",
+          "branches": ["feature/test-stash-panel", "main"],
+          "committedFiles": [
+            { "path": "frontend/src/demo-panel.js", "content": "export const panel = 'draft';\n" }
+          ],
+          "modifiedFiles": [
+            { "path": "frontend/src/demo-panel.js", "content": "export const panel = 'draft-staged';\n" }
+          ],
+          "untrackedFiles": [
+            { "path": "notes/ui-placeholder.txt", "content": "temporary ui notes\n" }
+          ]
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git status -sb",
+          "correctness": "partial",
+          "code": "workspace-inspected",
+          "message": "Контекст подтверждён, теперь сохраните текущие изменения в stash."
+        },
+        {
+          "rawCommand": "git status --short",
+          "correctness": "partial",
+          "code": "workspace-inspected",
+          "message": "Контекст подтверждён, теперь сохраните текущие изменения в stash."
+        },
+        {
+          "rawCommand": "git stash push -u",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Изменения и untracked-файлы безопасно убраны в stash."
+        },
+        {
+          "rawCommand": "git stash push --include-untracked",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Изменения и untracked-файлы безопасно убраны в stash."
+        },
+        {
+          "rawCommand": "git stash push -u -m \"ui-test\"",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Изменения и untracked-файлы безопасно убраны в stash."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "merge-sandbox-outline",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "feature/mock-merge-window",
+          "workingTreeClean": false
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "feature/mock-merge-window",
+          "branches": ["feature/mock-merge-window", "release/demo", "main"],
+          "committedFiles": [
+            { "path": "frontend/src/merge-banner.js", "content": "export const mergeBanner = 'draft';\n" },
+            { "path": "docs/mock-merge-plan.md", "content": "- inspect merge shape\n" }
+          ],
+          "modifiedFiles": [
+            { "path": "frontend/src/merge-banner.js", "content": "export const mergeBanner = 'outline';\n" },
+            { "path": "docs/mock-merge-plan.md", "content": "- inspect merge shape\n- review diff\n" }
+          ],
+          "untrackedFiles": []
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git status -sb",
+          "correctness": "partial",
+          "code": "merge-context-confirmed",
+          "message": "Контекст ветки просмотрен. Теперь можно безопасно открыть diff или граф."
+        },
+        {
+          "rawCommand": "git diff main...feature/mock-merge-window",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Preview различий собран без запуска merge."
+        },
+        {
+          "rawCommand": "git log --oneline --graph --decorate --all",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Граф веток просмотрен без запуска merge."
+        }
+      ]
+    },
+    {
+      "scenarioSlug": "tag-checkpoint-preview",
+      "validatorType": "git_command_probe",
+      "config": {
+        "expectedExitCode": 0,
+        "expectedWorkspaceState": {
+          "currentBranch": "main",
+          "workingTreeClean": true,
+          "tagCount": 2
+        },
+        "workspaceTemplate": {
+          "initialBranch": "main",
+          "currentBranch": "main",
+          "branches": [],
+          "committedFiles": [
+            { "path": "docs/release-tags.md", "content": "- release/demo-v1\n" },
+            { "path": "frontend/src/tag-chip.js", "content": "export const checkpoint = 'demo';\n" }
+          ],
+          "modifiedFiles": [],
+          "untrackedFiles": [],
+          "tags": ["release/demo-v1", "checkpoint/ui-shell"]
+        }
+      },
+      "rules": [
+        {
+          "rawCommand": "git tag --list",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Список тегов просмотрен без изменения истории."
+        },
+        {
+          "rawCommand": "git tag -l",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Список тегов просмотрен без изменения истории."
+        },
+        {
+          "rawCommand": "git show-ref --tags",
+          "correctness": "correct",
+          "code": "expected-command",
+          "message": "Ссылки на теги просмотрены без изменения истории."
+        }
+      ]
+    }
+  ]
+}

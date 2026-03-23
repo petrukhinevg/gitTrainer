@@ -682,6 +682,7 @@ export function createCatalogWorkspaceController({
         state.session.feedbackPanel = createFeedbackPanelState({
             previousFeedbackPanel: state.session.feedbackPanel,
             detail: state.detail.data,
+            repositoryContext: state.session.bootstrap.response?.workspace?.repositoryContext ?? null,
             scenarioSlug: state.selectedScenarioSlug,
             preparedSubmission,
             status: "submitting",
@@ -710,6 +711,7 @@ export function createCatalogWorkspaceController({
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
+                repositoryContext: response?.workspace?.repositoryContext ?? null,
                 scenarioSlug: state.selectedScenarioSlug,
                 preparedSubmission,
                 status: resolveFeedbackPanelStatus(response),
@@ -741,6 +743,7 @@ export function createCatalogWorkspaceController({
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
+                repositoryContext: state.session.bootstrap.response?.workspace?.repositoryContext ?? null,
                 scenarioSlug: state.selectedScenarioSlug,
                 preparedSubmission,
                 status: "request-failure",
@@ -1707,6 +1710,7 @@ function createInitialFeedbackPanelState() {
 function createFeedbackPanelState({
     previousFeedbackPanel = null,
     detail = null,
+    repositoryContext = null,
     scenarioSlug = null,
     preparedSubmission = null,
     status = "idle",
@@ -1720,9 +1724,9 @@ function createFeedbackPanelState({
 }) {
     const previousContext = previousFeedbackPanel?.contextSnapshot ?? null;
     const previousRetryFeedback = previousFeedbackPanel?.retryFeedback ?? null;
-    const repositoryContext = detail?.workspace?.repositoryContext ?? null;
-    const branches = Array.isArray(repositoryContext?.branches) ? repositoryContext.branches : [];
-    const files = Array.isArray(repositoryContext?.files) ? repositoryContext.files : [];
+    const activeRepositoryContext = repositoryContext ?? detail?.workspace?.repositoryContext ?? null;
+    const branches = Array.isArray(activeRepositoryContext?.branches) ? activeRepositoryContext.branches : [];
+    const files = Array.isArray(activeRepositoryContext?.files) ? activeRepositoryContext.files : [];
     const currentBranch = branches.find((branch) => branch?.current)?.name
         ?? branches[0]?.name
         ?? previousContext?.currentBranch

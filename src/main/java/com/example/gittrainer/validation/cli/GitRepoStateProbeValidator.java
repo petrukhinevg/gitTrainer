@@ -61,7 +61,11 @@ public final class GitRepoStateProbeValidator {
 
             ObservedRepoState observedState = observeState(workspace, config.expectedState());
             if (!matches(config.expectedState(), observedState)) {
-                return repoStateMismatchResponse(commandSequence.normalizedAnswer(), observedState);
+                return repoStateMismatchResponse(
+                        commandSequence.normalizedAnswer(),
+                        commandSequence.matchedRule(),
+                        observedState
+                );
             }
 
             return new CliValidationResponse(
@@ -117,9 +121,11 @@ public final class GitRepoStateProbeValidator {
             if (!matches(config.expectedState(), observedState)) {
                 return new CliValidationResponse(
                         "evaluated",
-                        "partial",
-                        "git-repo-state-incomplete",
-                        "Команда допустима, но сценарный workspace ещё не находится в целевом состоянии.",
+                        "partial".equals(matchedRule.correctness()) ? matchedRule.correctness() : "partial",
+                        "partial".equals(matchedRule.correctness()) ? matchedRule.code() : "git-repo-state-incomplete",
+                        "partial".equals(matchedRule.correctness())
+                                ? matchedRule.message()
+                                : "Команда допустима, но сценарный workspace ещё не находится в целевом состоянии.",
                         observations(normalizedAnswer, observedState),
                         List.of(),
                         null
@@ -337,13 +343,16 @@ public final class GitRepoStateProbeValidator {
 
     private static CliValidationResponse repoStateMismatchResponse(
             String normalizedAnswer,
+            com.example.gittrainer.validation.application.ScenarioValidationRule matchedRule,
             ObservedRepoState observedState
     ) {
         return new CliValidationResponse(
             "evaluated",
-            "partial",
-            "git-repo-state-incomplete",
-            "Команда допустима, но репозиторий пока не приведён в ожидаемое состояние.",
+            "partial".equals(matchedRule.correctness()) ? matchedRule.correctness() : "partial",
+            "partial".equals(matchedRule.correctness()) ? matchedRule.code() : "git-repo-state-incomplete",
+            "partial".equals(matchedRule.correctness())
+                    ? matchedRule.message()
+                    : "Команда допустима, но репозиторий пока не приведён в ожидаемое состояние.",
             observations(normalizedAnswer, observedState),
             List.of(),
             null

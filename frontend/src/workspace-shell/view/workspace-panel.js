@@ -65,10 +65,14 @@ export function renderWorkspacePanelSections(state) {
     }
 
     const detail = state.detail.data;
-    const repositoryContext = normalizeRepositoryContext(detail.workspace?.repositoryContext);
     const bootstrapState = normalizeBootstrapState(state.session?.bootstrap);
     const submissionState = normalizeSubmissionState(state.session?.submission);
     const feedbackPanelState = normalizeFeedbackPanelState(state.session?.feedbackPanel);
+    const repositoryContext = normalizeRepositoryContext(resolveActiveRepositoryContext(
+        detail,
+        bootstrapState,
+        submissionState
+    ));
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
     const retryFeedback = resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
@@ -822,6 +826,13 @@ function normalizeRepositoryContext(repositoryContext) {
     };
 }
 
+function resolveActiveRepositoryContext(detail, bootstrapState, submissionState) {
+    return submissionState.response?.workspace?.repositoryContext
+        ?? bootstrapState.response?.workspace?.repositoryContext
+        ?? detail?.workspace?.repositoryContext
+        ?? null;
+}
+
 function normalizeRepositoryFileStatus(status) {
     return typeof status === "string" && status.trim() !== ""
         ? status.trim().toLowerCase()
@@ -836,6 +847,12 @@ function formatRepositoryFileStatus(status) {
             return "не отслеживается";
         case "staged":
             return "в индексе";
+        case "deleted":
+            return "удалён";
+        case "renamed":
+            return "переименован";
+        case "conflicted":
+            return "конфликт";
         case "clean":
             return "чистый";
         default:
@@ -851,6 +868,12 @@ function describeRepositoryFileStatus(status) {
             return "Файл пока не добавлен в индекс и не отслеживается Git.";
         case "staged":
             return "Изменение уже попало в индекс и готово к коммиту.";
+        case "deleted":
+            return "Файл помечен на удаление в текущем состоянии рабочего дерева или индекса.";
+        case "renamed":
+            return "Git уже видит путь как переименование относительно предыдущего состояния.";
+        case "conflicted":
+            return "По этому пути есть конфликт, который нужно разрешить до следующего шага.";
         case "clean":
             return "По этому пути нет незакоммиченных изменений.";
         default:
@@ -1236,6 +1259,8 @@ function formatRepositoryStatus(value) {
     switch (value) {
         case "authored-fixture":
             return "фикстура";
+        case "live-session":
+            return "живая сессия";
         case "unavailable":
             return "недоступно";
         default:

@@ -4,6 +4,7 @@ public record SessionStartResponse(
         String sessionId,
         SessionScenarioResponse scenario,
         SessionLifecycleResponse lifecycle,
-        SessionSubmissionBoundaryResponse submission
+        SessionSubmissionBoundaryResponse submission,
+        SessionWorkspaceResponse workspace
 ) {
 }

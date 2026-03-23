@@ -122,16 +122,24 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
         assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
         assert.match(appRoot.textContent, /Рекомендация/iu);
 
-        assert.deepEqual(requests.slice(0, 5), [
+        assert.deepEqual(requests.slice(0, 3), [
             "GET /api/scenarios",
             "GET /api/scenarios/branch-safety",
-            "GET /api/scenarios/remote-sync-preview",
-            "POST /api/sessions",
-            "POST /api/sessions/session-1/submissions"
+            "GET /api/scenarios/remote-sync-preview"
         ]);
-        assert.ok(requests.length >= 6, "После перехода на progress должен быть хотя бы один запрос сводки прогресса");
         assert.ok(
-            requests.slice(5).every((request) => request === "GET /api/progress"),
+            requests.includes("POST /api/sessions"),
+            "Smoke path должен запускать backend session"
+        );
+        assert.ok(
+            requests.includes("POST /api/sessions/session-1/submissions"),
+            "Smoke path должен отправлять ответ в активную сессию"
+        );
+        assert.ok(requests.length >= 6, "После перехода на progress должен быть хотя бы один запрос сводки прогресса");
+        const requestIndexAfterSubmission = requests.lastIndexOf("POST /api/sessions/session-1/submissions");
+        assert.ok(requestIndexAfterSubmission >= 0, "Submit request должен попасть в журнал запросов");
+        assert.ok(
+            requests.slice(requestIndexAfterSubmission + 1).every((request) => request === "GET /api/progress"),
             "После submit дополнительные сетевые запросы должны ограничиваться только progress summary"
         );
     } finally {
@@ -227,6 +235,86 @@ test("отправляет ответ по Enter в поле команды", as
             appRoot.querySelector('[data-retry-feedback-panel][data-retry-feedback-status="resolved"]'),
             "После Enter-submit должен появиться resolved retry feedback"
         );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("правая колонка переключается на live workspace state из session API", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/stash-checkpoint-draft") {
+            return jsonResponse(createStashDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            return jsonResponse(createStashStartSessionPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions/session-stash/submissions") {
+            return jsonResponse(createStashSubmissionPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote", "stash"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/stash-checkpoint-draft");
+        await flushAsyncWork();
+
+        assert.match(appRoot.textContent, /живая сессия/i);
+        assert.match(appRoot.textContent, /Файлы: 2/);
+        assert.match(appRoot.textContent, /feature\/test-stash-panel/);
+
+        const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
+        assert.ok(answerField, "Поле ввода stash-команды должно быть доступно");
+        answerField.value = "git stash push -u";
+        answerField.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+        await flushAsyncWork();
+
+        appRoot.querySelector("[data-submission-draft-form]")
+            .dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+        await flushAsyncWork();
+
+        assert.match(appRoot.textContent, /Файлы: 0/);
+        assert.match(appRoot.textContent, /В stash сохранено записей: 1\./);
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -475,6 +563,14 @@ function createCatalogPayload() {
                 summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
                 difficulty: "intermediate",
                 tags: ["remote", "planning"]
+            },
+            {
+                id: "stash-checkpoint-draft",
+                slug: "stash-checkpoint-draft",
+                title: "Убери черновик в stash",
+                summary: "Сначала зафиксируй текущий рабочий контекст, а затем убери изменения и untracked файлы в stash.",
+                difficulty: "intermediate",
+                tags: ["stash", "safety", "workspace"]
             }
         ],
         meta: {
@@ -599,6 +695,60 @@ function createRemoteSyncDetailPayload() {
     };
 }
 
+function createStashDetailPayload() {
+    return {
+        id: "stash-checkpoint-draft",
+        slug: "stash-checkpoint-draft",
+        title: "Убери черновик в stash",
+        summary: "Сначала зафиксируй текущий рабочий контекст, а затем убери изменения и untracked файлы в stash.",
+        difficulty: "intermediate",
+        tags: ["stash", "safety", "workspace"],
+        meta: {
+            source: "mvp-fixture",
+            stub: true
+        },
+        workspace: {
+            shell: {
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
+            },
+            task: {
+                status: "authored-fixture",
+                goal: "Подтвердите текущие изменения и безопасно уберите их в stash вместе с untracked файлами.",
+                instructions: [
+                    {
+                        id: "inspect-before-stash",
+                        text: "Сначала посмотрите на текущее состояние, затем сохраните весь черновик в stash."
+                    }
+                ],
+                steps: [
+                    {
+                        position: 1,
+                        title: "Просмотрите рабочее дерево",
+                        detail: "Подтвердите, какие файлы изменены и какие ещё не отслеживаются."
+                    }
+                ],
+                annotations: []
+            },
+            repositoryContext: {
+                status: "authored-fixture",
+                branches: [
+                    { name: "feature/test-stash-panel", current: true }
+                ],
+                commits: [
+                    { id: "c41ab00", summary: "ui: подготовить черновик stash-панели" }
+                ],
+                files: [
+                    { path: "frontend/src/demo-panel.js", status: "modified" },
+                    { path: "notes/ui-placeholder.txt", status: "untracked" }
+                ],
+                annotations: []
+            }
+        }
+    };
+}
+
 function createStartSessionPayload(scenarioSlug = "branch-safety") {
     return {
         sessionId: "session-1",
@@ -606,6 +756,8 @@ function createStartSessionPayload(scenarioSlug = "branch-safety") {
             slug: scenarioSlug,
             title: scenarioSlug === "remote-sync-preview"
                 ? "Сначала обнови удалённое состояние"
+                : scenarioSlug === "stash-checkpoint-draft"
+                    ? "Убери черновик в stash"
                 : "Подтверди текущую ветку перед правками",
             source: "mvp-fixture"
         },
@@ -644,6 +796,9 @@ function createStartSessionPayload(scenarioSlug = "branch-safety") {
                     reveals: []
                 }
             }
+        },
+        workspace: {
+            repositoryContext: resolveStartRepositoryContext(scenarioSlug)
         }
     };
 }
@@ -690,7 +845,157 @@ function createSubmissionPayload() {
                 message: "После правильного ответа дополнительная подсказка не нужна.",
                 reveals: []
             }
+        },
+        workspace: {
+            repositoryContext: {
+                status: "live-session",
+                branches: [
+                    { name: "release/hotfix-7", current: true },
+                    { name: "feature/menu-refresh", current: false },
+                    { name: "main", current: false }
+                ],
+                commits: [
+                    { id: "b74e2d0", summary: "hotfix: восстановить отступы заголовка" }
+                ],
+                files: [
+                    { path: "src/ui/header.css", status: "modified" },
+                    { path: "docs/release-checklist.md", status: "modified" }
+                ],
+                annotations: [
+                    {
+                        label: "Активная ветка",
+                        message: "Сессия сейчас открыта на `release/hotfix-7`."
+                    }
+                ]
+            }
         }
+    };
+}
+
+function createStashStartSessionPayload() {
+    return {
+        ...createStartSessionPayload("stash-checkpoint-draft"),
+        sessionId: "session-stash"
+    };
+}
+
+function createStashSubmissionPayload() {
+    return {
+        submissionId: "submission-stash-1",
+        sessionId: "session-stash",
+        attemptNumber: 1,
+        submittedAt: "2026-03-21T00:24:05.818771Z",
+        lifecycle: {
+            status: "active",
+            startedAt: "2026-03-21T00:23:59.526366Z",
+            submissionCount: 1,
+            lastSubmissionId: "submission-stash-1"
+        },
+        answer: {
+            type: "command_text",
+            value: "git stash push -u"
+        },
+        outcome: {
+            status: "evaluated",
+            correctness: "correct",
+            code: "expected-command",
+            message: "Изменения и untracked-файлы безопасно убраны в stash."
+        },
+        retryFeedback: {
+            status: "resolved",
+            retryState: {
+                status: "complete",
+                attemptNumber: 1,
+                eligibility: "not-needed"
+            },
+            explanation: {
+                status: "resolved",
+                title: "Повторное объяснение не требуется",
+                tone: "success",
+                message: "Рабочее дерево уже приведено в нужное состояние.",
+                details: []
+            },
+            hint: {
+                status: "resolved",
+                level: "none",
+                message: "После правильного ответа дополнительная подсказка не нужна.",
+                reveals: []
+            }
+        },
+        workspace: {
+            repositoryContext: {
+                status: "live-session",
+                branches: [
+                    { name: "feature/test-stash-panel", current: true },
+                    { name: "main", current: false }
+                ],
+                commits: [
+                    { id: "c41ab00", summary: "ui: подготовить черновик stash-панели" }
+                ],
+                files: [],
+                annotations: [
+                    {
+                        label: "Активная ветка",
+                        message: "Сессия сейчас открыта на `feature/test-stash-panel`."
+                    },
+                    {
+                        label: "Рабочее дерево",
+                        message: "Незакоммиченных изменений сейчас нет."
+                    },
+                    {
+                        label: "Stash",
+                        message: "В stash сохранено записей: 1."
+                    }
+                ]
+            }
+        }
+    };
+}
+
+function resolveStartRepositoryContext(scenarioSlug) {
+    if (scenarioSlug === "stash-checkpoint-draft") {
+        return {
+            status: "live-session",
+            branches: [
+                { name: "feature/test-stash-panel", current: true },
+                { name: "main", current: false }
+            ],
+            commits: [
+                { id: "c41ab00", summary: "ui: подготовить черновик stash-панели" }
+            ],
+            files: [
+                { path: "frontend/src/demo-panel.js", status: "modified" },
+                { path: "notes/ui-placeholder.txt", status: "untracked" }
+            ],
+            annotations: [
+                {
+                    label: "Активная ветка",
+                    message: "Сессия сейчас открыта на `feature/test-stash-panel`."
+                }
+            ]
+        };
+    }
+
+    return {
+        status: "live-session",
+        branches: [
+            { name: "release/hotfix-7", current: true },
+            { name: "feature/menu-refresh", current: false },
+            { name: "main", current: false }
+        ],
+        commits: [
+            { id: "b74e2d0", summary: "hotfix: восстановить отступы заголовка" }
+        ],
+        files: [
+            { path: "src/ui/header.css", status: "modified" },
+            { path: "docs/release-checklist.md", status: "modified" }
+        ],
+        annotations: [
+            {
+                label: "Активная ветка",
+                message: "Сессия сейчас открыта на `release/hotfix-7`."
+            }
+        ]
     };
 }
 

@@ -128,7 +128,7 @@ class SessionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "answer": "git status"
+                                  "answer": "git status --short"
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON))
@@ -142,7 +142,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.lifecycle.submissionCount").value(1))
                 .andExpect(jsonPath("$.lifecycle.lastSubmissionId").isNotEmpty())
                 .andExpect(jsonPath("$.answer.type").value("command_text"))
-                .andExpect(jsonPath("$.answer.value").value("git status"))
+                .andExpect(jsonPath("$.answer.value").value("git status --short"))
                 .andExpect(jsonPath("$.outcome.status").value("evaluated"))
                 .andExpect(jsonPath("$.outcome.correctness").value("correct"))
                 .andExpect(jsonPath("$.outcome.code").value("expected-command"))
@@ -154,7 +154,51 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.retryFeedback.explanation.tone").value("success"))
                 .andExpect(jsonPath("$.retryFeedback.hint.status").value("resolved"))
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("none"))
-                .andExpect(jsonPath("$.retryFeedback.hint.reveals").isEmpty());
+                .andExpect(jsonPath("$.retryFeedback.hint.reveals").isEmpty())
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"));
+    }
+
+    @Test
+    void exposesLiveWorkspaceStateOnSessionStart() throws Exception {
+        mockMvc.perform(post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenarioSlug": "status-basics"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(3))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[0].path").value("README.md"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[0].status").value("modified"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[2].path").value("notes/status-checklist.md"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files[2].status").value("untracked"));
+    }
+
+    @Test
+    void returnsUpdatedLiveWorkspaceStateAfterMutatingSubmission() throws Exception {
+        String sessionId = startSessionAndExtractId("stash-checkpoint-draft");
+
+        mockMvc.perform(post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git stash push -u"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.outcome.correctness").value("correct"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.files").isEmpty())
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[2].label").value("Stash"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[2].message")
+                        .value("В stash сохранено записей: 1."));
     }
 
     @Test

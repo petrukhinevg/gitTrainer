@@ -88,7 +88,14 @@ class GitValidationCliMainTest {
                         5000,
                         Map.of(
                                 "expectedExitCode", 0,
-                                "expectedStdout", "release/hotfix-7",
+                                "expectedWorkspaceState", Map.of(
+                                        "currentBranch", "release/hotfix-7",
+                                        "workingTreeClean", false
+                                ),
+                                "requiredPriorCommandsByCommand", Map.of(
+                                        "git status -sb", List.of("git branch --show-current"),
+                                        "git status --short -b", List.of("git branch --show-current")
+                                ),
                                 "workspaceTemplate", Map.of(
                                         "initialBranch", "main",
                                         "currentBranch", "release/hotfix-7",
@@ -108,10 +115,19 @@ class GitValidationCliMainTest {
                                 "exact_normalized_command",
                                 "git branch --show-current",
                                 "git branch --show-current",
-                                "correct",
-                                "expected-command",
+                                "partial",
+                                "branch-context-confirmed",
                                 "ok"
-                        ))
+                        ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git status -sb",
+                                        "git status -sb",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
                 )
         );
         Path requestFile = Files.createTempFile("git-cli-probe-test-", ".json");
@@ -130,10 +146,86 @@ class GitValidationCliMainTest {
 
         CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
         assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("partial");
+        assertThat(response.code()).isEqualTo("branch-context-confirmed");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("current-branch", "working-tree-clean");
+    }
+
+    @Test
+    void writesJsonOutcomeForBranchSafetyAfterRequiredHistory() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "branch-safety",
+                List.of(new SubmittedAnswer("command_text", "git branch --show-current")),
+                new SubmittedAnswer("command_text", "git status -sb"),
+                new ScenarioValidationSpec(
+                        "fixture:branch-safety:command_text",
+                        "branch-safety",
+                        "command_text",
+                        "git_command_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "expectedWorkspaceState", Map.of(
+                                        "currentBranch", "release/hotfix-7",
+                                        "workingTreeClean", false
+                                ),
+                                "requiredPriorCommandsByCommand", Map.of(
+                                        "git status -sb", List.of("git branch --show-current")
+                                ),
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "currentBranch", "release/hotfix-7",
+                                        "branches", List.of("release/hotfix-7", "feature/menu-refresh", "main"),
+                                        "committedFiles", List.of(
+                                                Map.of("path", "src/ui/header.css", "content", ".header { padding: 8px; }\n"),
+                                                Map.of("path", "docs/release-checklist.md", "content", "- verify deploy\n")
+                                        ),
+                                        "modifiedFiles", List.of(
+                                                Map.of("path", "src/ui/header.css", "content", ".header { padding: 12px; }\n"),
+                                                Map.of("path", "docs/release-checklist.md", "content", "- verify deploy\n- smoke test\n")
+                                        ),
+                                        "untrackedFiles", List.of()
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git branch --show-current",
+                                        "git branch --show-current",
+                                        "partial",
+                                        "branch-context-confirmed",
+                                        "ok"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git status -sb",
+                                        "git status -sb",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-branch-history-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
         assertThat(response.correctness()).isEqualTo("correct");
         assertThat(response.code()).isEqualTo("expected-command");
-        assertThat(response.observations()).extracting(CliValidationObservation::code)
-                .contains("stdout", "workspace-branch");
     }
 
     @Test
@@ -303,5 +395,147 @@ class GitValidationCliMainTest {
         assertThat(response.code()).isEqualTo("expected-command");
         assertThat(response.observations()).extracting(CliValidationObservation::message)
                 .contains("remote hotfix ready");
+    }
+
+    @Test
+    void writesJsonOutcomeForWorkspaceStateAwareCommandProbe() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "stash-checkpoint-draft",
+                List.of(new SubmittedAnswer("command_text", "git status -sb")),
+                new SubmittedAnswer("command_text", "git stash push -u"),
+                new ScenarioValidationSpec(
+                        "fixture:stash-checkpoint-draft:command_text",
+                        "stash-checkpoint-draft",
+                        "command_text",
+                        "git_command_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "expectedWorkspaceState", Map.of(
+                                        "currentBranch", "feature/test-stash-panel",
+                                        "workingTreeClean", true,
+                                        "stashEntryCount", 1
+                                ),
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "currentBranch", "feature/test-stash-panel",
+                                        "branches", List.of("feature/test-stash-panel", "main"),
+                                        "committedFiles", List.of(
+                                                Map.of("path", "frontend/src/demo-panel.js", "content", "export const panel = 'draft';\n")
+                                        ),
+                                        "modifiedFiles", List.of(
+                                                Map.of("path", "frontend/src/demo-panel.js", "content", "export const panel = 'draft-staged';\n")
+                                        ),
+                                        "untrackedFiles", List.of(
+                                                Map.of("path", "notes/ui-placeholder.txt", "content", "temporary ui notes\n")
+                                        )
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git status -sb",
+                                        "git status -sb",
+                                        "partial",
+                                        "workspace-inspected",
+                                        "inspect"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git stash push -u",
+                                        "git stash push -u",
+                                        "correct",
+                                        "expected-command",
+                                        "stash"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-command-state-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("correct");
+        assertThat(response.code()).isEqualTo("expected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("current-branch", "working-tree-clean", "stash-entry-count");
+    }
+
+    @Test
+    void writesJsonOutcomeForTagAwareCommandProbe() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "tag-checkpoint-preview",
+                List.of(),
+                new SubmittedAnswer("command_text", "git show-ref --tags"),
+                new ScenarioValidationSpec(
+                        "fixture:tag-checkpoint-preview:command_text",
+                        "tag-checkpoint-preview",
+                        "command_text",
+                        "git_command_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "expectedWorkspaceState", Map.of(
+                                        "currentBranch", "main",
+                                        "workingTreeClean", true,
+                                        "tagCount", 2
+                                ),
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "currentBranch", "main",
+                                        "branches", List.of(),
+                                        "committedFiles", List.of(
+                                                Map.of("path", "docs/release-tags.md", "content", "- release/demo-v1\n"),
+                                                Map.of("path", "frontend/src/tag-chip.js", "content", "export const checkpoint = 'demo';\n")
+                                        ),
+                                        "modifiedFiles", List.of(),
+                                        "untrackedFiles", List.of(),
+                                        "tags", List.of("release/demo-v1", "checkpoint/ui-shell")
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git show-ref --tags",
+                                        "git show-ref --tags",
+                                        "correct",
+                                        "expected-command",
+                                        "tags"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-tag-state-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("correct");
+        assertThat(response.code()).isEqualTo("expected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("tag-count");
     }
 }

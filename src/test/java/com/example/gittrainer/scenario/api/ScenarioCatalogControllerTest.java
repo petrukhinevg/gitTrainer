@@ -35,7 +35,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
-                .andExpect(jsonPath("$.items.length()").value(4))
+                .andExpect(jsonPath("$.items.length()").value(7))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
                 .andExpect(jsonPath("$.items[2].slug").value("remote-sync-preview"))
@@ -71,26 +71,31 @@ class ScenarioCatalogControllerTest {
 
     @Test
     void filtersCatalogByDifficultyIgnoringCase() throws Exception {
-        mockMvc.perform(get("/api/scenarios")
+                mockMvc.perform(get("/api/scenarios")
                         .param("difficulty", "beginner")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(2))
-                .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
-                .andExpect(jsonPath("$.items[1].id").value("status-basics"));
-    }
-
-    @Test
-    void sortsCatalogByDifficultyThenTitleWhenRequested() throws Exception {
-        mockMvc.perform(get("/api/scenarios")
-                        .param("sort", "difficulty")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("history-cleanup-preview"))
-                .andExpect(jsonPath("$.items[3].id").value("remote-sync-preview"));
+                .andExpect(jsonPath("$.items[2].id").value("stash-checkpoint-draft"))
+                .andExpect(jsonPath("$.items[3].id").value("tag-checkpoint-preview"));
+    }
+
+    @Test
+    void sortsCatalogByDifficultyThenTitleWhenRequested() throws Exception {
+                mockMvc.perform(get("/api/scenarios")
+                        .param("sort", "difficulty")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(7))
+                .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
+                .andExpect(jsonPath("$.items[1].id").value("status-basics"))
+                .andExpect(jsonPath("$.items[2].id").value("stash-checkpoint-draft"))
+                .andExpect(jsonPath("$.items[3].id").value("tag-checkpoint-preview"))
+                .andExpect(jsonPath("$.items[4].id").value("history-cleanup-preview"))
+                .andExpect(jsonPath("$.items[5].id").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[6].id").value("merge-sandbox-outline"));
     }
 
     @Test
@@ -162,7 +167,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("inspect-working-tree-first"))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с команды проверки состояния, а не с переключения ветки или изменения файлов."))
                 .andExpect(jsonPath("$.workspace.task.instructions[1].id").value("confirm-short-status-signals"))
-                .andExpect(jsonPath("$.workspace.task.steps.length()").value(3))
+                .andExpect(jsonPath("$.workspace.task.steps.length()").value(5))
                 .andExpect(jsonPath("$.workspace.task.steps[0].position").value(1))
                 .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Начните с проверки рабочего дерева"))
                 .andExpect(jsonPath("$.workspace.task.steps[1].position").value(2))

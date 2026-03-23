@@ -83,13 +83,13 @@ class PostgresAuthoredScenarioReadModelTest {
         Long validatorRuleCount = jdbcClient.sql("SELECT COUNT(*) FROM authored_scenario_validator_rules")
                 .query(Long.class)
                 .single();
-        String remoteSyncValidatorType = jdbcClient.sql("""
-                        SELECT validator_type
+        Long probeValidatorSpecCount = jdbcClient.sql("""
+                        SELECT COUNT(*)
                         FROM authored_scenario_validator_specs
-                        WHERE scenario_slug = 'remote-sync-preview'
-                          AND answer_type = 'command_text'
+                        WHERE answer_type = 'command_text'
+                          AND validator_type IN ('git_command_probe', 'git_repo_state_probe')
                         """)
-                .query(String.class)
+                .query(Long.class)
                 .single();
 
         assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("mvp-fixture");
@@ -111,17 +111,55 @@ class PostgresAuthoredScenarioReadModelTest {
         assertThat(repositoryContext.files()).extracting(ScenarioWorkspaceDetail.ScenarioRepositoryFile::status)
                 .contains("modified", "untracked");
         assertThat(scenarioCount).isGreaterThanOrEqualTo(7);
-        assertThat(answerCount).isGreaterThanOrEqualTo(21);
+        assertThat(answerCount).isGreaterThanOrEqualTo(23);
         assertThat(validatorSpecCount).isGreaterThanOrEqualTo(7);
-        assertThat(validatorRuleCount).isGreaterThanOrEqualTo(21);
-        assertThat(remoteSyncValidatorType).isEqualTo("git_repo_state_probe");
+        assertThat(validatorRuleCount).isGreaterThanOrEqualTo(23);
+        assertThat(probeValidatorSpecCount).isGreaterThanOrEqualTo(7);
     }
 
     @Test
     void validatesAnswersUsingDatabaseBackedValidatorSpecs() {
+        SubmissionOutcome statusPartialOutcome = submissionAnswerValidator.validate(
+                "status-basics",
+                new SubmittedAnswer("command_text", "git status")
+        ).outcome();
         SubmissionOutcome correctOutcome = submissionAnswerValidator.validate(
                 "status-basics",
                 new SubmittedAnswer("command_text", "git status --short")
+        ).outcome();
+        SubmissionOutcome branchPartialOutcome = submissionAnswerValidator.validate(
+                "branch-safety",
+                new SubmittedAnswer("command_text", "git branch --show-current")
+        ).outcome();
+        SubmissionOutcome branchCorrectOutcome = submissionAnswerValidator.validate(
+                null,
+                "branch-safety",
+                List.of(new SubmittedAnswer("command_text", "git branch --show-current")),
+                new SubmittedAnswer("command_text", "git status -sb")
+        ).outcome();
+        SubmissionOutcome historyPartialOutcome = submissionAnswerValidator.validate(
+                "history-cleanup-preview",
+                new SubmittedAnswer("command_text", "git log --oneline --decorate")
+        ).outcome();
+        SubmissionOutcome historyCorrectOutcome = submissionAnswerValidator.validate(
+                "history-cleanup-preview",
+                new SubmittedAnswer("command_text", "git log --oneline --graph --decorate")
+        ).outcome();
+        SubmissionOutcome partialOutcome = submissionAnswerValidator.validate(
+                null,
+                "stash-checkpoint-draft",
+                List.of(),
+                new SubmittedAnswer("command_text", "git status -sb")
+        ).outcome();
+        SubmissionOutcome stashCorrectOutcome = submissionAnswerValidator.validate(
+                null,
+                "stash-checkpoint-draft",
+                List.of(new SubmittedAnswer("command_text", "git status -sb")),
+                new SubmittedAnswer("command_text", "git stash push -u")
+        ).outcome();
+        SubmissionOutcome tagCorrectOutcome = submissionAnswerValidator.validate(
+                "tag-checkpoint-preview",
+                new SubmittedAnswer("command_text", "git show-ref --tags")
         ).outcome();
         SubmissionOutcome incorrectOutcome = submissionAnswerValidator.validate(
                 "status-basics",
@@ -132,8 +170,24 @@ class PostgresAuthoredScenarioReadModelTest {
                 new SubmittedAnswer("command_text", "git status")
         ).outcome();
 
+        assertThat(statusPartialOutcome.correctness()).isEqualTo("partial");
+        assertThat(statusPartialOutcome.code()).isEqualTo("working-tree-inspected");
         assertThat(correctOutcome.correctness()).isEqualTo("correct");
         assertThat(correctOutcome.code()).isEqualTo("expected-command");
+        assertThat(branchPartialOutcome.correctness()).isEqualTo("partial");
+        assertThat(branchPartialOutcome.code()).isEqualTo("branch-context-confirmed");
+        assertThat(branchCorrectOutcome.correctness()).isEqualTo("correct");
+        assertThat(branchCorrectOutcome.code()).isEqualTo("expected-command");
+        assertThat(historyPartialOutcome.correctness()).isEqualTo("partial");
+        assertThat(historyPartialOutcome.code()).isEqualTo("history-preview-opened");
+        assertThat(historyCorrectOutcome.correctness()).isEqualTo("correct");
+        assertThat(historyCorrectOutcome.code()).isEqualTo("expected-command");
+        assertThat(partialOutcome.correctness()).isEqualTo("partial");
+        assertThat(partialOutcome.code()).isEqualTo("workspace-inspected");
+        assertThat(stashCorrectOutcome.correctness()).isEqualTo("correct");
+        assertThat(stashCorrectOutcome.code()).isEqualTo("expected-command");
+        assertThat(tagCorrectOutcome.correctness()).isEqualTo("correct");
+        assertThat(tagCorrectOutcome.code()).isEqualTo("expected-command");
         assertThat(incorrectOutcome.correctness()).isEqualTo("incorrect");
         assertThat(incorrectOutcome.code()).isEqualTo("unexpected-command");
         assertThat(missingRuleOutcome.correctness()).isEqualTo("incorrect");

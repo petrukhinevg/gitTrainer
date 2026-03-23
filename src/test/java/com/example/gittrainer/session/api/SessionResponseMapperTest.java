@@ -29,7 +29,8 @@ class SessionResponseMapperTest {
                     new RetryHintResponseFactory(
                             new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
                     )
-            )
+            ),
+            sessionId -> java.util.Optional.empty()
     );
 
     @Test

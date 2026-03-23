@@ -61,7 +61,7 @@ class SubmitAnswerUseCaseRetryStateTest {
 
         SubmitAnswerResult success = submitAnswerUseCase.submit(
                 sessionId,
-                new SubmitAnswerCommand("command_text", "git status")
+                new SubmitAnswerCommand("command_text", "git status --short")
         );
 
         assertThat(success.retryState().phase()).isEqualTo(RetryStatePhase.COMPLETED);

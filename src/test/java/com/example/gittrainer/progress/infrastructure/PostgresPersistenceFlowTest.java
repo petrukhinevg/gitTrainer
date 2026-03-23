@@ -79,7 +79,7 @@ class PostgresPersistenceFlowTest {
         );
         SubmitAnswerResult correctAttempt = submitAnswerUseCase.submit(
                 sessionId,
-                new SubmitAnswerCommand("command_text", "git status")
+                new SubmitAnswerCommand("command_text", "git status --short")
         );
 
         TrainingSession storedSession = sessionRepository.findById(sessionId).orElseThrow();
@@ -123,7 +123,7 @@ class PostgresPersistenceFlowTest {
         assertThat(latestPersistedSubmission.submissionId()).isEqualTo(correctAttempt.submissionId());
         assertThat(latestPersistedSubmission.attemptNumber()).isEqualTo(correctAttempt.attemptNumber());
         assertThat(latestPersistedSubmission.answerType()).isEqualTo("command_text");
-        assertThat(latestPersistedSubmission.answerValue()).isEqualTo("git status");
+        assertThat(latestPersistedSubmission.answerValue()).isEqualTo("git status --short");
         assertThat(latestPersistedSubmission.correctness()).isEqualTo("correct");
 
         assertThat(progressRecord.attemptCount()).isEqualTo(2);

@@ -41,7 +41,7 @@ class SubmitAnswerProgressRecordingTest {
         );
         SubmitAnswerResult correctAttempt = submitAnswerUseCase.submit(
                 sessionId,
-                new SubmitAnswerCommand("command_text", "git status")
+                new SubmitAnswerCommand("command_text", "git status --short")
         );
 
         ScenarioProgressRecord progressRecord = progressRepository.findByScenarioSlug("status-basics").orElseThrow();

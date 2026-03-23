@@ -1,5 +1,6 @@
 package com.example.gittrainer.app;
 
+import com.example.gittrainer.validation.infrastructure.AuthoredScenarioValidationLibrary;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.json.JsonParser;
 import org.springframework.boot.json.JsonParserFactory;
@@ -12,7 +13,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +42,14 @@ class MvpLifecycleFlowTest {
     @Test
     void completesCurrentMvpFlowFromCatalogBrowseToEvaluatedSubmission() throws Exception {
         Map<String, Object> catalogResponse = performJson(get("/api/scenarios"));
-        Map<String, Object> firstCatalogItem = firstMap(listValue(catalogResponse, "items"), "catalog items");
+        Map<String, Object> catalogItem = findMapByField(
+                listValue(catalogResponse, "items"),
+                "slug",
+                "status-basics"
+        );
 
-        String scenarioSlug = stringValue(firstCatalogItem, "slug");
-        String scenarioTitle = stringValue(firstCatalogItem, "title");
+        String scenarioSlug = stringValue(catalogItem, "slug");
+        String scenarioTitle = stringValue(catalogItem, "title");
         String acceptedCommand = firstAcceptedCommandFor(scenarioSlug);
 
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/{slug}", scenarioSlug));
@@ -201,7 +205,7 @@ class MvpLifecycleFlowTest {
         );
         String sessionId = stringValue(startSessionResponse, "sessionId");
 
-        Map<String, Object> submissionResponse = performJson(
+        Map<String, Object> firstSubmissionResponse = performJson(
                 post("/api/sessions/{sessionId}/submissions", sessionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -211,10 +215,25 @@ class MvpLifecycleFlowTest {
                                 }
                                 """)
         );
+        Map<String, Object> secondSubmissionResponse = performJson(
+                post("/api/sessions/{sessionId}/submissions", sessionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "answerType": "command_text",
+                                  "answer": "git status -sb"
+                                }
+                                """)
+        );
 
-        Map<String, Object> outcome = mapValue(submissionResponse, "outcome");
-        Map<String, Object> retryFeedback = mapValue(submissionResponse, "retryFeedback");
+        Map<String, Object> firstOutcome = mapValue(firstSubmissionResponse, "outcome");
+        Map<String, Object> firstRetryFeedback = mapValue(firstSubmissionResponse, "retryFeedback");
+        Map<String, Object> outcome = mapValue(secondSubmissionResponse, "outcome");
+        Map<String, Object> retryFeedback = mapValue(secondSubmissionResponse, "retryFeedback");
 
+        assertThat(stringValue(firstOutcome, "correctness")).isEqualTo("partial");
+        assertThat(stringValue(firstOutcome, "code")).isEqualTo("branch-context-confirmed");
+        assertThat(stringValue(firstRetryFeedback, "status")).isEqualTo("guided");
         assertThat(stringValue(outcome, "correctness")).isEqualTo("correct");
         assertThat(stringValue(outcome, "code")).isEqualTo("expected-command");
         assertThat(stringValue(retryFeedback, "status")).isEqualTo("resolved");
@@ -398,13 +417,7 @@ class MvpLifecycleFlowTest {
     }
 
     private String firstAcceptedCommandFor(String scenarioSlug) throws Exception {
-        try (InputStream inputStream = getClass().getClassLoader()
-                .getResourceAsStream("session/fixture-submission-rules.json")) {
-            assertThat(inputStream).isNotNull();
-            Map<String, Object> rules = jsonParser.parseMap(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
-            List<?> commands = listValue(rules, scenarioSlug);
-            return String.valueOf(firstValue(commands));
-        }
+        return AuthoredScenarioValidationLibrary.correctAnswersFor(scenarioSlug).getFirst();
     }
 
     @SuppressWarnings("unchecked")

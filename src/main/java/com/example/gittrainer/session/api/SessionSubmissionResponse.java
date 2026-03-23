@@ -10,6 +10,7 @@ record SessionSubmissionResponse(
         SessionLifecycleResponse lifecycle,
         SubmittedAnswerResponse answer,
         SubmissionOutcomeResponse outcome,
-        RetryFeedbackResponse retryFeedback
+        RetryFeedbackResponse retryFeedback,
+        SessionWorkspaceResponse workspace
 ) {
 }

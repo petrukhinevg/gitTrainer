@@ -35,7 +35,7 @@ class LoadProgressSummaryUseCaseTest {
 
         submitAnswerUseCase.submit(
                 statusSessionId,
-                new SubmitAnswerCommand("command_text", "git status")
+                new SubmitAnswerCommand("command_text", "git status --short")
         );
         submitAnswerUseCase.submit(
                 branchSessionId,

@@ -26,10 +26,17 @@
 ```json
 {
   "scenarioSlug": "remote-sync-preview",
+  "priorAnswers": [
+    {
+      "type": "command_text",
+      "value": "git fetch origin"
+    }
+  ],
   "answer": {
     "type": "command_text",
     "value": "git fetch origin"
   },
+  "workspacePath": "/tmp/gittrainer-session-workspaces/session_123/workspace",
   "spec": {
     "specId": "default:remote-sync-preview:command_text",
     "scenarioSlug": "remote-sync-preview",
@@ -79,7 +86,7 @@ CLI обязан вернуть JSON в stdout.
 ## Response поля
 
 - `status`: сейчас поддерживается только `evaluated`.
-- `correctness`: `correct`, `incorrect` или `unsupported`.
+- `correctness`: `correct`, `partial`, `incorrect` или `unsupported`.
 - `code`: machine-readable outcome code.
 - `message`: learner-facing или operator-facing пояснение.
 - `observations`: диагностические наблюдения для telemetry и future debugging.
@@ -91,7 +98,8 @@ CLI обязан вернуть JSON в stdout.
 - `exact_command_match`
   - In-process и CLI path делают одинаковый normalized rule match.
 - `git_command_probe`
-  - CLI поднимает временный repo fixture, запускает реальную git-команду и проверяет `exitCode`/`stdout`.
+  - CLI поднимает временный repo fixture или использует session-backed workspace, запускает реальную git-команду и проверяет `exitCode`, `stdout` и/или post-command состояние workspace.
+  - `expectedWorkspaceState` сейчас может включать `currentBranch`, `workingTreeClean`, `stashEntryCount` и `tagCount`.
 - `git_repo_state_probe`
   - CLI поднимает временный repo fixture с remote topology, запускает реальную git-команду и проверяет post-command repo state.
 
@@ -119,7 +127,7 @@ CLI обязан вернуть JSON в stdout.
 
 - Новые поля в request/response должны добавляться как backward-compatible расширения.
 - Новые validator types допустимы, если старые spec records и старый backend path продолжают работать без миграции authored data.
-- In-process validator обязан деградировать до rule-based поведения, если полноценная git-проверка выполняется только в CLI runner.
+- In-process validator и CLI path должны поддерживать одинаковую probe-логику, если scenario spec допускает state-based проверку.
 
 ## Execution policy
 

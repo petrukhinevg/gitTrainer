@@ -36,7 +36,7 @@ class SubmitAnswerUseCaseValidationRunTest {
 
         SubmitAnswerResult result = submitAnswerUseCase.submit(
                 startedSession.session().sessionId(),
-                new SubmitAnswerCommand("command_text", "git status")
+                new SubmitAnswerCommand("command_text", "git status --short")
         );
 
         assertThat(validationRunRepository.findAll()).hasSize(1);

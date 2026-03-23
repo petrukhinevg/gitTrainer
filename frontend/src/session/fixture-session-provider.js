@@ -1,5 +1,4 @@
 import { FIXTURE_SCENARIO_DETAILS } from "../detail/detail-fixtures.js";
-import acceptedCommandsByScenario from "../../../src/main/resources/session/fixture-submission-rules.json" with { type: "json" };
 import { createPlaceholderRetryFeedback } from "./session-fixture-retry-feedback.js";
 import { normalizeStartSessionResponse, normalizeSubmissionResponse, SUPPORTED_ANSWER_TYPES } from "./session-response-normalizer.js";
 import {
@@ -8,14 +7,39 @@ import {
     SessionTransportError
 } from "./session-transport-error.js";
 
-const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze(
-    Object.fromEntries(
-        Object.entries(acceptedCommandsByScenario).map(([scenarioSlug, commands]) => [
-            scenarioSlug,
-            Object.freeze(Array.isArray(commands) ? [...commands] : [])
-        ])
-    )
-);
+const ACCEPTED_COMMANDS_BY_SCENARIO = Object.freeze({
+    "status-basics": Object.freeze([
+        "git status --short",
+        "git status -sb"
+    ]),
+    "branch-safety": Object.freeze([
+        "git status -sb",
+        "git status --short -b"
+    ]),
+    "history-cleanup-preview": Object.freeze([
+        "git log --oneline --graph --decorate",
+        "git log --graph --oneline --decorate"
+    ]),
+    "remote-sync-preview": Object.freeze([
+        "git fetch",
+        "git fetch origin",
+        "git fetch --all --prune"
+    ]),
+    "stash-checkpoint-draft": Object.freeze([
+        "git stash push -u",
+        "git stash push --include-untracked",
+        "git stash push -u -m \"ui-test\""
+    ]),
+    "merge-sandbox-outline": Object.freeze([
+        "git diff main...feature/mock-merge-window",
+        "git log --oneline --graph --decorate --all"
+    ]),
+    "tag-checkpoint-preview": Object.freeze([
+        "git tag --list",
+        "git tag -l",
+        "git show-ref --tags"
+    ])
+});
 
 export function createLocalFixtureSessionProvider({ now = () => new Date() } = {}) {
     let nextSessionNumber = 1;
@@ -72,6 +96,9 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                         outcome: null,
                         answer: null
                     })
+                },
+                workspace: {
+                    repositoryContext: structuredClone(detail.workspace?.repositoryContext ?? null)
                 }
             });
         },
@@ -117,7 +144,12 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     attemptNumber: session.submissionCount,
                     outcome,
                     answer
-                })
+                }),
+                workspace: {
+                    repositoryContext: structuredClone(
+                        FIXTURE_SCENARIO_DETAILS[session.scenarioSlug]?.workspace?.repositoryContext ?? null
+                    )
+                }
             });
         }
     };
