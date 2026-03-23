@@ -19,6 +19,7 @@ import {
     captureSurfaceScrollState,
     NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS,
     releaseCollapsedScenarioGap,
+    resolveScenarioSubtaskEnterAnimationMs,
     resetLaneScrollPosition,
     restoreLaneScrollPositions,
     restoreSurfaceScrollState
@@ -103,6 +104,7 @@ export function createCatalogWorkspaceController({
     let latestSubmissionRequestId = 0;
     const sessionProviders = new Map();
     const activeNavigationAnimationSlugs = new Set();
+    const scenarioSubtaskEnterCleanupTimeoutIds = new Map();
     let navigationRevealTimeoutId = 0;
     let navigationCollapseTimeoutId = 0;
     let cleanupPendingNavigationReveal = null;
@@ -846,6 +848,7 @@ export function createCatalogWorkspaceController({
     }
 
     function syncCollapsedScenarioNavigationNode(slug) {
+        cancelScenarioSubtaskEnterStateCleanup(slug);
         const toggleButton = appRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`);
         if (toggleButton) {
             toggleButton.setAttribute("aria-expanded", "false");
@@ -855,6 +858,37 @@ export function createCatalogWorkspaceController({
         appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`)?.remove();
         releaseCollapsedScenarioGap(appRoot, slug);
         syncNavigationSurfaceCacheFromDom();
+    }
+
+    function scheduleScenarioSubtaskEnterStateCleanup(slug) {
+        if (!slug) {
+            return;
+        }
+
+        cancelScenarioSubtaskEnterStateCleanup(slug);
+
+        const cleanupDelayMs = resolveScenarioSubtaskEnterAnimationMs(appRoot, slug);
+        if (cleanupDelayMs <= 0) {
+            clearScenarioSubtaskEnterState(slug);
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            scenarioSubtaskEnterCleanupTimeoutIds.delete(slug);
+            clearScenarioSubtaskEnterState(slug);
+        }, cleanupDelayMs);
+
+        scenarioSubtaskEnterCleanupTimeoutIds.set(slug, timeoutId);
+    }
+
+    function cancelScenarioSubtaskEnterStateCleanup(slug) {
+        const timeoutId = scenarioSubtaskEnterCleanupTimeoutIds.get(slug);
+        if (typeof timeoutId !== "number" || timeoutId <= 0) {
+            return;
+        }
+
+        window.clearTimeout(timeoutId);
+        scenarioSubtaskEnterCleanupTimeoutIds.delete(slug);
     }
 
     function clearScenarioSubtaskEnterState(slug) {
@@ -924,7 +958,7 @@ export function createCatalogWorkspaceController({
             redrawNavigationTagConnections(appRoot);
         } finally {
             state.expandingScenarioSlugs = state.expandingScenarioSlugs.filter((item) => item !== slug);
-            clearScenarioSubtaskEnterState(slug);
+            scheduleScenarioSubtaskEnterStateCleanup(slug);
             activeNavigationAnimationSlugs.delete(slug);
         }
     }

@@ -2,6 +2,8 @@ import { escapeSelectorValue } from "./dom-helpers.js";
 
 export const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
 export const NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS = 500;
+export const FLOW_SUBTASK_ENTER_ANIMATION_MS = 220;
+export const FLOW_SUBTASK_ENTER_STAGGER_MS = 36;
 
 export function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
     const excludedLaneNameSet = new Set(excludedLaneNames);
@@ -98,6 +100,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
 
     const flowNode = panel.closest(".flow-node");
     const flowNodeGap = readFlowNodeGap(flowNode);
+    const expansionDuration = resolveScenarioExpansionDuration(panel);
 
     delete panel.dataset.tagConnectionCollapsing;
     panel.dataset.scenarioAnimating = "true";
@@ -112,21 +115,23 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
         const stopFrameTracking = startAnimationFrameTracking(onFrame);
 
         const startAnimation = () => {
+            const targetHeight = measureExpandedPanelHeight(panel);
             if (typeof ResizeObserver !== "undefined") {
                 observer = new ResizeObserver(() => {
                     if (panel.style.height && panel.style.height !== "auto") {
-                        panel.style.height = `${panel.scrollHeight}px`;
+                        panel.style.height = formatPixelValue(measureExpandedPanelHeight(panel));
                     }
                 });
                 observer.observe(panel);
             }
 
-            panel.style.transition = createScenarioPanelTransition();
-            panel.style.height = `${panel.scrollHeight}px`;
+            panel.style.transition = createScenarioPanelTransition(expansionDuration);
+            void panel.offsetHeight;
+            panel.style.height = formatPixelValue(targetHeight);
             panel.style.opacity = "1";
-            startFlowNodeGapExpansion(flowNode, flowNodeGap);
+            startFlowNodeGapExpansion(flowNode, flowNodeGap, expansionDuration);
 
-            void waitForScenarioAnimation(panel, () => {
+            void waitForScenarioAnimation(panel, expansionDuration, () => {
                 stopFrameTracking();
                 observer?.disconnect();
                 panel.style.removeProperty("height");
@@ -164,22 +169,22 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
 
     panel.dataset.tagConnectionCollapsing = "true";
     panel.dataset.scenarioAnimating = "true";
-    panel.style.height = `${panel.getBoundingClientRect().height}px`;
+    panel.style.height = formatPixelValue(panel.getBoundingClientRect().height);
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
     prepareFlowNodeCollapse(flowNode, flowNodeGap);
     panel.getBoundingClientRect();
 
-    panel.style.transition = createScenarioPanelTransition();
+    panel.style.transition = createScenarioPanelTransition(NAVIGATION_TOGGLE_ANIMATION_MS);
     panel.style.height = "0px";
     panel.style.opacity = "0";
-    startFlowNodeGapCollapse(flowNode, flowNodeGap);
+    startFlowNodeGapCollapse(flowNode, flowNodeGap, NAVIGATION_TOGGLE_ANIMATION_MS);
 
     const stopFrameTracking = startAnimationFrameTracking(() => {
         scrollStabilizer?.update();
         onFrame?.();
     });
-    return waitForScenarioAnimation(panel, () => {
+    return waitForScenarioAnimation(panel, NAVIGATION_TOGGLE_ANIMATION_MS, () => {
         stopFrameTracking();
         scrollStabilizer?.cleanup();
         panel.style.removeProperty("transition");
@@ -271,15 +276,23 @@ function findScenarioPanel(appRoot, slug) {
     return appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`);
 }
 
-function createScenarioPanelTransition() {
+export function resolveScenarioSubtaskEnterAnimationMs(appRoot, slug) {
+    if (!(appRoot instanceof HTMLElement) || !slug || prefersReducedMotion()) {
+        return 0;
+    }
+
+    return measureScenarioSubtaskEnterAnimationMs(findScenarioPanel(appRoot, slug));
+}
+
+function createScenarioPanelTransition(durationMs) {
     return [
-        `height ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-        `opacity ${Math.round(NAVIGATION_TOGGLE_ANIMATION_MS * 0.7)}ms ease`
+        `height ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        `opacity ${Math.round(durationMs * 0.7)}ms ease`
     ].join(", ");
 }
 
-function createFlowNodeGapTransition() {
-    return `row-gap ${NAVIGATION_TOGGLE_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+function createFlowNodeGapTransition(durationMs) {
+    return `row-gap ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
 }
 
 function readFlowNodeGap(flowNode) {
@@ -305,12 +318,12 @@ function prepareFlowNodeExpansion(flowNode, flowNodeGap) {
     flowNode.style.willChange = "row-gap";
 }
 
-function startFlowNodeGapExpansion(flowNode, flowNodeGap) {
+function startFlowNodeGapExpansion(flowNode, flowNodeGap, durationMs) {
     if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
         return;
     }
 
-    flowNode.style.transition = createFlowNodeGapTransition();
+    flowNode.style.transition = createFlowNodeGapTransition(durationMs);
     flowNode.style.rowGap = flowNodeGap;
 }
 
@@ -323,12 +336,12 @@ function prepareFlowNodeCollapse(flowNode, flowNodeGap) {
     flowNode.style.willChange = "row-gap";
 }
 
-function startFlowNodeGapCollapse(flowNode, flowNodeGap) {
+function startFlowNodeGapCollapse(flowNode, flowNodeGap, durationMs) {
     if (!(flowNode instanceof HTMLElement) || !flowNodeGap) {
         return;
     }
 
-    flowNode.style.transition = createFlowNodeGapTransition();
+    flowNode.style.transition = createFlowNodeGapTransition(durationMs);
     flowNode.style.rowGap = "0px";
 }
 
@@ -379,7 +392,7 @@ function startAnimationFrameTracking(onFrame) {
     };
 }
 
-function waitForScenarioAnimation(panel, cleanup) {
+function waitForScenarioAnimation(panel, durationMs, cleanup) {
     return new Promise((resolve) => {
         let settled = false;
 
@@ -401,9 +414,65 @@ function waitForScenarioAnimation(panel, cleanup) {
             }
         };
 
-        const timeoutId = window.setTimeout(finalize, NAVIGATION_TOGGLE_ANIMATION_MS + 120);
+        const timeoutId = window.setTimeout(finalize, durationMs + 120);
         panel.addEventListener("transitionend", handleTransitionEnd);
     });
+}
+
+function resolveScenarioExpansionDuration(panel) {
+    return Math.max(
+        NAVIGATION_TOGGLE_ANIMATION_MS,
+        measureScenarioSubtaskEnterAnimationMs(panel)
+    );
+}
+
+function measureScenarioSubtaskEnterAnimationMs(panel) {
+    if (!(panel instanceof HTMLElement)) {
+        return 0;
+    }
+
+    let maxEnterIndex = -1;
+    panel.querySelectorAll("[data-flow-subtask-enter]").forEach((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        const rawIndex = element.style.getPropertyValue("--flow-subtask-enter-index");
+        const enterIndex = Number.parseFloat(rawIndex);
+        if (Number.isFinite(enterIndex)) {
+            maxEnterIndex = Math.max(maxEnterIndex, enterIndex);
+            return;
+        }
+
+        maxEnterIndex = Math.max(maxEnterIndex, 0);
+    });
+
+    if (maxEnterIndex < 0) {
+        return 0;
+    }
+
+    return FLOW_SUBTASK_ENTER_ANIMATION_MS + (maxEnterIndex * FLOW_SUBTASK_ENTER_STAGGER_MS);
+}
+
+function measureExpandedPanelHeight(panel) {
+    if (!(panel instanceof HTMLElement)) {
+        return 0;
+    }
+
+    const contentElement = panel.firstElementChild;
+    if (contentElement instanceof HTMLElement) {
+        return contentElement.getBoundingClientRect().height;
+    }
+
+    return panel.scrollHeight;
+}
+
+function formatPixelValue(value) {
+    if (!Number.isFinite(value) || value <= 0) {
+        return "0px";
+    }
+
+    return `${value.toFixed(3)}px`;
 }
 
 function prefersReducedMotion() {
