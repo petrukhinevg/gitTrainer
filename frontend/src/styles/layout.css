@@ -243,6 +243,7 @@ body {
 
 .lesson-lane--lesson {
     padding-right: 0;
+    padding-left: 0;
     transform: translateX(0);
     transform-origin: left center;
     will-change: transform, box-shadow;
