@@ -253,15 +253,21 @@ export function resolveNavigationActiveMarkerTarget(mapRoot, dragTargetDescripto
 
     const dragTarget = resolveNavigationMarkerTargetFromDescriptor(mapRoot, dragTargetDescriptor);
     if (dragTarget instanceof HTMLElement) {
-        return dragTarget;
+        return isNavigationMarkerTargetVisible(dragTarget) ? dragTarget : null;
     }
 
-    return (
-        mapRoot.querySelector('[data-navigation-marker-target="true"]')
-        ?? mapRoot.querySelector(".flow-block--subtask.flow-block--active")
-        ?? mapRoot.querySelector("[data-scenario-toggle].flow-block--active")
-        ?? mapRoot.querySelector(".flow-block--active")
-    );
+    const explicitTarget = mapRoot.querySelector('[data-navigation-marker-target="true"]');
+    if (explicitTarget instanceof HTMLElement) {
+        return isNavigationMarkerTargetVisible(explicitTarget) ? explicitTarget : null;
+    }
+
+    const targetCandidates = [
+        mapRoot.querySelector(".flow-block--subtask.flow-block--active"),
+        mapRoot.querySelector("[data-scenario-toggle].flow-block--active"),
+        mapRoot.querySelector(".flow-block--active")
+    ];
+
+    return targetCandidates.find((target) => target instanceof HTMLElement && isNavigationMarkerTargetVisible(target)) ?? null;
 }
 
 export function resolveNavigationMarkerDragTarget({
@@ -487,6 +493,14 @@ function resolveNavigationMarkerDragCandidateElement(mapRoot, candidateElement) 
     }
 
     return null;
+}
+
+function isNavigationMarkerTargetVisible(target) {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    return target.closest('.flow-node[data-flow-node-filtered="true"]') === null;
 }
 
 function isSameNavigationMarkerTargetDescriptor(left, right) {

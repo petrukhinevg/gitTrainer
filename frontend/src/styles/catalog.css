@@ -139,7 +139,7 @@
 
 .navigation-flow-rail__marker {
     --navigation-active-marker-accent: rgba(72, 72, 72, 0.75);
-    --navigation-active-marker-motion-duration: 200ms;
+    --navigation-active-marker-motion-duration: 100ms;
     position: absolute;
     top: 0;
     left: -4px;

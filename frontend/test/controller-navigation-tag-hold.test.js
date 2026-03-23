@@ -312,6 +312,85 @@ test("левый клик по активному middle-фильтру сраз
     }
 });
 
+test("при снятии middle-фильтра без движения мыши hover-подсветка тега сохраняется", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    dom.window.matchMedia = () => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+
+    const fetchImpl = createFetchImpl();
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const branchingTagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+
+        branchingTagButton?.dispatchEvent(new dom.window.MouseEvent("mouseenter", {
+            bubbles: true,
+            cancelable: true
+        }));
+        await flushAsyncWork();
+
+        branchingTagButton?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        branchingTagButton?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        assert.equal(
+            navigationLane?.dataset.highlightTag,
+            "branching",
+            "Hover-подсветка должна сохраняться, пока курсор остаётся над тегом"
+        );
+        assert.equal(
+            navigationLane?.hasAttribute("data-pinned-tag"),
+            false,
+            "После снятия middle-фильтра pinned-состояние должно быть очищено"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function createFetchImpl() {
     return async (url) => {
         const requestUrl = new URL(url);

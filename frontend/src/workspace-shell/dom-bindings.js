@@ -188,7 +188,8 @@ function bindNavigationControls({
         timerId: 0,
         pendingTag: null,
         activeTag: null,
-        suppressClickTag: null
+        suppressClickTag: null,
+        hoveredTag: null
     };
     appRoot.__tagLegendHoldState = tagHoldState;
 
@@ -213,7 +214,7 @@ function bindNavigationControls({
         return;
     }
 
-    const applyNavigationHighlight = (hoveredTag = null) => {
+    const applyNavigationHighlight = (hoveredTag = tagHoldState.hoveredTag) => {
         const activeTag = state.heldNavigationTag ?? state.pinnedNavigationTag ?? hoveredTag;
         if (activeTag) {
             navigationLane.dataset.highlightTag = activeTag;
@@ -339,17 +340,25 @@ function bindNavigationControls({
 
         button.dataset.tagLegendBound = "true";
         button.addEventListener("mouseenter", () => {
+            tagHoldState.hoveredTag = tag;
             applyNavigationHighlight(tag);
         });
         button.addEventListener("mouseleave", () => {
+            if (tagHoldState.hoveredTag === tag) {
+                tagHoldState.hoveredTag = null;
+            }
             if (!tagHoldState.activeTag) {
                 applyNavigationHighlight(null);
             }
         });
         button.addEventListener("focus", () => {
+            tagHoldState.hoveredTag = tag;
             applyNavigationHighlight(tag);
         });
         button.addEventListener("blur", () => {
+            if (tagHoldState.hoveredTag === tag) {
+                tagHoldState.hoveredTag = null;
+            }
             if (!tagHoldState.activeTag) {
                 applyNavigationHighlight(null);
             }

@@ -115,6 +115,57 @@ test("маркер следует за явно выбранной целью и
     }
 });
 
+test("маркер скрывается для активной цели внутри отфильтрованного сценария и возвращается после выбора видимой цели", () => {
+    const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const remoteScenarioNode = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node");
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(branchStep, createRect(40, 236, 204, 46));
+        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
+
+        remoteScenarioNode.dataset.flowNodeFiltered = "true";
+        remoteScenarioNode.dataset.flowNodeTagMatch = "false";
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "remote-sync-preview",
+            selectedFocus: null
+        });
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), null);
+        assert.equal(marker.hasAttribute("data-visible"), false);
+
+        remoteScenarioNode.dataset.flowNodeFiltered = "false";
+        remoteScenarioNode.dataset.flowNodeTagMatch = "true";
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "branch-safety",
+            selectedFocus: "step-1"
+        });
+        redrawNavigationActiveMarker(appRoot);
+        flushRafQueue(window);
+
+        assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), branchStep);
+        assert.equal(marker.dataset.visible, "true");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("drag-резолвер выбирает ближайший блок по вертикали, даже если курсор между карточками", () => {
     const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
     const { window } = dom;
