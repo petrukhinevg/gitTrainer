@@ -89,6 +89,11 @@ export function bindNavigationActiveMarker({
     const applyMarkerDraggingState = (isDragging) => {
         isMarkerDragging = isDragging;
         marker.classList.toggle("navigation-flow-rail__marker--dragging", isDragging);
+        if (isDragging) {
+            navigationLane.dataset.markerDragging = "true";
+        } else {
+            delete navigationLane.dataset.markerDragging;
+        }
     };
 
     const resolveCurrentDragTarget = () => resolveNavigationMarkerTargetFromDescriptor(mapRoot, dragTargetDescriptor);
@@ -111,6 +116,7 @@ export function bindNavigationActiveMarker({
         });
         dragTargetDescriptor = nextDescriptor;
         navigationLane.__navigationActiveMarkerDragDescriptor = nextDescriptor;
+        syncNavigationMarkerPreviewTarget(mapRoot, nextTarget);
         queueDraw({ instant: !shouldAnimate });
         if (nextTarget instanceof HTMLElement) {
             onMarkerDragTargetChange?.(nextTarget);
@@ -128,6 +134,7 @@ export function bindNavigationActiveMarker({
         dragSession.snapshot = null;
         dragTargetDescriptor = null;
         navigationLane.__navigationActiveMarkerDragDescriptor = null;
+        syncNavigationMarkerPreviewTarget(mapRoot, null);
         applyMarkerDraggingState(false);
         window.removeEventListener("mousemove", handleMarkerDragMove);
         window.removeEventListener("mouseup", stopMarkerDrag);
@@ -267,24 +274,14 @@ export function resolveNavigationMarkerDragTarget({
         return null;
     }
 
-    const scopedRoot = resolveNavigationMarkerDragScopeRoot({
-        mapRoot,
-        clientY,
-        currentTargetDescriptor
-    });
-    const dynamicScopedCandidates = scopedRoot
-        ? collectNavigationMarkerDragCandidates(scopedRoot)
-        : [];
     const snapshotCandidates = resolveNavigationMarkerDragSnapshotCandidates({
         dragSnapshot,
         currentTargetDescriptor,
         clientY
     });
-    const candidates = dynamicScopedCandidates.length > 0
-        ? dynamicScopedCandidates
-        : snapshotCandidates.length > 0
-            ? snapshotCandidates
-            : collectNavigationMarkerDragCandidates(mapRoot);
+    const candidates = snapshotCandidates.length > 0
+        ? snapshotCandidates
+        : collectNavigationMarkerDragCandidates(mapRoot);
 
     if (candidates.length === 0) {
         return null;
@@ -324,15 +321,14 @@ export function createNavigationMarkerDragSnapshot(mapRoot) {
                 descriptor,
                 top: candidate.top,
                 bottom: candidate.bottom,
-                centerY: candidate.centerY,
-                ...resolveNavigationMarkerDragFlowNodeGeometry(candidate.element)
+                centerY: candidate.centerY
             };
         })
         .filter(Boolean);
 }
 
 function collectNavigationMarkerDragCandidates(root) {
-    return Array.from(root.querySelectorAll('a[href^="#/"], [data-scenario-toggle]'))
+    return Array.from(root.querySelectorAll("[data-scenario-toggle]"))
         .filter((element) => element instanceof HTMLElement)
         .map((element) => {
             const rect = element.getBoundingClientRect();
@@ -352,31 +348,21 @@ function collectNavigationMarkerDragCandidates(root) {
 
 function resolveNavigationMarkerDragSnapshotCandidates({
     dragSnapshot,
-    currentTargetDescriptor,
-    clientY
+    currentTargetDescriptor
 }) {
     if (!Array.isArray(dragSnapshot) || dragSnapshot.length === 0) {
         return [];
     }
 
-    const currentEntry = dragSnapshot.find((entry) => isSameNavigationMarkerTargetDescriptor(
-        entry.descriptor,
-        currentTargetDescriptor
-    ));
-    const isInsideCurrentFlowNode = currentEntry
-        && Number.isFinite(currentEntry.flowNodeTop)
-        && Number.isFinite(currentEntry.flowNodeBottom)
-        && clientY >= currentEntry.flowNodeTop
-        && clientY <= currentEntry.flowNodeBottom;
+    const sortedEntries = [...dragSnapshot].sort((left, right) => left.top - right.top);
+    void currentTargetDescriptor;
 
-    const scopedEntries = isInsideCurrentFlowNode && currentEntry?.flowNodeKey
-        ? dragSnapshot.filter((entry) => entry.flowNodeKey === currentEntry.flowNodeKey)
-        : dragSnapshot;
-
-    return scopedEntries.map((entry) => ({
+    return sortedEntries.map((entry, index) => ({
         element: entry.descriptor,
-        top: entry.top,
-        bottom: entry.bottom,
+        top: index === 0 ? Number.NEGATIVE_INFINITY : (sortedEntries[index - 1].centerY + entry.centerY) / 2,
+        bottom: index === sortedEntries.length - 1
+            ? Number.POSITIVE_INFINITY
+            : (entry.centerY + sortedEntries[index + 1].centerY) / 2,
         centerY: entry.centerY
     }));
 }
@@ -491,43 +477,6 @@ function resolveNavigationMarkerTargetFromDescriptor(mapRoot, descriptor) {
     return null;
 }
 
-function resolveNavigationMarkerDragFlowNodeKey(element) {
-    if (!(element instanceof HTMLElement)) {
-        return null;
-    }
-
-    const flowNode = element.closest(".flow-node");
-    if (flowNode instanceof HTMLElement) {
-        const scenarioToggle = flowNode.querySelector("[data-scenario-toggle]");
-        if (scenarioToggle instanceof HTMLElement && scenarioToggle.dataset.scenarioToggle) {
-            return `scenario:${scenarioToggle.dataset.scenarioToggle}`;
-        }
-    }
-
-    const href = element.getAttribute("href");
-    if (href) {
-        return `href:${href}`;
-    }
-
-    if (element.dataset.scenarioToggle) {
-        return `scenario:${element.dataset.scenarioToggle}`;
-    }
-
-    return null;
-}
-
-function resolveNavigationMarkerDragFlowNodeGeometry(element) {
-    const flowNodeKey = resolveNavigationMarkerDragFlowNodeKey(element);
-    const flowNode = element instanceof HTMLElement ? element.closest(".flow-node") : null;
-    const flowNodeRect = flowNode instanceof HTMLElement ? flowNode.getBoundingClientRect() : null;
-
-    return {
-        flowNodeKey,
-        flowNodeTop: Number.isFinite(flowNodeRect?.top) ? flowNodeRect.top : null,
-        flowNodeBottom: Number.isFinite(flowNodeRect?.bottom) ? flowNodeRect.bottom : null
-    };
-}
-
 function resolveNavigationMarkerDragCandidateElement(mapRoot, candidateElement) {
     if (candidateElement instanceof HTMLElement) {
         return candidateElement;
@@ -540,35 +489,6 @@ function resolveNavigationMarkerDragCandidateElement(mapRoot, candidateElement) 
     return null;
 }
 
-function resolveNavigationMarkerDragScopeRoot({
-    mapRoot,
-    clientY,
-    currentTargetDescriptor
-}) {
-    const currentTarget = resolveNavigationMarkerTargetFromDescriptor(mapRoot, currentTargetDescriptor);
-    if (!(currentTarget instanceof HTMLElement)) {
-        return null;
-    }
-
-    const flowNode = currentTarget.closest(".flow-node");
-    if (!(flowNode instanceof HTMLElement)) {
-        return null;
-    }
-
-    const candidates = collectNavigationMarkerDragCandidates(flowNode);
-    if (candidates.length === 0) {
-        return null;
-    }
-
-    const top = Math.min(...candidates.map((candidate) => candidate.top));
-    const bottom = Math.max(...candidates.map((candidate) => candidate.bottom));
-    if (!Number.isFinite(top) || !Number.isFinite(bottom)) {
-        return null;
-    }
-
-    return clientY >= top && clientY <= bottom ? flowNode : null;
-}
-
 function isSameNavigationMarkerTargetDescriptor(left, right) {
     return left?.kind === right?.kind && left?.key === right?.key;
 }
@@ -579,6 +499,22 @@ function shouldAnimateNavigationMarkerDragTransition({ currentDescriptor, nextDe
     }
 
     return currentDescriptor.kind === "scenario-toggle" || nextDescriptor.kind === "scenario-toggle";
+}
+
+function syncNavigationMarkerPreviewTarget(mapRoot, target) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    Array.from(mapRoot.querySelectorAll("[data-navigation-marker-preview-target]")).forEach((element) => {
+        if (element instanceof HTMLElement) {
+            delete element.dataset.navigationMarkerPreviewTarget;
+        }
+    });
+
+    if (target instanceof HTMLElement) {
+        target.dataset.navigationMarkerPreviewTarget = "true";
+    }
 }
 
 export function measureNavigationActiveMarkerGeometry({ mapRoot, target }) {

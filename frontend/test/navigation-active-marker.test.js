@@ -124,15 +124,13 @@ test("drag-резолвер выбирает ближайший блок по в
         const appRoot = window.document.querySelector("[data-app-root]");
         const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
         const firstScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        const firstStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
         const secondScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
 
         assignRect(firstScenarioToggle, createRect(24, 120, 220, 52));
-        assignRect(firstStep, createRect(40, 236, 204, 46));
         assignRect(secondScenarioToggle, createRect(24, 320, 220, 52));
 
         assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 150 }), firstScenarioToggle);
-        assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 274 }), firstStep);
+        assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 274 }), secondScenarioToggle);
         assert.equal(resolveNavigationMarkerDragTarget({ mapRoot, clientY: 410 }), secondScenarioToggle);
         assert.deepEqual(describeNavigationMarkerTarget(secondScenarioToggle), {
             kind: "scenario-toggle",
@@ -144,7 +142,7 @@ test("drag-резолвер выбирает ближайший блок по в
     }
 });
 
-test("drag-резолвер удерживает выбор внутри текущего родителя, пока курсор не вышел из его блока", () => {
+test("drag-резолвер использует snapshot родительских блоков и не учитывает временно скрытые подзадачи", () => {
     const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
     const { window } = dom;
     const restoreGlobals = installNavigationMarkerGlobals(window);
@@ -152,57 +150,63 @@ test("drag-резолвер удерживает выбор внутри тек�
     try {
         const appRoot = window.document.querySelector("[data-app-root]");
         const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
-        const flowNodes = appRoot.querySelectorAll(".flow-node");
         const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        const branchStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
         const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
 
-        assignRect(flowNodes[0], createRect(16, 110, 240, 200));
-        assignRect(flowNodes[1], createRect(16, 320, 240, 80));
         assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
-        assignRect(branchStep, createRect(40, 236, 204, 46));
         assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
 
-        const stickyTarget = resolveNavigationMarkerDragTarget({
+        const dragSnapshot = [
+            {
+                descriptor: describeNavigationMarkerTarget(branchScenarioToggle),
+                top: 120,
+                bottom: 172,
+                centerY: 146
+            },
+            {
+                descriptor: describeNavigationMarkerTarget(remoteScenarioToggle),
+                top: 320,
+                bottom: 372,
+                centerY: 346
+            }
+        ];
+
+        const preservedTarget = resolveNavigationMarkerDragTarget({
             mapRoot,
             clientY: 300,
-            currentTargetDescriptor: {
-                kind: "href",
-                key: "#/exercise/branch-safety?focus=step-1"
-            }
+            dragSnapshot
         });
 
-        const outsideStickyScopeTarget = resolveNavigationMarkerDragTarget({
+        assignRect(remoteScenarioToggle, createRect(24, 520, 220, 52));
+        const movedLayoutTarget = resolveNavigationMarkerDragTarget({
             mapRoot,
             clientY: 346,
-            currentTargetDescriptor: {
-                kind: "href",
-                key: "#/exercise/branch-safety?focus=step-1"
-            }
+            dragSnapshot
         });
 
-        assert.equal(stickyTarget, branchStep);
-        assert.equal(outsideStickyScopeTarget, remoteScenarioToggle);
+        assert.equal(preservedTarget, remoteScenarioToggle);
+        assert.equal(movedLayoutTarget, remoteScenarioToggle);
     } finally {
         restoreGlobals();
         dom.window.close();
     }
 });
 
-test("drag между сценариями оставляет анимацию маркера включенной", () => {
+test("drag между сценариями оставляет анимацию маркера включенной и помечает preview-цель", () => {
     const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
     const { window } = dom;
     const restoreGlobals = installNavigationMarkerGlobals(window);
 
     try {
         const appRoot = window.document.querySelector("[data-app-root]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
         const marker = appRoot.querySelector("[data-navigation-active-marker]");
         const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
-        const firstStep = appRoot.querySelector('[data-scenario-focus="step-1"]');
+        const firstScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
         const secondScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
 
         assignRect(mapRoot, createRect(0, 40, 280, 520));
-        assignRect(firstStep, createRect(40, 236, 204, 46));
+        assignRect(firstScenarioToggle, createRect(24, 120, 220, 52));
         assignRect(secondScenarioToggle, createRect(24, 320, 220, 52));
 
         bindNavigationActiveMarker({ appRoot });
@@ -212,7 +216,7 @@ test("drag между сценариями оставляет анимацию �
             bubbles: true,
             cancelable: true,
             button: 0,
-            clientY: 250
+            clientY: 146
         }));
         window.dispatchEvent(new window.MouseEvent("mousemove", {
             bubbles: true,
@@ -224,6 +228,19 @@ test("drag между сценариями оставляет анимацию �
 
         assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "280px");
         assert.equal(marker.classList.contains("navigation-flow-rail__marker--instant"), false);
+        assert.equal(navigationLane.dataset.markerDragging, "true");
+        assert.equal(secondScenarioToggle.dataset.navigationMarkerPreviewTarget, "true");
+
+        window.dispatchEvent(new window.MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientY: 346
+        }));
+        flushRafQueue(window);
+
+        assert.equal(navigationLane.hasAttribute("data-marker-dragging"), false);
+        assert.equal(secondScenarioToggle.hasAttribute("data-navigation-marker-preview-target"), false);
     } finally {
         restoreGlobals();
         dom.window.close();

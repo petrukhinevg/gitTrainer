@@ -44,7 +44,6 @@ const DEFAULT_QUERY = Object.freeze({
     tags: [],
     sort: null
 });
-const NAVIGATION_MARKER_DRAG_PREVIEW_DELAY_MS = 500;
 const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-flow-subtask-enter",
     "data-flow-subtask-active-tag",
@@ -119,10 +118,7 @@ export function createCatalogWorkspaceController({
         practiceSurface: null
     };
     const navigationMarkerDragState = {
-        active: false,
-        transientExpandedSlugs: new Set(),
-        previewDelayTimeoutId: 0,
-        pendingTargetMeta: null
+        active: false
     };
     const providerOptions = resolveSharedProviderOptions({
         catalogProviderFactories,
@@ -1045,33 +1041,10 @@ export function createCatalogWorkspaceController({
 
     function handleNavigationMarkerDragStart() {
         navigationMarkerDragState.active = true;
-        navigationMarkerDragState.transientExpandedSlugs.clear();
-        cancelNavigationMarkerDragPreviewDelay();
     }
 
     async function handleNavigationMarkerDragSelection(target) {
-        await queueNavigationMarkerDragOperation(async () => {
-            if (!navigationMarkerDragState.active) {
-                return;
-            }
-
-            const targetMeta = resolveNavigationMarkerDragTargetMeta(target);
-            if (shouldDelayNavigationMarkerDragPreview(targetMeta, state)) {
-                scheduleNavigationMarkerDragPreview(targetMeta);
-                await collapseTransientNavigationMarkerExpansions(null);
-                return;
-            }
-
-            cancelNavigationMarkerDragPreviewDelay();
-            await ensureNavigationMarkerDragPreview(targetMeta);
-
-            if (targetMeta.hash && targetMeta.hash !== window.location.hash) {
-                window.history.pushState(null, "", targetMeta.hash);
-                await handleRouteChange();
-            }
-
-            await collapseTransientNavigationMarkerExpansions(targetMeta.scenarioSlug);
-        });
+        void target;
     }
 
     async function handleNavigationMarkerDragEnd(target) {
@@ -1082,87 +1055,11 @@ export function createCatalogWorkspaceController({
 
             const targetMeta = resolveNavigationMarkerDragTargetMeta(target);
             navigationMarkerDragState.active = false;
-            cancelNavigationMarkerDragPreviewDelay();
-
-            if (targetMeta.scenarioSlug) {
-                navigationMarkerDragState.transientExpandedSlugs.delete(targetMeta.scenarioSlug);
+            if (targetMeta.hash && targetMeta.hash !== window.location.hash) {
+                window.history.pushState(null, "", targetMeta.hash);
+                await handleRouteChange();
             }
-
-            await collapseTransientNavigationMarkerExpansions(targetMeta.scenarioSlug);
-            navigationMarkerDragState.transientExpandedSlugs.clear();
         });
-    }
-
-    async function ensureNavigationMarkerDragPreview(targetMeta) {
-        const scenarioSlug = targetMeta.scenarioSlug;
-        if (!scenarioSlug) {
-            return;
-        }
-
-        if (state.expandedScenarioSlugs.includes(scenarioSlug)) {
-            return;
-        }
-
-        navigationMarkerDragState.transientExpandedSlugs.add(scenarioSlug);
-        await expandScenarioWithAnimation(scenarioSlug, { loadDetail: true });
-    }
-
-    async function collapseTransientNavigationMarkerExpansions(keepScenarioSlug = null) {
-        const transientSlugs = Array.from(navigationMarkerDragState.transientExpandedSlugs);
-
-        for (const slug of transientSlugs) {
-            if (slug === keepScenarioSlug) {
-                continue;
-            }
-
-            navigationMarkerDragState.transientExpandedSlugs.delete(slug);
-            await collapseScenarioWithAnimation(slug);
-        }
-    }
-
-    function scheduleNavigationMarkerDragPreview(targetMeta) {
-        if (
-            navigationMarkerDragState.pendingTargetMeta
-            && isSameNavigationMarkerDragTargetMeta(navigationMarkerDragState.pendingTargetMeta, targetMeta)
-        ) {
-            return;
-        }
-
-        cancelNavigationMarkerDragPreviewDelay();
-        navigationMarkerDragState.pendingTargetMeta = targetMeta;
-        navigationMarkerDragState.previewDelayTimeoutId = window.setTimeout(() => {
-            navigationMarkerDragState.previewDelayTimeoutId = 0;
-            const scheduledTargetMeta = navigationMarkerDragState.pendingTargetMeta;
-            navigationMarkerDragState.pendingTargetMeta = null;
-
-            if (!scheduledTargetMeta) {
-                return;
-            }
-
-            void queueNavigationMarkerDragOperation(async () => {
-                if (!navigationMarkerDragState.active) {
-                    return;
-                }
-
-                await ensureNavigationMarkerDragPreview(scheduledTargetMeta);
-
-                if (scheduledTargetMeta.hash && scheduledTargetMeta.hash !== window.location.hash) {
-                    window.history.pushState(null, "", scheduledTargetMeta.hash);
-                    await handleRouteChange();
-                }
-
-                await collapseTransientNavigationMarkerExpansions(scheduledTargetMeta.scenarioSlug);
-            });
-        }, NAVIGATION_MARKER_DRAG_PREVIEW_DELAY_MS);
-    }
-
-    function cancelNavigationMarkerDragPreviewDelay() {
-        if (navigationMarkerDragState.previewDelayTimeoutId) {
-            window.clearTimeout(navigationMarkerDragState.previewDelayTimeoutId);
-            navigationMarkerDragState.previewDelayTimeoutId = 0;
-        }
-
-        navigationMarkerDragState.pendingTargetMeta = null;
     }
 }
 
@@ -1214,18 +1111,6 @@ function resolveNavigationMarkerDragTargetMeta(target) {
         scenarioSlug: normalizeOptionalValue(target.dataset.scenarioToggle),
         kind: "scenario-toggle"
     };
-}
-
-function shouldDelayNavigationMarkerDragPreview(targetMeta, state) {
-    return targetMeta.kind === "scenario-toggle"
-        && Boolean(targetMeta.scenarioSlug)
-        && !state.expandedScenarioSlugs.includes(targetMeta.scenarioSlug);
-}
-
-function isSameNavigationMarkerDragTargetMeta(left, right) {
-    return left?.hash === right?.hash
-        && left?.scenarioSlug === right?.scenarioSlug
-        && left?.kind === right?.kind;
 }
 
 export function captureNavigationFlowBlockTagState(surfaceRoot) {

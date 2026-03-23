@@ -293,14 +293,18 @@ test("перетаскивание маркера навигации откры�
         await navigateToHash(dom.window, "#/exercise/branch-safety");
         await flushAsyncWork();
 
-        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
         const marker = appRoot.querySelector("[data-navigation-active-marker]");
-        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
+        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
         const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        const branchPanel = appRoot.querySelector('[data-scenario-panel="branch-safety"]');
 
-        assert.ok(mapRoot && marker && branchOverview && remoteScenarioToggle, "Навигационные элементы должны быть доступны");
+        assert.ok(
+            navigationLane && marker && branchScenarioToggle && remoteScenarioToggle && branchPanel,
+            "Навигационные элементы должны быть доступны"
+        );
 
-        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
         assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
 
         marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
@@ -315,8 +319,13 @@ test("перетаскивание маркера навигации откры�
             buttons: 1,
             clientY: 346
         }));
-        await waitForDragPreviewDelay();
         await flushAsyncWork();
+
+        assert.equal(dom.window.location.hash, "#/exercise/branch-safety");
+        assert.equal(navigationLane.dataset.markerDragging, "true");
+        assert.equal(remoteScenarioToggle.dataset.navigationMarkerPreviewTarget, "true");
+        assert.equal(branchPanel.isConnected, true);
+
         dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
             bubbles: true,
             cancelable: true,
@@ -333,7 +342,7 @@ test("перетаскивание маркера навигации откры�
     }
 });
 
-test("захват маркера сохраняется между переключениями карточек, пока кнопка мыши зажата", async () => {
+test("во время drag скрываются дочерние панели и preview пропадает после фиксации выбора", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"
     });
@@ -393,11 +402,15 @@ test("захват маркера сохраняется между перекл
         await navigateToHash(dom.window, "#/exercise/branch-safety");
         await flushAsyncWork();
 
-        let marker = appRoot.querySelector("[data-navigation-active-marker]");
-        let branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
-        let remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        const branchPanel = appRoot.querySelector('[data-scenario-panel="branch-safety"]');
 
-        assignRect(branchOverview, createRect(40, 236, 204, 46));
+        assert.ok(navigationLane && marker && branchScenarioToggle && remoteScenarioToggle && branchPanel);
+
+        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
         assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
 
         marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
@@ -412,275 +425,31 @@ test("захват маркера сохраняется между перекл
             buttons: 1,
             clientY: 346
         }));
-        await waitForDragPreviewDelay();
         await flushAsyncWork();
 
-        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
-
-        marker = appRoot.querySelector("[data-navigation-active-marker]");
-        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
-        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
-        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
-
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
-            bubbles: true,
-            cancelable: true,
-            buttons: 1,
-            clientY: 146
-        }));
-        await flushAsyncWork();
-
-        assert.match(dom.window.location.hash, /^#\/exercise\/branch-safety(?:\?focus=overview)?$/);
+        assert.equal(navigationLane.dataset.markerDragging, "true");
+        assert.equal(branchPanel.closest("[data-scenario-panel]")?.hasAttribute("hidden"), false);
+        assert.equal(remoteScenarioToggle.dataset.navigationMarkerPreviewTarget, "true");
         assert.ok(marker.classList.contains("navigation-flow-rail__marker--dragging"));
 
         dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
             bubbles: true,
             cancelable: true,
             button: 0,
-            clientY: 146
-        }));
-        await flushAsyncWork();
-
-        assert.equal(
-            appRoot.querySelector("[data-navigation-active-marker]").classList.contains("navigation-flow-rail__marker--dragging"),
-            false
-        );
-    } finally {
-        restoreGlobals();
-        dom.window.close();
-    }
-});
-
-test("drag к закрытому родителю временно раскрывает его и скрывает обратно при уходе без mouseup", async () => {
-    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
-        url: "http://localhost:5173/#/catalog"
-    });
-    const restoreGlobals = installDomGlobals(dom.window);
-    const appRoot = dom.window.document.querySelector("#app");
-    setReducedMotion(dom.window, true);
-
-    const fetchImpl = async (url, options = {}) => {
-        const requestUrl = new URL(url);
-        const method = String(options.method ?? "GET").toUpperCase();
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
-            return jsonResponse(createCatalogPayload());
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
-            return jsonResponse(createBranchSafetyDetailPayload());
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
-            return jsonResponse(createRemoteSyncDetailPayload());
-        }
-
-        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
-            const payload = JSON.parse(String(options.body ?? "{}"));
-            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/progress") {
-            return jsonResponse(createInitialProgressPayload());
-        }
-
-        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
-    };
-
-    try {
-        const controller = createCatalogWorkspaceController({
-            appRoot,
-            defaultProviderName: "backend-api",
-            catalogProviderFactories: {
-                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
-            },
-            detailProviderFactories: {
-                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
-            },
-            sessionProviderFactories: {
-                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
-            },
-            progressProviderFactories: {
-                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
-            },
-            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
-        });
-
-        await controller.bootstrap();
-        await flushAsyncWork();
-        await navigateToHash(dom.window, "#/exercise/branch-safety");
-        await flushAsyncWork();
-
-        const marker = appRoot.querySelector("[data-navigation-active-marker]");
-        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
-        const branchScenarioToggle = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
-
-        assignRect(branchOverview, createRect(40, 236, 204, 46));
-        assignRect(branchScenarioToggle, createRect(24, 120, 220, 52));
-        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
-
-        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-            clientY: 250
-        }));
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
-            bubbles: true,
-            cancelable: true,
-            buttons: 1,
             clientY: 346
         }));
-        await waitForDragPreviewDelay();
         await flushAsyncWork();
 
         assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
         assert.equal(
-            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.getAttribute("aria-expanded"),
-            "true"
+            appRoot.querySelector("[data-navigation-active-marker]").classList.contains("navigation-flow-rail__marker--dragging"),
+            false
         );
-
-        const remoteToggleAfterOpen = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
-        const branchToggleAfterOpen = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        assignRect(remoteToggleAfterOpen, createRect(24, 320, 220, 52));
-        assignRect(branchToggleAfterOpen, createRect(24, 120, 220, 52));
-
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
-            bubbles: true,
-            cancelable: true,
-            buttons: 1,
-            clientY: 146
-        }));
-        await flushAsyncWork();
-
-        assert.equal(dom.window.location.hash, "#/exercise/branch-safety");
+        assert.equal(navigationLane.hasAttribute("data-marker-dragging"), false);
         assert.equal(
-            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.getAttribute("aria-expanded"),
-            "false"
-        );
-
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-            clientY: 146
-        }));
-        await flushAsyncWork(12);
-    } finally {
-        restoreGlobals();
-        dom.window.close();
-    }
-});
-
-test("если отпустить маркер на дочернем элементе временно раскрытого сценария, он остаётся раскрытым", async () => {
-    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
-        url: "http://localhost:5173/#/catalog"
-    });
-    const restoreGlobals = installDomGlobals(dom.window);
-    const appRoot = dom.window.document.querySelector("#app");
-    setReducedMotion(dom.window, true);
-
-    const fetchImpl = async (url, options = {}) => {
-        const requestUrl = new URL(url);
-        const method = String(options.method ?? "GET").toUpperCase();
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
-            return jsonResponse(createCatalogPayload());
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
-            return jsonResponse(createBranchSafetyDetailPayload());
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
-            return jsonResponse(createRemoteSyncDetailPayload());
-        }
-
-        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
-            const payload = JSON.parse(String(options.body ?? "{}"));
-            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
-        }
-
-        if (method === "GET" && requestUrl.pathname === "/api/progress") {
-            return jsonResponse(createInitialProgressPayload());
-        }
-
-        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
-    };
-
-    try {
-        const controller = createCatalogWorkspaceController({
-            appRoot,
-            defaultProviderName: "backend-api",
-            catalogProviderFactories: {
-                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
-            },
-            detailProviderFactories: {
-                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
-            },
-            sessionProviderFactories: {
-                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
-            },
-            progressProviderFactories: {
-                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
-            },
-            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
-        });
-
-        await controller.bootstrap();
-        await flushAsyncWork();
-        await navigateToHash(dom.window, "#/exercise/branch-safety");
-        await flushAsyncWork();
-
-        const marker = appRoot.querySelector("[data-navigation-active-marker]");
-        const branchOverview = appRoot.querySelector('[data-scenario-panel="branch-safety"] [data-scenario-focus="overview"]');
-        const remoteScenarioToggle = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
-
-        assignRect(branchOverview, createRect(40, 236, 204, 46));
-        assignRect(remoteScenarioToggle, createRect(24, 320, 220, 52));
-
-        marker.dispatchEvent(new dom.window.MouseEvent("mousedown", {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-            clientY: 250
-        }));
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
-            bubbles: true,
-            cancelable: true,
-            buttons: 1,
-            clientY: 346
-        }));
-        await waitForDragPreviewDelay();
-        await flushAsyncWork();
-
-        const remoteOverview = appRoot.querySelector('[data-scenario-panel="remote-sync-preview"] [data-scenario-focus="overview"]');
-        assert.ok(remoteOverview, "Временно раскрытый сценарий должен показать дочерние блоки");
-        assignRect(remoteOverview, createRect(40, 404, 204, 46));
-
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mousemove", {
-            bubbles: true,
-            cancelable: true,
-            buttons: 1,
-            clientY: 426
-        }));
-        await flushAsyncWork();
-
-        dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-            clientY: 426
-        }));
-        await flushAsyncWork(12);
-
-        assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview?focus=overview");
-        assert.ok(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'));
-        assert.ok(
-            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"] [data-scenario-focus="overview"]')
-                ?.classList.contains("flow-block--active")
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')
+                ?.hasAttribute("data-navigation-marker-preview-target"),
+            false
         );
     } finally {
         restoreGlobals();
@@ -1055,10 +824,6 @@ async function flushAsyncWork(iterations = 6) {
         await Promise.resolve();
         await new Promise((resolve) => setTimeout(resolve, 0));
     }
-}
-
-async function waitForDragPreviewDelay() {
-    await new Promise((resolve) => setTimeout(resolve, 540));
 }
 
 function installDomGlobals(windowLike) {
