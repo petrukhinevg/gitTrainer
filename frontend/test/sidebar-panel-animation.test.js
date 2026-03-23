@@ -148,6 +148,45 @@ test("при удержании тега неподходящие сценари
     }
 });
 
+test("между тегами и заданиями рендерится разделитель с toggle для collapse-all", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            expandedScenarioSlugs: ["branch-safety", "remote-sync-preview"],
+            catalogItems: [
+                {
+                    slug: "branch-safety",
+                    title: "Подтверди текущую ветку",
+                    tags: ["branching", "navigation"]
+                },
+                {
+                    slug: "remote-sync-preview",
+                    title: "Синхронизируй удалённое состояние",
+                    tags: ["remote", "planning"]
+                }
+            ],
+            detailCache: {
+                "branch-safety": createDetailCacheEntry(["Проверь ветку"]),
+                "remote-sync-preview": createDetailCacheEntry(["Сделай fetch"])
+            }
+        }),
+        null,
+        ["branching", "navigation", "remote", "planning"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+
+    try {
+        const divider = dom.window.document.querySelector(".scenario-flow-divider");
+        const button = dom.window.document.querySelector("[data-navigation-collapse-all-toggle]");
+
+        assert.ok(divider, "Между legend и списком должен появиться разделитель");
+        assert.ok(button, "В разделителе должна быть кнопка collapse-all");
+        assert.equal(button?.getAttribute("data-navigation-collapse-all-toggle"), "collapse");
+        assert.equal(button?.textContent?.trim(), "-");
+    } finally {
+        dom.window.close();
+    }
+});
+
 function createReadyState({
     expandingScenarioSlug = null,
     expandedScenarioSlugs = ["branch-safety"],
@@ -174,6 +213,7 @@ function createReadyState({
         },
         expandedScenarioSlugs,
         expandingScenarioSlug,
+        collapsedNavigationScenarioSnapshot: null,
         selectedScenarioSlug,
         selectedFocus: null,
         pinnedNavigationTag: null,

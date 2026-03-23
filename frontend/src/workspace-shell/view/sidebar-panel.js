@@ -54,6 +54,10 @@ function renderTrainingFlow(state, tagOptions) {
     }
 
     const activeFilterTag = toTagToken(state.heldNavigationTag);
+    const hasExpandedScenarios = state.expandedScenarioSlugs.length > 0;
+    const canRestoreCollapsedScenarios = !hasExpandedScenarios
+        && Array.isArray(state.collapsedNavigationScenarioSnapshot)
+        && state.collapsedNavigationScenarioSnapshot.length > 0;
 
     return `
         <div class="tag-connection-map" data-tag-connection-map>
@@ -62,6 +66,7 @@ function renderTrainingFlow(state, tagOptions) {
                     ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag, state.heldNavigationTag)}
                 </div>
             </div>
+            ${renderScenarioFlowDivider({ hasExpandedScenarios, canRestoreCollapsedScenarios })}
             <div class="flow-block-list" data-flow-block-list>
                 ${renderWelcomeFlowBlock(state)}
                 ${renderProgressFlowBlock(state)}
@@ -74,6 +79,27 @@ function renderTrainingFlow(state, tagOptions) {
                     selectedFocus: state.selectedFocus
                 })).join("")}
             </div>
+        </div>
+    `;
+}
+
+function renderScenarioFlowDivider({ hasExpandedScenarios, canRestoreCollapsedScenarios }) {
+    const isDisabled = !hasExpandedScenarios && !canRestoreCollapsedScenarios;
+    const buttonLabel = canRestoreCollapsedScenarios ? "Вернуть раскрытие" : "Свернуть всё";
+    const buttonState = canRestoreCollapsedScenarios ? "restore" : "collapse";
+
+    return `
+        <div class="scenario-flow-divider">
+            <span class="scenario-flow-divider__line" aria-hidden="true"></span>
+            <button
+                class="scenario-flow-divider__toggle"
+                type="button"
+                data-navigation-collapse-all-toggle="${buttonState}"
+                aria-label="${buttonLabel}"
+                title="${buttonLabel}"${isDisabled ? " disabled" : ""}
+            >
+                ${canRestoreCollapsedScenarios ? "+" : "-"}
+            </button>
         </div>
     `;
 }

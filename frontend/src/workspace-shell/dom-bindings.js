@@ -5,6 +5,8 @@ import {
     redrawNavigationTagConnections
 } from "./tag-connection-overlay.js";
 
+const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
+
 export function bindWorkspaceShellDom({
     appRoot,
     state,
@@ -16,6 +18,7 @@ export function bindWorkspaceShellDom({
     resetCatalogControls,
     toggleNavigationVisibility,
     toggleScenarioExpansion,
+    toggleAllNavigationScenarios,
     toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold,
@@ -34,6 +37,7 @@ export function bindWorkspaceShellDom({
         appRoot,
         state,
         toggleScenarioExpansion,
+        toggleAllNavigationScenarios,
         toggleNavigationTagPin,
         beginNavigationTagHold,
         endNavigationTagHold
@@ -109,6 +113,46 @@ export function restoreDraftFieldSnapshot(appRoot, snapshot) {
     }
 }
 
+export function preparePinnedNavigationSubtaskUnpinAnimation(appRoot, tag) {
+    if (!(appRoot instanceof HTMLElement) || !tag) {
+        return;
+    }
+
+    const mapRoot = appRoot.querySelector(".lesson-lane--navigation [data-tag-connection-map]");
+    if (!(mapRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    const groups = Array.from(
+        mapRoot.querySelectorAll(`.flow-subtask-group[data-flow-subtask-active-tag="${escapeSelectorValue(tag)}"]`)
+    ).filter((element) => element instanceof HTMLElement);
+
+    if (groups.length === 0) {
+        return;
+    }
+
+    groups.forEach((group) => {
+        if (typeof group.__flowSubtaskShiftAnimationTimeoutId === "number" && group.__flowSubtaskShiftAnimationTimeoutId) {
+            window.clearTimeout(group.__flowSubtaskShiftAnimationTimeoutId);
+            group.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }
+
+        group.removeAttribute("data-flow-subtask-tag-state-restored");
+        group.dataset.flowSubtaskShiftAnimating = "true";
+    });
+
+    groups.forEach((group) => {
+        void group.offsetWidth;
+    });
+
+    groups.forEach((group) => {
+        group.__flowSubtaskShiftAnimationTimeoutId = window.setTimeout(() => {
+            delete group.dataset.flowSubtaskShiftAnimating;
+            group.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }, FLOW_SUBTASK_SHIFT_ANIMATION_MS);
+    });
+}
+
 function bindCatalogControls({ applyCatalogControls, resetCatalogControls }) {
     const form = document.querySelector("[data-catalog-controls-form]");
     if (!form || form.dataset.controlsBound === "true") {
@@ -179,6 +223,7 @@ function bindNavigationControls({
     appRoot,
     state,
     toggleScenarioExpansion,
+    toggleAllNavigationScenarios,
     toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold
@@ -206,6 +251,21 @@ function bindNavigationControls({
             }
 
             void toggleScenarioExpansion(slug);
+        });
+    });
+
+    document.querySelectorAll("[data-navigation-collapse-all-toggle]").forEach((button) => {
+        if (
+            !(button instanceof HTMLElement)
+            || button.tagName !== "BUTTON"
+            || button.dataset.navigationCollapseAllBound === "true"
+        ) {
+            return;
+        }
+
+        button.dataset.navigationCollapseAllBound = "true";
+        button.addEventListener("click", () => {
+            toggleAllNavigationScenarios();
         });
     });
 
@@ -252,7 +312,10 @@ function bindNavigationControls({
         tagHoldState.timerId = 0;
     };
 
-    const releaseTagHold = (tag = tagHoldState.activeTag ?? tagHoldState.pendingTag) => {
+    const releaseTagHold = (
+        tag = tagHoldState.activeTag ?? tagHoldState.pendingTag,
+        { suppressClick = true } = {}
+    ) => {
         const normalizedTag = typeof tag === "string" ? tag : null;
         const wasHeld = Boolean(normalizedTag) && tagHoldState.activeTag === normalizedTag;
 
@@ -266,7 +329,7 @@ function bindNavigationControls({
         }
 
         tagHoldState.activeTag = null;
-        tagHoldState.suppressClickTag = normalizedTag;
+        tagHoldState.suppressClickTag = suppressClick ? normalizedTag : null;
         endNavigationTagHold(normalizedTag);
         applyNavigationHighlight();
         syncNavigationLegendState();
@@ -296,12 +359,12 @@ function bindNavigationControls({
         }
 
         if (tagHoldState.activeTag === tag) {
-            releaseTagHold(tag);
+            releaseTagHold(tag, { suppressClick: false });
             return;
         }
 
         if (tagHoldState.activeTag) {
-            releaseTagHold(tagHoldState.activeTag);
+            releaseTagHold(tagHoldState.activeTag, { suppressClick: false });
         }
 
         beginTagHold(tag);
@@ -399,6 +462,9 @@ function bindNavigationControls({
             tagHoldState.pendingTag = null;
             tagHoldState.activeTag = null;
             tagHoldState.suppressClickTag = null;
+            if (!state.heldNavigationTag && state.pinnedNavigationTag === tag) {
+                preparePinnedNavigationSubtaskUnpinAnimation(appRoot, tag);
+            }
             toggleNavigationTagPin(tag);
         });
     });

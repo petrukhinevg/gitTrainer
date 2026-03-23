@@ -10,6 +10,7 @@ const CONNECTION_DRAW_SPEED_PX_PER_MS = 3;
 const CONNECTION_MIN_ANIMATION_MS = 4;
 const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
 const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
+const FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-subtask-tag-state-restored";
 const BRANCH_DOT_REMOVAL_MS = 320;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
@@ -681,9 +682,7 @@ function buildSecondaryBranchStates({
 
     return flowNodes.flatMap((node, index) => {
         const subtaskPanel = node.querySelector("[data-scenario-panel]");
-        if (subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true") {
-            return [];
-        }
+        const isCollapsing = subtaskPanel instanceof HTMLElement && subtaskPanel.dataset.tagConnectionCollapsing === "true";
 
         const parentBlock = node.querySelector("[data-scenario-toggle]");
         const branchKey = resolveTargetKey(parentBlock, index);
@@ -737,6 +736,7 @@ function buildSecondaryBranchStates({
                 targetPoints: polyline.targetPoints,
                 targetSegmentLengths: polyline.targetSegmentLengths,
                 revealLength: revealLengthByKey.get(branchKey) ?? 0,
+                isCollapsing,
                 targetElements: childBlocks.map((entry) => entry.element),
                 targetRevealLengths: polyline.targetRevealLengths
             }
@@ -940,11 +940,14 @@ function syncSecondaryBranchLayer({ branchLayer, accent, visibleLength, nextBran
         const previousState = path.__branchStateData ?? null;
         const shouldKeepVisible = previousState?.activeTag === branch.activeTag
             && isBranchFullyVisible(previousState);
+        const targetVisibleLength = branch.isCollapsing
+            ? 0
+            : (shouldKeepVisible || visibleLength >= branch.revealLength ? branch.pathLength : 0);
 
         const renderState = resolveBranchRenderState({
             path,
             nextState: branch,
-            targetVisibleLength: shouldKeepVisible || visibleLength >= branch.revealLength ? branch.pathLength : 0,
+            targetVisibleLength,
             instant
         });
         applyBranchRenderState(path, accent, renderState);
@@ -1576,6 +1579,11 @@ function prepareFlowSubtaskShiftAnimation(groups) {
         if (typeof group.__flowSubtaskShiftAnimationTimeoutId === "number" && group.__flowSubtaskShiftAnimationTimeoutId) {
             window.clearTimeout(group.__flowSubtaskShiftAnimationTimeoutId);
             group.__flowSubtaskShiftAnimationTimeoutId = 0;
+        }
+
+        if (group.hasAttribute(FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE)) {
+            group.removeAttribute(FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE);
+            shouldForceLayout = true;
         }
 
         if (group.dataset.flowSubtaskShiftAnimating !== "true") {

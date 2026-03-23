@@ -505,6 +505,64 @@ test("во время shift-анимации pinned-состояния secondary
     }
 });
 
+test("left-unpin снимает restored-флаг перед shift-анимацией дочерней группы", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const scenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const childBlock = appRoot.querySelector("[data-tag-branch-target]");
+        const subtaskPanel = appRoot.querySelector("[data-scenario-panel]");
+        const subtaskGroup = dom.window.document.createElement("div");
+
+        subtaskGroup.className = "flow-subtask-group";
+        childBlock.replaceWith(subtaskGroup);
+        subtaskGroup.append(childBlock);
+
+        navigationLane.dataset.highlightTag = "branching";
+        navigationLane.dataset.pinnedTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 640));
+        assignRect(navigationBody, createRect(0, 40, 280, 240));
+        assignRect(mapRoot, createRect(0, 20, 280, 520));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(scenarioButton, createRect(24, 140, 220, 52));
+        assignRect(childBlock, createRect(40, 204, 204, 46));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+        advanceAnimationFrames(4);
+
+        subtaskGroup?.setAttribute("data-flow-subtask-active-tag", "branching");
+        subtaskGroup?.setAttribute("data-flow-subtask-tag-state-restored", "true");
+        delete navigationLane.dataset.pinnedTag;
+        delete navigationLane.dataset.highlightTag;
+
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+
+        assert.equal(
+            subtaskGroup?.dataset.flowSubtaskShiftAnimating,
+            "true",
+            "После left-unpin дочерняя группа должна получить shift-анимацию"
+        );
+        assert.equal(
+            subtaskGroup?.hasAttribute("data-flow-subtask-tag-state-restored"),
+            false,
+            "Перед shift-анимацией restored-флаг должен сниматься"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("анимация появления вторичной линии повторяет дорисовку первичной", () => {
     const dom = new JSDOM(createOverlayFixture());
     const restoreGlobals = installDomGlobals(dom.window);
@@ -772,6 +830,82 @@ test("начинает закрывать вторичную линию сраз
         assert.ok(
             shrinkingPathData.length < fullPathData.length,
             "Shrink-анимация должна стартовать до удаления дочерних блоков из DOM"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("при одновременном collapse нескольких панелей secondary branch продолжает следовать за нижним родителем", () => {
+    const dom = new JSDOM(createOverlayFixture());
+    const restoreGlobals = installDomGlobals(dom.window);
+
+    try {
+        const appRoot = dom.window.document.querySelector("[data-app-root]");
+        const layoutRoot = appRoot.querySelector(".lesson-layout");
+        const navigationBody = appRoot.querySelector(".lesson-lane__body");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const navigationLane = appRoot.querySelector(".lesson-lane--navigation");
+        const canvas = appRoot.querySelector("[data-tag-connection-canvas]");
+        const tagButton = appRoot.querySelector('[data-tag-legend-control="branching"]');
+        const firstScenarioButton = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        const firstChildBlock = appRoot.querySelector("[data-tag-branch-target]");
+        const firstSubtaskPanel = appRoot.querySelector('[data-scenario-panel="branch-safety"]');
+        const secondFlowNode = createScenarioNode(dom.window.document, {
+            slug: "merge-safety",
+            label: "Merge safety",
+            focusHref: "#/exercise/merge-safety?focus=step-1"
+        });
+
+        mapRoot.querySelector(".flow-block-list").append(secondFlowNode);
+
+        const secondScenarioButton = mapRoot.querySelector('[data-scenario-toggle="merge-safety"]');
+        const secondChildBlock = secondFlowNode.querySelector("[data-tag-branch-target]");
+        const secondSubtaskPanel = secondFlowNode.querySelector('[data-scenario-panel="merge-safety"]');
+
+        navigationLane.dataset.highlightTag = "branching";
+        assignRect(layoutRoot, createRect(0, 0, 960, 800));
+        assignRect(navigationBody, createRect(0, 40, 280, 360));
+        assignRect(mapRoot, createRect(0, 20, 280, 700));
+        assignRect(tagButton, createRect(20, 60, 96, 28));
+        assignRect(firstScenarioButton, createRect(24, 140, 220, 52));
+        assignRect(firstChildBlock, createRect(40, 204, 204, 46));
+        assignRect(firstSubtaskPanel, createRect(24, 198, 224, 110));
+        assignRect(secondScenarioButton, createRect(24, 320, 220, 52));
+        assignRect(secondChildBlock, createRect(40, 384, 204, 46));
+        assignRect(secondSubtaskPanel, createRect(24, 378, 224, 110));
+
+        bindNavigationTagConnections({ appRoot });
+        redrawNavigationTagConnections(appRoot, { instant: true });
+        flushRafQueue();
+
+        const initialBranchPath = canvas.querySelector('[data-branch-key="merge-safety"]');
+        const initialPoints = parsePathPoints(initialBranchPath?.getAttribute("d") ?? "");
+        assert.equal(initialPoints[0]?.y, 346);
+
+        firstSubtaskPanel.dataset.tagConnectionCollapsing = "true";
+        secondSubtaskPanel.dataset.tagConnectionCollapsing = "true";
+        assignRect(secondScenarioButton, createRect(24, 236, 220, 52));
+        assignRect(secondChildBlock, createRect(40, 300, 204, 46));
+        assignRect(secondSubtaskPanel, createRect(24, 294, 224, 110));
+
+        redrawNavigationTagConnections(appRoot);
+        stepRafQueue();
+
+        const collapsingBranchPath = canvas.querySelector('[data-branch-key="merge-safety"]');
+        const collapsingPoints = parsePathPoints(collapsingBranchPath?.getAttribute("d") ?? "");
+
+        assert.ok(collapsingBranchPath?.isConnected, "Во время batch-collapse ветка нижнего блока должна оставаться в DOM");
+        assert.equal(
+            collapsingPoints[0]?.y,
+            262,
+            "Во время shrink secondary branch должна пересчитываться по новой позиции родительского блока"
+        );
+        assert.notEqual(
+            collapsingPoints[0]?.y,
+            initialPoints[0]?.y,
+            "Ветка не должна затухать на старой позиции после смещения родителя"
         );
     } finally {
         restoreGlobals();

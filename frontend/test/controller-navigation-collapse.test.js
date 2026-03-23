@@ -340,6 +340,237 @@ test("можно запустить раскрытие следующего ро
     }
 });
 
+test("кнопка между тегами и заданиями сворачивает все сценарии и восстанавливает предыдущее раскрытие", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    dom.window.matchMedia = () => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+
+    const appRoot = dom.window.document.querySelector("#app");
+    const fetchImpl = async (url) => {
+        const requestUrl = new URL(url);
+
+        if (requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/history-scan") {
+            return jsonResponse(createHistoryScanDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/progress") {
+            return jsonResponse({
+                items: [],
+                recentActivity: [],
+                recommendations: null,
+                meta: { source: "mvp-fixture" }
+            });
+        }
+
+        throw new Error(`Unexpected request: ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning", "history", "inspection"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-scenario-toggle="branch-safety"]')?.click();
+        await flushAsyncWork();
+        appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.click();
+        await flushAsyncWork();
+
+        assert.ok(appRoot.querySelector('[data-scenario-panel="branch-safety"]'));
+        assert.ok(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'));
+
+        appRoot.querySelector('[data-navigation-collapse-all-toggle="collapse"]')?.click();
+        await flushAsyncWork();
+
+        assert.equal(appRoot.querySelector('[data-scenario-panel="branch-safety"]'), null);
+        assert.equal(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'), null);
+        assert.equal(
+            appRoot.querySelector("[data-navigation-collapse-all-toggle]")?.getAttribute("data-navigation-collapse-all-toggle"),
+            "restore"
+        );
+
+        appRoot.querySelector('[data-navigation-collapse-all-toggle="restore"]')?.click();
+        await flushAsyncWork();
+
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="branch-safety"]'),
+            "После restore должен вернуться первый ранее раскрытый сценарий"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'),
+            "После restore должен вернуться второй ранее раскрытый сценарий"
+        );
+        assert.equal(
+            appRoot.querySelector("[data-navigation-collapse-all-toggle]")?.getAttribute("data-navigation-collapse-all-toggle"),
+            "collapse"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("collapse-all и restore используют анимации родительских и дочерних блоков", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    dom.window.matchMedia = () => ({
+        matches: false,
+        media: "(prefers-reduced-motion: no-preference)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+    const restoreAsyncRaf = installAsyncRaf(dom.window);
+
+    const appRoot = dom.window.document.querySelector("#app");
+    const fetchImpl = async (url) => {
+        const requestUrl = new URL(url);
+
+        if (requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/scenarios/history-scan") {
+            return jsonResponse(createHistoryScanDetailPayload());
+        }
+
+        if (requestUrl.pathname === "/api/progress") {
+            return jsonResponse({
+                items: [],
+                recentActivity: [],
+                recommendations: null,
+                meta: { source: "mvp-fixture" }
+            });
+        }
+
+        throw new Error(`Unexpected request: ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning", "history", "inspection"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork(1);
+
+        appRoot.querySelector('[data-scenario-toggle="branch-safety"]')?.click();
+        appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.click();
+        await waitForTimers(NAVIGATION_TOGGLE_ANIMATION_MS + 180);
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-navigation-collapse-all-toggle="collapse"]')?.click();
+        await flushAsyncWork(1);
+
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="branch-safety"][data-scenario-animating="true"]'),
+            "При collapse-all первая дочерняя группа должна схлопываться анимацией"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"][data-scenario-animating="true"]'),
+            "При collapse-all вторая дочерняя группа должна схлопываться анимацией"
+        );
+
+        await waitForTimers(NAVIGATION_TOGGLE_ANIMATION_MS + 180);
+        await flushAsyncWork();
+
+        assert.equal(appRoot.querySelector('[data-scenario-panel="branch-safety"]'), null);
+        assert.equal(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'), null);
+        assert.equal(
+            appRoot.querySelector("[data-navigation-collapse-all-toggle]")?.getAttribute("data-navigation-collapse-all-toggle"),
+            "restore"
+        );
+
+        appRoot.querySelector('[data-navigation-collapse-all-toggle="restore"]')?.click();
+        await flushAsyncWork(1);
+
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="branch-safety"][data-scenario-animating="true"]'),
+            "При restore первая дочерняя группа должна раскрываться анимацией"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-scenario-panel="remote-sync-preview"][data-scenario-animating="true"]'),
+            "При restore вторая дочерняя группа должна раскрываться анимацией"
+        );
+
+        await waitForTimers(NAVIGATION_TOGGLE_ANIMATION_MS + 180);
+        await flushAsyncWork();
+
+        assert.ok(appRoot.querySelector('[data-scenario-panel="branch-safety"]'));
+        assert.ok(appRoot.querySelector('[data-scenario-panel="remote-sync-preview"]'));
+        assert.equal(
+            appRoot.querySelector("[data-navigation-collapse-all-toggle]")?.getAttribute("data-navigation-collapse-all-toggle"),
+            "collapse"
+        );
+    } finally {
+        restoreAsyncRaf();
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("при переходе в соседнюю уже открытую группу подзадачи не получают enter-анимацию повторно", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"

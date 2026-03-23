@@ -56,6 +56,7 @@ const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-scenario-animating",
     "data-tag-connection-collapsing",
     "data-tag-legend-bound",
+    "data-navigation-collapse-all-bound",
     "data-navigation-toggle-bound",
     "data-route-link-bound"
 ]);
@@ -77,6 +78,7 @@ export function createCatalogWorkspaceController({
         selectedFocus: null,
         expandedScenarioSlugs: [],
         expandingScenarioSlugs: [],
+        collapsedNavigationScenarioSnapshot: null,
         isNavigationCollapsed: false,
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
@@ -115,6 +117,7 @@ export function createCatalogWorkspaceController({
     let shellMounted = false;
     let pendingLessonScrollReset = false;
     let pendingNavigationSelectionSyncOnly = false;
+    let isTogglingAllNavigationScenarios = false;
     let renderedRouteKind = null;
     let navigationMarkerDragOperation = Promise.resolve();
     const renderedSurfaceCache = {
@@ -244,6 +247,7 @@ export function createCatalogWorkspaceController({
             resetCatalogControls,
             toggleNavigationVisibility,
             toggleScenarioExpansion,
+            toggleAllNavigationScenarios,
             toggleNavigationTagPin,
             beginNavigationTagHold,
             endNavigationTagHold,
@@ -935,6 +939,46 @@ export function createCatalogWorkspaceController({
         await expandScenarioWithAnimation(slug, { loadDetail: true });
     }
 
+    async function toggleAllNavigationScenarios() {
+        if (activeNavigationAnimationSlugs.size > 0 || isTogglingAllNavigationScenarios) {
+            return;
+        }
+
+        isTogglingAllNavigationScenarios = true;
+
+        try {
+            const snapshot = Array.isArray(state.collapsedNavigationScenarioSnapshot)
+                ? state.collapsedNavigationScenarioSnapshot.filter(Boolean)
+                : [];
+
+            if (state.expandedScenarioSlugs.length > 0) {
+                const collapsedSlugs = [...state.expandedScenarioSlugs];
+                state.collapsedNavigationScenarioSnapshot = collapsedSlugs;
+                await Promise.all(collapsedSlugs.map((slug) => collapseScenarioWithAnimation(slug)));
+                render();
+                return;
+            }
+
+            if (snapshot.length === 0) {
+                return;
+            }
+
+            const knownSlugs = new Set(state.catalog.items.map((item) => item.slug).filter(Boolean));
+            const nextExpandedSlugs = Array.from(new Set(snapshot.filter((slug) => knownSlugs.has(slug))));
+            state.collapsedNavigationScenarioSnapshot = null;
+
+            if (nextExpandedSlugs.length === 0) {
+                render();
+                return;
+            }
+
+            await Promise.all(nextExpandedSlugs.map((slug) => expandScenarioWithAnimation(slug, { loadDetail: true })));
+            render();
+        } finally {
+            isTogglingAllNavigationScenarios = false;
+        }
+    }
+
     async function expandScenarioWithAnimation(slug, { loadDetail = true } = {}) {
         if (!slug || state.expandedScenarioSlugs.includes(slug) || activeNavigationAnimationSlugs.has(slug)) {
             if (loadDetail && slug) {
@@ -1277,7 +1321,6 @@ export function restoreNavigationSubtaskGroupTagState(surfaceRoot, entries) {
             .querySelector(`[data-scenario-panel="${escapeSelectorValue(entry.panelKey)}"] .flow-subtask-group`);
         if (group instanceof HTMLElement) {
             group.dataset.flowSubtaskActiveTag = entry.tag;
-            group.setAttribute(FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE, "true");
         }
     });
 }
@@ -1338,6 +1381,17 @@ function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
         return false;
     }
 
+    const currentDivider = surfaceRoot.querySelector(".scenario-flow-divider");
+    const nextDivider = template.content.querySelector(".scenario-flow-divider");
+    if ((currentDivider instanceof HTMLElement) !== (nextDivider instanceof HTMLElement)) {
+        return false;
+    }
+
+    const shouldPatchDivider = currentDivider instanceof HTMLElement
+        && nextDivider instanceof HTMLElement
+        && serializeNormalizedNavigationMarkup(currentDivider.outerHTML)
+            !== serializeNormalizedNavigationMarkup(nextDivider.outerHTML);
+
     const currentScenarioNodes = Array.from(currentFlowList.children).filter(isScenarioFlowNode);
     const nextScenarioNodes = Array.from(nextFlowList.children).filter(isScenarioFlowNode);
     if (currentScenarioNodes.length !== nextScenarioNodes.length) {
@@ -1368,12 +1422,15 @@ function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
         }
     }
 
-    if (diffEntries.length === 0) {
+    if (diffEntries.length === 0 && !shouldPatchDivider) {
         return false;
     }
 
     const preservedNavigationTagState = captureNavigationFlowBlockTagState(surfaceRoot);
     const preservedSubtaskGroupTagState = captureNavigationSubtaskGroupTagState(surfaceRoot);
+    if (shouldPatchDivider && currentDivider instanceof HTMLElement && nextDivider instanceof HTMLElement) {
+        currentDivider.replaceWith(nextDivider.cloneNode(true));
+    }
     diffEntries.forEach(({ currentNode, nextNode }) => {
         currentNode.replaceWith(nextNode.cloneNode(true));
     });
@@ -1404,6 +1461,10 @@ function normalizeNavigationMarkup(root) {
         }
 
         element.classList.remove("flow-block--active");
+        if (element.matches("[data-tag-legend-control]")) {
+            element.classList.remove("scenario-legend__tag--active");
+            element.removeAttribute("aria-pressed");
+        }
         TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES.forEach((attributeName) => {
             element.removeAttribute(attributeName);
         });

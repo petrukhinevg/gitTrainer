@@ -391,6 +391,79 @@ test("при снятии middle-фильтра без движения мыши
     }
 });
 
+test("после снятия middle-фильтра можно сразу закрепить тег левой кнопкой", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    dom.window.matchMedia = () => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {}
+    });
+
+    const fetchImpl = createFetchImpl();
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation", "remote", "planning"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        appRoot.querySelector('[data-tag-legend-control="branching"]')?.click();
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-tag-legend-control="branching"]')?.getAttribute("aria-pressed"),
+            "true",
+            "Сразу после middle-off левый клик должен закреплять тот же тег"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "false",
+            "После left-pin обычный список сценариев не должен переходить в middle-filter режим"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function createFetchImpl() {
     return async (url) => {
         const requestUrl = new URL(url);
