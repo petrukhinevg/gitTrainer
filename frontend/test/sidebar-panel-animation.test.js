@@ -106,7 +106,7 @@ test("раскрытая соседняя группа берёт подзада
     }
 });
 
-test("при удержании тега в рендере остаются только подходящие сценарии и они считаются раскрытыми", () => {
+test("при удержании тега неподходящие сценарии остаются в DOM, но переходят в скрытое состояние", () => {
     const markup = renderSidebarPanelContent(
         createReadyState({
             heldNavigationTag: "branching",
@@ -134,8 +134,14 @@ test("при удержании тега в рендере остаются то
     const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
 
     try {
-        assert.ok(dom.window.document.querySelector('[data-scenario-toggle="branch-safety"]'));
-        assert.equal(dom.window.document.querySelector('[data-scenario-toggle="remote-sync-preview"]'), null);
+        assert.equal(
+            dom.window.document.querySelector('[data-scenario-toggle="branch-safety"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "false"
+        );
+        assert.equal(
+            dom.window.document.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "true"
+        );
         assert.ok(dom.window.document.querySelector('[data-scenario-panel="branch-safety"]'));
     } finally {
         dom.window.close();

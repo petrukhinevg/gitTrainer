@@ -8,7 +8,7 @@ import { createBackendApiProgressProvider } from "../src/progress/progress-provi
 import { createBackendApiSessionProvider } from "../src/session/session-provider.js";
 import { createCatalogWorkspaceController } from "../src/workspace-shell/controller.js";
 
-test("удержание тега временно раскрывает подходящие сценарии и скрывает остальные", async () => {
+test("средняя кнопка на теге фиксирует выбор и повторным нажатием возвращает предыдущее состояние", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"
     });
@@ -103,36 +103,59 @@ test("удержание тега временно раскрывает подх
         tagButton.dispatchEvent(new dom.window.MouseEvent("mousedown", {
             bubbles: true,
             cancelable: true,
-            button: 0
+            button: 1
         }));
-        await wait(dom.window, 220);
         await flushAsyncWork();
 
-        const branchButtonDuringHold = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
-        assert.ok(branchButtonDuringHold, "Подходящий сценарий должен оставаться видимым");
-        assert.equal(branchButtonDuringHold.getAttribute("aria-expanded"), "true");
+        const branchButtonAfterMiddleClick = appRoot.querySelector('[data-scenario-toggle="branch-safety"]');
+        assert.ok(branchButtonAfterMiddleClick, "Подходящий сценарий должен оставаться видимым");
+        assert.equal(branchButtonAfterMiddleClick.getAttribute("aria-expanded"), "true");
+        const remoteButtonAfterMiddleClick = appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]');
+        assert.ok(remoteButtonAfterMiddleClick, "Неподходящий сценарий должен оставаться в DOM для анимации");
         assert.equal(
-            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]'),
-            null,
-            "Неподходящий сценарий должен временно скрываться"
+            remoteButtonAfterMiddleClick.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "true",
+            "Неподходящий сценарий должен переходить в скрытое состояние после фиксации тега"
         );
         assert.ok(appRoot.querySelector('[data-scenario-panel="branch-safety"]'));
 
         dom.window.dispatchEvent(new dom.window.MouseEvent("mouseup", {
             bubbles: true,
             cancelable: true,
-            button: 0
+            button: 1
+        }));
+        await flushAsyncWork();
+
+        assert.ok(
+            appRoot.querySelector('[data-scenario-toggle="branch-safety"]'),
+            "После отпускания средней кнопки выбранный тег должен оставаться зафиксированным"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "true",
+            "Отпускание средней кнопки не должно отменять фильтрацию"
+        );
+
+        tagButton.dispatchEvent(new dom.window.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            button: 1
         }));
         await flushAsyncWork();
 
         assert.ok(
             appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]'),
-            "После отпускания тега скрытые сценарии должны вернуться"
+            "Повторное нажатие средней кнопки должно вернуть ранее скрытые сценарии"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')?.closest(".flow-node")?.dataset.flowNodeFiltered,
+            "false",
+            "После повторного нажатия ранее скрытый сценарий должен выйти из filtered-состояния"
         );
         assert.equal(
             appRoot.querySelector('[data-scenario-toggle="branch-safety"]')?.getAttribute("aria-expanded"),
             "false",
-            "После отпускания тег не должен оставлять сценарий раскрытым, если до удержания он был закрыт"
+            "После повторного нажатия состояние раскрытия должно вернуться к исходному"
         );
     } finally {
         restoreGlobals();
@@ -176,10 +199,6 @@ function createDetailPayload(title, stepTitles) {
             }
         }
     };
-}
-
-async function wait(windowLike, ms) {
-    await new Promise((resolve) => windowLike.setTimeout(resolve, ms));
 }
 
 async function flushAsyncWork(iterations = 6) {

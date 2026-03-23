@@ -268,6 +268,41 @@ function bindNavigationControls({
         syncNavigationLegendState();
     };
 
+    const beginTagHold = (tag) => {
+        if (!tag) {
+            return;
+        }
+
+        cancelPendingTagHold();
+        tagHoldState.pendingTag = null;
+
+        if (tagHoldState.activeTag === tag) {
+            return;
+        }
+
+        tagHoldState.activeTag = tag;
+        beginNavigationTagHold(tag);
+        applyNavigationHighlight();
+        syncNavigationLegendState();
+    };
+
+    const toggleTagHold = (tag) => {
+        if (!tag) {
+            return;
+        }
+
+        if (tagHoldState.activeTag === tag) {
+            releaseTagHold(tag);
+            return;
+        }
+
+        if (tagHoldState.activeTag) {
+            releaseTagHold(tagHoldState.activeTag);
+        }
+
+        beginTagHold(tag);
+    };
+
     const armTagHold = (tag) => {
         if (!tag) {
             return;
@@ -285,11 +320,7 @@ function bindNavigationControls({
                 return;
             }
 
-            tagHoldState.pendingTag = null;
-            tagHoldState.activeTag = tag;
-            beginNavigationTagHold(tag);
-            applyNavigationHighlight();
-            syncNavigationLegendState();
+            beginTagHold(tag);
         }, TAG_HOLD_DELAY_MS);
     };
 
@@ -321,11 +352,19 @@ function bindNavigationControls({
             }
         });
         button.addEventListener("mousedown", (event) => {
-            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+            if (event.button !== 1 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
                 return;
             }
 
-            armTagHold(tag);
+            event.preventDefault();
+            toggleTagHold(tag);
+        });
+        button.addEventListener("auxclick", (event) => {
+            if (event.button !== 1) {
+                return;
+            }
+
+            event.preventDefault();
         });
         button.addEventListener("touchstart", () => {
             armTagHold(tag);
@@ -352,9 +391,6 @@ function bindNavigationControls({
 
     if (appRoot.__tagLegendHoldReleaseBound !== true) {
         appRoot.__tagLegendHoldReleaseBound = true;
-        window.addEventListener("mouseup", () => {
-            appRoot.__releaseTagLegendHold?.();
-        });
         window.addEventListener("touchend", () => {
             appRoot.__releaseTagLegendHold?.();
         });

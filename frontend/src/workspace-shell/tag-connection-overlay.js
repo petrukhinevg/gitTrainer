@@ -384,7 +384,9 @@ function renderNavigationTagConnections({
     } else {
         clearSecondaryBranchSideState(mapRoot);
     }
-    showCanvasSteady(canvas);
+    showCanvasSteady(canvas, {
+        restartFade: previousState?.activeTag !== activeTag
+    });
     nextState.revealedTargetKeys = Array.from(revealedTargetKeys);
     nextState.secondaryBranches = nextBranchStates;
     navigationLane.__tagConnectionState = nextState;
@@ -1899,18 +1901,17 @@ function resetBranchLayerAnimationState(canvas) {
     });
 }
 
-function showCanvasSteady(canvas) {
+function showCanvasSteady(canvas, { restartFade = false } = {}) {
     clearCanvasHideTimer(canvas);
+    clearCanvasHideFrame(canvas);
     const wasVisible = canvas.classList.contains("tag-connection-map__canvas--visible");
-    canvas.classList.add("tag-connection-map__canvas--visible");
-    canvas.classList.add("tag-connection-map__canvas--steady");
-
-    if (!wasVisible) {
-        canvas.classList.add("tag-connection-map__canvas--instant");
-        requestAnimationFrame(() => {
-            canvas.classList.remove("tag-connection-map__canvas--instant");
-        });
+    if (restartFade && wasVisible) {
+        canvas.classList.remove("tag-connection-map__canvas--visible");
+        void canvas.getBoundingClientRect();
     }
+
+    canvas.classList.add("tag-connection-map__canvas--steady");
+    canvas.classList.add("tag-connection-map__canvas--visible");
 }
 
 function isPathPrefix(prefixPath, fullPath) {

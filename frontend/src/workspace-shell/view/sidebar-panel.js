@@ -53,7 +53,7 @@ function renderTrainingFlow(state, tagOptions) {
         `;
     }
 
-    const visibleCatalogItems = resolveVisibleCatalogItems(state);
+    const activeFilterTag = toTagToken(state.heldNavigationTag);
 
     return `
         <div class="tag-connection-map" data-tag-connection-map>
@@ -65,10 +65,11 @@ function renderTrainingFlow(state, tagOptions) {
             <div class="flow-block-list" data-flow-block-list>
                 ${renderWelcomeFlowBlock(state)}
                 ${renderProgressFlowBlock(state)}
-                ${visibleCatalogItems.map((item, index) => renderScenarioFlowBlock({
+                ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
                     state,
                     item,
                     index,
+                    activeFilterTag,
                     isActive: item.slug === state.selectedScenarioSlug,
                     selectedFocus: state.selectedFocus
                 })).join("")}
@@ -85,15 +86,6 @@ function renderLegendTagRows(tagOptions, pinnedNavigationTag, heldNavigationTag)
             ${row.map((tag) => renderLegendTag(tag, pinnedNavigationTag, heldNavigationTag)).join("")}
         </div>
     `).join("");
-}
-
-function resolveVisibleCatalogItems(state) {
-    const heldTag = toTagToken(state.heldNavigationTag);
-    if (!heldTag) {
-        return state.catalog.items;
-    }
-
-    return state.catalog.items.filter((item) => item.tags.map(toTagToken).includes(heldTag));
 }
 
 function resolveLegendTagRows(tagOptions) {
@@ -147,11 +139,12 @@ function renderProgressFlowBlock(state) {
     `;
 }
 
-function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }) {
+function renderScenarioFlowBlock({ state, item, index, activeFilterTag, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const shouldAnimateSubtasks = resolveExpandingScenarioSlugs(state).includes(item.slug);
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
+    const matchesActiveFilter = !activeFilterTag || tagTokens.includes(activeFilterTag);
     const subtaskBlocks = isExpanded
         ? `
             <div
@@ -169,25 +162,34 @@ function renderScenarioFlowBlock({ state, item, index, isActive, selectedFocus }
             </div>
         `
         : "";
+    const filteredStateAttributes = matchesActiveFilter
+        ? 'data-flow-node-filtered="false" data-flow-node-tag-match="true"'
+        : 'data-flow-node-filtered="true" data-flow-node-tag-match="false" aria-hidden="true" inert';
 
     return `
-        <section class="flow-node" data-tags="${escapeHtml(tagTokens.join(" "))}">
-            <button
-                class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
-                type="button"
-                data-scenario-toggle="${encodeHashSegment(item.slug)}"
-                data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
-                aria-expanded="${isExpanded ? "true" : "false"}"
-                aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
-            >
-                <span class="flow-block__heading">
-                    <span class="flow-block__eyebrow">Задание ${index + 1}</span>
-                    <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
-                </span>
-                <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
-                ${renderScenarioTagAccessibilityText(item.tags)}
-            </button>
-            ${subtaskBlocks}
+        <section
+            class="flow-node"
+            data-tags="${escapeHtml(tagTokens.join(" "))}"
+            ${filteredStateAttributes}
+        >
+            <div class="flow-node__body">
+                <button
+                    class="flow-block flow-block--toggle ${isActive ? "flow-block--active" : ""}"
+                    type="button"
+                    data-scenario-toggle="${encodeHashSegment(item.slug)}"
+                    data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
+                    aria-expanded="${isExpanded ? "true" : "false"}"
+                    aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
+                >
+                    <span class="flow-block__heading">
+                        <span class="flow-block__eyebrow">Задание ${index + 1}</span>
+                        <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
+                    </span>
+                    <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
+                    ${renderScenarioTagAccessibilityText(item.tags)}
+                </button>
+                ${subtaskBlocks}
+            </div>
         </section>
     `;
 }
