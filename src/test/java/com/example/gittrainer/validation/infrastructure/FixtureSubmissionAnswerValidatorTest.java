@@ -1,15 +1,25 @@
 package com.example.gittrainer.validation.infrastructure;
 
+import com.example.gittrainer.session.application.SessionWorkspaceManager;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
+import com.example.gittrainer.validation.application.ScenarioValidationRule;
+import com.example.gittrainer.validation.application.ScenarioValidationSpec;
+import com.example.gittrainer.validation.application.ScenarioValidationSpecSource;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FixtureSubmissionAnswerValidatorTest {
 
     private final FixtureSubmissionAnswerValidator validator =
-            new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource());
+            new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
 
     @Test
     void marksMatchingCommandAsCorrect() {
@@ -141,5 +151,126 @@ class FixtureSubmissionAnswerValidatorTest {
         assertEquals("evaluated", outcome.status());
         assertEquals("incorrect", outcome.correctness());
         assertEquals("validation-rule-missing", outcome.code());
+    }
+
+    @Test
+    void marksScenarioCorrectWhenAllowedCommandHistoryReachesExpectedRepoState() {
+        FixtureSubmissionAnswerValidator historyAwareValidator = new FixtureSubmissionAnswerValidator(
+                historySpecSource(),
+                new NoOpSessionWorkspaceManager()
+        );
+
+        SubmissionOutcome outcome = historyAwareValidator.validate(
+                "remote-sync-apply",
+                List.of(new SubmittedAnswer("command_text", "git fetch origin")),
+                new SubmittedAnswer("command_text", "git reset --hard origin/main")
+        ).outcome();
+
+        assertEquals("evaluated", outcome.status());
+        assertEquals("correct", outcome.correctness());
+        assertEquals("expected-command", outcome.code());
+    }
+
+    @Test
+    void keepsWorkspaceSeparatePerSessionAndMarksIntermediateStateAsPartial(@TempDir Path tempDir) {
+        ScenarioValidationSpecSource specSource = historySpecSource();
+        SessionWorkspaceManager workspaceManager =
+                new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
+                        tempDir.toString(),
+                        specSource
+                );
+        FixtureSubmissionAnswerValidator historyAwareValidator =
+                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        String sessionId = "session-1";
+        workspaceManager.initializeWorkspace(sessionId, "remote-sync-apply");
+
+        SubmissionOutcome firstOutcome = historyAwareValidator.validate(
+                sessionId,
+                "remote-sync-apply",
+                List.of(),
+                new SubmittedAnswer("command_text", "git fetch origin")
+        ).outcome();
+        SubmissionOutcome secondOutcome = historyAwareValidator.validate(
+                sessionId,
+                "remote-sync-apply",
+                List.of(new SubmittedAnswer("command_text", "git fetch origin")),
+                new SubmittedAnswer("command_text", "git reset --hard origin/main")
+        ).outcome();
+
+        assertEquals("partial", firstOutcome.correctness());
+        assertEquals("git-repo-state-incomplete", firstOutcome.code());
+        assertEquals("correct", secondOutcome.correctness());
+        assertEquals("expected-command", secondOutcome.code());
+    }
+
+    private ScenarioValidationSpecSource historySpecSource() {
+        return (scenarioSlug, answerType) -> {
+            if (!"remote-sync-apply".equals(scenarioSlug) || !"command_text".equals(answerType)) {
+                return Optional.empty();
+            }
+            return Optional.of(new ScenarioValidationSpec(
+                    "fixture:remote-sync-apply:command_text",
+                    scenarioSlug,
+                    answerType,
+                    "git_repo_state_probe",
+                    5000,
+                    Map.of(
+                            "expectedExitCode", 0,
+                            "workspaceTemplate", Map.of(
+                                    "initialBranch", "main",
+                                    "remoteName", "origin",
+                                    "localAheadCommitMessage", "local notes WIP",
+                                    "remoteAheadCommitMessage", "remote hotfix ready",
+                                    "baseFiles", List.of(
+                                            Map.of("path", "README.md", "content", "# Git Trainer\n")
+                                    ),
+                                    "localAheadFiles", List.of(
+                                            Map.of("path", "docs/local-notes.md", "content", "- pending local integration\n")
+                                    ),
+                                    "remoteAheadFiles", List.of(
+                                            Map.of("path", "release/remote-hotfix.md", "content", "- hotfix available upstream\n")
+                                    )
+                            ),
+                            "expectedState", Map.of(
+                                    "currentBranch", "main",
+                                    "localHeadCommitMessage", "remote hotfix ready",
+                                    "fetchHeadCommitMessage", "remote hotfix ready",
+                                    "remoteTrackingRefs", List.of(
+                                            Map.of("ref", "refs/remotes/origin/main", "commitMessage", "remote hotfix ready")
+                                    )
+                            )
+                    ),
+                    List.of(
+                            new ScenarioValidationRule(
+                                    "exact_normalized_command",
+                                    "git fetch origin",
+                                    "git fetch origin",
+                                    "correct",
+                                    "expected-command",
+                                    "ok"
+                            ),
+                            new ScenarioValidationRule(
+                                    "exact_normalized_command",
+                                    "git reset --hard origin/main",
+                                    "git reset --hard origin/main",
+                                    "correct",
+                                    "expected-command",
+                                    "ok"
+                            )
+                    )
+            ));
+        };
+    }
+
+    private static final class NoOpSessionWorkspaceManager implements SessionWorkspaceManager {
+
+        @Override
+        public void initializeWorkspace(String sessionId, String scenarioSlug) {
+        }
+
+        @Override
+        public Optional<Path> resolveWorkspacePath(String sessionId) {
+            return Optional.empty();
+        }
     }
 }

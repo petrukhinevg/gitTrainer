@@ -17,17 +17,20 @@ public class StartSessionUseCase {
     private final SessionIdentityGenerator sessionIdentityGenerator;
     private final SessionScenarioReadPort sessionScenarioReadPort;
     private final ProgressRepository progressRepository;
+    private final SessionWorkspaceManager sessionWorkspaceManager;
 
     public StartSessionUseCase(
             SessionRepository sessionRepository,
             SessionIdentityGenerator sessionIdentityGenerator,
             SessionScenarioReadPort sessionScenarioReadPort,
-            ProgressRepository progressRepository
+            ProgressRepository progressRepository,
+            SessionWorkspaceManager sessionWorkspaceManager
     ) {
         this.sessionRepository = sessionRepository;
         this.sessionIdentityGenerator = sessionIdentityGenerator;
         this.sessionScenarioReadPort = sessionScenarioReadPort;
         this.progressRepository = progressRepository;
+        this.sessionWorkspaceManager = sessionWorkspaceManager;
     }
 
     public StartSessionResult start(StartSessionCommand command) {
@@ -40,7 +43,7 @@ public class StartSessionUseCase {
                 command.source()
         );
 
-        TrainingSession session = sessionRepository.save(new TrainingSession(
+        TrainingSession session = new TrainingSession(
                 sessionIdentityGenerator.nextSessionId(),
                 scenario.slug(),
                 scenario.title(),
@@ -50,17 +53,19 @@ public class StartSessionUseCase {
                 0,
                 0,
                 null
-        ));
+        );
+        sessionWorkspaceManager.initializeWorkspace(session.sessionId(), scenario.slug());
+        TrainingSession persistedSession = sessionRepository.save(session);
         progressRepository.recordAttemptStart(new ScenarioAttemptStart(
-                session.scenarioSlug(),
-                session.scenarioTitle(),
-                session.scenarioSource(),
-                session.sessionId(),
-                session.startedAt()
+                persistedSession.scenarioSlug(),
+                persistedSession.scenarioTitle(),
+                persistedSession.scenarioSource(),
+                persistedSession.sessionId(),
+                persistedSession.startedAt()
         ));
 
         return new StartSessionResult(
-                session,
+                persistedSession,
                 SessionSubmissionAnswerTypes.supportedAnswerTypes(),
                 SubmissionOutcome.boundaryReady(),
                 RetryStatePolicy.initialState()

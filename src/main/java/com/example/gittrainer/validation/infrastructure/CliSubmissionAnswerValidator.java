@@ -11,6 +11,7 @@ import com.example.gittrainer.validation.cli.CliValidationResponse;
 import com.example.gittrainer.validation.cli.GitValidationCliMain;
 import com.example.gittrainer.validation.domain.SubmissionValidationResult;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
+import com.example.gittrainer.session.application.SessionWorkspaceManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,24 +37,32 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
     private static final String RUNNER_KIND = "cli-process";
 
     private final ScenarioValidationSpecSource specSource;
+    private final SessionWorkspaceManager sessionWorkspaceManager;
     private final CliValidationProcessPolicy processPolicy;
     private final Duration timeout;
     private final String executableOverride;
 
     public CliSubmissionAnswerValidator(
             ScenarioValidationSpecSource specSource,
+            SessionWorkspaceManager sessionWorkspaceManager,
             CliValidationProcessPolicy processPolicy,
             @Value("${gittrainer.validator.cli.timeout-ms:5000}") long timeoutMs,
             @Value("${gittrainer.validator.cli.executable:}") String executableOverride
     ) {
         this.specSource = specSource;
+        this.sessionWorkspaceManager = sessionWorkspaceManager;
         this.processPolicy = processPolicy;
         this.timeout = Duration.ofMillis(timeoutMs);
         this.executableOverride = executableOverride == null ? "" : executableOverride.trim();
     }
 
     @Override
-    public SubmissionValidationResult validate(String scenarioSlug, SubmittedAnswer answer) {
+    public SubmissionValidationResult validate(
+            String sessionId,
+            String scenarioSlug,
+            List<SubmittedAnswer> priorAnswers,
+            SubmittedAnswer answer
+    ) {
         long startedAt = System.nanoTime();
         if (!"command_text".equals(answer.type())) {
             return SubmissionValidationResult.evaluated(
@@ -76,7 +85,8 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
             );
         }
 
-        return runCli(new CliValidationRequest(scenarioSlug, answer, spec.get()), startedAt);
+        String workspacePath = sessionWorkspaceManager.resolveWorkspacePath(sessionId).map(Path::toString).orElse(null);
+        return runCli(new CliValidationRequest(scenarioSlug, priorAnswers, answer, spec.get(), workspacePath), startedAt);
     }
 
     private SubmissionValidationResult runCli(CliValidationRequest request, long startedAt) {

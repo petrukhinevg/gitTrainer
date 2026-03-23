@@ -65,6 +65,7 @@ public final class ScenarioValidationEngine {
     private static SubmissionOutcome toOutcome(ScenarioValidationRule rule) {
         return switch (rule.correctness()) {
             case "correct" -> SubmissionOutcome.correct(rule.code(), rule.message());
+            case "partial" -> SubmissionOutcome.partial(rule.code(), rule.message());
             case "unsupported" -> SubmissionOutcome.unsupported(rule.code(), rule.message());
             default -> SubmissionOutcome.incorrect(rule.code(), rule.message());
         };

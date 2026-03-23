@@ -5,6 +5,8 @@ import com.example.gittrainer.session.domain.TrainingSessionSubmission;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,5 +19,13 @@ public class InMemorySessionSubmissionRepository implements SessionSubmissionRep
     @Override
     public void save(TrainingSessionSubmission submission) {
         submissionsById.put(submission.submissionId(), submission);
+    }
+
+    @Override
+    public List<TrainingSessionSubmission> findBySessionId(String sessionId) {
+        return submissionsById.values().stream()
+                .filter(submission -> submission.sessionId().equals(sessionId))
+                .sorted(Comparator.comparingInt(TrainingSessionSubmission::attemptNumber))
+                .toList();
     }
 }

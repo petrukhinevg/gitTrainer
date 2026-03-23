@@ -24,6 +24,10 @@ public record SubmissionOutcome(
         return new SubmissionOutcome("evaluated", "incorrect", code, message);
     }
 
+    public static SubmissionOutcome partial(String code, String message) {
+        return new SubmissionOutcome("evaluated", "partial", code, message);
+    }
+
     public static SubmissionOutcome unsupported(String code, String message) {
         return new SubmissionOutcome("evaluated", "unsupported", code, message);
     }

@@ -14,6 +14,11 @@ public final class GitValidationCliHandler {
     private GitValidationCliHandler() {
     }
 
+    public static boolean supports(String validatorType) {
+        return GitRepoStateProbeValidator.supports(validatorType)
+                || GitCommandProbeValidator.supports(validatorType);
+    }
+
     public static CliValidationResponse handle(CliValidationRequest request) {
         long startedAt = System.nanoTime();
         if (request == null || request.answer() == null || request.spec() == null) {

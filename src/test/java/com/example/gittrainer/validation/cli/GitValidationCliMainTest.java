@@ -23,6 +23,7 @@ class GitValidationCliMainTest {
     void writesJsonOutcomeToStdoutForMatchingCommand() throws Exception {
         CliValidationRequest request = new CliValidationRequest(
                 "status-basics",
+                List.of(),
                 new SubmittedAnswer("command_text", "git status --short"),
                 new ScenarioValidationSpec(
                         "fixture:status-basics:command_text",
@@ -77,6 +78,7 @@ class GitValidationCliMainTest {
     void writesJsonOutcomeForRealGitCommandProbe() throws Exception {
         CliValidationRequest request = new CliValidationRequest(
                 "branch-safety",
+                List.of(),
                 new SubmittedAnswer("command_text", "git branch --show-current"),
                 new ScenarioValidationSpec(
                         "fixture:branch-safety:command_text",
@@ -138,6 +140,7 @@ class GitValidationCliMainTest {
     void writesJsonOutcomeForRealGitRepoStateProbe() throws Exception {
         CliValidationRequest request = new CliValidationRequest(
                 "remote-sync-preview",
+                List.of(),
                 new SubmittedAnswer("command_text", "git fetch origin"),
                 new ScenarioValidationSpec(
                         "fixture:remote-sync-preview:command_text",
@@ -220,5 +223,85 @@ class GitValidationCliMainTest {
         assertThat(response.code()).isEqualTo("expected-command");
         assertThat(response.observations()).extracting(CliValidationObservation::code)
                 .contains("current-branch", "local-head-commit", "fetch-head-commit", "remote-tracking-ref");
+    }
+
+    @Test
+    void writesJsonOutcomeForStateProbeAfterReplayOfPriorCommands() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "remote-sync-apply",
+                List.of(new SubmittedAnswer("command_text", "git fetch origin")),
+                new SubmittedAnswer("command_text", "git reset --hard origin/main"),
+                new ScenarioValidationSpec(
+                        "fixture:remote-sync-apply:command_text",
+                        "remote-sync-apply",
+                        "command_text",
+                        "git_repo_state_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "remoteName", "origin",
+                                        "localAheadCommitMessage", "local notes WIP",
+                                        "remoteAheadCommitMessage", "remote hotfix ready",
+                                        "baseFiles", List.of(
+                                                Map.of("path", "README.md", "content", "# Git Trainer\n")
+                                        ),
+                                        "localAheadFiles", List.of(
+                                                Map.of("path", "docs/local-notes.md", "content", "- pending local integration\n")
+                                        ),
+                                        "remoteAheadFiles", List.of(
+                                                Map.of("path", "release/remote-hotfix.md", "content", "- hotfix available upstream\n")
+                                        )
+                                ),
+                                "expectedState", Map.of(
+                                        "currentBranch", "main",
+                                        "localHeadCommitMessage", "remote hotfix ready",
+                                        "fetchHeadCommitMessage", "remote hotfix ready",
+                                        "remoteTrackingRefs", List.of(
+                                                Map.of("ref", "refs/remotes/origin/main", "commitMessage", "remote hotfix ready")
+                                        )
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git fetch origin",
+                                        "git fetch origin",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git reset --hard origin/main",
+                                        "git reset --hard origin/main",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-state-history-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("correct");
+        assertThat(response.code()).isEqualTo("expected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::message)
+                .contains("remote hotfix ready");
     }
 }

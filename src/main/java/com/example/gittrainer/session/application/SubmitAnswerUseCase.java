@@ -17,6 +17,7 @@ import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class SubmitAnswerUseCase {
@@ -58,13 +59,21 @@ public class SubmitAnswerUseCase {
 
         TrainingSession session = sessionRepository.findById(normalizedSessionId)
                 .orElseThrow(() -> new SessionNotFoundException(normalizedSessionId));
+        List<SubmittedAnswer> priorAnswers = sessionSubmissionRepository.findBySessionId(normalizedSessionId).stream()
+                .map(submission -> new SubmittedAnswer(submission.answerType(), submission.answerValue()))
+                .toList();
 
         SubmittedAnswer submittedAnswer = new SubmittedAnswer(command.answerType(), command.answer());
         String submissionId = sessionIdentityGenerator.nextSubmissionId();
         String validationRunId = sessionIdentityGenerator.nextValidationRunId();
         SubmissionValidationResult validationResult;
         try {
-            validationResult = submissionAnswerValidator.validate(session.scenarioSlug(), submittedAnswer);
+            validationResult = submissionAnswerValidator.validate(
+                    session.sessionId(),
+                    session.scenarioSlug(),
+                    priorAnswers,
+                    submittedAnswer
+            );
             validationRunRepository.save(ValidationRunRecord.evaluated(
                     validationRunId,
                     session.sessionId(),

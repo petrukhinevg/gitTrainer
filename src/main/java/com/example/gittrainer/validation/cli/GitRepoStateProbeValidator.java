@@ -1,7 +1,5 @@
 package com.example.gittrainer.validation.cli;
 
-import com.example.gittrainer.validation.application.CommandTextNormalizer;
-import com.example.gittrainer.validation.application.ScenarioValidationRule;
 import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
 
 import java.io.IOException;
@@ -20,20 +18,28 @@ public final class GitRepoStateProbeValidator {
 
     public static CliValidationResponse handle(CliValidationRequest request) {
         GitRepoStateProbeConfig config = GitRepoStateProbeConfig.from(request.spec().config());
-        String normalizedAnswer = CommandTextNormalizer.normalize(request.answer().value());
-        ScenarioValidationRule matchedRule = request.spec().rules().stream()
-                .filter(rule -> rule.normalizedAnswerValue().equals(normalizedAnswer))
-                .findFirst()
-                .orElse(null);
-        if (matchedRule == null) {
+        GitValidationCommandSequence.PreparedCommandSequence commandSequence =
+                GitValidationCommandSequence.prepare(request);
+        if (commandSequence.matchedRule() == null) {
             return new CliValidationResponse(
                     "evaluated",
                     "incorrect",
                     "unexpected-command",
                     "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария.",
-                    List.of(new CliValidationObservation("normalized-answer", normalizedAnswer)),
+                    List.of(new CliValidationObservation("normalized-answer", commandSequence.normalizedAnswer())),
                     List.of(),
                     null
+            );
+        }
+
+        Path persistedWorkspace = workspacePath(request);
+        if (persistedWorkspace != null) {
+            return executeAgainstWorkspace(
+                    persistedWorkspace,
+                    commandSequence.normalizedAnswer(),
+                    commandSequence.matchedRule(),
+                    GitCliSupport.tokenizeGitCommand(request.answer().value()),
+                    config
             );
         }
 
@@ -41,30 +47,29 @@ public final class GitRepoStateProbeValidator {
         try {
             root = Files.createTempDirectory("git-validator-state-workspace-");
             Path workspace = prepareWorkspace(root, config.workspaceTemplate());
-            GitCliSupport.CommandResult commandResult = GitCliSupport.runCommand(
-                    GitCliSupport.tokenizeGitCommand(request.answer().value()),
-                    workspace
-            );
-            if (commandResult.exitCode() != config.expectedExitCode()) {
-                return commandMismatchResponse(
-                        normalizedAnswer,
-                        "git-command-exit-mismatch",
-                        "Команда выполнилась не так, как ожидается для этого сценария.",
-                        commandResult
-                );
+            for (List<String> tokens : commandSequence.commandTokens()) {
+                GitCliSupport.CommandResult commandResult = GitCliSupport.runCommand(tokens, workspace);
+                if (commandResult.exitCode() != config.expectedExitCode()) {
+                    return commandMismatchResponse(
+                            commandSequence.normalizedAnswer(),
+                            "git-command-exit-mismatch",
+                            "Команда выполнилась не так, как ожидается для этого сценария.",
+                            commandResult
+                    );
+                }
             }
 
             ObservedRepoState observedState = observeState(workspace, config.expectedState());
             if (!matches(config.expectedState(), observedState)) {
-                return repoStateMismatchResponse(normalizedAnswer, observedState);
+                return repoStateMismatchResponse(commandSequence.normalizedAnswer(), observedState);
             }
 
             return new CliValidationResponse(
                     "evaluated",
-                    matchedRule.correctness(),
-                    matchedRule.code(),
-                    matchedRule.message(),
-                    observations(normalizedAnswer, observedState),
+                    commandSequence.matchedRule().correctness(),
+                    commandSequence.matchedRule().code(),
+                    commandSequence.matchedRule().message(),
+                    observations(commandSequence.normalizedAnswer(), observedState),
                     List.of(),
                     null
             );
@@ -90,7 +95,71 @@ public final class GitRepoStateProbeValidator {
         return GIT_REPO_STATE_PROBE.equals(validatorType);
     }
 
-    private static Path prepareWorkspace(Path root, GitRepoStateProbeConfig.RemoteSyncWorkspaceTemplate template)
+    private static CliValidationResponse executeAgainstWorkspace(
+            Path workspace,
+            String normalizedAnswer,
+            com.example.gittrainer.validation.application.ScenarioValidationRule matchedRule,
+            List<String> tokens,
+            GitRepoStateProbeConfig config
+    ) {
+        try {
+            GitCliSupport.CommandResult commandResult = GitCliSupport.runCommand(tokens, workspace);
+            if (commandResult.exitCode() != config.expectedExitCode()) {
+                return commandMismatchResponse(
+                        normalizedAnswer,
+                        "git-command-exit-mismatch",
+                        "Команда выполнилась не так, как ожидается для этого сценария.",
+                        commandResult
+                );
+            }
+
+            ObservedRepoState observedState = observeState(workspace, config.expectedState());
+            if (!matches(config.expectedState(), observedState)) {
+                return new CliValidationResponse(
+                        "evaluated",
+                        "partial",
+                        "git-repo-state-incomplete",
+                        "Команда допустима, но сценарный workspace ещё не находится в целевом состоянии.",
+                        observations(normalizedAnswer, observedState),
+                        List.of(),
+                        null
+                );
+            }
+
+            return new CliValidationResponse(
+                    "evaluated",
+                    matchedRule.correctness(),
+                    matchedRule.code(),
+                    matchedRule.message(),
+                    observations(normalizedAnswer, observedState),
+                    List.of(),
+                    null
+            );
+        } catch (IOException exception) {
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-workspace-setup-failed",
+                    "Не удалось использовать session-backed workspace для state probe validator.",
+                    exception
+            );
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-command-interrupted",
+                    "State-based проверка git-команды была прервана.",
+                    exception
+            );
+        }
+    }
+
+    private static Path workspacePath(CliValidationRequest request) {
+        if (request.workspacePath() == null) {
+            return null;
+        }
+        Path workspace = Path.of(request.workspacePath());
+        return Files.isDirectory(workspace) ? workspace : null;
+    }
+
+    static Path prepareWorkspace(Path root, GitRepoStateProbeConfig.RemoteSyncWorkspaceTemplate template)
             throws IOException, InterruptedException {
         Path remoteRepository = root.resolve("origin.git");
         Path publisherWorkspace = root.resolve("publisher");
@@ -271,13 +340,13 @@ public final class GitRepoStateProbeValidator {
             ObservedRepoState observedState
     ) {
         return new CliValidationResponse(
-                "evaluated",
-                "incorrect",
-                "git-repo-state-mismatch",
-                "Команда не привела репозиторий в ожидаемое post-fetch состояние.",
-                observations(normalizedAnswer, observedState),
-                List.of(),
-                null
+            "evaluated",
+            "partial",
+            "git-repo-state-incomplete",
+            "Команда допустима, но репозиторий пока не приведён в ожидаемое состояние.",
+            observations(normalizedAnswer, observedState),
+            List.of(),
+            null
         );
     }
 

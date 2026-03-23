@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Repository
 @Profile("!test & !local-memory")
@@ -48,5 +49,38 @@ public class PostgresSessionSubmissionRepository implements SessionSubmissionRep
                         Timestamp.from(submission.submittedAt())
                 )
                 .update();
+    }
+
+    @Override
+    public List<TrainingSessionSubmission> findBySessionId(String sessionId) {
+        return jdbcClient.sql("""
+                        SELECT submission_id,
+                               session_id,
+                               scenario_slug,
+                               scenario_title,
+                               scenario_source,
+                               attempt_number,
+                               answer_type,
+                               answer_value,
+                               correctness,
+                               submitted_at
+                        FROM training_session_submissions
+                        WHERE session_id = ?
+                        ORDER BY attempt_number
+                        """)
+                .param(sessionId)
+                .query((resultSet, rowNum) -> new TrainingSessionSubmission(
+                        resultSet.getString("submission_id"),
+                        resultSet.getString("session_id"),
+                        resultSet.getString("scenario_slug"),
+                        resultSet.getString("scenario_title"),
+                        resultSet.getString("scenario_source"),
+                        resultSet.getInt("attempt_number"),
+                        resultSet.getString("answer_type"),
+                        resultSet.getString("answer_value"),
+                        resultSet.getString("correctness"),
+                        resultSet.getTimestamp("submitted_at").toInstant()
+                ))
+                .list();
     }
 }
