@@ -7,12 +7,12 @@ import com.example.gittrainer.session.domain.RetryGuidanceProfile;
 import java.util.Map;
 import java.util.Optional;
 
-public final class AuthoredRetryFeedbackLibrary {
+public final class SeedRetryFeedbackLibrary {
 
-    private static final AuthoredRetryFeedbackResourceLoader RESOURCE_LOADER =
-            new AuthoredRetryFeedbackResourceLoader();
+    private static final SeedRetryFeedbackResourceLoader RESOURCE_LOADER =
+            new SeedRetryFeedbackResourceLoader();
 
-    private AuthoredRetryFeedbackLibrary() {
+    private SeedRetryFeedbackLibrary() {
     }
 
     public static Optional<RetryGuidanceProfile> findIncorrectGuidance(String scenarioSlug) {

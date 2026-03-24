@@ -3,7 +3,7 @@ package com.example.gittrainer.scenario.api;
 import com.example.gittrainer.GitTrainerApplication;
 import com.example.gittrainer.scenario.application.ScenarioTaskContent;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentGateway;
-import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentMissingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,12 +38,12 @@ class ScenarioApiExceptionHandlingTest {
     }
 
     @Test
-    void returnsSharedProblemDetailWhenTaskContentIsNotAuthored() throws Exception {
+    void returnsSharedProblemDetailWhenTaskContentIsMissing() throws Exception {
         mockMvc.perform(get("/api/scenarios/status-basics").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.title").value("Контент сценария не подготовлен"))
                 .andExpect(jsonPath("$.detail").value("Описание задания не подготовлено для сценария: status-basics"))
-                .andExpect(jsonPath("$.code").value("scenario-task-content-not-authored"))
+                .andExpect(jsonPath("$.code").value("scenario-task-content-missing"))
                 .andExpect(jsonPath("$.failureDisposition").value("terminal"))
                 .andExpect(jsonPath("$.retryable").value(false));
     }
@@ -57,7 +57,7 @@ class ScenarioApiExceptionHandlingTest {
             return new ScenarioTaskContentGateway() {
                 @Override
                 public ScenarioTaskContent loadTaskContent(String scenarioSlug) {
-                    throw new ScenarioTaskContentNotAuthoredException(scenarioSlug);
+                    throw new ScenarioTaskContentMissingException(scenarioSlug);
                 }
             };
         }

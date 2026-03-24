@@ -9,10 +9,10 @@ import java.util.Optional;
 
 @Component
 @Profile("test")
-public class TestScenarioValidationSpecSource implements ScenarioValidationSpecSource {
+public class SeedScenarioValidationSpecSource implements ScenarioValidationSpecSource {
 
     @Override
     public Optional<ScenarioValidationSpec> findSpec(String scenarioSlug, String answerType) {
-        return AuthoredScenarioValidationLibrary.findSpec("test", scenarioSlug, answerType);
+        return SeedScenarioValidationLibrary.findSpec("default", scenarioSlug, answerType);
     }
 }

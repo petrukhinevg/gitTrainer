@@ -13,7 +13,7 @@ import java.util.List;
 
 @Component
 @Profile("!test")
-class AuthoredScenarioJsonMapper {
+class ScenarioPayloadJsonMapper {
 
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .findAndAddModules()
@@ -23,7 +23,7 @@ class AuthoredScenarioJsonMapper {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось сериализовать authored scenario payload.", exception);
+            throw new IllegalStateException("Не удалось сериализовать payload сценария.", exception);
         }
     }
 
@@ -32,7 +32,7 @@ class AuthoredScenarioJsonMapper {
             return objectMapper.readValue(rawJson, new TypeReference<List<String>>() {
             });
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось десериализовать список тегов authored scenario.", exception);
+            throw new IllegalStateException("Не удалось десериализовать список тегов сценария.", exception);
         }
     }
 
@@ -40,7 +40,7 @@ class AuthoredScenarioJsonMapper {
         try {
             return objectMapper.readValue(rawJson, ScenarioTaskContent.class);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось десериализовать task payload authored scenario.", exception);
+            throw new IllegalStateException("Не удалось десериализовать payload задания сценария.", exception);
         }
     }
 
@@ -49,7 +49,7 @@ class AuthoredScenarioJsonMapper {
             return objectMapper.readValue(rawJson, ScenarioWorkspaceDetail.ScenarioRepositoryContext.class);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException(
-                    "Не удалось десериализовать repository context authored scenario.",
+                    "Не удалось десериализовать контекст репозитория сценария.",
                     exception
             );
         }

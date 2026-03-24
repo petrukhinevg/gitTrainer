@@ -21,14 +21,14 @@ import java.util.List;
         havingValue = "false",
         matchIfMissing = true
 )
-public class TestSubmissionAnswerValidator implements SubmissionAnswerValidator {
+public class SeedSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
-    private static final String RUNNER_KIND = "in-process-test";
+    private static final String RUNNER_KIND = "in-process";
     private final ScenarioValidationSpecSource specSource;
     private final SessionWorkspaceManager sessionWorkspaceManager;
 
-    public TestSubmissionAnswerValidator(
+    public SeedSubmissionAnswerValidator(
             ScenarioValidationSpecSource specSource,
             SessionWorkspaceManager sessionWorkspaceManager
     ) {

@@ -26,9 +26,9 @@ public class PostgresScenarioCatalogGateway implements ScenarioCatalogGateway {
     private static final String UNAVAILABLE_SOURCE_NAME = "db-seeded-unavailable";
 
     private final JdbcClient jdbcClient;
-    private final AuthoredScenarioJsonMapper jsonMapper;
+    private final ScenarioPayloadJsonMapper jsonMapper;
 
-    public PostgresScenarioCatalogGateway(JdbcClient jdbcClient, AuthoredScenarioJsonMapper jsonMapper) {
+    public PostgresScenarioCatalogGateway(JdbcClient jdbcClient, ScenarioPayloadJsonMapper jsonMapper) {
         this.jdbcClient = jdbcClient;
         this.jsonMapper = jsonMapper;
     }

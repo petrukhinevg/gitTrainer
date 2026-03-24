@@ -467,7 +467,7 @@
       "id": "stash-checkpoint-draft",
       "slug": "stash-checkpoint-draft",
       "title": "Убери черновик в stash перед переключением",
-      "summary": "В `feature/test-stash-panel` изменён `frontend/src/demo-panel.js` и появился новый `notes/ui-placeholder.txt`. Сначала проверь статус, затем сохрани всё в stash вместе с untracked-файлом.",
+      "summary": "В `feature/stash-panel-draft` изменён `frontend/src/demo-panel.js` и появился новый `notes/ui-placeholder.txt`. Сначала проверь статус, затем сохрани всё в stash вместе с untracked-файлом.",
       "difficulty": "BEGINNER",
       "tags": [
         "stash",
@@ -481,7 +481,7 @@
           {
             "position": 1,
             "id": "inspect-dirty-worktree-before-stash",
-            "text": "Сначала убедитесь, что в `feature/test-stash-panel` есть и изменённый tracked-файл, и новый untracked-файл."
+            "text": "Сначала убедитесь, что в `feature/stash-panel-draft` есть и изменённый tracked-файл, и новый untracked-файл."
           },
           {
             "position": 2,
@@ -528,7 +528,7 @@
         "status": "db-seeded",
         "branches": [
           {
-            "name": "feature/test-stash-panel",
+            "name": "feature/stash-panel-draft",
             "current": true
           },
           {
@@ -539,7 +539,7 @@
         "commits": [
           {
             "id": "5d91af0",
-            "summary": "test: добавить временный контент для панели"
+            "summary": "draft: добавить временный контент для панели"
           },
           {
             "id": "88ce113",
@@ -595,7 +595,7 @@
           },
           {
             "position": 3,
-            "id": "use-test-copy",
+            "id": "use-preview-copy",
             "text": "Подойдёт команда, которая либо показывает diff между `main` и `feature/mock-merge-window`, либо строит понятный граф веток."
           }
         ],
@@ -653,7 +653,7 @@
         "commits": [
           {
             "id": "fbe4309",
-            "summary": "test: набросать фикстуру для merge preview"
+            "summary": "draft: набросать черновик preview перед merge"
           },
           {
             "id": "2cc9b15",
@@ -758,7 +758,7 @@
         "commits": [
           {
             "id": "11b7d31",
-            "summary": "test: добавить условный тег релизного ориентира"
+            "summary": "draft: добавить условный тег релизного ориентира"
           },
           {
             "id": "d34aa0c",

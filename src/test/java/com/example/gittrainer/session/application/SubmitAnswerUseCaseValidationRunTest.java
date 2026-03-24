@@ -43,7 +43,7 @@ class SubmitAnswerUseCaseValidationRunTest {
         assertThat(validationRunRepository.findAll().getFirst().sessionId()).isEqualTo(startedSession.session().sessionId());
         assertThat(validationRunRepository.findAll().getFirst().submissionId()).isEqualTo(result.submissionId());
         assertThat(validationRunRepository.findAll().getFirst().runnerStatus()).isEqualTo("evaluated");
-        assertThat(validationRunRepository.findAll().getFirst().runnerKind()).isEqualTo("in-process-test");
+        assertThat(validationRunRepository.findAll().getFirst().runnerKind()).isEqualTo("in-process");
         assertThat(validationRunRepository.findAll().getFirst().outcomeCode()).isEqualTo("expected-command");
     }
 }

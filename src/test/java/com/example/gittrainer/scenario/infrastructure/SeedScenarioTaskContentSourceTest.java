@@ -1,7 +1,7 @@
 package com.example.gittrainer.scenario.infrastructure;
 
 import com.example.gittrainer.scenario.application.ScenarioTaskContent;
-import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentMissingException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,14 +10,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class TestScenarioTaskContentSourceTest {
+class SeedScenarioTaskContentSourceTest {
 
     @Autowired
-    private TestScenarioTaskContentSource scenarioTaskContentFixtureSource;
+    private SeedScenarioTaskContentSource scenarioTaskContentSeedSource;
 
     @Test
-    void providesAuthoredTaskContentFixtureForKnownScenario() {
-        ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("status-basics");
+    void providesSeededTaskContentForKnownScenario() {
+        ScenarioTaskContent fixture = scenarioTaskContentSeedSource.loadTaskContent("status-basics");
 
         assertThat(fixture.status()).isEqualTo("db-seeded");
         assertThat(fixture.instructions()).hasSize(3);
@@ -27,7 +27,7 @@ class TestScenarioTaskContentSourceTest {
 
     @Test
     void providesHistoryCleanupTaskContentThatLeadsWithHistoryPreview() {
-        ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("history-cleanup-preview");
+        ScenarioTaskContent fixture = scenarioTaskContentSeedSource.loadTaskContent("history-cleanup-preview");
 
         assertThat(fixture.goal()).contains("верхушку истории");
         assertThat(fixture.instructions())
@@ -45,7 +45,7 @@ class TestScenarioTaskContentSourceTest {
 
     @Test
     void providesRemoteSyncTaskContentThatLeadsWithFetch() {
-        ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("remote-sync-preview");
+        ScenarioTaskContent fixture = scenarioTaskContentSeedSource.loadTaskContent("remote-sync-preview");
 
         assertThat(fixture.goal()).contains("remote-tracking");
         assertThat(fixture.instructions())
@@ -63,7 +63,7 @@ class TestScenarioTaskContentSourceTest {
 
     @Test
     void providesBranchSafetyTaskContentThatLeadsWithBranchInspection() {
-        ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("branch-safety");
+        ScenarioTaskContent fixture = scenarioTaskContentSeedSource.loadTaskContent("branch-safety");
 
         assertThat(fixture.goal()).contains("`release/hotfix-7`");
         assertThat(fixture.instructions())
@@ -80,9 +80,9 @@ class TestScenarioTaskContentSourceTest {
     }
 
     @Test
-    void failsExplicitlyWhenTaskContentWasNotAuthoredForScenario() {
-        assertThatThrownBy(() -> scenarioTaskContentFixtureSource.loadTaskContent("not-authored-yet"))
-                .isInstanceOf(ScenarioTaskContentNotAuthoredException.class)
-                .hasMessage("Описание задания не подготовлено для сценария: not-authored-yet");
+    void failsExplicitlyWhenTaskContentWasMissingForScenario() {
+        assertThatThrownBy(() -> scenarioTaskContentSeedSource.loadTaskContent("missing-seed"))
+                .isInstanceOf(ScenarioTaskContentMissingException.class)
+                .hasMessage("Описание задания не подготовлено для сценария: missing-seed");
     }
 }

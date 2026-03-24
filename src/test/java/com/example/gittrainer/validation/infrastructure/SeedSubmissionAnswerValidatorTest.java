@@ -16,10 +16,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TestSubmissionAnswerValidatorTest {
+class SeedSubmissionAnswerValidatorTest {
 
-    private final TestSubmissionAnswerValidator validator =
-            new TestSubmissionAnswerValidator(new TestScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
+    private final SeedSubmissionAnswerValidator validator =
+            new SeedSubmissionAnswerValidator(new SeedScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
 
     @Test
     void marksFullStatusCommandAsPartial() {
@@ -95,14 +95,14 @@ class TestSubmissionAnswerValidatorTest {
 
     @Test
     void marksBranchStatusAsCorrectAfterBranchReadingForBranchSafety(@TempDir Path tempDir) {
-        ScenarioValidationSpecSource specSource = new TestScenarioValidationSpecSource();
+        ScenarioValidationSpecSource specSource = new SeedScenarioValidationSpecSource();
         SessionWorkspaceManager workspaceManager =
                 new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
                         tempDir.toString(),
                         specSource
                 );
-        TestSubmissionAnswerValidator branchValidator =
-                new TestSubmissionAnswerValidator(specSource, workspaceManager);
+        SeedSubmissionAnswerValidator branchValidator =
+                new SeedSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "branch-session";
         workspaceManager.initializeWorkspace(sessionId, "branch-safety");
 
@@ -204,7 +204,7 @@ class TestSubmissionAnswerValidatorTest {
 
     @Test
     void marksScenarioCorrectWhenAllowedCommandHistoryReachesExpectedRepoState() {
-        TestSubmissionAnswerValidator historyAwareValidator = new TestSubmissionAnswerValidator(
+        SeedSubmissionAnswerValidator historyAwareValidator = new SeedSubmissionAnswerValidator(
                 historySpecSource(),
                 new NoOpSessionWorkspaceManager()
         );
@@ -228,8 +228,8 @@ class TestSubmissionAnswerValidatorTest {
                         tempDir.toString(),
                         specSource
                 );
-        TestSubmissionAnswerValidator historyAwareValidator =
-                new TestSubmissionAnswerValidator(specSource, workspaceManager);
+        SeedSubmissionAnswerValidator historyAwareValidator =
+                new SeedSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "session-1";
         workspaceManager.initializeWorkspace(sessionId, "remote-sync-apply");
 
@@ -254,14 +254,14 @@ class TestSubmissionAnswerValidatorTest {
 
     @Test
     void marksRealStashScenarioAsPartialBeforeCheckpointAndCorrectAfterCheckpoint(@TempDir Path tempDir) {
-        ScenarioValidationSpecSource specSource = new TestScenarioValidationSpecSource();
+        ScenarioValidationSpecSource specSource = new SeedScenarioValidationSpecSource();
         SessionWorkspaceManager workspaceManager =
                 new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
                         tempDir.toString(),
                         specSource
                 );
-        TestSubmissionAnswerValidator stashValidator =
-                new TestSubmissionAnswerValidator(specSource, workspaceManager);
+        SeedSubmissionAnswerValidator stashValidator =
+                new SeedSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "stash-session";
         workspaceManager.initializeWorkspace(sessionId, "stash-checkpoint-draft");
 
@@ -290,7 +290,7 @@ class TestSubmissionAnswerValidatorTest {
                 return Optional.empty();
             }
             return Optional.of(new ScenarioValidationSpec(
-                    "test:remote-sync-apply:command_text",
+                    "default:remote-sync-apply:command_text",
                     scenarioSlug,
                     answerType,
                     "git_repo_state_probe",

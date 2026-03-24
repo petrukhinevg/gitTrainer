@@ -1,6 +1,6 @@
 package com.example.gittrainer.scenario.infrastructure;
 
-import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextMissingException;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +10,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class TestScenarioRepositoryContextSourceTest {
+class SeedScenarioRepositoryContextSourceTest {
 
     @Autowired
-    private TestScenarioRepositoryContextSource scenarioRepositoryContextFixtureSource;
+    private SeedScenarioRepositoryContextSource scenarioRepositoryContextSeedSource;
 
     @Test
-    void providesAuthoredRepositoryContextFixtureForKnownScenario() {
+    void providesSeededRepositoryContextForKnownScenario() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.loadRepositoryContext("status-basics");
+                scenarioRepositoryContextSeedSource.loadRepositoryContext("status-basics");
 
         assertThat(fixture.status()).isEqualTo("db-seeded");
         assertThat(fixture.branches()).hasSize(2);
@@ -30,7 +30,7 @@ class TestScenarioRepositoryContextSourceTest {
     @Test
     void providesHistoryCleanupRepositoryContextWithPreviewCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.loadRepositoryContext("history-cleanup-preview");
+                scenarioRepositoryContextSeedSource.loadRepositoryContext("history-cleanup-preview");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -50,7 +50,7 @@ class TestScenarioRepositoryContextSourceTest {
     @Test
     void providesRemoteSyncRepositoryContextWithFetchFirstCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.loadRepositoryContext("remote-sync-preview");
+                scenarioRepositoryContextSeedSource.loadRepositoryContext("remote-sync-preview");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -66,7 +66,7 @@ class TestScenarioRepositoryContextSourceTest {
     @Test
     void providesBranchSafetyRepositoryContextWithHotfixCues() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
-                scenarioRepositoryContextFixtureSource.loadRepositoryContext("branch-safety");
+                scenarioRepositoryContextSeedSource.loadRepositoryContext("branch-safety");
 
         assertThat(fixture.branches())
                 .extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
@@ -81,9 +81,9 @@ class TestScenarioRepositoryContextSourceTest {
     }
 
     @Test
-    void failsExplicitlyWhenRepositoryContextWasNotAuthoredForScenario() {
-        assertThatThrownBy(() -> scenarioRepositoryContextFixtureSource.loadRepositoryContext("not-authored-yet"))
-                .isInstanceOf(ScenarioRepositoryContextNotAuthoredException.class)
-                .hasMessage("Контекст репозитория не подготовлен для сценария: not-authored-yet");
+    void failsExplicitlyWhenRepositoryContextWasMissingForScenario() {
+        assertThatThrownBy(() -> scenarioRepositoryContextSeedSource.loadRepositoryContext("missing-seed"))
+                .isInstanceOf(ScenarioRepositoryContextMissingException.class)
+                .hasMessage("Контекст репозитория не подготовлен для сценария: missing-seed");
     }
 }

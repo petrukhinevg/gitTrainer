@@ -8,18 +8,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public final class AuthoredScenarioValidationLibrary {
+public final class SeedScenarioValidationLibrary {
 
     public static final long DEFAULT_VALIDATOR_TIMEOUT_MS = 5_000L;
 
     private static final String COMMAND_TEXT = "command_text";
-    private static final AuthoredScenarioValidationResourceLoader RESOURCE_LOADER =
-            new AuthoredScenarioValidationResourceLoader();
+    private static final SeedScenarioValidationResourceLoader RESOURCE_LOADER =
+            new SeedScenarioValidationResourceLoader();
 
-    private AuthoredScenarioValidationLibrary() {
+    private SeedScenarioValidationLibrary() {
     }
 
-    public static Optional<AuthoredScenarioValidationDefinition> findDefinition(String scenarioSlug) {
+    public static Optional<SeedScenarioValidationDefinition> findDefinition(String scenarioSlug) {
         return RESOURCE_LOADER.findDefinition(scenarioSlug);
     }
 
@@ -41,7 +41,7 @@ public final class AuthoredScenarioValidationLibrary {
 
     public static List<String> correctAnswersFor(String scenarioSlug) {
         return findDefinition(scenarioSlug)
-                .map(AuthoredScenarioValidationDefinition::correctAnswers)
+                .map(SeedScenarioValidationDefinition::correctAnswers)
                 .orElse(List.of());
     }
 
@@ -49,14 +49,14 @@ public final class AuthoredScenarioValidationLibrary {
         return specNamespace + ":" + scenarioSlug + ":" + answerType;
     }
 
-    public record AuthoredScenarioValidationDefinition(
+    public record SeedScenarioValidationDefinition(
             String scenarioSlug,
             String validatorType,
             Map<String, Object> config,
             List<ScenarioValidationRule> rules
     ) {
 
-        public AuthoredScenarioValidationDefinition {
+        public SeedScenarioValidationDefinition {
             config = Map.copyOf(config);
             rules = List.copyOf(rules);
         }

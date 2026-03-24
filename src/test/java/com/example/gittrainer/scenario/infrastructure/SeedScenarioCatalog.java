@@ -4,12 +4,12 @@ import com.example.gittrainer.scenario.domain.ScenarioSummary;
 
 import java.util.List;
 
-public record TestScenarioCatalog(
+public record SeedScenarioCatalog(
         String sourceName,
         List<ScenarioSummary> items
 ) {
 
-    public TestScenarioCatalog {
+    public SeedScenarioCatalog {
         items = items == null ? List.of() : List.copyOf(items);
     }
 }

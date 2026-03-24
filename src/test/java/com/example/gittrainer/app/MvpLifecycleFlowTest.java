@@ -1,6 +1,6 @@
 package com.example.gittrainer.app;
 
-import com.example.gittrainer.validation.infrastructure.AuthoredScenarioValidationLibrary;
+import com.example.gittrainer.validation.infrastructure.SeedScenarioValidationLibrary;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.json.JsonParser;
 import org.springframework.boot.json.JsonParserFactory;
@@ -130,7 +130,7 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
-    void completesStatusBasicsFlowUsingAuthoredWorkspaceCues() throws Exception {
+    void completesStatusBasicsFlowUsingSeededWorkspaceCues() throws Exception {
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/status-basics"));
         Map<String, Object> workspace = mapValue(detailResponse, "workspace");
         Map<String, Object> task = mapValue(workspace, "task");
@@ -179,7 +179,7 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
-    void completesBranchSafetyFlowUsingAuthoredBranchCues() throws Exception {
+    void completesBranchSafetyFlowUsingSeededBranchCues() throws Exception {
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/branch-safety"));
         Map<String, Object> workspace = mapValue(detailResponse, "workspace");
         Map<String, Object> task = mapValue(workspace, "task");
@@ -241,7 +241,7 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
-    void completesHistoryCleanupFlowUsingAuthoredHistoryPreviewCues() throws Exception {
+    void completesHistoryCleanupFlowUsingSeededHistoryPreviewCues() throws Exception {
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/history-cleanup-preview"));
         Map<String, Object> workspace = mapValue(detailResponse, "workspace");
         Map<String, Object> task = mapValue(workspace, "task");
@@ -288,7 +288,7 @@ class MvpLifecycleFlowTest {
     }
 
     @Test
-    void completesRemoteSyncFlowUsingAuthoredFetchFirstCues() throws Exception {
+    void completesRemoteSyncFlowUsingSeededFetchFirstCues() throws Exception {
         Map<String, Object> detailResponse = performJson(get("/api/scenarios/remote-sync-preview"));
         Map<String, Object> workspace = mapValue(detailResponse, "workspace");
         Map<String, Object> task = mapValue(workspace, "task");
@@ -417,7 +417,7 @@ class MvpLifecycleFlowTest {
     }
 
     private String firstAcceptedCommandFor(String scenarioSlug) throws Exception {
-        return AuthoredScenarioValidationLibrary.correctAnswersFor(scenarioSlug).getFirst();
+        return SeedScenarioValidationLibrary.correctAnswersFor(scenarioSlug).getFirst();
     }
 
     @SuppressWarnings("unchecked")

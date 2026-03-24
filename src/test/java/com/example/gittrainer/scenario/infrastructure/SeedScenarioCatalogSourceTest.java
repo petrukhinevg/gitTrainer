@@ -9,14 +9,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class TestScenarioCatalogSourceTest {
+class SeedScenarioCatalogSourceTest {
 
     @Autowired
-    private TestScenarioCatalogSource scenarioCatalogFixtureSource;
+    private SeedScenarioCatalogSource scenarioCatalogSeedSource;
 
     @Test
-    void providesAuthoredFixtureCatalogForMvpBrowsing() {
-        TestScenarioCatalog fixture = scenarioCatalogFixtureSource.defaultCatalog();
+    void providesSeededCatalogForBrowsing() {
+        SeedScenarioCatalog fixture = scenarioCatalogSeedSource.defaultCatalog();
 
         assertThat(fixture.sourceName()).isEqualTo("db-seeded");
         assertThat(fixture.items())
@@ -33,16 +33,16 @@ class TestScenarioCatalogSourceTest {
     }
 
     @Test
-    void providesEmptyFixtureUsingSameCatalogSchema() {
-        TestScenarioCatalog fixture = scenarioCatalogFixtureSource.emptyCatalog();
+    void providesEmptySeedUsingSameCatalogSchema() {
+        SeedScenarioCatalog fixture = scenarioCatalogSeedSource.emptyCatalog();
 
         assertThat(fixture.sourceName()).isEqualTo("db-seeded-empty");
         assertThat(fixture.items()).isEmpty();
     }
 
     @Test
-    void providesUnavailableSourceFixtureAsDomainSpecificFailure() {
-        assertThatThrownBy(() -> scenarioCatalogFixtureSource.unavailableCatalog())
+    void providesUnavailableSourceSeedAsDomainSpecificFailure() {
+        assertThatThrownBy(() -> scenarioCatalogSeedSource.unavailableCatalog())
                 .isInstanceOf(ScenarioSourceUnavailableException.class)
                 .hasMessage("Источник каталога сейчас недоступен. Выберите другой источник или повторите позже.");
     }

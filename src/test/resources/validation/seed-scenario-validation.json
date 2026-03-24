@@ -198,14 +198,14 @@
       "config": {
         "expectedExitCode": 0,
         "expectedWorkspaceState": {
-          "currentBranch": "feature/test-stash-panel",
+          "currentBranch": "feature/stash-panel-draft",
           "workingTreeClean": true,
           "stashEntryCount": 1
         },
         "workspaceTemplate": {
           "initialBranch": "main",
-          "currentBranch": "feature/test-stash-panel",
-          "branches": ["feature/test-stash-panel", "main"],
+          "currentBranch": "feature/stash-panel-draft",
+          "branches": ["feature/stash-panel-draft", "main"],
           "committedFiles": [
             { "path": "frontend/src/demo-panel.js", "content": "export const panel = 'draft';\n" }
           ],
@@ -243,7 +243,7 @@
           "message": "Изменения и untracked-файлы безопасно убраны в stash."
         },
         {
-          "rawCommand": "git stash push -u -m \"ui-test\"",
+          "rawCommand": "git stash push -u -m \"ui-draft\"",
           "correctness": "correct",
           "code": "expected-command",
           "message": "Изменения и untracked-файлы безопасно убраны в stash."

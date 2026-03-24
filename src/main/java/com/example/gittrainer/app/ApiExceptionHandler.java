@@ -1,9 +1,9 @@
 package com.example.gittrainer.app;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
-import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextMissingException;
 import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
-import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentMissingException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
 import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
@@ -34,13 +34,13 @@ public class ApiExceptionHandler {
         return ApiProblemDetailFactory.unavailableScenarioSource(exception);
     }
 
-    @ExceptionHandler(ScenarioTaskContentNotAuthoredException.class)
-    ProblemDetail handleMissingTaskContent(ScenarioTaskContentNotAuthoredException exception) {
+    @ExceptionHandler(ScenarioTaskContentMissingException.class)
+    ProblemDetail handleMissingTaskContent(ScenarioTaskContentMissingException exception) {
         return ApiProblemDetailFactory.missingTaskContent(exception);
     }
 
-    @ExceptionHandler(ScenarioRepositoryContextNotAuthoredException.class)
-    ProblemDetail handleMissingRepositoryContext(ScenarioRepositoryContextNotAuthoredException exception) {
+    @ExceptionHandler(ScenarioRepositoryContextMissingException.class)
+    ProblemDetail handleMissingRepositoryContext(ScenarioRepositoryContextMissingException exception) {
         return ApiProblemDetailFactory.missingRepositoryContext(exception);
     }
 

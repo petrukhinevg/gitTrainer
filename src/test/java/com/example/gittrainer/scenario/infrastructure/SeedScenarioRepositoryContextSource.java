@@ -1,16 +1,16 @@
 package com.example.gittrainer.scenario.infrastructure;
 
 import com.example.gittrainer.scenario.application.ScenarioRepositoryContextGateway;
-import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextMissingException;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TestScenarioRepositoryContextSource implements ScenarioRepositoryContextGateway {
+public class SeedScenarioRepositoryContextSource implements ScenarioRepositoryContextGateway {
 
-    private final AuthoredScenarioResourceLoader resourceLoader;
+    private final SeedScenarioResourceLoader resourceLoader;
 
-    public TestScenarioRepositoryContextSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public SeedScenarioRepositoryContextSource(SeedScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
@@ -19,7 +19,7 @@ public class TestScenarioRepositoryContextSource implements ScenarioRepositoryCo
         try {
             return resourceLoader.repositoryContext(scenarioSlug);
         } catch (IllegalArgumentException exception) {
-            throw new ScenarioRepositoryContextNotAuthoredException(scenarioSlug);
+            throw new ScenarioRepositoryContextMissingException(scenarioSlug);
         }
     }
 }

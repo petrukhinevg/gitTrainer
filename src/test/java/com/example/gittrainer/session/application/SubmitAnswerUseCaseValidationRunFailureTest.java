@@ -51,6 +51,6 @@ class SubmitAnswerUseCaseValidationRunFailureTest {
         assertThat(validationRunRepository.findAll().getFirst().outcomeCode())
                 .isEqualTo("validation-runner-invalid-executable");
         assertThat(validationRunRepository.findAll().getFirst().validatorSpecId())
-                .isEqualTo("test:status-basics:command_text");
+                .isEqualTo("default:status-basics:command_text");
     }
 }

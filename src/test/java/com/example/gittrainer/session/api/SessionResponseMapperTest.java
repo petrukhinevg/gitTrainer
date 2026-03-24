@@ -9,8 +9,8 @@ import com.example.gittrainer.session.domain.StrongerHintEligibility;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.TrainingSession;
-import com.example.gittrainer.session.infrastructure.TestRetryFeedbackCatalog;
-import com.example.gittrainer.session.infrastructure.TestRetryFeedbackSource;
+import com.example.gittrainer.session.infrastructure.SeedRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.SeedRetryFeedbackSource;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import com.example.gittrainer.validation.domain.SubmissionTerminalOutput;
 import org.junit.jupiter.api.Test;
@@ -25,10 +25,10 @@ class SessionResponseMapperTest {
             new SessionRetryFeedbackFactory(
                     new RetryStateResponseMapper(),
                     new RetryExplanationResponseFactory(
-                            new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
+                            new SeedRetryFeedbackCatalog(new SeedRetryFeedbackSource())
                     ),
                     new RetryHintResponseFactory(
-                            new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
+                            new SeedRetryFeedbackCatalog(new SeedRetryFeedbackSource())
                     )
             ),
             sessionId -> java.util.Optional.empty()

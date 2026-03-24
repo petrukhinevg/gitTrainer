@@ -11,26 +11,26 @@ import java.util.Optional;
 
 @Component
 @Profile("test")
-public class TestRetryFeedbackCatalog implements RetryFeedbackCatalog {
+public class SeedRetryFeedbackCatalog implements RetryFeedbackCatalog {
 
-    private final TestRetryFeedbackSource retryFeedbackFixtureSource;
+    private final SeedRetryFeedbackSource retryFeedbackSeedSource;
 
-    public TestRetryFeedbackCatalog(TestRetryFeedbackSource retryFeedbackFixtureSource) {
-        this.retryFeedbackFixtureSource = retryFeedbackFixtureSource;
+    public SeedRetryFeedbackCatalog(SeedRetryFeedbackSource retryFeedbackSeedSource) {
+        this.retryFeedbackSeedSource = retryFeedbackSeedSource;
     }
 
     @Override
     public Optional<RetryGuidanceProfile> findIncorrectGuidance(String scenarioSlug) {
-        return retryFeedbackFixtureSource.findIncorrectGuidance(scenarioSlug);
+        return retryFeedbackSeedSource.findIncorrectGuidance(scenarioSlug);
     }
 
     @Override
     public Optional<RetryExplanationTemplate> findExplanationTemplate(String code) {
-        return retryFeedbackFixtureSource.findExplanationTemplate(code);
+        return retryFeedbackSeedSource.findExplanationTemplate(code);
     }
 
     @Override
     public Optional<RetryHintTemplate> findHintTemplate(String templateCode) {
-        return retryFeedbackFixtureSource.findHintTemplate(templateCode);
+        return retryFeedbackSeedSource.findHintTemplate(templateCode);
     }
 }

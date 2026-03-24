@@ -26,7 +26,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status --short"),
                 new ScenarioValidationSpec(
-                        "test:status-basics:command_text",
+                        "default:status-basics:command_text",
                         "status-basics",
                         "command_text",
                         "exact_command_match",
@@ -81,7 +81,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git branch --show-current"),
                 new ScenarioValidationSpec(
-                        "test:branch-safety:command_text",
+                        "default:branch-safety:command_text",
                         "branch-safety",
                         "command_text",
                         "git_command_probe",
@@ -159,7 +159,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git branch --show-current")),
                 new SubmittedAnswer("command_text", "git status -sb"),
                 new ScenarioValidationSpec(
-                        "test:branch-safety:command_text",
+                        "default:branch-safety:command_text",
                         "branch-safety",
                         "command_text",
                         "git_command_probe",
@@ -235,7 +235,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status"),
                 new ScenarioValidationSpec(
-                        "test:history-cleanup-preview:command_text",
+                        "default:history-cleanup-preview:command_text",
                         "history-cleanup-preview",
                         "command_text",
                         "git_command_probe",
@@ -312,7 +312,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git fetch origin"),
                 new ScenarioValidationSpec(
-                        "test:remote-sync-preview:command_text",
+                        "default:remote-sync-preview:command_text",
                         "remote-sync-preview",
                         "command_text",
                         "git_repo_state_probe",
@@ -401,7 +401,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status -sb"),
                 new ScenarioValidationSpec(
-                        "test:remote-sync-preview:command_text",
+                        "default:remote-sync-preview:command_text",
                         "remote-sync-preview",
                         "command_text",
                         "git_repo_state_probe",
@@ -476,7 +476,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git fetch origin")),
                 new SubmittedAnswer("command_text", "git reset --hard origin/main"),
                 new ScenarioValidationSpec(
-                        "test:remote-sync-apply:command_text",
+                        "default:remote-sync-apply:command_text",
                         "remote-sync-apply",
                         "command_text",
                         "git_repo_state_probe",
@@ -556,7 +556,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git status -sb")),
                 new SubmittedAnswer("command_text", "git stash push -u"),
                 new ScenarioValidationSpec(
-                        "test:stash-checkpoint-draft:command_text",
+                        "default:stash-checkpoint-draft:command_text",
                         "stash-checkpoint-draft",
                         "command_text",
                         "git_command_probe",
@@ -564,14 +564,14 @@ class GitValidationCliMainTest {
                         Map.of(
                                 "expectedExitCode", 0,
                                 "expectedWorkspaceState", Map.of(
-                                        "currentBranch", "feature/test-stash-panel",
+                                        "currentBranch", "feature/stash-panel-draft",
                                         "workingTreeClean", true,
                                         "stashEntryCount", 1
                                 ),
                                 "workspaceTemplate", Map.of(
                                         "initialBranch", "main",
-                                        "currentBranch", "feature/test-stash-panel",
-                                        "branches", List.of("feature/test-stash-panel", "main"),
+                                        "currentBranch", "feature/stash-panel-draft",
+                                        "branches", List.of("feature/stash-panel-draft", "main"),
                                         "committedFiles", List.of(
                                                 Map.of("path", "frontend/src/demo-panel.js", "content", "export const panel = 'draft';\n")
                                         ),
@@ -632,7 +632,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git show-ref --tags"),
                 new ScenarioValidationSpec(
-                        "test:tag-checkpoint-preview:command_text",
+                        "default:tag-checkpoint-preview:command_text",
                         "tag-checkpoint-preview",
                         "command_text",
                         "git_command_probe",

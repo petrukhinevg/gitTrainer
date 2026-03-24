@@ -4,28 +4,28 @@ import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableExce
 import org.springframework.stereotype.Component;
 
 @Component
-public class TestScenarioCatalogSource {
+public class SeedScenarioCatalogSource {
 
-    private static final TestScenarioCatalog EMPTY_CATALOG = new TestScenarioCatalog(
+    private static final SeedScenarioCatalog EMPTY_CATALOG = new SeedScenarioCatalog(
             "db-seeded-empty",
             java.util.List.of()
     );
 
-    private final AuthoredScenarioResourceLoader resourceLoader;
+    private final SeedScenarioResourceLoader resourceLoader;
 
-    public TestScenarioCatalogSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public SeedScenarioCatalogSource(SeedScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
-    public TestScenarioCatalog defaultCatalog() {
+    public SeedScenarioCatalog defaultCatalog() {
         return resourceLoader.defaultCatalog();
     }
 
-    public TestScenarioCatalog emptyCatalog() {
+    public SeedScenarioCatalog emptyCatalog() {
         return EMPTY_CATALOG;
     }
 
-    public TestScenarioCatalog unavailableCatalog() {
+    public SeedScenarioCatalog unavailableCatalog() {
         throw new ScenarioSourceUnavailableException(
                 "db-seeded-unavailable",
                 "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."

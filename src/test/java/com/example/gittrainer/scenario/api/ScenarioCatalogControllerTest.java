@@ -29,7 +29,7 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
-    void returnsAuthoredFixtureCatalogBoundary() throws Exception {
+    void returnsSeededCatalogBoundary() throws Exception {
         mockMvc.perform(get("/api/scenarios")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -124,7 +124,7 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
-    void exposesEmptyFixtureThroughCatalogBoundary() throws Exception {
+    void exposesEmptySeedThroughCatalogBoundary() throws Exception {
         mockMvc.perform(get("/api/scenarios")
                         .param("source", "empty")
                         .accept(MediaType.APPLICATION_JSON))
@@ -134,7 +134,7 @@ class ScenarioCatalogControllerTest {
     }
 
     @Test
-    void exposesUnavailableFixtureThroughCatalogBoundary() throws Exception {
+    void exposesUnavailableSeedThroughCatalogBoundary() throws Exception {
         mockMvc.perform(get("/api/scenarios")
                         .param("source", "unavailable")
                         .accept(MediaType.APPLICATION_JSON))

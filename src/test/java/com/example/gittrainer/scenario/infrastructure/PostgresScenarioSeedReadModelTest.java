@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("postgres")
 @EnabledIfEnvironmentVariable(named = "RUN_POSTGRES_TESTS", matches = "true")
-class PostgresAuthoredScenarioReadModelTest {
+class PostgresScenarioSeedReadModelTest {
 
     @Autowired
     private ScenarioCatalogGateway scenarioCatalogGateway;
@@ -64,7 +64,7 @@ class PostgresAuthoredScenarioReadModelTest {
     }
 
     @Test
-    void exposesSeededAuthoredScenariosFromDatabase() {
+    void exposesSeededScenariosFromDatabase() {
         CatalogBrowseQuery query = new CatalogBrowseQuery(null, null, null, null);
 
         List<ScenarioSummary> catalog = scenarioCatalogGateway.loadCatalog(query);

@@ -1,8 +1,8 @@
 package com.example.gittrainer.session.api;
 
-import com.example.gittrainer.session.infrastructure.TestRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.SeedRetryFeedbackCatalog;
 import com.example.gittrainer.session.domain.RetryExplanationSelection;
-import com.example.gittrainer.session.infrastructure.TestRetryFeedbackSource;
+import com.example.gittrainer.session.infrastructure.SeedRetryFeedbackSource;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RetryExplanationResponseFactoryTest {
 
     private final RetryExplanationResponseFactory factory = new RetryExplanationResponseFactory(
-            new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
+            new SeedRetryFeedbackCatalog(new SeedRetryFeedbackSource())
     );
 
     @Test

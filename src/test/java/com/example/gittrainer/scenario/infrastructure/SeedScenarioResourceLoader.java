@@ -17,31 +17,31 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class AuthoredScenarioResourceLoader {
+public class SeedScenarioResourceLoader {
 
-    private static final String RESOURCE_PATH = "scenario/authored-scenarios.json";
+    private static final String RESOURCE_PATH = "scenario/seed-scenarios.json";
 
-    private final TestScenarioCatalog defaultCatalog;
-    private final Map<String, AuthoredScenarioResourceItem> itemsBySlug;
+    private final SeedScenarioCatalog defaultCatalog;
+    private final Map<String, SeedScenarioItem> itemsBySlug;
 
-    public AuthoredScenarioResourceLoader() {
-        AuthoredScenarioResourceBundle bundle = readBundle();
-        this.defaultCatalog = new TestScenarioCatalog(
+    public SeedScenarioResourceLoader() {
+        SeedScenarioBundle bundle = readBundle();
+        this.defaultCatalog = new SeedScenarioCatalog(
                 bundle.sourceName(),
                 bundle.items().stream()
-                        .map(AuthoredScenarioResourceItem::toSummary)
+                        .map(SeedScenarioItem::toSummary)
                         .toList()
         );
         this.itemsBySlug = bundle.items().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                        AuthoredScenarioResourceItem::slug,
+                        SeedScenarioItem::slug,
                         item -> item,
                         (left, right) -> right,
                         LinkedHashMap::new
                 ));
     }
 
-    public TestScenarioCatalog defaultCatalog() {
+    public SeedScenarioCatalog defaultCatalog() {
         return defaultCatalog;
     }
 
@@ -53,37 +53,37 @@ public class AuthoredScenarioResourceLoader {
         return requireItem(scenarioSlug).repositoryContext();
     }
 
-    private AuthoredScenarioResourceItem requireItem(String scenarioSlug) {
-        AuthoredScenarioResourceItem item = itemsBySlug.get(scenarioSlug);
+    private SeedScenarioItem requireItem(String scenarioSlug) {
+        SeedScenarioItem item = itemsBySlug.get(scenarioSlug);
         if (item == null) {
-            throw new IllegalArgumentException("Authored scenario resource not found: " + scenarioSlug);
+            throw new IllegalArgumentException("Scenario seed not found: " + scenarioSlug);
         }
         return item;
     }
 
-    private AuthoredScenarioResourceBundle readBundle() {
+    private SeedScenarioBundle readBundle() {
         ObjectMapper objectMapper = JsonMapper.builder()
                 .findAndAddModules()
                 .build();
         try (InputStream inputStream = new ClassPathResource(RESOURCE_PATH).getInputStream()) {
-            return objectMapper.readValue(inputStream, AuthoredScenarioResourceBundle.class);
+            return objectMapper.readValue(inputStream, SeedScenarioBundle.class);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось десериализовать authored scenario resource bundle.", exception);
+            throw new IllegalStateException("Не удалось десериализовать scenario seed bundle.", exception);
         } catch (IOException exception) {
-            throw new IllegalStateException("Не удалось загрузить authored scenario resource bundle.", exception);
+            throw new IllegalStateException("Не удалось загрузить scenario seed bundle.", exception);
         }
     }
 
-    private record AuthoredScenarioResourceBundle(
+    private record SeedScenarioBundle(
             String sourceName,
-            List<AuthoredScenarioResourceItem> items
+            List<SeedScenarioItem> items
     ) {
-        private AuthoredScenarioResourceBundle {
+        private SeedScenarioBundle {
             items = items == null ? List.of() : List.copyOf(items);
         }
     }
 
-    private record AuthoredScenarioResourceItem(
+    private record SeedScenarioItem(
             String id,
             String slug,
             String title,
@@ -94,7 +94,7 @@ public class AuthoredScenarioResourceLoader {
             ScenarioWorkspaceDetail.ScenarioRepositoryContext repositoryContext
     ) {
 
-        private AuthoredScenarioResourceItem {
+        private SeedScenarioItem {
             tags = tags == null ? List.of() : List.copyOf(tags);
         }
 

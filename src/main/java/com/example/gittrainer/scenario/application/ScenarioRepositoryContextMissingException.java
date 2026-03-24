@@ -1,8 +1,8 @@
 package com.example.gittrainer.scenario.application;
 
-public class ScenarioRepositoryContextNotAuthoredException extends RuntimeException {
+public class ScenarioRepositoryContextMissingException extends RuntimeException {
 
-    public ScenarioRepositoryContextNotAuthoredException(String scenarioSlug) {
+    public ScenarioRepositoryContextMissingException(String scenarioSlug) {
         super("Контекст репозитория не подготовлен для сценария: %s".formatted(scenarioSlug));
     }
 }

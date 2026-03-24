@@ -9,29 +9,29 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-public class TestRetryFeedbackSource {
+public class SeedRetryFeedbackSource {
 
     public Optional<RetryGuidanceProfile> findIncorrectGuidance(String scenarioSlug) {
-        return AuthoredRetryFeedbackLibrary.findIncorrectGuidance(scenarioSlug);
+        return SeedRetryFeedbackLibrary.findIncorrectGuidance(scenarioSlug);
     }
 
     public Optional<RetryExplanationTemplate> findExplanationTemplate(String code) {
-        return AuthoredRetryFeedbackLibrary.findExplanationTemplate(code);
+        return SeedRetryFeedbackLibrary.findExplanationTemplate(code);
     }
 
     public Optional<RetryHintTemplate> findHintTemplate(String templateCode) {
-        return AuthoredRetryFeedbackLibrary.findHintTemplate(templateCode);
+        return SeedRetryFeedbackLibrary.findHintTemplate(templateCode);
     }
 
     public Map<String, RetryGuidanceProfile> incorrectGuidanceProfiles() {
-        return AuthoredRetryFeedbackLibrary.incorrectGuidanceProfiles();
+        return SeedRetryFeedbackLibrary.incorrectGuidanceProfiles();
     }
 
     public Map<String, RetryExplanationTemplate> explanationTemplates() {
-        return AuthoredRetryFeedbackLibrary.explanationTemplates();
+        return SeedRetryFeedbackLibrary.explanationTemplates();
     }
 
     public Map<String, RetryHintTemplate> hintTemplates() {
-        return AuthoredRetryFeedbackLibrary.hintTemplates();
+        return SeedRetryFeedbackLibrary.hintTemplates();
     }
 }

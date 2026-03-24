@@ -2,15 +2,15 @@ package com.example.gittrainer.scenario.infrastructure;
 
 import com.example.gittrainer.scenario.application.ScenarioTaskContent;
 import com.example.gittrainer.scenario.application.ScenarioTaskContentGateway;
-import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentMissingException;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TestScenarioTaskContentSource implements ScenarioTaskContentGateway {
+public class SeedScenarioTaskContentSource implements ScenarioTaskContentGateway {
 
-    private final AuthoredScenarioResourceLoader resourceLoader;
+    private final SeedScenarioResourceLoader resourceLoader;
 
-    public TestScenarioTaskContentSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public SeedScenarioTaskContentSource(SeedScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
@@ -19,7 +19,7 @@ public class TestScenarioTaskContentSource implements ScenarioTaskContentGateway
         try {
             return resourceLoader.taskContent(scenarioSlug);
         } catch (IllegalArgumentException exception) {
-            throw new ScenarioTaskContentNotAuthoredException(scenarioSlug);
+            throw new ScenarioTaskContentMissingException(scenarioSlug);
         }
     }
 }

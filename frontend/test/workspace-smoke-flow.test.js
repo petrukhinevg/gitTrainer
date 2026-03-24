@@ -550,7 +550,7 @@ test("правая колонка переключается на live workspace
             "Терминал live session тоже не должен показывать meta-блок над полем ввода"
         );
         assert.match(appRoot.textContent, /Файлы: 2/);
-        assert.match(appRoot.textContent, /feature\/test-stash-panel/);
+        assert.match(appRoot.textContent, /feature\/stash-panel-draft/);
         assert.ok(
             appRoot.querySelector('[data-repository-commit-tree]'),
             "Viewer должен сохранить commit tree в верхней части панели"
@@ -1143,7 +1143,7 @@ function createStashDetailPayload() {
             repositoryContext: {
                 status: "db-seeded",
                 branches: [
-                    { name: "feature/test-stash-panel", current: true }
+                    { name: "feature/stash-panel-draft", current: true }
                 ],
                 commits: [
                     { id: "c41ab00", summary: "ui: подготовить черновик stash-панели" }
@@ -1377,7 +1377,7 @@ function createStashSubmissionPayload() {
             repositoryContext: {
                 status: "live-session",
                 branches: [
-                    { name: "feature/test-stash-panel", current: true },
+                    { name: "feature/stash-panel-draft", current: true },
                     { name: "main", current: false }
                 ],
                 commits: [
@@ -1387,7 +1387,7 @@ function createStashSubmissionPayload() {
                 annotations: [
                     {
                         label: "Активная ветка",
-                        message: "Сессия сейчас открыта на `feature/test-stash-panel`."
+                        message: "Сессия сейчас открыта на `feature/stash-panel-draft`."
                     },
                     {
                         label: "Рабочее дерево",
@@ -1408,7 +1408,7 @@ function resolveStartRepositoryContext(scenarioSlug) {
         return {
             status: "live-session",
             branches: [
-                { name: "feature/test-stash-panel", current: true },
+                { name: "feature/stash-panel-draft", current: true },
                 { name: "main", current: false }
             ],
             commits: [
@@ -1421,7 +1421,7 @@ function resolveStartRepositoryContext(scenarioSlug) {
             annotations: [
                 {
                     label: "Активная ветка",
-                    message: "Сессия сейчас открыта на `feature/test-stash-panel`."
+                    message: "Сессия сейчас открыта на `feature/stash-panel-draft`."
                 }
             ]
         };

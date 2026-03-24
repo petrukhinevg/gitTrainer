@@ -1,9 +1,9 @@
 package com.example.gittrainer.app;
 
 import com.example.gittrainer.scenario.application.ScenarioDetailNotFoundException;
-import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextMissingException;
 import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableException;
-import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioTaskContentMissingException;
 import com.example.gittrainer.session.application.SessionNotFoundException;
 import com.example.gittrainer.session.application.SessionRequestValidationException;
 import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
@@ -61,23 +61,23 @@ final class ApiProblemDetailFactory {
         return problem;
     }
 
-    static ProblemDetail missingTaskContent(ScenarioTaskContentNotAuthoredException exception) {
+    static ProblemDetail missingTaskContent(ScenarioTaskContentMissingException exception) {
         return createProblem(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Контент сценария не подготовлен",
                 exception.getMessage(),
-                "scenario-task-content-not-authored",
+                "scenario-task-content-missing",
                 "terminal",
                 false
         );
     }
 
-    static ProblemDetail missingRepositoryContext(ScenarioRepositoryContextNotAuthoredException exception) {
+    static ProblemDetail missingRepositoryContext(ScenarioRepositoryContextMissingException exception) {
         return createProblem(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Контекст сценария не подготовлен",
                 exception.getMessage(),
-                "scenario-repository-context-not-authored",
+                "scenario-repository-context-missing",
                 "terminal",
                 false
         );

@@ -1,7 +1,7 @@
 package com.example.gittrainer.scenario.infrastructure;
 
 import com.example.gittrainer.scenario.application.ScenarioRepositoryContextGateway;
-import com.example.gittrainer.scenario.application.ScenarioRepositoryContextNotAuthoredException;
+import com.example.gittrainer.scenario.application.ScenarioRepositoryContextMissingException;
 import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 public class PostgresScenarioRepositoryContextGateway implements ScenarioRepositoryContextGateway {
 
     private final JdbcClient jdbcClient;
-    private final AuthoredScenarioJsonMapper jsonMapper;
+    private final ScenarioPayloadJsonMapper jsonMapper;
 
-    public PostgresScenarioRepositoryContextGateway(JdbcClient jdbcClient, AuthoredScenarioJsonMapper jsonMapper) {
+    public PostgresScenarioRepositoryContextGateway(JdbcClient jdbcClient, ScenarioPayloadJsonMapper jsonMapper) {
         this.jdbcClient = jdbcClient;
         this.jsonMapper = jsonMapper;
     }
@@ -33,6 +33,6 @@ public class PostgresScenarioRepositoryContextGateway implements ScenarioReposit
                 .query(String.class)
                 .optional()
                 .map(jsonMapper::readRepositoryContext)
-                .orElseThrow(() -> new ScenarioRepositoryContextNotAuthoredException(scenarioSlug));
+                .orElseThrow(() -> new ScenarioRepositoryContextMissingException(scenarioSlug));
     }
 }

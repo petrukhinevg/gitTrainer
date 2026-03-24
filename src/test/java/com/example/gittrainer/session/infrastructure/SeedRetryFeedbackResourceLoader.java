@@ -15,15 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-final class AuthoredRetryFeedbackResourceLoader {
+final class SeedRetryFeedbackResourceLoader {
 
-    private static final String RESOURCE_PATH = "session/authored-retry-feedback.json";
+    private static final String RESOURCE_PATH = "session/seed-retry-feedback.json";
 
     private final Map<String, RetryGuidanceProfile> profiles;
     private final Map<String, RetryExplanationTemplate> explanationTemplates;
     private final Map<String, RetryHintTemplate> hintTemplates;
 
-    AuthoredRetryFeedbackResourceLoader() {
+    SeedRetryFeedbackResourceLoader() {
         RetryFeedbackBundleResource bundle = readBundle();
         this.profiles = toOrderedMap(bundle.profiles(), RetryGuidanceProfileResource::toProfile);
         this.explanationTemplates = toOrderedMap(bundle.explanationTemplates(), RetryExplanationTemplateResource::toTemplate);
@@ -61,9 +61,9 @@ final class AuthoredRetryFeedbackResourceLoader {
         try (InputStream inputStream = new ClassPathResource(RESOURCE_PATH).getInputStream()) {
             return objectMapper.readValue(inputStream, RetryFeedbackBundleResource.class);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось десериализовать authored retry feedback bundle.", exception);
+            throw new IllegalStateException("Не удалось десериализовать retry feedback seed bundle.", exception);
         } catch (IOException exception) {
-            throw new IllegalStateException("Не удалось загрузить authored retry feedback bundle.", exception);
+            throw new IllegalStateException("Не удалось загрузить retry feedback seed bundle.", exception);
         }
     }
 

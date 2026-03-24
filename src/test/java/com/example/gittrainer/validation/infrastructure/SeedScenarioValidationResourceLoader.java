@@ -14,28 +14,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-final class AuthoredScenarioValidationResourceLoader {
+final class SeedScenarioValidationResourceLoader {
 
-    private static final String RESOURCE_PATH = "validation/authored-scenario-validation.json";
+    private static final String RESOURCE_PATH = "validation/seed-scenario-validation.json";
 
-    private final Map<String, AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition> definitionsBySlug;
+    private final Map<String, SeedScenarioValidationLibrary.SeedScenarioValidationDefinition> definitionsBySlug;
 
-    AuthoredScenarioValidationResourceLoader() {
+    SeedScenarioValidationResourceLoader() {
         this.definitionsBySlug = readBundle().definitions().stream()
                 .map(ValidationDefinitionResource::toDefinition)
                 .collect(java.util.stream.Collectors.toMap(
-                        AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition::scenarioSlug,
+                        SeedScenarioValidationLibrary.SeedScenarioValidationDefinition::scenarioSlug,
                         definition -> definition,
                         (left, right) -> right,
                         LinkedHashMap::new
                 ));
     }
 
-    Optional<AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition> findDefinition(String scenarioSlug) {
+    Optional<SeedScenarioValidationLibrary.SeedScenarioValidationDefinition> findDefinition(String scenarioSlug) {
         return Optional.ofNullable(definitionsBySlug.get(scenarioSlug));
     }
 
-    Map<String, AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition> definitions() {
+    Map<String, SeedScenarioValidationLibrary.SeedScenarioValidationDefinition> definitions() {
         return definitionsBySlug;
     }
 
@@ -46,9 +46,9 @@ final class AuthoredScenarioValidationResourceLoader {
         try (InputStream inputStream = new ClassPathResource(RESOURCE_PATH).getInputStream()) {
             return objectMapper.readValue(inputStream, ValidationBundleResource.class);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Не удалось десериализовать authored scenario validation bundle.", exception);
+            throw new IllegalStateException("Не удалось десериализовать scenario validation seed bundle.", exception);
         } catch (IOException exception) {
-            throw new IllegalStateException("Не удалось загрузить authored scenario validation bundle.", exception);
+            throw new IllegalStateException("Не удалось загрузить scenario validation seed bundle.", exception);
         }
     }
 
@@ -72,8 +72,8 @@ final class AuthoredScenarioValidationResourceLoader {
             rules = rules == null ? List.of() : List.copyOf(rules);
         }
 
-        private AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition toDefinition() {
-            return new AuthoredScenarioValidationLibrary.AuthoredScenarioValidationDefinition(
+        private SeedScenarioValidationLibrary.SeedScenarioValidationDefinition toDefinition() {
+            return new SeedScenarioValidationLibrary.SeedScenarioValidationDefinition(
                     scenarioSlug,
                     validatorType,
                     config,

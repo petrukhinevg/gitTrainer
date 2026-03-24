@@ -10,36 +10,36 @@ import java.util.List;
 
 @Component
 @Profile("test")
-public class TestScenarioCatalogGateway implements ScenarioCatalogGateway {
+public class SeedScenarioCatalogGateway implements ScenarioCatalogGateway {
 
-    private final TestScenarioCatalogSource scenarioCatalogFixtureSource;
+    private final SeedScenarioCatalogSource scenarioCatalogSeedSource;
 
-    public TestScenarioCatalogGateway(TestScenarioCatalogSource scenarioCatalogFixtureSource) {
-        this.scenarioCatalogFixtureSource = scenarioCatalogFixtureSource;
+    public SeedScenarioCatalogGateway(SeedScenarioCatalogSource scenarioCatalogSeedSource) {
+        this.scenarioCatalogSeedSource = scenarioCatalogSeedSource;
     }
 
     @Override
     public List<ScenarioSummary> loadCatalog(CatalogBrowseQuery query) {
-        return resolveFixture(query).items();
+        return resolveSeed(query).items();
     }
 
     @Override
     public String sourceName(CatalogBrowseQuery query) {
-        return resolveFixture(query).sourceName();
+        return resolveSeed(query).sourceName();
     }
 
-    private TestScenarioCatalog resolveFixture(CatalogBrowseQuery query) {
+    private SeedScenarioCatalog resolveSeed(CatalogBrowseQuery query) {
         String source = query.source();
         if (source == null || source.isBlank() || source.equalsIgnoreCase("default")) {
-            return scenarioCatalogFixtureSource.defaultCatalog();
+            return scenarioCatalogSeedSource.defaultCatalog();
         }
         if (source.equalsIgnoreCase("empty")) {
-            return scenarioCatalogFixtureSource.emptyCatalog();
+            return scenarioCatalogSeedSource.emptyCatalog();
         }
         if (source.equalsIgnoreCase("unavailable")) {
-            return scenarioCatalogFixtureSource.unavailableCatalog();
+            return scenarioCatalogSeedSource.unavailableCatalog();
         }
 
-        return scenarioCatalogFixtureSource.defaultCatalog();
+        return scenarioCatalogSeedSource.defaultCatalog();
     }
 }
