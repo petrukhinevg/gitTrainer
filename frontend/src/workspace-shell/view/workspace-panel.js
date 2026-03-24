@@ -5,7 +5,10 @@ import {
 } from "./render-helpers.js";
 
 export function renderWorkspacePanel(state) {
-    return renderPracticeShell(renderWorkspacePanelSections(state));
+    return renderPracticeShell(
+        renderWorkspacePanelSections(state),
+        resolveWorkspacePanelAccentTag(state)
+    );
 }
 
 export function renderWorkspacePanelSections(state) {
@@ -113,17 +116,19 @@ export function renderWorkspacePanelSections(state) {
                     <span class="control-label">Контекст и результат</span>
                     <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
-                <div class="practice-composer__scroll" data-practice-surface-scroll>
-                    ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
-                    ${renderBootstrapNotice(bootstrapState)}
-                    ${renderPracticeRepositorySupplement(
-                        repositoryContext,
-                        workspacePlayback,
-                        bootstrapState,
-                        submissionState,
-                        lifecycle
-                    )}
-                    <div class="practice-composer__results">
+                <div class="practice-composer__body">
+                    <div class="practice-composer__scroll practice-composer__scroll--context" data-practice-surface-scroll>
+                        ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
+                        ${renderBootstrapNotice(bootstrapState)}
+                        ${renderPracticeRepositorySupplement(
+                            repositoryContext,
+                            workspacePlayback,
+                            bootstrapState,
+                            submissionState,
+                            lifecycle
+                        )}
+                    </div>
+                    <div class="practice-composer__results" data-practice-results-scroll>
                         ${renderSubmissionTransportOutput(
                             state.submissionDraft.preparedSubmission,
                             submissionState,
@@ -137,7 +142,7 @@ export function renderWorkspacePanelSections(state) {
     };
 }
 
-function renderPracticeShell({ viewer, surface }) {
+function renderPracticeShell({ viewer, surface }, accentTag = null) {
     return renderLessonLane({
         lane: "practice",
         label: "Практика",
@@ -145,12 +150,31 @@ function renderPracticeShell({ viewer, surface }) {
         description: "Справа сверху показывается commit tree и терминал, ниже остаются контекст упражнения и результат отправки.",
         showHeader: false,
         body: `
-            <div class="practice-stack">
+            <div class="practice-stack"${accentTag ? ` data-workspace-active-tag="${escapeHtml(accentTag)}"` : ""}>
                 <div class="practice-pane practice-pane--viewer">${viewer}</div>
                 <div class="practice-pane practice-pane--surface">${surface}</div>
             </div>
         `
     });
+}
+
+function resolveWorkspacePanelAccentTag(state) {
+    const activeTag = normalizeWorkspaceTagToken(state?.heldNavigationTag ?? state?.pinnedNavigationTag);
+    if (!activeTag) {
+        return null;
+    }
+
+    const scenarioTags = Array.isArray(state?.detail?.data?.tags)
+        ? state.detail.data.tags.map(normalizeWorkspaceTagToken).filter(Boolean)
+        : [];
+
+    return scenarioTags.includes(activeTag) ? activeTag : null;
+}
+
+function normalizeWorkspaceTagToken(tag) {
+    return typeof tag === "string" && tag.trim() !== ""
+        ? tag.trim().toLowerCase()
+        : null;
 }
 
 function renderPlaceholderViewer(title, copy) {
