@@ -137,10 +137,20 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             "Каталог должен отрисовать сценарий branch-safety"
         );
         assert.match(appRoot.textContent, /Каталог и практика работают через backend API/);
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--practice-hidden"),
+            true,
+            "На экране каталога правая панель должна быть скрыта"
+        );
 
         await navigateToHash(dom.window, "#/exercise/branch-safety");
         await flushAsyncWork();
 
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--practice-hidden"),
+            false,
+            "На экране упражнения правая панель должна возвращаться"
+        );
         assert.ok(
             appRoot.querySelector('[data-repository-workspace-visual="ready"]'),
             "Экран упражнения должен показать визуальную workspace-схему"

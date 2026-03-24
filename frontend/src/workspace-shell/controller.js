@@ -292,12 +292,14 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        const isPracticeHidden = state.route !== "exercise";
         layout.classList.toggle("lesson-layout--navigation-collapsed", state.isNavigationCollapsed);
         layout.classList.toggle("lesson-layout--navigation-collapsing", state.isNavigationCollapsing);
         layout.classList.toggle(
             "lesson-layout--navigation-transitioning",
             !state.isNavigationCollapsed && !state.isNavigationExpandedReady
         );
+        layout.classList.toggle("lesson-layout--practice-hidden", isPracticeHidden);
 
         const navigationLane = layout.querySelector(".lesson-layout__lane--navigation");
         if (navigationLane instanceof HTMLElement) {
@@ -307,6 +309,17 @@ export function createCatalogWorkspaceController({
             } else {
                 navigationLane.removeAttribute("aria-hidden");
                 navigationLane.removeAttribute("inert");
+            }
+        }
+
+        const practiceLane = layout.querySelector(".lesson-layout__lane--practice");
+        if (practiceLane instanceof HTMLElement) {
+            if (isPracticeHidden) {
+                practiceLane.setAttribute("aria-hidden", "true");
+                practiceLane.setAttribute("inert", "");
+            } else {
+                practiceLane.removeAttribute("aria-hidden");
+                practiceLane.removeAttribute("inert");
             }
         }
 

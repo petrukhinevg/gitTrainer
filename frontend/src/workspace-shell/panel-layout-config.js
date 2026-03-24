@@ -1,5 +1,9 @@
 const PANEL_LAYOUT_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
+function resolveThreeColumnBreakpoint({ leftWidthPx, middleMinWidthPx, rightWidthPx }) {
+    return leftWidthPx + middleMinWidthPx + rightWidthPx;
+}
+
 export class PanelLayoutConfig {
     // Левая панель: навигация, toggle и связанные размеры.
     static LEFT_PANEL = Object.freeze({
@@ -15,14 +19,8 @@ export class PanelLayoutConfig {
 
     // Правая панель: практика, терминал и repository viewer.
     static RIGHT_PANEL = Object.freeze({
-        laneWidthPx: 670
-    });
-
-    // Общие брейкпоинты для перестройки layout.
-    static BREAKPOINTS = Object.freeze({
-        stackedLayoutPx: 1000,
-        compactPanelsPx: 960,
-        mobilePanelsPx: 720
+        defaultWidthPx: 670,
+        narrowedWidthPx: 500
     });
 
     // Общие анимации и визуальные коэффициенты для панелей и оверлеев.
@@ -56,11 +54,21 @@ export class PanelLayoutConfig {
     });
 }
 
+const PANEL_LAYOUT_BREAKPOINTS = Object.freeze({
+    stackedLayoutPx: resolveThreeColumnBreakpoint({
+        leftWidthPx: PanelLayoutConfig.LEFT_PANEL.laneWidthPx,
+        middleMinWidthPx: PanelLayoutConfig.MIDDLE_PANEL.minWidthPx,
+        rightWidthPx: PanelLayoutConfig.RIGHT_PANEL.narrowedWidthPx
+    }),
+    compactPanelsPx: 960,
+    mobilePanelsPx: 720
+});
+
 export const PANEL_LAYOUT_CONFIG = Object.freeze({
     leftPanel: PanelLayoutConfig.LEFT_PANEL,
     middlePanel: PanelLayoutConfig.MIDDLE_PANEL,
     rightPanel: PanelLayoutConfig.RIGHT_PANEL,
-    breakpoints: PanelLayoutConfig.BREAKPOINTS,
+    breakpoints: PANEL_LAYOUT_BREAKPOINTS,
     animation: PanelLayoutConfig.ANIMATION
 });
 
@@ -79,7 +87,8 @@ export function buildPanelLayoutInlineStyle() {
         `--navigation-active-marker-easing: ${PANEL_LAYOUT_CONFIG.animation.activeMarkerEasing}`,
         `--lesson-lane-min-width: ${PANEL_LAYOUT_CONFIG.middlePanel.minWidthPx}px`,
         `--lesson-collapsed-left-inset: ${PANEL_LAYOUT_CONFIG.middlePanel.collapsedLeftInsetPx}px`,
-        `--practice-lane-current-width: ${PANEL_LAYOUT_CONFIG.rightPanel.laneWidthPx}px`,
+        `--practice-lane-default-width: ${PANEL_LAYOUT_CONFIG.rightPanel.defaultWidthPx}px`,
+        `--practice-lane-min-width: ${PANEL_LAYOUT_CONFIG.rightPanel.narrowedWidthPx}px`,
         `--flow-subtask-enter-duration: ${PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterMs}ms`,
         `--flow-subtask-enter-stagger: ${PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterStaggerMs}ms`,
         `--flow-node-filter-duration: ${PANEL_LAYOUT_CONFIG.animation.flowNodeFilterMs}ms`,

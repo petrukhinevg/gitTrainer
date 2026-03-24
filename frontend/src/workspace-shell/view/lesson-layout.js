@@ -10,11 +10,12 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
     const isNavigationCollapsed = Boolean(state.isNavigationCollapsed);
     const isNavigationCollapsing = Boolean(state.isNavigationCollapsing);
     const isNavigationTransitioning = !isNavigationCollapsed && state.isNavigationExpandedReady === false;
+    const isPracticeHidden = state.route !== "exercise";
 
     return `
         ${renderPanelLayoutResponsiveStyle()}
         <section
-            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""}"
+            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
             aria-label="Рабочее пространство урока"
             style="${escapeHtml(buildPanelLayoutInlineStyle())}"
         >
@@ -39,7 +40,7 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
             <div class="lesson-layout__lane lesson-layout__lane--lesson">
                 ${lessonLane}
             </div>
-            <div class="lesson-layout__lane lesson-layout__lane--practice">
+            <div class="lesson-layout__lane lesson-layout__lane--practice" ${isPracticeHidden ? 'aria-hidden="true" inert' : ""}>
                 ${practiceLane}
             </div>
             <svg
