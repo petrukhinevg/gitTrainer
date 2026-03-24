@@ -79,7 +79,7 @@ export function captureDraftFieldSnapshot(field) {
 
 export function restoreDraftFieldSnapshot(appRoot, snapshot) {
     if (!snapshot?.name) {
-        return;
+        return false;
     }
 
     const restoredField = appRoot.querySelector(
@@ -91,7 +91,11 @@ export function restoreDraftFieldSnapshot(appRoot, snapshot) {
         && !(restoredField instanceof HTMLTextAreaElement)
         && !(restoredField instanceof HTMLSelectElement)
     ) {
-        return;
+        return false;
+    }
+
+    if (restoredField.disabled) {
+        return false;
     }
 
     restoredField.focus({ preventScroll: true });
@@ -111,6 +115,8 @@ export function restoreDraftFieldSnapshot(appRoot, snapshot) {
             snapshot.selectionDirection
         );
     }
+
+    return true;
 }
 
 export function preparePinnedNavigationSubtaskUnpinAnimation(appRoot, tag) {

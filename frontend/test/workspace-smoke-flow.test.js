@@ -59,6 +59,11 @@ test("маршрут #/sandbox открывает рабочую песочни�
             "Shortcut песочницы должен оставаться активным"
         );
         assert.equal(
+            appRoot.querySelector(".workspace-terminal__meta"),
+            null,
+            "Терминал больше не должен показывать meta-блок над полем ввода"
+        );
+        assert.equal(
             appRoot.querySelector('[data-scenario-toggle="merge-sandbox-outline"]'),
             null,
             "Служебный sandbox-сценарий не должен дублироваться в общем списке заданий"
@@ -161,6 +166,11 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             null,
             "Верхняя часть viewer не должна показывать отдельную карточку-обвязку"
         );
+        assert.match(
+            appRoot.querySelector("[data-workspace-terminal-header]")?.textContent ?? "",
+            /Git Terminal - Подтверди текущую ветку перед правками/,
+            "Терминал должен показывать заголовок с названием текущего задания"
+        );
         assert.equal(
             appRoot.querySelector('.workspace-terminal__chrome'),
             null,
@@ -178,22 +188,63 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             Boolean(commitTree?.compareDocumentPosition(commandHistory) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING),
             "Commit tree должен располагаться выше terminal history"
         );
+        const terminalEditor = appRoot.querySelector(".workspace-terminal__editor");
+        assert.equal(
+            appRoot.querySelector(".workspace-terminal__meta"),
+            null,
+            "Над полем ввода не должно оставаться отдельного meta-блока"
+        );
+        assert.ok(terminalEditor, "Строка ввода команды должна оставаться доступной");
         assert.equal(
             appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
             "ready"
+        );
+        assert.equal(
+            appRoot.querySelectorAll("[data-workspace-terminal-output]").length,
+            0,
+            "В terminal history не должно оставаться сервисных output-сообщений"
         );
         assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
         assert.ok(answerField, "Поле ввода ответа должно быть доступно");
+        installTerminalHistoryMetrics(dom.window);
+        const commitTreeNodeBeforeTyping = appRoot.querySelector('[data-repository-commit-tree]');
+        assert.ok(commitTreeNodeBeforeTyping, "Commit tree должен быть доступен до ввода команды");
         answerField.value = "git branch --show-current";
         answerField.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
         await flushAsyncWork();
+        assert.equal(
+            appRoot.querySelector('[data-repository-commit-tree]'),
+            commitTreeNodeBeforeTyping,
+            "Commit tree не должен пересоздаваться на каждый ввод в поле команды"
+        );
 
         const submissionForm = appRoot.querySelector("[data-submission-draft-form]");
         assert.ok(submissionForm, "Форма отправки должна быть доступна");
         submissionForm.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+        assert.equal(
+            appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]')?.value,
+            "",
+            "Поле команды должно очищаться сразу при submit, не дожидаясь ответа"
+        );
         await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]')?.value,
+            "",
+            "После отправки поле команды должно очищаться"
+        );
+        assert.equal(
+            dom.window.document.activeElement,
+            appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]'),
+            "После отправки фокус должен возвращаться в поле команды"
+        );
+        assert.equal(
+            appRoot.querySelector(".workspace-terminal__history")?.scrollTop,
+            240,
+            "После отправки terminal history должна прокручиваться к последней команде и ответу"
+        );
 
         const retryFeedback = appRoot.querySelector('[data-retry-feedback-panel][data-retry-feedback-status="resolved"]');
         assert.ok(retryFeedback, "После успешной отправки должен появиться resolved retry feedback");
@@ -202,6 +253,11 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             "complete"
         );
         assert.match(appRoot.textContent, /Повторное объяснение не требуется/);
+        assert.doesNotMatch(
+            appRoot.textContent ?? "",
+            /Команда git branch --show-current выполнена\. Viewer показывает обновлённый snapshot workspace\./,
+            "Служебный summary про обновлённый snapshot не должен показываться под командой"
+        );
 
         await navigateToHash(dom.window, "#/progress");
         await flushAsyncWork();
@@ -330,6 +386,112 @@ test("отправляет ответ по Enter в поле команды", as
             appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
             "После Enter-submit history должна пометить команду как correct"
         );
+        assert.equal(
+            appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]')?.value,
+            "",
+            "После Enter-submit поле команды тоже должно очищаться"
+        );
+        assert.equal(
+            dom.window.document.activeElement,
+            appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]'),
+            "После Enter-submit фокус должен оставаться в поле команды"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("терминал не дублирует backend-ошибку в summary и stderr", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+    const duplicatedMessage = "Используйте простую Git-команду без shell-кавычек и подстановок.";
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            return jsonResponse(createStartSessionPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions/session-1/submissions") {
+            return jsonResponse({
+                type: "https://git-trainer.dev/problems/validation",
+                title: "Validation failed",
+                status: 400,
+                detail: duplicatedMessage,
+                code: "validation-runner-quoted-args-not-supported",
+                failureDisposition: "terminal",
+                retryable: false
+            }, { status: 400 });
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
+        assert.ok(answerField, "Поле ввода должно быть доступно");
+        answerField.value = "git commit --allow-empty -m \"feat: branch commit\"";
+        answerField.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+        await flushAsyncWork();
+
+        appRoot.querySelector("[data-submission-draft-form]")
+            .dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+        await flushAsyncWork();
+
+        const occurrences = (appRoot.textContent?.match(new RegExp(escapeRegExp(duplicatedMessage), "g")) ?? []).length;
+        assert.equal(occurrences, 1, "Одна и та же backend-ошибка не должна рендериться дважды");
+        assert.equal(
+            appRoot.querySelectorAll(".workspace-terminal__summary--error").length,
+            0,
+            "Если summary совпадает с stderr, отдельную summary-строку показывать не нужно"
+        );
+        assert.match(appRoot.textContent ?? "", /Подробности ошибки уже показаны в консоли выше\./);
+        assert.doesNotMatch(
+            appRoot.textContent ?? "",
+            /UI не получил корректный результат команды/,
+            "Сервисный terminal-error status-copy не должен дублироваться в transcript"
+        );
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -394,7 +556,11 @@ test("правая колонка переключается на live workspace
         await navigateToHash(dom.window, "#/exercise/stash-checkpoint-draft");
         await flushAsyncWork();
 
-        assert.match(appRoot.textContent, /живая сессия/i);
+        assert.equal(
+            appRoot.querySelector(".workspace-terminal__meta"),
+            null,
+            "Терминал live session тоже не должен показывать meta-блок над полем ввода"
+        );
         assert.match(appRoot.textContent, /Файлы: 2/);
         assert.match(appRoot.textContent, /feature\/test-stash-panel/);
         assert.ok(
@@ -435,9 +601,18 @@ test("правая колонка переключается на live workspace
             appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
             "После stash history должна показать успешную команду"
         );
+        assert.equal(
+            appRoot.querySelectorAll("[data-workspace-terminal-output]").length,
+            0,
+            "Даже в live-session terminal history должна содержать только команды и их ответы"
+        );
         assert.match(appRoot.textContent, /git stash push -u/);
         assert.match(appRoot.textContent, /Изменения и untracked-файлы безопасно убраны в stash/);
-        assert.match(appRoot.textContent, /Команда принята, и viewer уже показывает обновлённый snapshot рабочей копии/);
+        assert.doesNotMatch(
+            appRoot.textContent ?? "",
+            /Команда принята, и viewer уже показывает обновлённый snapshot рабочей копии/,
+            "Служебный updated-status не должен дублироваться в terminal transcript"
+        );
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -1219,6 +1394,36 @@ function jsonResponse(payload, { status = 200 } = {}) {
             return structuredClone(payload);
         }
     };
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function installTerminalHistoryMetrics(windowLike) {
+    const prototype = windowLike.HTMLElement.prototype;
+
+    Object.defineProperty(prototype, "clientHeight", {
+        configurable: true,
+        get() {
+            if (this instanceof windowLike.HTMLElement && this.classList?.contains("workspace-terminal__history")) {
+                return 120;
+            }
+
+            return 0;
+        }
+    });
+
+    Object.defineProperty(prototype, "scrollHeight", {
+        configurable: true,
+        get() {
+            if (this instanceof windowLike.HTMLElement && this.classList?.contains("workspace-terminal__history")) {
+                return 360;
+            }
+
+            return 0;
+        }
+    });
 }
 
 function assignRect(element, rect) {

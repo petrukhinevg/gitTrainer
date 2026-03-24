@@ -1,5 +1,5 @@
 .practice-stack {
-    --practice-viewer-height: 430px;
+    --practice-viewer-height: 540px;
     --workspace-panel-accent: var(--tag-color-default, #395979);
     --workspace-panel-border-color: rgba(31, 23, 32, 0.3);
     --workspace-panel-surface: rgba(211, 207, 199, 0.68);
@@ -16,7 +16,7 @@
     --workspace-terminal-editor-surface: rgba(255, 255, 255, 0.68);
     --workspace-terminal-editor-shadow: rgba(57, 89, 121, 0.06);
     --workspace-terminal-ink: #2f1f13;
-    --workspace-terminal-ink-soft: rgba(47, 31, 19, 0.7);
+    --workspace-terminal-ink-soft: rgba(0, 0, 0, 0.7);
     --workspace-terminal-ink-muted: rgba(47, 31, 19, 0.52);
     --workspace-terminal-badge: rgba(47, 31, 19, 0.62);
     --workspace-terminal-prompt: #395979;
@@ -710,19 +710,42 @@
 .workspace-console,
 .workspace-terminal {
     gap: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: start;
     height: 100%;
     min-height: 0;
     border: 1px solid var(--workspace-terminal-border);
     border-radius: 16px;
-    background: linear-gradient(180deg, var(--workspace-terminal-surface-top), var(--workspace-terminal-surface-bottom));
+    background: var(--workspace-panel-surface);
     color: var(--workspace-terminal-ink);
     overflow: hidden;
 }
 
 .workspace-terminal--plain {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--workspace-terminal-border) 84%, transparent);
+    border-radius: 14px;
+    background: var(--workspace-panel-surface);
+}
+
+.workspace-terminal__header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 5px 12px 5px;
+    border-bottom: 1px solid color-mix(in srgb, var(--workspace-terminal-border) 72%, transparent);
+    background: var(--workspace-panel-surface);
+}
+
+.workspace-terminal__title {
+    display: block;
+    color: var(--workspace-terminal-ink-soft);
+    font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
 }
 
 .workspace-console__chrome,
@@ -786,7 +809,7 @@
 }
 
 .workspace-terminal--plain .workspace-terminal__history {
-    padding: 0 0 16px;
+    padding: 6px 14px 12px;
 }
 
 .workspace-terminal--plain .workspace-terminal__form {
@@ -794,8 +817,10 @@
 }
 
 .workspace-terminal__history {
+    align-content: start;
+    gap: 4px;
     min-height: 0;
-    padding: 12px 14px 16px;
+    padding: 6px 14px 12px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--workspace-terminal-action-border) transparent;
@@ -823,7 +848,11 @@
 .workspace-terminal__output,
 .workspace-terminal__entry {
     margin: 0;
-    padding: 0 0 10px;
+    padding: 0;
+}
+
+.workspace-terminal__entry {
+    gap: 4px;
 }
 
 .workspace-console__line,
@@ -854,7 +883,7 @@
 
 .workspace-terminal__stream {
     margin: 0;
-    padding: 0 0 0 86px;
+    padding: 0;
     color: var(--workspace-terminal-stdout);
     font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 0.78rem;
@@ -885,7 +914,7 @@
 .workspace-terminal__summary {
     color: var(--workspace-terminal-ink-soft);
     margin: 0;
-    padding-left: 86px;
+    padding-left: 0;
     line-height: 1.5;
 }
 
@@ -922,19 +951,12 @@
     flex-wrap: nowrap;
     align-items: center;
     gap: 6px;
-    padding: 6px 8px;
+    padding: 10px 12px;
     border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    white-space: nowrap;
-}
-
-.workspace-terminal__editor::-webkit-scrollbar {
-    display: none;
+    min-width: 0;
 }
 
 .workspace-terminal__chip {

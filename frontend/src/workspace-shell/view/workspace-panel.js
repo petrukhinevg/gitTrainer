@@ -92,6 +92,7 @@ export function renderWorkspacePanelSections(state) {
                 <div class="practice-repository-viewer" data-repository-context>
                     ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
                     ${renderWorkspaceTerminal({
+            scenarioTitle: detail.title,
             submissionDraft: state.submissionDraft,
             bootstrapState,
             submissionState,
@@ -370,7 +371,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
             label: "Отправка ответа",
             status: "retryable",
             badge: "retryable",
-            copy: submissionState.error?.message ?? "Отправка не удалась, но её можно повторить.",
+            copy: "Отправка не удалась, но её можно повторить. Подробности уже показаны в консоли выше.",
             payload: submissionState.lastPayload,
             actions: `
                 <button class="practice-action practice-action--primary" type="button" data-session-request-retry="submission">Повторить отправку</button>
@@ -383,7 +384,7 @@ function renderSubmissionTransportOutput(preparedSubmission, submissionState, su
             label: "Отправка ответа",
             status: "terminal",
             badge: "terminal",
-            copy: submissionState.error?.message ?? "Отправка завершилась ошибкой.",
+            copy: "Отправка завершилась ошибкой. Подробности уже показаны в консоли выше.",
             payload: submissionState.lastPayload,
             actions: `
                 <button class="practice-action practice-action--primary" type="button" data-session-request-restart>Начать новую сессию</button>
@@ -723,6 +724,7 @@ function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback
 }
 
 function renderWorkspaceTerminal({
+    scenarioTitle,
     submissionDraft,
     bootstrapState,
     submissionState,
@@ -743,10 +745,12 @@ function renderWorkspaceTerminal({
         commandHistory,
         statusCopy
     });
-    const currentBranch = resolveCurrentBranchName(repositoryContext.branches);
 
     return `
         <section class="workspace-terminal workspace-terminal--plain" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
+            <div class="workspace-terminal__header" data-workspace-terminal-header>
+                <span class="workspace-terminal__title">Git Terminal - ${escapeHtml(scenarioTitle ?? "Активное задание")}</span>
+            </div>
             <div class="workspace-terminal__body" data-workspace-command-history>
                 <div class="workspace-terminal__history">
                     ${transcriptItems.map((entry) => entry.kind === "command" ? `
@@ -754,34 +758,31 @@ function renderWorkspaceTerminal({
                             class="workspace-terminal__entry workspace-terminal__entry--${escapeHtml(entry.status)}"
                             data-workspace-command-status="${escapeHtml(entry.status)}"
                             data-workspace-command-id="${escapeHtml(entry.id)}"
+                            data-workspace-transcript-id="${escapeHtml(entry.id)}"
                         >
                             <div class="workspace-terminal__line">
                                 <span class="workspace-terminal__prompt">git-trainer%</span>
                                 <code class="workspace-terminal__command">${escapeHtml(entry.command)}</code>
                             </div>
                             ${renderWorkspaceTerminalStreams(entry.terminalOutput)}
-                            <p class="panel-copy workspace-terminal__summary workspace-terminal__summary--${escapeHtml(mapCommandHistoryTone(entry.status))}">
-                                ${escapeHtml(entry.summary)}
-                            </p>
+                            ${renderWorkspaceTerminalSummary(entry)}
                         </article>
                     ` : `
                         <p
                             class="panel-copy workspace-terminal__output workspace-terminal__output--${escapeHtml(entry.tone)}"
                             data-workspace-terminal-output="${escapeHtml(entry.tone)}"
+                            data-workspace-transcript-id="${escapeHtml(entry.id)}"
                         >${escapeHtml(entry.text)}</p>
                     `).join("")}
                 </div>
                 <form class="workspace-terminal__form practice-composer__form" data-submission-draft-form>
-                    <label class="workspace-terminal__editor" aria-label="Ввод Git-команды">
-                        <span class="workspace-terminal__chip">git-trainer</span>
-                        <span class="workspace-terminal__chip workspace-terminal__chip--path">/repo</span>
-                        <span class="workspace-terminal__chip workspace-terminal__chip--branch">${escapeHtml(currentBranch)}</span>
-                        <span class="workspace-terminal__chip workspace-terminal__chip--status">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
+                    <div class="workspace-terminal__editor">
                         <span class="workspace-terminal__prompt workspace-terminal__prompt--input">git-trainer%</span>
                         <textarea
                             class="workspace-terminal__input"
                             name="answer"
                             rows="1"
+                            aria-label="Ввод Git-команды"
                             placeholder="Введите Git-команду"${submissionState.status === "pending" || bootstrapState.status === "pending" ? " disabled" : ""}
                         >${escapeHtml(submissionDraft.answer ?? "")}</textarea>
                         ${workspacePlayback.status === "running" || workspacePlayback.status === "booting"
@@ -789,7 +790,7 @@ function renderWorkspaceTerminal({
             : ""}
                         <button class="workspace-terminal__action workspace-terminal__action--submit" type="submit"${submitDisabled ? " disabled" : ""}>send</button>
                         <button class="workspace-terminal__action workspace-terminal__action--reset" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>clear</button>
-                    </label>
+                    </div>
                 </form>
             </div>
         </section>
@@ -797,59 +798,16 @@ function renderWorkspaceTerminal({
 }
 
 function buildWorkspaceTerminalTranscript({
-    submissionDraft,
-    bootstrapState,
-    submissionState,
-    workspacePlayback,
-    repositoryContext,
-    commandHistory,
-    statusCopy
+    commandHistory
 }) {
-    const transcriptItems = [
-        {
-            id: "system-welcome",
-            kind: "output",
-            tone: "system",
-            text: `Сессия подключена. Активная ветка: ${resolveCurrentBranchName(repositoryContext.branches)}.`
-        },
-        {
-            id: "system-status",
-            kind: "output",
-            tone: mapPlaybackStatusToTranscriptTone(workspacePlayback.status),
-            text: statusCopy
-        }
-    ];
-
-    if (!commandHistory.length && bootstrapState.status === "idle" && submissionState.status === "idle") {
-        transcriptItems.push({
-            id: "system-guidance",
-            kind: "output",
-            tone: "muted",
-            text: "Введите Git-команду в строке ниже. Команды и сервисные сообщения останутся в этом окне."
-        });
-    }
-
-    commandHistory.forEach((entry) => {
-        transcriptItems.push({
+    return commandHistory.map((entry) => ({
             id: entry.id,
             kind: "command",
             command: entry.command,
             status: entry.status,
             summary: entry.summary,
             terminalOutput: entry.terminalOutput
-        });
-    });
-
-    if (submissionDraft.validationError) {
-        transcriptItems.push({
-            id: "draft-validation",
-            kind: "output",
-            tone: "error",
-            text: submissionDraft.validationError
-        });
-    }
-
-    return transcriptItems;
+        }));
 }
 
 function renderWorkspaceTerminalStreams(terminalOutput) {
@@ -865,6 +823,10 @@ function renderWorkspaceTerminalStreams(terminalOutput) {
         : "";
 
     return `${stdoutBlock}${stderrBlock}`;
+}
+
+function renderWorkspaceTerminalSummary(entry) {
+    return "";
 }
 
 function buildCommitTreeLayout(graph) {
@@ -1164,7 +1126,7 @@ function normalizeCommandHistory(commandHistory) {
                     : "idle",
                 summary: typeof entry.summary === "string" && entry.summary.trim() !== ""
                     ? entry.summary
-                    : "Viewer сохранил команду в истории, но подробности пока недоступны.",
+                    : "",
                 terminalOutput: normalizeCommandTerminalOutput(entry.terminalOutput),
                 createdAt: entry.createdAt ?? null,
                 completedAt: entry.completedAt ?? null
@@ -1421,17 +1383,15 @@ function describeWorkspacePlaybackStatus(workspacePlayback, repositoryContext) {
         case "booting":
             return "Создаём рабочую копию сценария и подготавливаем Git-состояние для первой отправки.";
         case "ready":
-            return `Workspace подключён. Активная ветка: ${resolveCurrentBranchName(repositoryContext.branches)}. Можно отправлять следующую Git-команду.`;
+            return "";
         case "running":
             return `Команда ${workspacePlayback.command ? `"${workspacePlayback.command}"` : "пользователя"} выполняется на snapshot текущей сессии.`;
         case "updated":
-            return workspacePlayback.outcomeCorrectness === "correct"
-                ? "Команда принята, и viewer уже показывает обновлённый snapshot рабочей копии."
-                : "Команда обработана. Viewer показывает новое состояние workspace после попытки.";
+            return "";
         case "retryable-error":
             return "Снимок workspace сохранён, но команду не удалось довести до результата. Попробуйте повторную отправку.";
         case "terminal-error":
-            return "UI не получил корректный результат команды. Для продолжения может потребоваться перезапуск сессии.";
+            return "";
         default:
             return "После первой команды здесь появится живая история изменений workspace.";
     }

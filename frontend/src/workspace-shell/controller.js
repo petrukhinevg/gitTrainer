@@ -118,6 +118,7 @@ export function createCatalogWorkspaceController({
     let shellMounted = false;
     let pendingLessonScrollReset = false;
     let pendingNavigationSelectionSyncOnly = false;
+    let pendingDraftFieldSnapshot = null;
     let isTogglingAllNavigationScenarios = false;
     let renderedRouteKind = null;
     let navigationMarkerDragOperation = Promise.resolve();
@@ -197,6 +198,11 @@ export function createCatalogWorkspaceController({
     }
 
     function render() {
+        const activeDraftFieldSnapshot = captureDraftFieldSnapshot(document.activeElement);
+        if (activeDraftFieldSnapshot) {
+            pendingDraftFieldSnapshot = activeDraftFieldSnapshot;
+        }
+
         const selectedCatalogScenario = resolveSelectedCatalogScenario(state, state.catalog.items);
         const isExerciseRoute = state.route === "exercise";
         const isNotFoundRoute = state.route === "not-found";
@@ -261,6 +267,10 @@ export function createCatalogWorkspaceController({
             resetSubmissionDraft
         });
         bindSmoothScrollContainers();
+
+        if (pendingDraftFieldSnapshot && restoreDraftFieldSnapshot(appRoot, pendingDraftFieldSnapshot)) {
+            pendingDraftFieldSnapshot = null;
+        }
     }
 
     function ensureWorkspaceShellMounted() {
@@ -395,7 +405,10 @@ export function createCatalogWorkspaceController({
     }
 
     function patchSurface(surfaceName, nextMarkup, cacheKey = surfaceName) {
-        if (renderedSurfaceCache[cacheKey] === nextMarkup) {
+        const comparableMarkup = normalizeSurfaceMarkupForCache(surfaceName, nextMarkup);
+        const shouldAutoScrollCommandHistory = shouldAutoScrollWorkspaceCommandHistory(surfaceName, nextMarkup);
+
+        if (renderedSurfaceCache[cacheKey] === comparableMarkup) {
             return;
         }
 
@@ -410,7 +423,14 @@ export function createCatalogWorkspaceController({
             || tryPatchNavigationScenarioNodes(target, nextMarkup)
         )) {
             syncNavigationSurfaceActiveState(target, state);
-            renderedSurfaceCache[cacheKey] = nextMarkup;
+            renderedSurfaceCache[cacheKey] = comparableMarkup;
+            return;
+        }
+
+        if (surfaceName === "practice-viewer" && tryPatchPracticeViewerSurface(target, nextMarkup, {
+            shouldAutoScrollCommandHistory
+        })) {
+            renderedSurfaceCache[cacheKey] = comparableMarkup;
             return;
         }
 
@@ -441,6 +461,9 @@ export function createCatalogWorkspaceController({
             nextLaneBody.scrollLeft = preservedLaneScroll.scrollLeft;
         }
         restoreSurfaceScrollState(target, preservedScrollState);
+        if (shouldAutoScrollCommandHistory) {
+            scrollWorkspaceCommandHistoryToBottom(target);
+        }
         requestAnimationFrame(() => {
             const deferredLaneBody = target.querySelector(".lesson-lane__body");
             if (deferredLaneBody && preservedLaneScroll) {
@@ -449,8 +472,174 @@ export function createCatalogWorkspaceController({
             }
 
             restoreSurfaceScrollState(target, preservedScrollState);
+            if (shouldAutoScrollCommandHistory) {
+                scrollWorkspaceCommandHistoryToBottom(target);
+            }
         });
-        renderedSurfaceCache[cacheKey] = nextMarkup;
+        renderedSurfaceCache[cacheKey] = comparableMarkup;
+    }
+
+    function normalizeSurfaceMarkupForCache(surfaceName, markup) {
+        if (surfaceName !== "practice-viewer") {
+            return markup;
+        }
+
+        return markup.replace(
+            /(<textarea\b[^>]*name="answer"[^>]*>)[\s\S]*?(<\/textarea>)/,
+            "$1$2"
+        );
+    }
+
+    function shouldAutoScrollWorkspaceCommandHistory(surfaceName, markup) {
+        if (surfaceName !== "practice-viewer" || state.route !== "exercise") {
+            return false;
+        }
+
+        if (!String(markup ?? "").includes("data-workspace-command-history")) {
+            return false;
+        }
+
+        return state.session.commandHistory.length > 0 || state.submissionDraft.validationError !== null;
+    }
+
+    function scrollWorkspaceCommandHistoryToBottom(surfaceRoot) {
+        const historyPanel = surfaceRoot.querySelector(".workspace-terminal__history");
+        if (!(historyPanel instanceof HTMLElement)) {
+            return;
+        }
+
+        const nextScrollTop = Math.max(0, historyPanel.scrollHeight - historyPanel.clientHeight);
+        historyPanel.scrollTop = nextScrollTop;
+    }
+
+    function tryPatchPracticeViewerSurface(target, nextMarkup, { shouldAutoScrollCommandHistory }) {
+        const nextRoot = parseMarkupRoot(nextMarkup);
+        const currentViewerRoot = target.firstElementChild;
+        const nextViewerRoot = nextRoot?.firstElementChild;
+        if (!(currentViewerRoot instanceof HTMLElement) || !(nextViewerRoot instanceof HTMLElement)) {
+            return false;
+        }
+
+        const currentWorkspace = currentViewerRoot.querySelector("[data-repository-workspace-visual]");
+        const nextWorkspace = nextViewerRoot.querySelector("[data-repository-workspace-visual]");
+        const currentTerminal = currentViewerRoot.querySelector(".workspace-terminal");
+        const nextTerminal = nextViewerRoot.querySelector(".workspace-terminal");
+        if (
+            !(currentWorkspace instanceof HTMLElement)
+            || !(nextWorkspace instanceof HTMLElement)
+            || !(currentTerminal instanceof HTMLElement)
+            || !(nextTerminal instanceof HTMLElement)
+        ) {
+            return false;
+        }
+
+        patchPracticeViewerWorkspace(currentViewerRoot, nextViewerRoot);
+        patchPracticeViewerTerminal(currentViewerRoot, nextViewerRoot, { shouldAutoScrollCommandHistory });
+        return true;
+    }
+
+    function patchPracticeViewerWorkspace(currentViewerRoot, nextViewerRoot) {
+        const currentWorkspace = currentViewerRoot.querySelector("[data-repository-workspace-visual]");
+        const nextWorkspace = nextViewerRoot.querySelector("[data-repository-workspace-visual]");
+        if (!(currentWorkspace instanceof HTMLElement) || !(nextWorkspace instanceof HTMLElement)) {
+            return;
+        }
+
+        if (!currentWorkspace.isEqualNode(nextWorkspace)) {
+            currentWorkspace.replaceWith(nextWorkspace.cloneNode(true));
+        }
+    }
+
+    function patchPracticeViewerTerminal(currentViewerRoot, nextViewerRoot, { shouldAutoScrollCommandHistory }) {
+        const currentTerminal = currentViewerRoot.querySelector(".workspace-terminal");
+        const nextTerminal = nextViewerRoot.querySelector(".workspace-terminal");
+        if (!(currentTerminal instanceof HTMLElement) || !(nextTerminal instanceof HTMLElement)) {
+            return;
+        }
+
+        currentTerminal.className = nextTerminal.className;
+        syncElementAttributes(currentTerminal, nextTerminal, ["class"]);
+
+        const currentHeader = currentTerminal.querySelector("[data-workspace-terminal-header]");
+        const nextHeader = nextTerminal.querySelector("[data-workspace-terminal-header]");
+        if (currentHeader instanceof HTMLElement && nextHeader instanceof HTMLElement && !currentHeader.isEqualNode(nextHeader)) {
+            currentHeader.replaceWith(nextHeader.cloneNode(true));
+        }
+
+        const currentHistory = currentTerminal.querySelector(".workspace-terminal__history");
+        const nextHistory = nextTerminal.querySelector(".workspace-terminal__history");
+        if (currentHistory instanceof HTMLElement && nextHistory instanceof HTMLElement) {
+            patchWorkspaceTerminalHistory(currentHistory, nextHistory);
+        }
+
+        const currentForm = currentTerminal.querySelector("[data-submission-draft-form]");
+        const nextForm = nextTerminal.querySelector("[data-submission-draft-form]");
+        if (currentForm instanceof HTMLElement && nextForm instanceof HTMLElement && !currentForm.isEqualNode(nextForm)) {
+            currentForm.replaceWith(nextForm.cloneNode(true));
+        }
+
+        if (shouldAutoScrollCommandHistory) {
+            scrollWorkspaceCommandHistoryToBottom(currentViewerRoot);
+        }
+    }
+
+    function patchWorkspaceTerminalHistory(currentHistory, nextHistory) {
+        const currentByTranscriptId = new Map(
+            Array.from(currentHistory.children)
+                .filter((element) => element instanceof HTMLElement)
+                .map((element) => [element.getAttribute("data-workspace-transcript-id"), element])
+        );
+        const retainedNodes = new Set();
+        const nextChildren = Array.from(nextHistory.children).filter((element) => element instanceof HTMLElement);
+
+        nextChildren.forEach((nextChild, index) => {
+            const transcriptId = nextChild.getAttribute("data-workspace-transcript-id");
+            const currentChild = transcriptId ? currentByTranscriptId.get(transcriptId) : null;
+
+            let desiredNode;
+            if (currentChild instanceof HTMLElement) {
+                desiredNode = currentChild;
+                if (!currentChild.isEqualNode(nextChild)) {
+                    const replacementNode = nextChild.cloneNode(true);
+                    currentChild.replaceWith(replacementNode);
+                    desiredNode = replacementNode;
+                }
+            } else {
+                desiredNode = nextChild.cloneNode(true);
+            }
+
+            retainedNodes.add(desiredNode);
+            const referenceNode = currentHistory.children[index] ?? null;
+            if (referenceNode !== desiredNode) {
+                currentHistory.insertBefore(desiredNode, referenceNode);
+            }
+        });
+
+        Array.from(currentHistory.children)
+            .filter((child) => child instanceof HTMLElement && !retainedNodes.has(child))
+            .forEach((child) => child.remove());
+    }
+
+    function parseMarkupRoot(markup) {
+        const template = document.createElement("template");
+        template.innerHTML = markup;
+        return template.content;
+    }
+
+    function syncElementAttributes(targetElement, sourceElement, excludedAttributeNames = []) {
+        const excluded = new Set(excludedAttributeNames);
+        const targetAttributes = Array.from(targetElement.attributes).map((attribute) => attribute.name);
+        targetAttributes.forEach((attributeName) => {
+            if (!excluded.has(attributeName) && !sourceElement.hasAttribute(attributeName)) {
+                targetElement.removeAttribute(attributeName);
+            }
+        });
+
+        Array.from(sourceElement.attributes).forEach((attribute) => {
+            if (!excluded.has(attribute.name)) {
+                targetElement.setAttribute(attribute.name, attribute.value);
+            }
+        });
     }
 
     function shouldSyncNavigationSelectionOnly(surfaceRoot) {
@@ -561,9 +750,23 @@ export function createCatalogWorkspaceController({
             answer,
             preparedAt: new Date().toISOString()
         };
+        const draftField = event.currentTarget.querySelector('[name="answer"]');
+        if (
+            draftField instanceof HTMLInputElement
+            || draftField instanceof HTMLTextAreaElement
+        ) {
+            draftField.value = "";
+            draftField.setSelectionRange(0, 0, "none");
+        }
 
+        pendingDraftFieldSnapshot = {
+            name: "answer",
+            selectionStart: 0,
+            selectionEnd: 0,
+            selectionDirection: "none"
+        };
         state.submissionDraft.answerType = preparedSubmission.answerType;
-        state.submissionDraft.answer = String(formData.get("answer") ?? "");
+        state.submissionDraft.answer = "";
         state.submissionDraft.validationError = null;
         state.submissionDraft.preparedSubmission = preparedSubmission;
         render();
@@ -584,6 +787,12 @@ export function createCatalogWorkspaceController({
     function resetSubmissionDraft() {
         state.submissionDraft = createInitialSubmissionDraftState();
         resetSubmissionRequestState();
+        pendingDraftFieldSnapshot = {
+            name: "answer",
+            selectionStart: 0,
+            selectionEnd: 0,
+            selectionDirection: "none"
+        };
         render();
     }
 
@@ -828,7 +1037,7 @@ export function createCatalogWorkspaceController({
                 status: "request-failure",
                 attemptNumber: state.session.feedbackPanel?.contextSnapshot?.attemptNumber ?? 0,
                 transportDisposition: normalizedFailure.failureKind,
-                errorMessage: normalizedFailure.message,
+                errorMessage: "Подробности ошибки уже показаны в консоли выше.",
                 preserveHintReveals: true
             });
         }
@@ -1839,7 +2048,7 @@ function resolveCommandHistoryStatus(correctness) {
 function resolveCommandHistorySummary(command, correctness) {
     return correctness === "correct"
         ? `Команда ${command} принята. Viewer уже показывает новое состояние веток и дерева.`
-        : `Команда ${command} выполнена. Viewer показывает обновлённый snapshot workspace.`;
+        : "";
 }
 
 function createFeedbackPanelState({
