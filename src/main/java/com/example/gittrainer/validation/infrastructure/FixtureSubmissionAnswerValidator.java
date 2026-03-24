@@ -55,24 +55,28 @@ public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidat
         }
 
         return specSource.findSpec(scenarioSlug, answer.type())
-                .map(spec -> SubmissionValidationResult.evaluated(
-                        spec.specId(),
-                        spec.validatorType(),
-                        RUNNER_KIND,
-                        elapsedMillis(startedAt),
-                        ValidationOutcomeMapper.outcome(
-                                spec,
-                                new CliValidationRequest(
-                                        scenarioSlug,
-                                        priorAnswers,
-                                        answer,
-                                        spec,
-                                        sessionWorkspaceManager.resolveWorkspacePath(sessionId)
-                                                .map(java.nio.file.Path::toString)
-                                                .orElse(null)
-                                )
-                        )
-                ))
+                .map(spec -> {
+                    ValidationOutcomeMapper.ValidationOutcomeDetails details = ValidationOutcomeMapper.details(
+                            spec,
+                            new CliValidationRequest(
+                                    scenarioSlug,
+                                    priorAnswers,
+                                    answer,
+                                    spec,
+                                    sessionWorkspaceManager.resolveWorkspacePath(sessionId)
+                                            .map(java.nio.file.Path::toString)
+                                            .orElse(null)
+                            )
+                    );
+                    return SubmissionValidationResult.evaluated(
+                            spec.specId(),
+                            spec.validatorType(),
+                            RUNNER_KIND,
+                            elapsedMillis(startedAt),
+                            details.outcome(),
+                            details.terminalOutput()
+                    );
+                })
                 .orElseGet(() -> SubmissionValidationResult.evaluated(
                         null,
                         null,

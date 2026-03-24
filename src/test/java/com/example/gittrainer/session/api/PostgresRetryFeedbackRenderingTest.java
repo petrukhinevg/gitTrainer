@@ -9,6 +9,7 @@ import com.example.gittrainer.session.domain.StrongerHintEligibility;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
+import com.example.gittrainer.validation.domain.SubmissionTerminalOutput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,7 @@ class PostgresRetryFeedbackRenderingTest {
                 ),
                 new SubmittedAnswer("command_text", "git pull"),
                 outcome,
+                new SubmissionTerminalOutput("", "fatal: not possible"),
                 retryState,
                 retryGuidance
         ));

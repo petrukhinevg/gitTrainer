@@ -6,7 +6,8 @@ public record SubmissionValidationResult(
         String runnerKind,
         String runnerStatus,
         long durationMs,
-        SubmissionOutcome outcome
+        SubmissionOutcome outcome,
+        SubmissionTerminalOutput terminalOutput
 ) {
 
     public static SubmissionValidationResult evaluated(
@@ -22,7 +23,27 @@ public record SubmissionValidationResult(
                 runnerKind,
                 "evaluated",
                 durationMs,
-                outcome
+                outcome,
+                null
+        );
+    }
+
+    public static SubmissionValidationResult evaluated(
+            String validatorSpecId,
+            String validatorType,
+            String runnerKind,
+            long durationMs,
+            SubmissionOutcome outcome,
+            SubmissionTerminalOutput terminalOutput
+    ) {
+        return new SubmissionValidationResult(
+                validatorSpecId,
+                validatorType,
+                runnerKind,
+                "evaluated",
+                durationMs,
+                outcome,
+                terminalOutput
         );
     }
 }

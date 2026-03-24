@@ -71,7 +71,7 @@ public record ValidationRunRecord(
                 answer.value(),
                 exception.validatorSpecId(),
                 exception.validatorType(),
-                exception.runnerKind(),
+                normalizeRunnerKind(exception.runnerKind()),
                 "runner-failed",
                 "failed",
                 null,
@@ -80,5 +80,12 @@ public record ValidationRunRecord(
                 exception.durationMs(),
                 recordedAt
         );
+    }
+
+    private static String normalizeRunnerKind(String runnerKind) {
+        if (runnerKind == null || runnerKind.isBlank()) {
+            return "validation-runner";
+        }
+        return runnerKind;
     }
 }

@@ -20,20 +20,16 @@ public final class GitCommandProbeValidator {
         GitCommandProbeConfig config = GitCommandProbeConfig.from(request.spec().config());
         GitValidationCommandSequence.PreparedCommandSequence commandSequence =
                 GitValidationCommandSequence.prepare(request);
-        if (commandSequence.matchedRule() == null) {
-            return new CliValidationResponse(
-                    "evaluated",
-                    "incorrect",
-                    "unexpected-command",
-                    "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария.",
-                    List.of(new CliValidationObservation("normalized-answer", commandSequence.normalizedAnswer())),
-                    List.of(),
-                    null
-            );
-        }
 
         Path persistedWorkspace = workspacePath(request);
-        if (persistedWorkspace != null) {
+        if (commandSequence.matchedRule() == null && persistedWorkspace != null) {
+            return executeUnexpectedAgainstWorkspace(
+                    persistedWorkspace,
+                    commandSequence.normalizedAnswer(),
+                    GitCliSupport.tokenizeGitCommand(request.answer().value())
+            );
+        }
+        if (commandSequence.matchedRule() != null && persistedWorkspace != null) {
             return executeAgainstWorkspace(
                     persistedWorkspace,
                     commandSequence.normalizedAnswer(),
@@ -48,6 +44,14 @@ public final class GitCommandProbeValidator {
         try {
             workspace = Files.createTempDirectory("git-validator-workspace-");
             prepareWorkspace(workspace, config.workspaceTemplate());
+            if (commandSequence.matchedRule() == null) {
+                replayAllowedCommands(commandSequence.commandTokens(), workspace);
+                return executeUnexpectedAgainstWorkspace(
+                        workspace,
+                        commandSequence.normalizedAnswer(),
+                        GitCliSupport.tokenizeGitCommand(request.answer().value())
+                );
+            }
             GitCliSupport.CommandResult commandResult = null;
             for (List<String> tokens : commandSequence.commandTokens()) {
                 commandResult = GitCliSupport.runCommand(tokens, workspace);
@@ -120,6 +124,37 @@ public final class GitCommandProbeValidator {
 
     public static boolean supports(String validatorType) {
         return GIT_COMMAND_PROBE.equals(validatorType);
+    }
+
+    private static CliValidationResponse executeUnexpectedAgainstWorkspace(
+            Path workspace,
+            String normalizedAnswer,
+            List<String> tokens
+    ) {
+        try {
+            GitCliSupport.CommandResult commandResult = GitCliSupport.runCommand(tokens, workspace);
+            return unexpectedCommandResponse(normalizedAnswer, commandResult);
+        } catch (IOException exception) {
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-workspace-setup-failed",
+                    "Не удалось использовать session-backed workspace для command probe validator.",
+                    exception
+            );
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-command-interrupted",
+                    "Проверка git-команды была прервана.",
+                    exception
+            );
+        }
+    }
+
+    private static void replayAllowedCommands(List<List<String>> commandTokens, Path workspace)
+            throws IOException, InterruptedException {
+        for (List<String> tokens : commandTokens) {
+            GitCliSupport.runCommand(tokens, workspace);
+        }
     }
 
     private static CliValidationResponse executeAgainstWorkspace(
@@ -350,6 +385,25 @@ public final class GitCommandProbeValidator {
                 "incorrect",
                 code,
                 message,
+                List.of(
+                        new CliValidationObservation("normalized-answer", normalizedAnswer),
+                        new CliValidationObservation("stdout", commandResult.stdout().trim()),
+                        new CliValidationObservation("stderr", commandResult.stderr().trim())
+                ),
+                List.of(),
+                null
+        );
+    }
+
+    private static CliValidationResponse unexpectedCommandResponse(
+            String normalizedAnswer,
+            GitCliSupport.CommandResult commandResult
+    ) {
+        return new CliValidationResponse(
+                "evaluated",
+                "incorrect",
+                "unexpected-command",
+                "Отправленная команда не совпадает с ожидаемым безопасным следующим шагом для этого сценария.",
                 List.of(
                         new CliValidationObservation("normalized-answer", normalizedAnswer),
                         new CliValidationObservation("stdout", commandResult.stdout().trim()),

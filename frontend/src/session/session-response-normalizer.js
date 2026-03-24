@@ -24,7 +24,23 @@ export function normalizeSubmissionResponse(response) {
     const safeResponse = response ?? {};
     return {
         ...safeResponse,
+        terminalOutput: normalizeTerminalOutput(safeResponse.terminalOutput),
         retryFeedback: normalizeRetryFeedbackBoundary(safeResponse.retryFeedback)
+    };
+}
+
+export function normalizeTerminalOutput(terminalOutput) {
+    const safeOutput = terminalOutput ?? {};
+    const stdout = normalizeOptionalSessionValue(safeOutput.stdout);
+    const stderr = normalizeOptionalSessionValue(safeOutput.stderr);
+
+    if (!stdout && !stderr) {
+        return null;
+    }
+
+    return {
+        stdout: stdout ?? "",
+        stderr: stderr ?? ""
     };
 }
 

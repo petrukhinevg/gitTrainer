@@ -137,6 +137,7 @@ public class SubmitAnswerUseCase {
                 updatedSession,
                 submittedAnswer,
                 outcome,
+                validationResult.terminalOutput(),
                 retryState,
                 retryGuidance
         );

@@ -229,6 +229,83 @@ class GitValidationCliMainTest {
     }
 
     @Test
+    void writesStdoutForUnexpectedCommandInGitCommandProbe() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "history-cleanup-preview",
+                List.of(),
+                new SubmittedAnswer("command_text", "git status"),
+                new ScenarioValidationSpec(
+                        "fixture:history-cleanup-preview:command_text",
+                        "history-cleanup-preview",
+                        "command_text",
+                        "git_command_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "expectedWorkspaceState", Map.of(
+                                        "currentBranch", "feature/history-cleanup",
+                                        "workingTreeClean", false
+                                ),
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "currentBranch", "feature/history-cleanup",
+                                        "branches", List.of("feature/history-cleanup", "main"),
+                                        "committedFiles", List.of(
+                                                Map.of("path", "frontend/src/styles.css", "content", ".badge { padding: 4px; }\n"),
+                                                Map.of("path", "frontend/src/workspace-shell/view.js", "content", "export const badge = 'shell';\n")
+                                        ),
+                                        "modifiedFiles", List.of(
+                                                Map.of("path", "frontend/src/styles.css", "content", ".badge { padding: 6px; }\n"),
+                                                Map.of("path", "frontend/src/workspace-shell/view.js", "content", "export const badge = 'shell-preview';\n")
+                                        ),
+                                        "untrackedFiles", List.of()
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git log --oneline --decorate",
+                                        "git log --oneline --decorate",
+                                        "partial",
+                                        "history-preview-opened",
+                                        "ok"
+                                ),
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git log --oneline --graph --decorate",
+                                        "git log --oneline --graph --decorate",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-unexpected-command-probe-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("incorrect");
+        assertThat(response.code()).isEqualTo("unexpected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("stdout", "stderr");
+        assertThat(response.observations()).extracting(CliValidationObservation::message)
+                .anyMatch(message -> message.contains("On branch feature/history-cleanup"));
+    }
+
+    @Test
     void writesJsonOutcomeForRealGitRepoStateProbe() throws Exception {
         CliValidationRequest request = new CliValidationRequest(
                 "remote-sync-preview",
@@ -315,6 +392,81 @@ class GitValidationCliMainTest {
         assertThat(response.code()).isEqualTo("expected-command");
         assertThat(response.observations()).extracting(CliValidationObservation::code)
                 .contains("current-branch", "local-head-commit", "fetch-head-commit", "remote-tracking-ref");
+    }
+
+    @Test
+    void writesStdoutForUnexpectedCommandInGitRepoStateProbe() throws Exception {
+        CliValidationRequest request = new CliValidationRequest(
+                "remote-sync-preview",
+                List.of(),
+                new SubmittedAnswer("command_text", "git status -sb"),
+                new ScenarioValidationSpec(
+                        "fixture:remote-sync-preview:command_text",
+                        "remote-sync-preview",
+                        "command_text",
+                        "git_repo_state_probe",
+                        5000,
+                        Map.of(
+                                "expectedExitCode", 0,
+                                "workspaceTemplate", Map.of(
+                                        "initialBranch", "main",
+                                        "remoteName", "origin",
+                                        "localAheadCommitMessage", "local notes WIP",
+                                        "remoteAheadCommitMessage", "remote hotfix ready",
+                                        "baseFiles", List.of(
+                                                Map.of("path", "README.md", "content", "# Git Trainer\n"),
+                                                Map.of("path", "docs/sync-playbook.md", "content", "- inspect divergence\n")
+                                        ),
+                                        "localAheadFiles", List.of(
+                                                Map.of("path", "docs/local-notes.md", "content", "- pending local integration\n")
+                                        ),
+                                        "remoteAheadFiles", List.of(
+                                                Map.of("path", "release/remote-hotfix.md", "content", "- hotfix available upstream\n")
+                                        )
+                                ),
+                                "expectedState", Map.of(
+                                        "currentBranch", "main",
+                                        "localHeadCommitMessage", "local notes WIP",
+                                        "fetchHeadCommitMessage", "remote hotfix ready",
+                                        "remoteTrackingRefs", List.of(
+                                                Map.of("ref", "refs/remotes/origin/main", "commitMessage", "remote hotfix ready")
+                                        )
+                                )
+                        ),
+                        List.of(
+                                new ScenarioValidationRule(
+                                        "exact_normalized_command",
+                                        "git fetch",
+                                        "git fetch",
+                                        "correct",
+                                        "expected-command",
+                                        "ok"
+                                )
+                        )
+                )
+        );
+        Path requestFile = Files.createTempFile("git-cli-unexpected-state-probe-test-", ".json");
+        Files.writeString(requestFile, OBJECT_MAPPER.writeValueAsString(request));
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(stdout));
+
+            GitValidationCliMain.main(new String[]{"--request-file", requestFile.toString()});
+        } finally {
+            System.setOut(originalOut);
+            Files.deleteIfExists(requestFile);
+        }
+
+        CliValidationResponse response = OBJECT_MAPPER.readValue(stdout.toString(), CliValidationResponse.class);
+        assertThat(response.status()).isEqualTo("evaluated");
+        assertThat(response.correctness()).isEqualTo("incorrect");
+        assertThat(response.code()).isEqualTo("unexpected-command");
+        assertThat(response.observations()).extracting(CliValidationObservation::code)
+                .contains("stdout", "stderr");
+        assertThat(response.observations()).extracting(CliValidationObservation::message)
+                .anyMatch(message -> message.contains("## main"));
     }
 
     @Test

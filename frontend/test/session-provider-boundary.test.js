@@ -80,6 +80,10 @@ test("normalizeStartSessionResponse stabilizes sparse retry-feedback boundary", 
 test("normalizeSubmissionResponse preserves stable retry-feedback defaults", () => {
     const response = normalizeSubmissionResponse({
         submissionId: "submission-1",
+        terminalOutput: {
+            stdout: "## main\n M README.md",
+            stderr: ""
+        },
         retryFeedback: {
             status: "guided",
             retryState: {
@@ -116,6 +120,10 @@ test("normalizeSubmissionResponse preserves stable retry-feedback defaults", () 
             reveals: []
         }
     });
+    assert.deepEqual(response.terminalOutput, {
+        stdout: "## main\n M README.md",
+        stderr: ""
+    });
 });
 
 test("local fixture provider keeps retry-feedback shape stable across attempts", async () => {
@@ -139,16 +147,19 @@ test("local fixture provider keeps retry-feedback shape stable across attempts",
     assert.equal(firstAttempt.retryFeedback.retryState.status, "retry-available");
     assert.equal(firstAttempt.retryFeedback.retryState.attemptNumber, 1);
     assert.equal(firstAttempt.retryFeedback.hint.reveals.length, 1);
+    assert.match(firstAttempt.terminalOutput.stdout, /fixture command executed|## /i);
 
     const secondAttempt = await provider.submitAnswer(session.sessionId, {
         answerType: "command_text",
-        answer: "git switch main"
+        answer: "git status"
     });
     assert.equal(secondAttempt.retryFeedback.status, "guided");
     assert.equal(secondAttempt.retryFeedback.retryState.status, "retry-available");
     assert.equal(secondAttempt.retryFeedback.retryState.attemptNumber, 2);
     assert.equal(secondAttempt.retryFeedback.hint.level, "strong");
     assert.equal(secondAttempt.retryFeedback.hint.reveals.length, 2);
+    assert.match(secondAttempt.terminalOutput.stdout, /^## /);
+    assert.match(secondAttempt.terminalOutput.stdout, /(src\/ui\/header\.css|docs\/release-checklist\.md)/);
 });
 
 test("backend provider normalizes sparse success payload through shared boundary seam", async () => {

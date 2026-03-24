@@ -127,6 +127,9 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
             session.submissionCount += 1;
             session.lastSubmissionId = submissionId;
             const outcome = evaluateFixtureSubmission(session.scenarioSlug, answerType, answer);
+            const repositoryContext = structuredClone(
+                FIXTURE_SCENARIO_DETAILS[session.scenarioSlug]?.workspace?.repositoryContext ?? null
+            );
 
             return normalizeSubmissionResponse({
                 submissionId,
@@ -139,6 +142,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     value: answer
                 },
                 outcome,
+                terminalOutput: buildFixtureTerminalOutput(session.scenarioSlug, answer, repositoryContext),
                 retryFeedback: createPlaceholderRetryFeedback({
                     scenarioSlug: session.scenarioSlug,
                     attemptNumber: session.submissionCount,
@@ -146,9 +150,7 @@ export function createLocalFixtureSessionProvider({ now = () => new Date() } = {
                     answer
                 }),
                 workspace: {
-                    repositoryContext: structuredClone(
-                        FIXTURE_SCENARIO_DETAILS[session.scenarioSlug]?.workspace?.repositoryContext ?? null
-                    )
+                    repositoryContext
                 }
             });
         }
@@ -260,5 +262,105 @@ function isPartialFixtureMatch(scenarioSlug, normalizedAnswer) {
                 || normalizedAnswer.startsWith("git show-ref");
         default:
             return false;
+    }
+}
+
+function buildFixtureTerminalOutput(scenarioSlug, answer, repositoryContext) {
+    const normalizedAnswer = normalizeCommand(answer);
+    if (!normalizedAnswer) {
+        return null;
+    }
+
+    if (normalizedAnswer.startsWith("git status")) {
+        return {
+            stdout: formatFixtureStatusOutput(repositoryContext),
+            stderr: ""
+        };
+    }
+
+    if (normalizedAnswer.startsWith("git log")) {
+        return {
+            stdout: formatFixtureLogOutput(repositoryContext),
+            stderr: ""
+        };
+    }
+
+    if (normalizedAnswer.startsWith("git stash push")) {
+        const branchName = resolveFixtureCurrentBranch(repositoryContext);
+        return {
+            stdout: `Saved working directory and index state WIP on ${branchName}: fixture snapshot`,
+            stderr: ""
+        };
+    }
+
+    if (normalizedAnswer.startsWith("git fetch")) {
+        return {
+            stdout: "From origin\n   fixture/main -> origin/main",
+            stderr: ""
+        };
+    }
+
+    if (normalizedAnswer.startsWith("git tag")) {
+        return {
+            stdout: "v0.9.0\nv1.0.0",
+            stderr: ""
+        };
+    }
+
+    if (normalizedAnswer.startsWith("git diff")) {
+        return {
+            stdout: "diff --git a/frontend/src/styles.css b/frontend/src/styles.css\n+ fixture diff preview",
+            stderr: ""
+        };
+    }
+
+    return {
+        stdout: `fixture command executed: ${answer}`,
+        stderr: ""
+    };
+}
+
+function formatFixtureStatusOutput(repositoryContext) {
+    const currentBranch = resolveFixtureCurrentBranch(repositoryContext);
+    const files = Array.isArray(repositoryContext?.files) ? repositoryContext.files : [];
+    const statusLines = files
+        .map((file) => `${mapFixtureFileStatus(file?.status)} ${String(file?.path ?? "unknown")}`.trimEnd())
+        .filter(Boolean);
+
+    return [`## ${currentBranch}`, ...statusLines].join("\n");
+}
+
+function formatFixtureLogOutput(repositoryContext) {
+    const commits = Array.isArray(repositoryContext?.commits) ? repositoryContext.commits : [];
+    if (!commits.length) {
+        return "fatal: your current branch does not have any commits yet";
+    }
+
+    return commits
+        .map((commit) => `${String(commit?.id ?? "unknown")} ${String(commit?.summary ?? "").trim()}`.trimEnd())
+        .join("\n");
+}
+
+function resolveFixtureCurrentBranch(repositoryContext) {
+    const branches = Array.isArray(repositoryContext?.branches) ? repositoryContext.branches : [];
+    return branches.find((branch) => branch?.current)?.name ?? "main";
+}
+
+function mapFixtureFileStatus(status) {
+    switch (normalizeOptionalSessionValue(status)?.toLowerCase()) {
+        case "modified":
+            return " M";
+        case "untracked":
+            return "??";
+        case "staged":
+            return "A ";
+        case "deleted":
+            return " D";
+        case "renamed":
+            return "R ";
+        case "conflicted":
+            return "UU";
+        default:
+            return "??";
     }
 }

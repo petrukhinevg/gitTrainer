@@ -774,17 +774,17 @@ function renderWorkspaceTerminal({
 }) {
     const statusLabel = formatWorkspacePlaybackStatus(workspacePlayback.status);
     const statusCopy = describeWorkspacePlaybackStatus(workspacePlayback, repositoryContext);
-    const historyItems = commandHistory.length
-        ? commandHistory
-        : [
-            {
-                id: "placeholder",
-                command: resolveWorkspaceDefaultCommand(workspacePlayback.status),
-                status: workspacePlayback.status === "idle" ? "idle" : "system",
-                summary: statusCopy,
-                createdAt: workspacePlayback.updatedAt
-            }
-        ];
+    const transcriptItems = buildWorkspaceTerminalTranscript({
+        submissionDraft,
+        bootstrapState,
+        submissionState,
+        workspacePlayback,
+        repositoryContext,
+        commandHistory,
+        statusCopy
+    });
+    const currentBranch = resolveCurrentBranchName(repositoryContext.branches);
+    const commandCount = commandHistory.length;
 
     return `
         <section class="workspace-terminal" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
@@ -792,12 +792,12 @@ function renderWorkspaceTerminal({
                 <span class="workspace-console__traffic workspace-console__traffic--close" aria-hidden="true"></span>
                 <span class="workspace-console__traffic workspace-console__traffic--min" aria-hidden="true"></span>
                 <span class="workspace-console__traffic workspace-console__traffic--max" aria-hidden="true"></span>
-                <span class="workspace-terminal__tab">workspace.git</span>
+                <span class="workspace-terminal__tab">git terminal</span>
                 <span class="workspace-terminal__badge">${escapeHtml(statusLabel)}</span>
             </div>
-            <div class="workspace-terminal__body">
-                <div class="workspace-terminal__history" data-workspace-command-history>
-                    ${historyItems.map((entry) => `
+            <div class="workspace-terminal__body" data-workspace-command-history>
+                <div class="workspace-terminal__history">
+                    ${transcriptItems.map((entry) => entry.kind === "command" ? `
                         <article
                             class="workspace-terminal__entry workspace-terminal__entry--${escapeHtml(entry.status)}"
                             data-workspace-command-status="${escapeHtml(entry.status)}"
@@ -806,39 +806,117 @@ function renderWorkspaceTerminal({
                             <div class="workspace-terminal__line">
                                 <span class="workspace-terminal__prompt">git-trainer%</span>
                                 <code class="workspace-terminal__command">${escapeHtml(entry.command)}</code>
-                                <span class="workspace-terminal__entry-badge">${escapeHtml(formatCommandHistoryStatus(entry.status))}</span>
                             </div>
-                            <p class="panel-copy workspace-terminal__summary">${escapeHtml(entry.summary)}</p>
+                            ${renderWorkspaceTerminalStreams(entry.terminalOutput)}
+                            <p class="panel-copy workspace-terminal__summary workspace-terminal__summary--${escapeHtml(mapCommandHistoryTone(entry.status))}">
+                                ${escapeHtml(entry.summary)}
+                            </p>
                         </article>
+                    ` : `
+                        <p
+                            class="panel-copy workspace-terminal__output workspace-terminal__output--${escapeHtml(entry.tone)}"
+                            data-workspace-terminal-output="${escapeHtml(entry.tone)}"
+                        >${escapeHtml(entry.text)}</p>
                     `).join("")}
                 </div>
                 <form class="workspace-terminal__form practice-composer__form" data-submission-draft-form>
-                    <p class="panel-copy">Введите одну Git-команду. После отправки она останется в истории и viewer обновит дерево коммитов.</p>
-                    <label class="workspace-terminal__editor practice-editor">
+                    <label class="workspace-terminal__editor" aria-label="Ввод Git-команды">
+                        <span class="workspace-terminal__chip">git-trainer</span>
+                        <span class="workspace-terminal__chip workspace-terminal__chip--path">workspace:/repo</span>
+                        <span class="workspace-terminal__chip workspace-terminal__chip--branch">${escapeHtml(currentBranch)}</span>
+                        <span class="workspace-terminal__chip workspace-terminal__chip--status">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                         <span class="workspace-terminal__prompt workspace-terminal__prompt--input">git-trainer%</span>
                         <textarea
                             class="workspace-terminal__input"
                             name="answer"
                             rows="1"
-                            placeholder="Например: git status"${submissionState.status === "pending" || bootstrapState.status === "pending" ? " disabled" : ""}
+                            placeholder="Введите Git-команду"${submissionState.status === "pending" || bootstrapState.status === "pending" ? " disabled" : ""}
                         >${escapeHtml(submissionDraft.answer ?? "")}</textarea>
                         ${workspacePlayback.status === "running" || workspacePlayback.status === "booting"
             ? '<span class="workspace-terminal__cursor" aria-hidden="true"></span>'
             : ""}
+                        <button class="workspace-terminal__action workspace-terminal__action--submit" type="submit"${submitDisabled ? " disabled" : ""}>send</button>
+                        <button class="workspace-terminal__action workspace-terminal__action--reset" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>clear</button>
                     </label>
-                    <div class="practice-composer__actions workspace-terminal__actions">
-                        <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
-                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
+                    <div class="workspace-terminal__footer-meta">
+                        <span class="workspace-terminal__footer-copy">Команд в истории: ${escapeHtml(String(commandCount))}</span>
+                        <span class="workspace-terminal__footer-copy">${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</span>
                     </div>
-                    ${submissionDraft.validationError ? `
-                        <div class="practice-inline-note workspace-terminal__note">
-                            <p class="panel-copy">${escapeHtml(submissionDraft.validationError)}</p>
-                        </div>
-                    ` : ""}
                 </form>
             </div>
         </section>
     `;
+}
+
+function buildWorkspaceTerminalTranscript({
+    submissionDraft,
+    bootstrapState,
+    submissionState,
+    workspacePlayback,
+    repositoryContext,
+    commandHistory,
+    statusCopy
+}) {
+    const transcriptItems = [
+        {
+            id: "system-welcome",
+            kind: "output",
+            tone: "system",
+            text: `Сессия подключена. Активная ветка: ${resolveCurrentBranchName(repositoryContext.branches)}.`
+        },
+        {
+            id: "system-status",
+            kind: "output",
+            tone: mapPlaybackStatusToTranscriptTone(workspacePlayback.status),
+            text: statusCopy
+        }
+    ];
+
+    if (!commandHistory.length && bootstrapState.status === "idle" && submissionState.status === "idle") {
+        transcriptItems.push({
+            id: "system-guidance",
+            kind: "output",
+            tone: "muted",
+            text: "Введите Git-команду в строке ниже. Команды и сервисные сообщения останутся в этом окне."
+        });
+    }
+
+    commandHistory.forEach((entry) => {
+        transcriptItems.push({
+            id: entry.id,
+            kind: "command",
+            command: entry.command,
+            status: entry.status,
+            summary: entry.summary,
+            terminalOutput: entry.terminalOutput
+        });
+    });
+
+    if (submissionDraft.validationError) {
+        transcriptItems.push({
+            id: "draft-validation",
+            kind: "output",
+            tone: "error",
+            text: submissionDraft.validationError
+        });
+    }
+
+    return transcriptItems;
+}
+
+function renderWorkspaceTerminalStreams(terminalOutput) {
+    if (!terminalOutput) {
+        return "";
+    }
+
+    const stdoutBlock = terminalOutput.stdout
+        ? `<pre class="workspace-terminal__stream workspace-terminal__stream--stdout">${escapeHtml(terminalOutput.stdout)}</pre>`
+        : "";
+    const stderrBlock = terminalOutput.stderr
+        ? `<pre class="workspace-terminal__stream workspace-terminal__stream--stderr">${escapeHtml(terminalOutput.stderr)}</pre>`
+        : "";
+
+    return `${stdoutBlock}${stderrBlock}`;
 }
 
 function buildCommitTreeLayout(graph) {
@@ -914,6 +992,50 @@ function renderCommitLaneCell(row, laneIndex) {
     `;
 }
 
+function formatShortCommitId(commitId) {
+    if (typeof commitId !== "string" || commitId.trim() === "") {
+        return "unknown";
+    }
+
+    return commitId.slice(0, 7);
+}
+
+function sortCommitRefs(refs) {
+    const refTypePriority = {
+        head: 0,
+        branch: 1,
+        remote: 2,
+        tag: 3,
+        stash: 4
+    };
+
+    return [...refs].sort((left, right) => {
+        if (left.current !== right.current) {
+            return left.current ? -1 : 1;
+        }
+
+        const leftPriority = refTypePriority[left.type] ?? 9;
+        const rightPriority = refTypePriority[right.type] ?? 9;
+        if (leftPriority !== rightPriority) {
+            return leftPriority - rightPriority;
+        }
+
+        return left.name.localeCompare(right.name);
+    });
+}
+
+function formatCommitTreeMeta(node, index) {
+    const headLabel = index === 0 ? "HEAD" : `HEAD~${index}`;
+    if (!Array.isArray(node.parentIds) || node.parentIds.length === 0) {
+        return `${headLabel} ROOT`;
+    }
+
+    const parentLabel = node.parentIds
+        .map((parentId) => formatShortCommitId(parentId).toUpperCase())
+        .join(", ");
+    return `${headLabel} PARENTS: ${parentLabel}`;
+}
+
 function isLaneWithinSegment(laneIndex, fromLane, toLane) {
     if (fromLane === toLane) {
         return false;
@@ -972,22 +1094,22 @@ function renderRepositoryCommitTree(graph, workspacePlayback) {
                     </div>
                     <div class="workspace-commit-tree__content">
                         <div class="workspace-commit-tree__header">
-                            <strong>${escapeHtml(row.node.id ?? "unknown")}</strong>
+                            <strong
+                                class="workspace-commit-tree__hash"
+                                title="${escapeHtml(row.node.id ?? "unknown")}"
+                            >${escapeHtml(formatShortCommitId(row.node.id ?? "unknown"))}</strong>
                             <div class="workspace-commit-tree__refs">
-                                ${row.node.refs.map((ref) => `
+                                ${sortCommitRefs(row.node.refs).map((ref) => `
                                     <span class="workspace-commit-tree__ref workspace-commit-tree__ref--${escapeHtml(ref.type)} ${ref.current ? "workspace-commit-tree__ref--current" : ""}">
                                         ${escapeHtml(ref.name)}
                                     </span>
                                 `).join("")}
                             </div>
                         </div>
-                        <p class="panel-copy">${escapeHtml(row.node.summary ?? "Описание коммита не указано.")}</p>
-                        <div class="workspace-commit-tree__meta">
-                            <span class="repository-status-pill">${escapeHtml(index === 0 ? "HEAD" : `HEAD~${index}`)}</span>
-                            ${row.node.parentIds.length
-            ? `<span class="repository-status-pill">parents: ${escapeHtml(row.node.parentIds.join(", "))}</span>`
-            : '<span class="repository-status-pill">root</span>'}
-                        </div>
+                        <p class="workspace-commit-tree__summary-row">
+                            <span class="workspace-commit-tree__summary">${escapeHtml(row.node.summary ?? "Описание коммита не указано.")}</span>
+                        </p>
+                        <p class="workspace-commit-tree__meta">${escapeHtml(formatCommitTreeMeta(row.node, index))}</p>
                     </div>
                 </article>
             `).join("")}
@@ -1232,10 +1354,23 @@ function normalizeCommandHistory(commandHistory) {
                 summary: typeof entry.summary === "string" && entry.summary.trim() !== ""
                     ? entry.summary
                     : "Viewer сохранил команду в истории, но подробности пока недоступны.",
+                terminalOutput: normalizeCommandTerminalOutput(entry.terminalOutput),
                 createdAt: entry.createdAt ?? null,
                 completedAt: entry.completedAt ?? null
             }))
         : [];
+}
+
+function normalizeCommandTerminalOutput(terminalOutput) {
+    const safeOutput = terminalOutput ?? {};
+    const stdout = typeof safeOutput.stdout === "string" ? safeOutput.stdout : "";
+    const stderr = typeof safeOutput.stderr === "string" ? safeOutput.stderr : "";
+
+    if (!stdout.trim() && !stderr.trim()) {
+        return null;
+    }
+
+    return { stdout, stderr };
 }
 
 function normalizeRepositoryContext(repositoryContext) {
@@ -1415,6 +1550,39 @@ function formatCommandHistoryStatus(status) {
             return "system";
         default:
             return "idle";
+    }
+}
+
+function mapCommandHistoryTone(status) {
+    switch (status) {
+        case "correct":
+            return "correct";
+        case "failed":
+            return "error";
+        case "running":
+            return "pending";
+        case "system":
+            return "system";
+        case "applied":
+            return "accent";
+        default:
+            return "muted";
+    }
+}
+
+function mapPlaybackStatusToTranscriptTone(status) {
+    switch (status) {
+        case "booting":
+        case "running":
+            return "pending";
+        case "updated":
+        case "ready":
+            return "system";
+        case "retryable-error":
+        case "terminal-error":
+            return "error";
+        default:
+            return "muted";
     }
 }
 

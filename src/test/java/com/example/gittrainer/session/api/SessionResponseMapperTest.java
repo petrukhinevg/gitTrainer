@@ -12,6 +12,7 @@ import com.example.gittrainer.session.domain.TrainingSession;
 import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
 import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
+import com.example.gittrainer.validation.domain.SubmissionTerminalOutput;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -69,6 +70,7 @@ class SessionResponseMapperTest {
                 ),
                 new SubmittedAnswer("command_text", "git branch"),
                 outcome,
+                new SubmissionTerminalOutput("## main\n M README.md", ""),
                 retryState,
                 retryGuidance
         ));
@@ -89,5 +91,6 @@ class SessionResponseMapperTest {
         assertThat(response.retryFeedback().hint().reveals())
                 .extracting(RetryHintRevealResponse::id)
                 .containsExactly("nudge", "strong");
+        assertThat(response.terminalOutput()).isEqualTo(new SessionTerminalOutputResponse("## main\n M README.md", ""));
     }
 }

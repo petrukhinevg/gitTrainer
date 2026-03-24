@@ -761,6 +761,7 @@ export function createCatalogWorkspaceController({
                 {
                     status: resolveCommandHistoryStatus(response?.outcome?.correctness),
                     summary: resolveCommandHistorySummary(preparedSubmission.answer, response?.outcome?.correctness),
+                    terminalOutput: response?.terminalOutput ?? null,
                     completedAt: response?.submittedAt ?? new Date().toISOString()
                 }
             );
@@ -810,6 +811,10 @@ export function createCatalogWorkspaceController({
                 {
                     status: "failed",
                     summary: normalizedFailure.message,
+                    terminalOutput: {
+                        stdout: "",
+                        stderr: normalizedFailure.message
+                    },
                     completedAt: new Date().toISOString()
                 }
             );
@@ -1799,6 +1804,7 @@ function createCommandHistoryEntry(entryId, preparedSubmission) {
         command: preparedSubmission.answer,
         status: "running",
         summary: `Команда отправлена: ${preparedSubmission.answer}. Ждём новый snapshot workspace.`,
+        terminalOutput: null,
         createdAt: preparedSubmission.preparedAt,
         completedAt: null
     };

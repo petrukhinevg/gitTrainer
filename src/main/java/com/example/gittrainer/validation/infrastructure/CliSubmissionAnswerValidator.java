@@ -7,10 +7,12 @@ import com.example.gittrainer.validation.application.ScenarioValidationSpecSourc
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
 import com.example.gittrainer.validation.application.ValidationRunnerExecutionException;
 import com.example.gittrainer.validation.cli.CliValidationRequest;
+import com.example.gittrainer.validation.cli.CliValidationObservation;
 import com.example.gittrainer.validation.cli.CliValidationResponse;
 import com.example.gittrainer.validation.cli.GitValidationCliMain;
 import com.example.gittrainer.validation.domain.SubmissionValidationResult;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
+import com.example.gittrainer.validation.domain.SubmissionTerminalOutput;
 import com.example.gittrainer.session.application.SessionWorkspaceManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -163,7 +165,8 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
                             response.correctness(),
                             response.code(),
                             response.message()
-                    )
+                    ),
+                    toTerminalOutput(response.observations())
             );
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
@@ -187,6 +190,29 @@ public class CliSubmissionAnswerValidator implements SubmissionAnswerValidator {
             deleteIfExists(stdoutFile);
             deleteIfExists(stderrFile);
         }
+    }
+
+    private SubmissionTerminalOutput toTerminalOutput(List<CliValidationObservation> observations) {
+        if (observations == null || observations.isEmpty()) {
+            return null;
+        }
+
+        String stdout = null;
+        String stderr = null;
+        for (CliValidationObservation observation : observations) {
+            if (observation == null || observation.code() == null) {
+                continue;
+            }
+            if ("stdout".equals(observation.code())) {
+                stdout = observation.message();
+            }
+            if ("stderr".equals(observation.code())) {
+                stderr = observation.message();
+            }
+        }
+
+        SubmissionTerminalOutput terminalOutput = new SubmissionTerminalOutput(stdout, stderr);
+        return terminalOutput.hasContent() ? terminalOutput : null;
     }
 
     private List<String> command(Path requestFile, ScenarioValidationSpec spec, long startedAt) {

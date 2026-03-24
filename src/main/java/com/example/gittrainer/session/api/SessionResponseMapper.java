@@ -56,6 +56,7 @@ public class SessionResponseMapper {
                 toLifecycleResponse(result.session()),
                 new SubmittedAnswerResponse(result.answer().type(), result.answer().value()),
                 toOutcomeResponse(result.outcome()),
+                toTerminalOutputResponse(result.terminalOutput()),
                 sessionRetryFeedbackFactory.toResponse(
                         result.retryState(),
                         result.retryGuidance(),
@@ -81,6 +82,18 @@ public class SessionResponseMapper {
                 outcome.correctness(),
                 outcome.code(),
                 outcome.message()
+        );
+    }
+
+    private SessionTerminalOutputResponse toTerminalOutputResponse(
+            com.example.gittrainer.validation.domain.SubmissionTerminalOutput terminalOutput
+    ) {
+        if (terminalOutput == null || !terminalOutput.hasContent()) {
+            return null;
+        }
+        return new SessionTerminalOutputResponse(
+                terminalOutput.stdout(),
+                terminalOutput.stderr()
         );
     }
 

@@ -69,8 +69,8 @@ final class GitCliSupport {
         String normalized = rawCommand == null ? "" : rawCommand.trim();
         if (normalized.isBlank()) {
             throw new ValidationRunnerExecutionException(
-                    "validation-runner-invalid-command",
-                    "CLI validator получил пустую git-команду."
+                    "validation-runner-empty-command",
+                    "Введите одну Git-команду, например `git status`."
             );
         }
         boolean containsShellControl = normalized.chars().anyMatch(character ->
@@ -85,23 +85,23 @@ final class GitCliSupport {
         );
         if (containsShellControl) {
             throw new ValidationRunnerExecutionException(
-                    "validation-runner-invalid-command",
-                    "CLI validator принимает только прямые git-команды без shell-операторов."
+                    "validation-runner-shell-operators-not-supported",
+                    "Введите одну Git-команду без `;`, `&&`, пайпов и других shell-операторов."
             );
         }
 
         List<String> tokens = new ArrayList<>(List.of(normalized.split("\\s+")));
         if (tokens.isEmpty() || !"git".equals(tokens.getFirst().toLowerCase(Locale.ROOT))) {
             throw new ValidationRunnerExecutionException(
-                    "validation-runner-invalid-command",
-                    "CLI validator принимает только команды, начинающиеся с `git`."
+                    "validation-runner-command-must-start-with-git",
+                    "Команда должна начинаться с `git`, например `git status`."
             );
         }
         tokens.forEach(token -> {
             if (token.contains("\"") || token.contains("'") || token.contains("$(")) {
                 throw new ValidationRunnerExecutionException(
-                        "validation-runner-invalid-command",
-                        "CLI validator пока не поддерживает shell-quoted аргументы."
+                        "validation-runner-quoted-args-not-supported",
+                        "Пока поддерживается только простая Git-команда без shell-quoted аргументов."
                 );
             }
         });

@@ -84,6 +84,17 @@ final class ApiProblemDetailFactory {
     }
 
     static ProblemDetail validationRunnerUnavailable(ValidationRunnerExecutionException exception) {
+        if (isInvalidUserCommand(exception.errorCode())) {
+            return createProblem(
+                    HttpStatus.BAD_REQUEST,
+                    "Некорректная Git-команда",
+                    userFacingValidationRunnerMessage(exception),
+                    exception.errorCode(),
+                    "terminal",
+                    false
+            );
+        }
+
         return createProblem(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "Проверка сценария временно недоступна",
@@ -92,6 +103,27 @@ final class ApiProblemDetailFactory {
                 "retryable",
                 true
         );
+    }
+
+    private static boolean isInvalidUserCommand(String errorCode) {
+        return "validation-runner-empty-command".equals(errorCode)
+                || "validation-runner-shell-operators-not-supported".equals(errorCode)
+                || "validation-runner-command-must-start-with-git".equals(errorCode)
+                || "validation-runner-quoted-args-not-supported".equals(errorCode);
+    }
+
+    private static String userFacingValidationRunnerMessage(ValidationRunnerExecutionException exception) {
+        return switch (String.valueOf(exception.errorCode())) {
+            case "validation-runner-empty-command" ->
+                    "Введите одну Git-команду. Например: `git status`.";
+            case "validation-runner-shell-operators-not-supported" ->
+                    "Тренажёр принимает одну Git-команду за раз, без `;`, `&&`, пайпов и других shell-операторов.";
+            case "validation-runner-command-must-start-with-git" ->
+                    "Здесь нужна именно Git-команда, начинающаяся с `git`.";
+            case "validation-runner-quoted-args-not-supported" ->
+                    "Используйте простую Git-команду без shell-кавычек и подстановок.";
+            default -> exception.getMessage();
+        };
     }
 
     private static ProblemDetail createProblem(
