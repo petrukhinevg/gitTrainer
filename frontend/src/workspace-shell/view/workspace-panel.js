@@ -111,31 +111,27 @@ export function renderWorkspacePanelSections(state) {
             </section>
         `,
         surface: `
-            <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
+            <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer" data-practice-surface-scroll>
                 <div class="workspace-card__header">
                     <span class="control-label">Контекст и результат</span>
                     <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
-                <div class="practice-composer__body">
-                    <div class="practice-composer__scroll practice-composer__scroll--context" data-practice-surface-scroll>
-                        ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
-                        ${renderBootstrapNotice(bootstrapState)}
-                        ${renderPracticeRepositorySupplement(
-                            repositoryContext,
-                            workspacePlayback,
-                            bootstrapState,
-                            submissionState,
-                            lifecycle
-                        )}
-                    </div>
-                    <div class="practice-composer__results" data-practice-results-scroll>
-                        ${renderSubmissionTransportOutput(
-                            state.submissionDraft.preparedSubmission,
-                            submissionState,
-                            bootstrapState.response?.submission?.supportedAnswerTypes ?? []
-                        )}
-                        ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
-                    </div>
+                <div class="practice-composer__scroll practice-composer__scroll--surface">
+                    ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
+                    ${renderBootstrapNotice(bootstrapState)}
+                    ${renderPracticeRepositorySupplement(
+                        repositoryContext,
+                        workspacePlayback,
+                        bootstrapState,
+                        submissionState,
+                        lifecycle
+                    )}
+                    ${renderSubmissionTransportOutput(
+                        state.submissionDraft.preparedSubmission,
+                        submissionState,
+                        bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                    )}
+                    ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
                 </div>
             </section>
         `
@@ -808,7 +804,6 @@ function renderWorkspaceTerminal({
         statusCopy
     });
     const currentBranch = resolveCurrentBranchName(repositoryContext.branches);
-    const commandCount = commandHistory.length;
 
     return `
         <section class="workspace-terminal" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
@@ -846,7 +841,7 @@ function renderWorkspaceTerminal({
                 <form class="workspace-terminal__form practice-composer__form" data-submission-draft-form>
                     <label class="workspace-terminal__editor" aria-label="Ввод Git-команды">
                         <span class="workspace-terminal__chip">git-trainer</span>
-                        <span class="workspace-terminal__chip workspace-terminal__chip--path">workspace:/repo</span>
+                        <span class="workspace-terminal__chip workspace-terminal__chip--path">/repo</span>
                         <span class="workspace-terminal__chip workspace-terminal__chip--branch">${escapeHtml(currentBranch)}</span>
                         <span class="workspace-terminal__chip workspace-terminal__chip--status">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
                         <span class="workspace-terminal__prompt workspace-terminal__prompt--input">git-trainer%</span>
@@ -862,10 +857,6 @@ function renderWorkspaceTerminal({
                         <button class="workspace-terminal__action workspace-terminal__action--submit" type="submit"${submitDisabled ? " disabled" : ""}>send</button>
                         <button class="workspace-terminal__action workspace-terminal__action--reset" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>clear</button>
                     </label>
-                    <div class="workspace-terminal__footer-meta">
-                        <span class="workspace-terminal__footer-copy">Команд в истории: ${escapeHtml(String(commandCount))}</span>
-                        <span class="workspace-terminal__footer-copy">${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</span>
-                    </div>
                 </form>
             </div>
         </section>

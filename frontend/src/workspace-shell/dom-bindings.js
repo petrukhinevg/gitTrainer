@@ -489,6 +489,17 @@ function bindPracticeSurfaceControls({
     handleSubmissionDraftSubmit,
     resetSubmissionDraft
 }) {
+    const practiceSurfaceScrollRoot = document.querySelector("[data-practice-surface-scroll]");
+    if (
+        practiceSurfaceScrollRoot instanceof HTMLElement
+        && practiceSurfaceScrollRoot.dataset.practiceSurfaceWheelBound !== "true"
+    ) {
+        practiceSurfaceScrollRoot.dataset.practiceSurfaceWheelBound = "true";
+        practiceSurfaceScrollRoot.addEventListener("wheel", (event) => {
+            routePracticeSurfaceWheel(practiceSurfaceScrollRoot, event);
+        }, { passive: false });
+    }
+
     const form = document.querySelector("[data-submission-draft-form]");
     if (form && form.dataset.practiceDraftBound !== "true") {
         form.dataset.practiceDraftBound = "true";
@@ -555,6 +566,63 @@ function bindPracticeSurfaceControls({
             revealNextRetryHint();
         });
     });
+}
+
+function routePracticeSurfaceWheel(scrollRoot, event) {
+    if (!(scrollRoot instanceof HTMLElement) || event.defaultPrevented || event.ctrlKey) {
+        return;
+    }
+
+    const deltaY = normalizeWheelAxis(event.deltaY, event.deltaMode, scrollRoot.clientHeight);
+    const deltaX = normalizeWheelAxis(event.deltaX, event.deltaMode, scrollRoot.clientWidth);
+    const canScrollVertically = Math.abs(deltaY) > 0 && scrollRoot.scrollHeight > scrollRoot.clientHeight;
+    const canScrollHorizontally = Math.abs(deltaX) > 0 && scrollRoot.scrollWidth > scrollRoot.clientWidth;
+
+    if (!canScrollVertically && !canScrollHorizontally) {
+        return;
+    }
+
+    const nextScrollTop = clampScrollOffset(
+        scrollRoot.scrollTop + deltaY,
+        0,
+        Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight)
+    );
+    const nextScrollLeft = clampScrollOffset(
+        scrollRoot.scrollLeft + deltaX,
+        0,
+        Math.max(0, scrollRoot.scrollWidth - scrollRoot.clientWidth)
+    );
+
+    if (nextScrollTop === scrollRoot.scrollTop && nextScrollLeft === scrollRoot.scrollLeft) {
+        return;
+    }
+
+    event.preventDefault();
+    scrollRoot.scrollTop = nextScrollTop;
+    scrollRoot.scrollLeft = nextScrollLeft;
+}
+
+function normalizeWheelAxis(delta, deltaMode, viewportSize) {
+    if (!Number.isFinite(delta) || delta === 0) {
+        return 0;
+    }
+
+    switch (deltaMode) {
+        case 1:
+            return delta * 16;
+        case 2:
+            return delta * Math.max(viewportSize, 1);
+        default:
+            return delta;
+    }
+}
+
+function clampScrollOffset(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+
+    return Math.min(Math.max(value, min), max);
 }
 
 function requestFormSubmit(form) {
