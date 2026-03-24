@@ -169,11 +169,6 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             null,
             "Нижняя правая панель не должна показывать заголовок 'Контекст и результат'"
         );
-        assert.match(
-            appRoot.querySelector("[data-workspace-terminal-header]")?.textContent ?? "",
-            /Git Terminal - Подтверди ветку и незавершённый hotfix/,
-            "Терминал должен показывать заголовок с названием текущего задания"
-        );
         assert.equal(
             appRoot.querySelector('.workspace-terminal__chrome'),
             null,

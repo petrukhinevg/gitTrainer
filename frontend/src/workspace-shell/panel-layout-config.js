@@ -247,6 +247,16 @@ export function renderPanelLayoutResponsiveStyle() {
                     align-items: flex-start;
                 }
 
+                .lesson-layout--compact-navigation-visible .scenario-legend__row {
+                    flex-direction: row;
+                    align-items: stretch;
+                }
+
+                .lesson-layout--compact-navigation-visible .scenario-legend__tag {
+                    width: 100%;
+                    flex: 1 1 0;
+                }
+
                 .flow-block-list,
                 .flow-subtask-group {
                     width: 100%;

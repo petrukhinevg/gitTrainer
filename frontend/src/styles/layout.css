@@ -181,6 +181,9 @@ body {
     grid-area: navigation;
     min-width: var(--navigation-lane-current-width);
     max-width: var(--navigation-lane-current-width);
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
+        var(--paper-strong);
     transition:
         min-width var(--navigation-collapse-duration) var(--navigation-collapse-easing),
         max-width var(--navigation-collapse-duration) var(--navigation-collapse-easing);
@@ -329,37 +332,50 @@ body {
     padding-right: 5px;
 }
 
-.lesson-layout--compact-two-panel {
-    grid-template-areas: "lesson practice";
-    grid-template-columns:
-        minmax(var(--lesson-lane-min-width), 1fr)
-        minmax(
-            var(--practice-lane-current-min-width),
-            clamp(
-                var(--practice-lane-current-min-width),
-                50%,
-                var(--practice-lane-current-width)
-            )
-        );
+.lesson-layout--compact-navigation-overlay {
+    --navigation-lane-current-width: 0px;
 }
 
-.lesson-layout--compact-two-panel .lesson-layout__lane--navigation,
-.lesson-layout--compact-two-panel .lesson-layout__lane--lesson {
+.lesson-layout--compact-navigation-overlay .lesson-layout__lane--navigation {
+    grid-area: lesson;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    background: transparent;
+}
+
+.lesson-layout--compact-navigation-overlay .lesson-layout__lane--lesson {
     grid-area: lesson;
     min-width: 0;
     max-width: none;
 }
 
-.lesson-layout--compact-two-panel .lesson-layout__lane--navigation {
+.lesson-layout--compact-navigation-overlay .lesson-layout__lane--navigation {
     z-index: 2;
 }
 
-.lesson-layout--compact-two-panel .lesson-layout__lane--lesson {
+.lesson-layout--compact-navigation-overlay .lesson-layout__lane--navigation::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(57, 89, 121, 0.08), rgba(255, 250, 241, 0.92)),
+        var(--paper-strong);
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity calc(var(--navigation-collapse-duration) * 0.55) ease;
+}
+
+.lesson-layout--compact-navigation-overlay:not(.lesson-layout--compact-navigation-visible) .lesson-layout__lane--navigation::before {
+    opacity: 0;
+}
+
+.lesson-layout--compact-navigation-overlay .lesson-layout__lane--lesson {
     z-index: 1;
 }
 
-.lesson-layout--compact-two-panel .lesson-lane--navigation,
-.lesson-layout--compact-two-panel .lesson-lane--lesson {
+.lesson-layout--compact-navigation-overlay .lesson-lane--navigation,
+.lesson-layout--compact-navigation-overlay .lesson-lane--lesson {
     width: 100%;
     min-width: 0;
     max-width: none;
@@ -371,14 +387,18 @@ body {
         box-shadow var(--navigation-collapse-duration) var(--navigation-collapse-easing);
 }
 
-.lesson-layout--compact-two-panel .lesson-lane--navigation {
+.lesson-layout--compact-navigation-overlay .lesson-lane--navigation {
+    width: var(--navigation-lane-width);
+    min-width: var(--navigation-lane-width);
+    max-width: var(--navigation-lane-width);
     transform: translateX(0);
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
     filter: none;
 }
 
-.lesson-layout--compact-two-panel .lesson-lane--lesson {
+.lesson-layout--compact-navigation-overlay .lesson-lane--lesson {
     padding-left: var(--lesson-collapsed-left-inset);
     padding-right: 0;
     opacity: 1;
@@ -387,42 +407,20 @@ body {
     filter: none;
 }
 
-.lesson-layout--compact-two-panel .lesson-lane--lesson .lesson-lane__scroll-content {
+.lesson-layout--compact-navigation-overlay .lesson-lane--lesson .lesson-lane__scroll-content {
     padding-left: 0;
 }
 
-.lesson-layout--compact-two-panel:not(.lesson-layout--compact-navigation-visible) .lesson-lane--lesson {
-    transition-delay: 0s, 0s, 0s, 0s, 0s;
+.lesson-layout--compact-navigation-visible .lesson-layout__lane--lesson {
+    pointer-events: none;
 }
 
-.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsed .lesson-lane--navigation {
+.lesson-layout--compact-navigation-visible .lesson-lane--lesson {
     opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateX(-10px);
-    filter: saturate(0.94);
-    transition-delay: 0s, 0s, 0s, var(--navigation-collapse-duration), 0s;
-}
-
-.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-layout__lane--lesson {
-    pointer-events: none;
-}
-
-.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-lane--navigation {
-    opacity: 1;
     visibility: visible;
-    pointer-events: auto;
-    transform: translateX(0);
-    filter: none;
-    transition-delay: 0s, 0s, 0s, 0s, 0s;
-}
-
-.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-lane--lesson {
-    opacity: 0;
-    visibility: hidden;
     transform: none;
     filter: saturate(0.94);
-    transition-delay: 0s, 0s, 0s, var(--navigation-collapse-duration), 0s;
+    transition-delay: 0s, 0s, 0s, 0s, 0s;
 }
 
 .lesson-layout--navigation-collapsed:not(.lesson-layout--navigation-collapsing) .lesson-layout__tag-connection-overlay,
@@ -460,17 +458,18 @@ body {
 
 .lesson-layout--navigation-collapsing .lesson-lane--lesson,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson {
+    padding-left: var(--lesson-collapsed-left-inset);
     transform: none;
     box-shadow: none;
 }
 
 .lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
-    padding-left: var(--lesson-collapsed-left-inset);
+    padding-left: 0;
 }
 
-.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
-.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
+.lesson-layout--compact-navigation-visible.lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
+.lesson-layout--compact-navigation-visible.lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
     padding-left: 0;
 }
 

@@ -311,9 +311,11 @@ export function createCatalogWorkspaceController({
 
         const isPracticeHidden = state.route !== "exercise";
         const isNavigationCollapsed = state.isNavigationEffectivelyCollapsed;
-        const isCompactTwoPanelLayout = state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED;
         const isNavigationToggleVisible = state.panelLayoutMode !== PANEL_LAYOUT_MODE.STACKED;
-        const isCompactNavigationVisible = isCompactTwoPanelLayout && state.isCompactNavigationVisible;
+        const isCompactNavigationOverlay = state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED
+            && (state.isCompactNavigationVisible || state.isNavigationCollapsing);
+        const isCompactNavigationVisible = state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED
+            && state.isCompactNavigationVisible;
 
         layout.classList.toggle("lesson-layout--navigation-collapsed", isNavigationCollapsed);
         layout.classList.toggle("lesson-layout--navigation-collapsing", state.isNavigationCollapsing);
@@ -321,7 +323,7 @@ export function createCatalogWorkspaceController({
             "lesson-layout--navigation-transitioning",
             !isNavigationCollapsed && !state.isNavigationExpandedReady
         );
-        layout.classList.toggle("lesson-layout--compact-two-panel", isCompactTwoPanelLayout);
+        layout.classList.toggle("lesson-layout--compact-navigation-overlay", isCompactNavigationOverlay);
         layout.classList.toggle("lesson-layout--compact-navigation-visible", isCompactNavigationVisible);
         layout.classList.toggle("lesson-layout--practice-hidden", isPracticeHidden);
 
@@ -1406,25 +1408,38 @@ export function createCatalogWorkspaceController({
         const focusedInsideLesson = lessonLane instanceof HTMLElement && lessonLane.contains(document.activeElement);
 
         if (state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
-            state.isCompactNavigationVisible = !state.isCompactNavigationVisible;
-            state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
-            state.isNavigationCollapsing = false;
-            state.isNavigationExpandedReady = true;
-            syncLayoutChrome();
-            redrawNavigationActiveMarker(appRoot);
-            redrawNavigationTagConnections(appRoot);
+            const shouldShowCompactNavigation = !state.isCompactNavigationVisible;
 
-            if (
-                state.isNavigationEffectivelyCollapsed
-                && focusedInsideNavigation
-                && navigationToggle instanceof HTMLElement
-                && navigationToggle.tagName === "BUTTON"
-            ) {
-                navigationToggle.focus({ preventScroll: true });
+            if (shouldShowCompactNavigation) {
+                cancelPendingNavigationCollapse();
+                state.isCompactNavigationVisible = true;
+                state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
+                state.isNavigationCollapsing = false;
+                state.isNavigationExpandedReady = true;
+                syncLayoutChrome();
+                redrawNavigationActiveMarker(appRoot);
+                redrawNavigationTagConnections(appRoot);
+            } else {
+                state.isCompactNavigationVisible = false;
+                state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
+                state.isNavigationCollapsing = true;
+                state.isNavigationExpandedReady = true;
+                syncLayoutChrome();
+                redrawNavigationActiveMarker(appRoot);
+                scheduleNavigationCollapseCleanup();
+                redrawNavigationTagConnections(appRoot);
+
+                if (
+                    focusedInsideNavigation
+                    && navigationToggle instanceof HTMLElement
+                    && navigationToggle.tagName === "BUTTON"
+                ) {
+                    navigationToggle.focus({ preventScroll: true });
+                }
             }
 
             if (
-                !state.isNavigationEffectivelyCollapsed
+                shouldShowCompactNavigation
                 && focusedInsideLesson
                 && navigationToggle instanceof HTMLElement
                 && navigationToggle.tagName === "BUTTON"

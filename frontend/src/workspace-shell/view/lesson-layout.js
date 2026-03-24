@@ -12,8 +12,10 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
     const isNavigationCollapsing = Boolean(state.isNavigationCollapsing);
     const isNavigationTransitioning = !isNavigationCollapsed && state.isNavigationExpandedReady === false;
     const isPracticeHidden = state.route !== "exercise";
-    const isCompactTwoPanelLayout = state.panelLayoutMode === "navigation-collapsed";
-    const isCompactNavigationVisible = isCompactTwoPanelLayout && Boolean(state.isCompactNavigationVisible);
+    const isCompactNavigationOverlay = state.panelLayoutMode === "navigation-collapsed"
+        && (Boolean(state.isCompactNavigationVisible) || isNavigationCollapsing);
+    const isCompactNavigationVisible = state.panelLayoutMode === "navigation-collapsed"
+        && Boolean(state.isCompactNavigationVisible);
     const navigationToggleLabel = state.panelLayoutMode === "navigation-collapsed"
         ? (isNavigationCollapsed ? "Показать левую панель" : "Показать среднюю панель")
         : (isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель");
@@ -21,7 +23,7 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
     return `
         ${renderPanelLayoutResponsiveStyle()}
         <section
-            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isCompactTwoPanelLayout ? "lesson-layout--compact-two-panel" : ""} ${isCompactNavigationVisible ? "lesson-layout--compact-navigation-visible" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
+            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isCompactNavigationOverlay ? "lesson-layout--compact-navigation-overlay" : ""} ${isCompactNavigationVisible ? "lesson-layout--compact-navigation-visible" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
             aria-label="Рабочее пространство урока"
             style="${escapeHtml(buildPanelLayoutInlineStyle())}"
         >

@@ -759,7 +759,7 @@ function renderWorkspaceTerminal({
             data-workspace-console-state="${escapeHtml(workspacePlayback.status)}"${accentTag ? ` data-workspace-command-active-tag="${escapeHtml(accentTag)}"` : ""}
         >
             <div class="workspace-terminal__header" data-workspace-terminal-header>
-                <span class="workspace-terminal__title">Git Terminal - ${escapeHtml(scenarioTitle ?? "Активное задание")}</span>
+                <span class="workspace-terminal__title">Git Terminal</span>
             </div>
             <div class="workspace-terminal__body" data-workspace-command-history>
                 <div class="workspace-terminal__history">
