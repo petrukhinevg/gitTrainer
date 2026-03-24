@@ -1,11 +1,12 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
 import { bindNavigationActiveMarker } from "./navigation-active-marker.js";
+import { PANEL_LAYOUT_CONFIG } from "./panel-layout-config.js";
 import {
     bindNavigationTagConnections,
     redrawNavigationTagConnections
 } from "./tag-connection-overlay.js";
 
-const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
+const FLOW_SUBTASK_SHIFT_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.overlayFlowSubtaskShiftMs;
 
 export function bindWorkspaceShellDom({
     appRoot,

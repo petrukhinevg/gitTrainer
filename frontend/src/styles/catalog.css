@@ -206,7 +206,7 @@
     top: 0;
     left: -4px;
     width: 16px;
-    height: max(var(--navigation-active-marker-height, 0px), 24px);
+    height: max(var(--navigation-active-marker-height, 0px), var(--navigation-active-marker-min-height));
     transform: translate3d(0, var(--navigation-active-marker-top, 0px), 0);
     opacity: 0;
     cursor: grab;
@@ -214,8 +214,8 @@
     pointer-events: auto;
     filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--navigation-active-marker-accent) 18%, transparent));
     transition:
-        transform var(--navigation-active-marker-motion-duration) cubic-bezier(0.2, 0.9, 0.25, 1),
-        height var(--navigation-active-marker-motion-duration) cubic-bezier(0.2, 0.9, 0.25, 1),
+        transform var(--navigation-active-marker-motion-duration) var(--navigation-active-marker-easing),
+        height var(--navigation-active-marker-motion-duration) var(--navigation-active-marker-easing),
         opacity 80ms ease;
 }
 
@@ -271,7 +271,7 @@
     pointer-events: none;
     z-index: 0;
     opacity: 0;
-    transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--panel-overlay-fade-duration) var(--panel-motion-easing);
 }
 
 .tag-connection-map__canvas--visible {
@@ -295,7 +295,7 @@
     shape-rendering: geometricPrecision;
     opacity: 0;
     filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tag-connection-accent) 24%, transparent));
-    transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--panel-overlay-path-duration) var(--panel-motion-easing);
 }
 
 .tag-connection-map__path--lead {
@@ -325,9 +325,9 @@
 
 .tag-connection-map__dot {
     --tag-connection-accent: #456d9a;
-    --tag-connection-dot-opacity-duration: 180ms;
-    --tag-connection-dot-transform-duration: 240ms;
-    --tag-connection-dot-delay: 60ms;
+    --tag-connection-dot-opacity-duration: var(--panel-overlay-fade-duration);
+    --tag-connection-dot-transform-duration: var(--panel-overlay-path-duration);
+    --tag-connection-dot-delay: var(--panel-overlay-dot-delay-duration);
     fill: color-mix(in srgb, var(--tag-connection-accent) 72%, white);
     stroke: rgba(255, 250, 241, 0.92);
     stroke-width: 1.5;
@@ -337,7 +337,7 @@
     transform: scale(0.72);
     transition:
         opacity var(--tag-connection-dot-opacity-duration) ease var(--tag-connection-dot-delay),
-        transform var(--tag-connection-dot-transform-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--tag-connection-dot-delay);
+        transform var(--tag-connection-dot-transform-duration) var(--panel-motion-easing) var(--tag-connection-dot-delay);
 }
 
 .tag-connection-map__dot--visible {
@@ -389,10 +389,10 @@
     opacity: 1;
     transform: translateY(0);
     transition:
-        grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 220ms ease,
-        transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-        margin-top 280ms cubic-bezier(0.22, 1, 0.36, 1);
+        grid-template-rows var(--flow-node-layout-duration) var(--panel-motion-easing),
+        opacity var(--flow-node-filter-duration) ease,
+        transform var(--flow-node-layout-duration) var(--panel-motion-easing),
+        margin-top var(--flow-node-layout-duration) var(--panel-motion-easing);
 }
 
 .flow-node__body {
@@ -405,9 +405,9 @@
     transform: translateY(0) scale(1);
     filter: blur(0);
     transition:
-        opacity 220ms ease,
-        transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-        filter 220ms ease;
+        opacity var(--flow-node-filter-duration) ease,
+        transform var(--flow-node-layout-duration) var(--panel-motion-easing),
+        filter var(--flow-node-filter-duration) ease;
 }
 
 .flow-node[data-flow-node-filtered="true"] {
@@ -630,8 +630,8 @@
 
 .flow-subtask-group[data-flow-subtask-shift-animating="true"] {
     transition:
-        padding-left 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
+        padding-left var(--flow-subtask-shift-duration) var(--panel-motion-easing),
+        padding-right var(--flow-subtask-shift-duration) var(--panel-motion-easing);
 }
 
 .flow-subtask-group[data-flow-subtask-tag-state-restored="true"],
@@ -653,9 +653,9 @@
 .flow-subtask-group[data-flow-subtask-shift-animating="true"]::before,
 .flow-subtask-group[data-flow-subtask-shift-animating="true"]::after {
     transition:
-        left 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        right 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        background-color 180ms ease;
+        left var(--flow-subtask-shift-duration) var(--panel-motion-easing),
+        right var(--flow-subtask-shift-duration) var(--panel-motion-easing),
+        background-color var(--panel-overlay-fade-duration) ease;
 }
 
 .flow-subtask-group::before {
@@ -683,8 +683,8 @@
 }
 
 .flow-subtask-group > [data-flow-subtask-enter="true"] {
-    animation: flow-subtask-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--flow-subtask-enter-index, 0) * 36ms);
+    animation: flow-subtask-enter var(--flow-subtask-enter-duration) var(--panel-motion-easing) both;
+    animation-delay: calc(var(--flow-subtask-enter-index, 0) * var(--flow-subtask-enter-stagger));
     will-change: opacity, transform;
 }
 
@@ -818,23 +818,6 @@
     --tag-accent: var(--tag-color-inspection);
 }
 
-@media (max-width: 960px) {
-    .scenario-legend__row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .flow-block-list,
-    .flow-subtask-group {
-        width: 100%;
-        min-width: 0;
-    }
-
-    .flow-block {
-        min-width: 0;
-    }
-}
-
 .catalog-controls {
     display: grid;
     gap: 16px;
@@ -908,15 +891,4 @@
 .catalog-controls__summary {
     color: var(--ink-soft);
     line-height: 1.5;
-}
-
-@media (max-width: 960px) {
-    .catalog-controls__grid {
-        grid-template-columns: 1fr;
-    }
-
-    .catalog-controls__actions {
-        align-items: flex-start;
-        justify-content: flex-start;
-    }
 }

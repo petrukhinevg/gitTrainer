@@ -1,9 +1,18 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
+import {
+    FLOW_SUBTASK_ENTER_ANIMATION_MS,
+    FLOW_SUBTASK_ENTER_STAGGER_MS,
+    NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS,
+    NAVIGATION_TOGGLE_ANIMATION_MS,
+    PANEL_LAYOUT_CONFIG
+} from "./panel-layout-config.js";
 
-export const NAVIGATION_TOGGLE_ANIMATION_MS = 240;
-export const NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS = 500;
-export const FLOW_SUBTASK_ENTER_ANIMATION_MS = 220;
-export const FLOW_SUBTASK_ENTER_STAGGER_MS = 36;
+export {
+    FLOW_SUBTASK_ENTER_ANIMATION_MS,
+    FLOW_SUBTASK_ENTER_STAGGER_MS,
+    NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS,
+    NAVIGATION_TOGGLE_ANIMATION_MS
+};
 
 export function captureLaneScrollPositions({ excludedLaneNames = [] } = {}) {
     const excludedLaneNameSet = new Set(excludedLaneNames);
@@ -294,13 +303,13 @@ export function resolveScenarioSubtaskEnterAnimationMs(appRoot, slug) {
 
 function createScenarioPanelTransition(durationMs) {
     return [
-        `height ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        `height ${durationMs}ms ${PANEL_LAYOUT_CONFIG.animation.easing}`,
         `opacity ${Math.round(durationMs * 0.7)}ms ease`
     ].join(", ");
 }
 
 function createFlowNodeGapTransition(durationMs) {
-    return `row-gap ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+    return `row-gap ${durationMs}ms ${PANEL_LAYOUT_CONFIG.animation.easing}`;
 }
 
 function readFlowNodeGap(flowNode) {

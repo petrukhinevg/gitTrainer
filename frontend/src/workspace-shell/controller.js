@@ -61,12 +61,6 @@ const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
 ]);
 const FLOW_BLOCK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-block-tag-state-restored";
 const FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-subtask-tag-state-restored";
-const PRACTICE_LANE_WIDTH_PX = 700;
-const LESSON_LANE_MIN_WIDTH_PX = 200;
-const NAVIGATION_LANE_WIDTH_PX = 340;
-const SINGLE_COLUMN_LAYOUT_BREAKPOINT_PX = 1280;
-const NAVIGATION_AUTO_COLLAPSE_BREAKPOINT_PX =
-    NAVIGATION_LANE_WIDTH_PX + LESSON_LANE_MIN_WIDTH_PX + PRACTICE_LANE_WIDTH_PX;
 
 export function createCatalogWorkspaceController({
     appRoot,
@@ -85,7 +79,6 @@ export function createCatalogWorkspaceController({
         expandingScenarioSlugs: [],
         collapsedNavigationScenarioSnapshot: null,
         isNavigationCollapsed: false,
-        navigationCollapseMode: "manual",
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
         pinnedNavigationTag: null,
@@ -204,18 +197,11 @@ export function createCatalogWorkspaceController({
     }
 
     function handleViewportResize() {
-        if (syncNavigationCollapseForViewport()) {
-            render();
-            return;
-        }
-
         redrawNavigationActiveMarker(appRoot);
         redrawNavigationTagConnections(appRoot);
     }
 
     function render() {
-        syncNavigationCollapseForViewport();
-
         const activeDraftFieldSnapshot = captureDraftFieldSnapshot(document.activeElement);
         if (activeDraftFieldSnapshot) {
             pendingDraftFieldSnapshot = activeDraftFieldSnapshot;
@@ -367,44 +353,6 @@ export function createCatalogWorkspaceController({
         syncLayoutChrome();
         redrawNavigationActiveMarker(appRoot);
         redrawNavigationTagConnections(appRoot);
-    }
-
-    function shouldAutoCollapseNavigationForViewport() {
-        return state.route === "exercise"
-            && window.innerWidth < NAVIGATION_AUTO_COLLAPSE_BREAKPOINT_PX
-            && window.innerWidth > SINGLE_COLUMN_LAYOUT_BREAKPOINT_PX;
-    }
-
-    function syncNavigationCollapseForViewport() {
-        const shouldAutoCollapse = shouldAutoCollapseNavigationForViewport();
-
-        if (shouldAutoCollapse) {
-            if (state.isNavigationCollapsed && state.navigationCollapseMode === "auto") {
-                return false;
-            }
-
-            if (!state.isNavigationCollapsed || state.navigationCollapseMode !== "auto") {
-                cancelPendingNavigationReveal();
-                cancelPendingNavigationCollapse();
-                state.isNavigationCollapsed = true;
-                state.navigationCollapseMode = "auto";
-                state.isNavigationCollapsing = false;
-                state.isNavigationExpandedReady = true;
-                return true;
-            }
-        }
-
-        if (state.navigationCollapseMode === "auto") {
-            cancelPendingNavigationReveal();
-            cancelPendingNavigationCollapse();
-            state.isNavigationCollapsed = false;
-            state.navigationCollapseMode = "manual";
-            state.isNavigationCollapsing = false;
-            state.isNavigationExpandedReady = true;
-            return true;
-        }
-
-        return false;
     }
 
     function scheduleNavigationReveal() {
@@ -1402,13 +1350,8 @@ export function createCatalogWorkspaceController({
         const focusedInsideNavigation = navigationLane instanceof HTMLElement && navigationLane.contains(document.activeElement);
 
         if (state.isNavigationCollapsed) {
-            if (shouldAutoCollapseNavigationForViewport()) {
-                return;
-            }
-
             cancelPendingNavigationCollapse();
             state.isNavigationCollapsed = false;
-            state.navigationCollapseMode = "manual";
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = false;
             syncLayoutChrome();
@@ -1418,7 +1361,6 @@ export function createCatalogWorkspaceController({
         } else {
             cancelPendingNavigationReveal();
             state.isNavigationCollapsed = true;
-            state.navigationCollapseMode = "manual";
             state.isNavigationCollapsing = true;
             state.isNavigationExpandedReady = true;
             syncLayoutChrome();

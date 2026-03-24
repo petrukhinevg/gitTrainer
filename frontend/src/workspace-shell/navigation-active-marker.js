@@ -1,4 +1,5 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
+import { PANEL_LAYOUT_CONFIG } from "./panel-layout-config.js";
 import {
     isSandboxScenarioSlug,
     SANDBOX_ROUTE_HASH
@@ -580,15 +581,26 @@ function createHiddenNavigationActiveMarkerState() {
 }
 
 export function resolveNavigationActiveMarkerMotionDuration(previousState, nextState) {
+    const {
+        baseMs,
+        maxMs,
+        travelFactor,
+        sizeFactor
+    } = PANEL_LAYOUT_CONFIG.animation.activeMarker;
+
     if (!previousState?.visible || !nextState?.visible) {
-        return 240;
+        return baseMs;
     }
 
     const travelDistance = Math.abs((nextState.top ?? 0) - (previousState.top ?? 0));
     const sizeDelta = Math.abs((nextState.height ?? 0) - (previousState.height ?? 0));
-    const weightedDistance = travelDistance + (sizeDelta * 0.35);
+    const weightedDistance = travelDistance + (sizeDelta * sizeFactor);
 
-    return clampNumber(Math.round(240 + (weightedDistance * 0.95)), 240, 620);
+    return clampNumber(
+        Math.round(baseMs + (weightedDistance * travelFactor)),
+        baseMs,
+        maxMs
+    );
 }
 
 function applyNavigationActiveMarkerState(marker, state, { instant = false, previousState = null } = {}) {
@@ -604,7 +616,10 @@ function applyNavigationActiveMarkerState(marker, state, { instant = false, prev
     }
 
     if (typeof state?.height === "number") {
-        marker.style.setProperty("--navigation-active-marker-height", `${Math.max(state.height, 24)}px`);
+        marker.style.setProperty(
+            "--navigation-active-marker-height",
+            `${Math.max(state.height, PANEL_LAYOUT_CONFIG.animation.activeMarker.minHeightPx)}px`
+        );
     }
 
     if (state?.visible) {

@@ -1,17 +1,17 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
-import { NAVIGATION_TOGGLE_ANIMATION_MS } from "./scroll-animation.js";
+import { isCompactPanelViewport, PANEL_LAYOUT_CONFIG } from "./panel-layout-config.js";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const EDGE_PADDING_PX = 0;
 const TARGET_OFFSET_PX = 0;
-const TRUNK_OFFSET_PX = 10;
-const CONNECTION_FADE_OUT_MS = NAVIGATION_TOGGLE_ANIMATION_MS;
-const CONNECTION_DRAW_SPEED_PX_PER_MS = 3;
-const CONNECTION_MIN_ANIMATION_MS = 4;
-const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = 0.45;
-const FLOW_SUBTASK_SHIFT_ANIMATION_MS = 260;
+const TRUNK_OFFSET_PX = PANEL_LAYOUT_CONFIG.animation.secondaryBranchTrunkOffsetPx;
+const CONNECTION_FADE_OUT_MS = PANEL_LAYOUT_CONFIG.animation.connectionFadeOutMs;
+const CONNECTION_DRAW_SPEED_PX_PER_MS = PANEL_LAYOUT_CONFIG.animation.connectionDrawSpeedPxPerMs;
+const CONNECTION_MIN_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.connectionMinAnimationMs;
+const SECONDARY_BRANCH_SHRINK_DURATION_FACTOR = PANEL_LAYOUT_CONFIG.animation.secondaryBranchShrinkDurationFactor;
+const FLOW_SUBTASK_SHIFT_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.overlayFlowSubtaskShiftMs;
 const FLOW_SUBTASK_TAG_STATE_RESTORED_ATTRIBUTE = "data-flow-subtask-tag-state-restored";
-const BRANCH_DOT_REMOVAL_MS = 320;
+const BRANCH_DOT_REMOVAL_MS = PANEL_LAYOUT_CONFIG.animation.branchDotRemovalMs;
 let nextCanvasClipPathId = 0;
 export function bindNavigationTagConnections({ appRoot }) {
     const layoutRoot = appRoot.querySelector(".lesson-layout");
@@ -196,7 +196,7 @@ function shouldRenderNavigationConnections(layoutRoot) {
         return false;
     }
 
-    if (window.matchMedia?.("(max-width: 960px)").matches) {
+    if (isCompactPanelViewport()) {
         return true;
     }
 

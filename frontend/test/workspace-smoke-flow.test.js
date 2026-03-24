@@ -950,7 +950,7 @@ test("при переключении сценария viewer не показы�
     }
 });
 
-test("автоматически скрывает левую панель при сужении окна и возвращает её после расширения", async () => {
+test("изменение ширины окна не скрывает левую панель автоматически", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"
     });
@@ -1022,8 +1022,8 @@ test("автоматически скрывает левую панель при
 
         assert.equal(
             appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
-            true,
-            "При нехватке места левая панель должна скрываться автоматически"
+            false,
+            "При сужении окна левая панель не должна скрываться автоматически"
         );
 
         dom.window.innerWidth = 1800;
@@ -1033,7 +1033,7 @@ test("автоматически скрывает левую панель при
         assert.equal(
             appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
             false,
-            "После расширения окна автоматически скрытая панель должна возвращаться"
+            "После повторного расширения окна левая панель должна оставаться открытой"
         );
     } finally {
         restoreGlobals();

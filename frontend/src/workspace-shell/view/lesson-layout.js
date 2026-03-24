@@ -1,4 +1,8 @@
 import {
+    buildPanelLayoutInlineStyle,
+    renderPanelLayoutResponsiveStyle
+} from "../panel-layout-config.js";
+import {
     escapeHtml,
 } from "./render-helpers.js";
 
@@ -8,9 +12,11 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
     const isNavigationTransitioning = !isNavigationCollapsed && state.isNavigationExpandedReady === false;
 
     return `
+        ${renderPanelLayoutResponsiveStyle()}
         <section
             class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""}"
             aria-label="Рабочее пространство урока"
+            style="${escapeHtml(buildPanelLayoutInlineStyle())}"
         >
             <button
                 class="lesson-layout__navigation-toggle"
