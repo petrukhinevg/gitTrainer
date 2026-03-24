@@ -480,6 +480,14 @@
 .workspace-console__chrome,
 .workspace-console__body,
 .workspace-console__line,
+.workspace-terminal,
+.workspace-terminal__chrome,
+.workspace-terminal__body,
+.workspace-terminal__history,
+.workspace-terminal__entry,
+.workspace-terminal__line,
+.workspace-terminal__form,
+.workspace-terminal__editor,
 .workspace-activity,
 .workspace-activity__header,
 .workspace-activity__heading,
@@ -518,7 +526,8 @@
     gap: 14px;
 }
 
-.workspace-console {
+.workspace-console,
+.workspace-terminal {
     gap: 0;
     border: 1px solid rgba(31, 23, 32, 0.1);
     border-radius: 18px;
@@ -527,7 +536,8 @@
     overflow: hidden;
 }
 
-.workspace-console__chrome {
+.workspace-console__chrome,
+.workspace-terminal__chrome {
     display: grid;
     grid-template-columns: auto auto auto 1fr auto;
     align-items: center;
@@ -558,53 +568,149 @@
 .workspace-console__tab,
 .workspace-console__badge,
 .workspace-console__prompt,
-.workspace-console__command {
+.workspace-console__command,
+.workspace-terminal__tab,
+.workspace-terminal__badge,
+.workspace-terminal__prompt,
+.workspace-terminal__command,
+.workspace-terminal__entry-badge,
+.workspace-terminal__input {
     font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .workspace-console__tab,
-.workspace-console__badge {
+.workspace-console__badge,
+.workspace-terminal__tab,
+.workspace-terminal__badge,
+.workspace-terminal__entry-badge {
     font-size: 0.68rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
-.workspace-console__tab {
+.workspace-console__tab,
+.workspace-terminal__tab {
     color: rgba(244, 236, 228, 0.74);
 }
 
-.workspace-console__badge {
+.workspace-console__badge,
+.workspace-terminal__badge {
     color: #ffd8c3;
 }
 
-.workspace-console__body {
+.workspace-console__body,
+.workspace-terminal__body {
     gap: 10px;
     padding: 14px 16px 16px;
 }
 
-.workspace-console__line {
+.workspace-terminal__history {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.workspace-terminal__entry {
+    gap: 6px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspace-terminal__entry:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.workspace-console__line,
+.workspace-terminal__line {
     grid-template-columns: auto auto auto;
     align-items: center;
     gap: 10px;
 }
 
-.workspace-console__prompt {
+.workspace-console__prompt,
+.workspace-terminal__prompt {
     color: #8fdaa0;
     font-size: 0.82rem;
 }
 
-.workspace-console__command {
+.workspace-console__command,
+.workspace-terminal__command {
     color: #fff4ea;
     font-size: 0.84rem;
     white-space: pre-wrap;
     word-break: break-word;
 }
 
-.workspace-console__summary {
+.workspace-terminal__entry-badge {
+    justify-self: end;
+    color: rgba(255, 216, 195, 0.92);
+}
+
+.workspace-terminal__entry--correct .workspace-terminal__entry-badge {
+    color: #8fdaa0;
+}
+
+.workspace-terminal__entry--failed .workspace-terminal__entry-badge {
+    color: #ff9e95;
+}
+
+.workspace-console__summary,
+.workspace-terminal__summary {
     color: rgba(244, 236, 228, 0.76);
 }
 
-.workspace-console__cursor {
+.workspace-terminal__form {
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspace-terminal__editor {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.workspace-terminal__prompt--input {
+    padding-top: 0;
+}
+
+.workspace-terminal__input {
+    width: 100%;
+    min-height: 1.45em;
+    max-height: 5.2em;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff4ea;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    resize: none;
+    outline: none;
+}
+
+.workspace-terminal__input:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+.workspace-terminal__actions {
+    padding: 0;
+}
+
+.workspace-terminal__note {
+    color: #ffd8c3;
+}
+
+.workspace-console__cursor,
+.workspace-terminal__cursor {
     width: 9px;
     height: 1.05em;
     background: rgba(255, 244, 234, 0.9);
@@ -692,6 +798,10 @@
     gap: 12px;
 }
 
+.repository-workspace__grid--details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .repository-workspace__section,
 .repository-workspace__notes {
     min-height: 100%;
@@ -708,6 +818,10 @@
 
 .repository-workspace__section--graph {
     grid-row: span 2;
+}
+
+.repository-workspace__section--graph-only {
+    grid-row: auto;
 }
 
 .workspace-commit-tree {
@@ -1198,6 +1312,10 @@
         grid-template-columns: 1fr;
     }
 
+    .repository-workspace__grid--details {
+        grid-template-columns: 1fr;
+    }
+
     .repository-workspace__section--graph {
         grid-row: auto;
     }
@@ -1243,11 +1361,13 @@
 }
 
 @media (max-width: 720px) {
-    .workspace-console__chrome {
+    .workspace-console__chrome,
+    .workspace-terminal__chrome {
         grid-template-columns: auto auto auto 1fr;
     }
 
-    .workspace-console__badge {
+    .workspace-console__badge,
+    .workspace-terminal__badge {
         grid-column: 1 / -1;
     }
 
@@ -1263,7 +1383,9 @@
         align-items: flex-start;
     }
 
-    .workspace-console__line {
+    .workspace-console__line,
+    .workspace-terminal__line,
+    .workspace-terminal__editor {
         grid-template-columns: 1fr;
         gap: 6px;
     }

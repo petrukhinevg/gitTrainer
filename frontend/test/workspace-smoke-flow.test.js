@@ -99,6 +99,13 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             appRoot.querySelector('[data-repository-commit-tree]'),
             "Viewer должен построить commit tree"
         );
+        const commitTree = appRoot.querySelector('[data-repository-commit-tree]');
+        const commandHistory = appRoot.querySelector('[data-workspace-command-history]');
+        assert.ok(commandHistory, "Под commit tree должна появиться terminal history");
+        assert.ok(
+            Boolean(commitTree?.compareDocumentPosition(commandHistory) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING),
+            "Commit tree должен располагаться выше terminal history"
+        );
         assert.equal(
             appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
             "ready"
@@ -247,6 +254,10 @@ test("отправляет ответ по Enter в поле команды", as
             appRoot.querySelector('[data-retry-feedback-panel][data-retry-feedback-status="resolved"]'),
             "После Enter-submit должен появиться resolved retry feedback"
         );
+        assert.ok(
+            appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
+            "После Enter-submit history должна пометить команду как correct"
+        );
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -322,6 +333,10 @@ test("правая колонка переключается на live workspace
             appRoot.querySelector('[data-repository-commit-tree]'),
             "Viewer должен сохранить commit tree рядом с рабочим деревом"
         );
+        assert.ok(
+            appRoot.querySelector('[data-workspace-command-history]'),
+            "Viewer должен показать terminal history под деревом"
+        );
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
         assert.ok(answerField, "Поле ввода stash-команды должно быть доступно");
@@ -340,6 +355,11 @@ test("правая колонка переключается на live workspace
             appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
             "updated"
         );
+        assert.ok(
+            appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
+            "После stash history должна показать успешную команду"
+        );
+        assert.match(appRoot.textContent, /git stash push -u/);
         assert.match(appRoot.textContent, /Рабочее дерево очищено/);
         assert.match(appRoot.textContent, /Сдвинулись указатели дерева|Явных изменений в snapshot нет|Появилась новая системная подсказка/);
     } finally {

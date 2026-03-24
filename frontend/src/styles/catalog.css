@@ -79,6 +79,12 @@
     box-shadow: 0 8px 18px color-mix(in srgb, var(--tag-accent) 12%, transparent);
 }
 
+.scenario-legend__tag--active:hover,
+.scenario-legend__tag--active:focus-visible {
+    border-color: var(--tag-accent);
+    background: color-mix(in srgb, var(--tag-accent) 11%, rgba(255, 250, 241, 0.96));
+}
+
 .scenario-legend__swatch {
     width: 10px;
     height: 10px;

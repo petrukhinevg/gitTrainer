@@ -77,6 +77,7 @@ export function renderWorkspacePanelSections(state) {
         state.session?.workspacePlayback,
         repositoryContext
     );
+    const commandHistory = normalizeCommandHistory(state.session?.commandHistory);
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
     const retryFeedback = resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
@@ -92,6 +93,16 @@ export function renderWorkspacePanelSections(state) {
                 <div class="practice-shell__viewer-body">
                     <div class="practice-repository-viewer" data-repository-context>
                         ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
+                        ${renderWorkspaceTerminal({
+            submissionDraft: state.submissionDraft,
+            bootstrapState,
+            submissionState,
+            workspacePlayback,
+            repositoryContext,
+            commandHistory,
+            submitDisabled,
+            resetDisabled
+        })}
                     </div>
                 </div>
             </section>
@@ -99,26 +110,8 @@ export function renderWorkspacePanelSections(state) {
         surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer">
                 <div class="workspace-card__header">
-                    <span class="control-label">Ввод ответа</span>
-                    <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveDraftBadge(state.submissionDraft, submissionState)))}</span>
-                </div>
-                <div class="practice-composer__primary">
-                    <form class="practice-composer__form" data-submission-draft-form>
-                        <p class="panel-copy">Введите одну Git-команду. В текущем MVP поддерживается только текст команды.</p>
-                        <label class="practice-editor">
-                            <span class="practice-editor__prompt">&gt;</span>
-                            <textarea name="answer" rows="4" placeholder="Например: git status"${submissionState.status === "pending" ? " disabled" : ""}>${escapeHtml(state.submissionDraft.answer ?? "")}</textarea>
-                        </label>
-                        <div class="practice-composer__actions">
-                            <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
-                            <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
-                        </div>
-                    </form>
-                    ${state.submissionDraft.validationError ? `
-                        <div class="practice-inline-note">
-                            <p class="panel-copy">${escapeHtml(state.submissionDraft.validationError)}</p>
-                        </div>
-                    ` : ""}
+                    <span class="control-label">Контекст и результат</span>
+                    <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
                 </div>
                 <div class="practice-composer__scroll" data-practice-surface-scroll>
                     ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
@@ -149,7 +142,7 @@ function renderPracticeShell({ viewer, surface }) {
         lane: "practice",
         label: "Практика",
         title: "Состояние репозитория и ввод команды",
-        description: "Правая колонка показывает состояние репозитория сверху и форму ответа снизу.",
+        description: "Справа сверху показывается commit tree и терминал, ниже остаются контекст упражнения и результат отправки.",
         showHeader: false,
         body: `
             <div class="practice-stack">
@@ -695,7 +688,40 @@ function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
             data-repository-workspace-visual="ready"
             data-workspace-playback-status="${escapeHtml(workspacePlayback.status)}"
         >
-            ${renderWorkspacePlaybackConsole(workspacePlayback, repositoryContext)}
+            <section
+                class="repository-workspace__section repository-workspace__section--graph repository-workspace__section--graph-only"
+                data-repository-workspace-section="graph"
+            >
+                <div class="repository-workspace__section-header">
+                    <span class="control-label">Дерево коммитов</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.graph.nodes.length))}</span>
+                </div>
+                ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
+            </section>
+        </section>
+    `;
+}
+
+function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback, bootstrapState, submissionState, lifecycle) {
+    return `
+        <div class="practice-context-details">
+            <div class="practice-shell__meta practice-shell__meta--viewer">
+                <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
+                <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
+                <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
+                <span class="practice-shell__chip">Коммиты: ${repositoryContext.commits.length}</span>
+                <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
+            </div>
+            ${renderViewerStatusStrip(bootstrapState, lifecycle)}
+            ${renderWorkspaceActivityPanel(workspacePlayback, repositoryContext)}
+            ${renderRepositoryWorkspaceDetails(repositoryContext)}
+        </div>
+    `;
+}
+
+function renderRepositoryWorkspaceDetails(repositoryContext) {
+    return `
+        <section class="repository-workspace repository-workspace--details" data-repository-workspace-details>
             <div class="repository-workspace__hero">
                 <div class="repository-workspace__hero-copy">
                     <span class="control-label">Git workspace</span>
@@ -709,17 +735,7 @@ function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
                     <span class="repository-workspace__chip">Файлы: ${escapeHtml(String(repositoryContext.files.length))}</span>
                 </div>
             </div>
-            <div class="repository-workspace__grid">
-                <section
-                    class="repository-workspace__section repository-workspace__section--graph"
-                    data-repository-workspace-section="graph"
-                >
-                    <div class="repository-workspace__section-header">
-                        <span class="control-label">Дерево коммитов</span>
-                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.graph.nodes.length))}</span>
-                    </div>
-                    ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
-                </section>
+            <div class="repository-workspace__grid repository-workspace__grid--details">
                 <section class="repository-workspace__section" data-repository-workspace-section="branches">
                     <div class="repository-workspace__section-header">
                         <span class="control-label">Ветки</span>
@@ -746,45 +762,80 @@ function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
     `;
 }
 
-function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback, bootstrapState, submissionState, lifecycle) {
-    return `
-        <div class="practice-context-details">
-            <div class="practice-shell__meta practice-shell__meta--viewer">
-                <span class="practice-shell__chip">Текущая ветка: ${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</span>
-                <span class="practice-shell__chip">Ветки: ${repositoryContext.branches.length}</span>
-                <span class="practice-shell__chip">Файлы: ${repositoryContext.files.length}</span>
-                <span class="practice-shell__chip">Коммиты: ${repositoryContext.commits.length}</span>
-                <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
-            </div>
-            ${renderViewerStatusStrip(bootstrapState, lifecycle)}
-            ${renderWorkspaceActivityPanel(workspacePlayback, repositoryContext)}
-        </div>
-    `;
-}
-
-function renderWorkspacePlaybackConsole(workspacePlayback, repositoryContext) {
-    const command = workspacePlayback.command ?? resolveWorkspaceDefaultCommand(workspacePlayback.status);
+function renderWorkspaceTerminal({
+    submissionDraft,
+    bootstrapState,
+    submissionState,
+    workspacePlayback,
+    repositoryContext,
+    commandHistory,
+    submitDisabled,
+    resetDisabled
+}) {
     const statusLabel = formatWorkspacePlaybackStatus(workspacePlayback.status);
     const statusCopy = describeWorkspacePlaybackStatus(workspacePlayback, repositoryContext);
+    const historyItems = commandHistory.length
+        ? commandHistory
+        : [
+            {
+                id: "placeholder",
+                command: resolveWorkspaceDefaultCommand(workspacePlayback.status),
+                status: workspacePlayback.status === "idle" ? "idle" : "system",
+                summary: statusCopy,
+                createdAt: workspacePlayback.updatedAt
+            }
+        ];
 
     return `
-        <section class="workspace-console" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
-            <div class="workspace-console__chrome">
+        <section class="workspace-terminal" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
+            <div class="workspace-terminal__chrome">
                 <span class="workspace-console__traffic workspace-console__traffic--close" aria-hidden="true"></span>
                 <span class="workspace-console__traffic workspace-console__traffic--min" aria-hidden="true"></span>
                 <span class="workspace-console__traffic workspace-console__traffic--max" aria-hidden="true"></span>
-                <span class="workspace-console__tab">workspace.git</span>
-                <span class="workspace-console__badge">${escapeHtml(statusLabel)}</span>
+                <span class="workspace-terminal__tab">workspace.git</span>
+                <span class="workspace-terminal__badge">${escapeHtml(statusLabel)}</span>
             </div>
-            <div class="workspace-console__body">
-                <div class="workspace-console__line">
-                    <span class="workspace-console__prompt">git-trainer%</span>
-                    <code class="workspace-console__command">${escapeHtml(command)}</code>
-                    ${workspacePlayback.status === "running" || workspacePlayback.status === "booting"
-            ? '<span class="workspace-console__cursor" aria-hidden="true"></span>'
-            : ""}
+            <div class="workspace-terminal__body">
+                <div class="workspace-terminal__history" data-workspace-command-history>
+                    ${historyItems.map((entry) => `
+                        <article
+                            class="workspace-terminal__entry workspace-terminal__entry--${escapeHtml(entry.status)}"
+                            data-workspace-command-status="${escapeHtml(entry.status)}"
+                            data-workspace-command-id="${escapeHtml(entry.id)}"
+                        >
+                            <div class="workspace-terminal__line">
+                                <span class="workspace-terminal__prompt">git-trainer%</span>
+                                <code class="workspace-terminal__command">${escapeHtml(entry.command)}</code>
+                                <span class="workspace-terminal__entry-badge">${escapeHtml(formatCommandHistoryStatus(entry.status))}</span>
+                            </div>
+                            <p class="panel-copy workspace-terminal__summary">${escapeHtml(entry.summary)}</p>
+                        </article>
+                    `).join("")}
                 </div>
-                <p class="panel-copy workspace-console__summary">${escapeHtml(statusCopy)}</p>
+                <form class="workspace-terminal__form practice-composer__form" data-submission-draft-form>
+                    <p class="panel-copy">Введите одну Git-команду. После отправки она останется в истории и viewer обновит дерево коммитов.</p>
+                    <label class="workspace-terminal__editor practice-editor">
+                        <span class="workspace-terminal__prompt workspace-terminal__prompt--input">git-trainer%</span>
+                        <textarea
+                            class="workspace-terminal__input"
+                            name="answer"
+                            rows="1"
+                            placeholder="Например: git status"${submissionState.status === "pending" || bootstrapState.status === "pending" ? " disabled" : ""}
+                        >${escapeHtml(submissionDraft.answer ?? "")}</textarea>
+                        ${workspacePlayback.status === "running" || workspacePlayback.status === "booting"
+            ? '<span class="workspace-terminal__cursor" aria-hidden="true"></span>'
+            : ""}
+                    </label>
+                    <div class="practice-composer__actions workspace-terminal__actions">
+                        <button class="practice-action practice-action--primary" type="submit"${submitDisabled ? " disabled" : ""}>${escapeHtml(resolvePrimaryActionLabel(bootstrapState, submissionState))}</button>
+                        <button class="practice-action" type="button" data-reset-submission-draft${resetDisabled ? " disabled" : ""}>Сбросить черновик</button>
+                    </div>
+                    ${submissionDraft.validationError ? `
+                        <div class="practice-inline-note workspace-terminal__note">
+                            <p class="panel-copy">${escapeHtml(submissionDraft.validationError)}</p>
+                        </div>
+                    ` : ""}
+                </form>
             </div>
         </section>
     `;
@@ -1164,6 +1215,29 @@ function normalizeWorkspacePlayback(playback, fallbackContext) {
     };
 }
 
+function normalizeCommandHistory(commandHistory) {
+    return Array.isArray(commandHistory)
+        ? commandHistory
+            .filter((entry) => entry && typeof entry === "object")
+            .map((entry, index) => ({
+                id: typeof entry.id === "string" && entry.id.trim() !== ""
+                    ? entry.id
+                    : `command-${index + 1}`,
+                command: typeof entry.command === "string" && entry.command.trim() !== ""
+                    ? entry.command.trim()
+                    : "unknown command",
+                status: typeof entry.status === "string" && entry.status.trim() !== ""
+                    ? entry.status
+                    : "idle",
+                summary: typeof entry.summary === "string" && entry.summary.trim() !== ""
+                    ? entry.summary
+                    : "Viewer сохранил команду в истории, но подробности пока недоступны.",
+                createdAt: entry.createdAt ?? null,
+                completedAt: entry.completedAt ?? null
+            }))
+        : [];
+}
+
 function normalizeRepositoryContext(repositoryContext) {
     const safeContext = repositoryContext ?? {};
     const branches = Array.isArray(safeContext.branches) ? safeContext.branches : [];
@@ -1322,6 +1396,23 @@ function formatWorkspacePlaybackStatus(status) {
             return "retryable";
         case "terminal-error":
             return "failed";
+        default:
+            return "idle";
+    }
+}
+
+function formatCommandHistoryStatus(status) {
+    switch (status) {
+        case "running":
+            return "running";
+        case "correct":
+            return "correct";
+        case "applied":
+            return "applied";
+        case "failed":
+            return "failed";
+        case "system":
+            return "system";
         default:
             return "idle";
     }

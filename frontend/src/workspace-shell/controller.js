@@ -611,6 +611,7 @@ export function createCatalogWorkspaceController({
             error: null,
             scenarioSlug
         };
+        state.session.commandHistory = [];
         state.session.workspacePlayback = {
             ...createInitialWorkspacePlaybackState(),
             status: "booting",
@@ -694,6 +695,7 @@ export function createCatalogWorkspaceController({
         }
 
         const requestId = ++latestSubmissionRequestId;
+        const historyEntryId = `command-${requestId}`;
         const activeRepositoryContext = state.session.submission.response?.workspace?.repositoryContext
             ?? state.session.bootstrap.response?.workspace?.repositoryContext
             ?? state.detail.data?.workspace?.repositoryContext
@@ -712,6 +714,10 @@ export function createCatalogWorkspaceController({
             outcomeCorrectness: null,
             updatedAt: new Date().toISOString()
         };
+        state.session.commandHistory = [
+            ...state.session.commandHistory,
+            createCommandHistoryEntry(historyEntryId, preparedSubmission)
+        ];
         state.session.feedbackPanel = createFeedbackPanelState({
             previousFeedbackPanel: state.session.feedbackPanel,
             detail: state.detail.data,
@@ -749,6 +755,15 @@ export function createCatalogWorkspaceController({
                 outcomeCorrectness: response?.outcome?.correctness ?? null,
                 updatedAt: new Date().toISOString()
             };
+            state.session.commandHistory = updateCommandHistoryEntry(
+                state.session.commandHistory,
+                historyEntryId,
+                {
+                    status: resolveCommandHistoryStatus(response?.outcome?.correctness),
+                    summary: resolveCommandHistorySummary(preparedSubmission.answer, response?.outcome?.correctness),
+                    completedAt: response?.submittedAt ?? new Date().toISOString()
+                }
+            );
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
@@ -789,6 +804,15 @@ export function createCatalogWorkspaceController({
                 outcomeCorrectness: null,
                 updatedAt: new Date().toISOString()
             };
+            state.session.commandHistory = updateCommandHistoryEntry(
+                state.session.commandHistory,
+                historyEntryId,
+                {
+                    status: "failed",
+                    summary: normalizedFailure.message,
+                    completedAt: new Date().toISOString()
+                }
+            );
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
@@ -1721,7 +1745,8 @@ function createInitialSessionState() {
         },
         submission: createInitialSubmissionRequestState(),
         feedbackPanel: createInitialFeedbackPanelState(),
-        workspacePlayback: createInitialWorkspacePlaybackState()
+        workspacePlayback: createInitialWorkspacePlaybackState(),
+        commandHistory: []
     };
 }
 
@@ -1766,6 +1791,47 @@ function createInitialWorkspacePlaybackState() {
         outcomeCorrectness: null,
         updatedAt: null
     };
+}
+
+function createCommandHistoryEntry(entryId, preparedSubmission) {
+    return {
+        id: entryId,
+        command: preparedSubmission.answer,
+        status: "running",
+        summary: `Команда отправлена: ${preparedSubmission.answer}. Ждём новый snapshot workspace.`,
+        createdAt: preparedSubmission.preparedAt,
+        completedAt: null
+    };
+}
+
+function updateCommandHistoryEntry(commandHistory, entryId, patch) {
+    return commandHistory.map((entry) => (
+        entry.id === entryId
+            ? {
+                ...entry,
+                ...patch
+            }
+            : entry
+    ));
+}
+
+function resolveCommandHistoryStatus(correctness) {
+    switch (correctness) {
+        case "correct":
+            return "correct";
+        case "incorrect":
+        case "partial":
+        case "unsupported":
+            return "applied";
+        default:
+            return "applied";
+    }
+}
+
+function resolveCommandHistorySummary(command, correctness) {
+    return correctness === "correct"
+        ? `Команда ${command} принята. Viewer уже показывает новое состояние веток и дерева.`
+        : `Команда ${command} выполнена. Viewer показывает обновлённый snapshot workspace.`;
 }
 
 function createFeedbackPanelState({
