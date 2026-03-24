@@ -88,6 +88,7 @@ export function renderWorkspacePanelSections(state) {
     const retryFeedback = resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
     const resetDisabled = bootstrapState.status === "pending" || submissionState.status === "pending";
+    const accentTag = resolveWorkspacePanelAccentTag(state);
 
     return {
         viewer: `
@@ -96,6 +97,7 @@ export function renderWorkspacePanelSections(state) {
                     ${renderRepositoryWorkspaceCanvas(viewerRepositoryContext, workspacePlayback)}
                     ${renderWorkspaceTerminal({
             scenarioTitle: detail.title,
+            accentTag,
             submissionDraft: state.submissionDraft,
             bootstrapState,
             submissionState,
@@ -153,7 +155,7 @@ function renderPracticeShell({ viewer, surface }, accentTag = null) {
     });
 }
 
-function resolveWorkspacePanelAccentTag(state) {
+export function resolveWorkspacePanelAccentTag(state) {
     const activeTag = normalizeWorkspaceTagToken(state?.heldNavigationTag ?? state?.pinnedNavigationTag);
     if (!activeTag) {
         return null;
@@ -729,6 +731,7 @@ function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback
 
 function renderWorkspaceTerminal({
     scenarioTitle,
+    accentTag,
     submissionDraft,
     bootstrapState,
     submissionState,
@@ -751,7 +754,10 @@ function renderWorkspaceTerminal({
     });
 
     return `
-        <section class="workspace-terminal workspace-terminal--plain" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
+        <section
+            class="workspace-terminal workspace-terminal--plain"
+            data-workspace-console-state="${escapeHtml(workspacePlayback.status)}"${accentTag ? ` data-workspace-command-active-tag="${escapeHtml(accentTag)}"` : ""}
+        >
             <div class="workspace-terminal__header" data-workspace-terminal-header>
                 <span class="workspace-terminal__title">Git Terminal - ${escapeHtml(scenarioTitle ?? "Активное задание")}</span>
             </div>
