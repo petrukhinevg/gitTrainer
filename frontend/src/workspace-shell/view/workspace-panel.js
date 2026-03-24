@@ -88,15 +88,10 @@ export function renderWorkspacePanelSections(state) {
 
     return {
         viewer: `
-            <section class="workspace-card workspace-card--viewer">
-                <div class="workspace-card__header">
-                    <span class="control-label">Состояние репозитория</span>
-                    <span class="workspace-card__badge">${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
-                </div>
-                <div class="practice-shell__viewer-body">
-                    <div class="practice-repository-viewer" data-repository-context>
-                        ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
-                        ${renderWorkspaceTerminal({
+            <div class="practice-shell__viewer-body practice-shell__viewer-body--plain">
+                <div class="practice-repository-viewer" data-repository-context>
+                    ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
+                    ${renderWorkspaceTerminal({
             submissionDraft: state.submissionDraft,
             bootstrapState,
             submissionState,
@@ -106,9 +101,8 @@ export function renderWorkspacePanelSections(state) {
             submitDisabled,
             resetDisabled
         })}
-                    </div>
                 </div>
-            </section>
+            </div>
         `,
         surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer" data-practice-surface-scroll>
@@ -703,22 +697,13 @@ function renderBranchGraph(branches) {
 
 function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
     return `
-        <section
-            class="repository-workspace repository-workspace--${escapeHtml(workspacePlayback.status)}"
+        <div
+            class="repository-workspace repository-workspace--${escapeHtml(workspacePlayback.status)} repository-workspace--plain"
             data-repository-workspace-visual="ready"
             data-workspace-playback-status="${escapeHtml(workspacePlayback.status)}"
         >
-            <section
-                class="repository-workspace__section repository-workspace__section--graph repository-workspace__section--graph-only"
-                data-repository-workspace-section="graph"
-            >
-                <div class="repository-workspace__section-header">
-                    <span class="control-label">Дерево коммитов</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.graph.nodes.length))}</span>
-                </div>
-                ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
-            </section>
-        </section>
+            ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
+        </div>
     `;
 }
 
@@ -733,52 +718,7 @@ function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback
                 <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
             </div>
             ${renderViewerStatusStrip(bootstrapState, lifecycle)}
-            ${renderWorkspaceActivityPanel(workspacePlayback, repositoryContext)}
-            ${renderRepositoryWorkspaceDetails(repositoryContext)}
         </div>
-    `;
-}
-
-function renderRepositoryWorkspaceDetails(repositoryContext) {
-    return `
-        <section class="repository-workspace repository-workspace--details" data-repository-workspace-details>
-            <div class="repository-workspace__hero">
-                <div class="repository-workspace__hero-copy">
-                    <span class="control-label">Git workspace</span>
-                    <h3 class="repository-workspace__title">${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</h3>
-                    <p class="panel-copy">${escapeHtml(describeRepositoryWorkspace(repositoryContext))}</p>
-                </div>
-                <div class="repository-workspace__hero-meta">
-                    <span class="repository-workspace__chip">Статус: ${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
-                    <span class="repository-workspace__chip">Ветки: ${escapeHtml(String(repositoryContext.branches.length))}</span>
-                    <span class="repository-workspace__chip">Коммиты: ${escapeHtml(String(repositoryContext.commits.length))}</span>
-                    <span class="repository-workspace__chip">Файлы: ${escapeHtml(String(repositoryContext.files.length))}</span>
-                </div>
-            </div>
-            <div class="repository-workspace__grid repository-workspace__grid--details">
-                <section class="repository-workspace__section" data-repository-workspace-section="branches">
-                    <div class="repository-workspace__section-header">
-                        <span class="control-label">Ветки</span>
-                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.branches.length))}</span>
-                    </div>
-                    ${renderBranchGraph(repositoryContext.branches)}
-                </section>
-                <section class="repository-workspace__section" data-repository-workspace-section="files">
-                    <div class="repository-workspace__section-header">
-                        <span class="control-label">Рабочее дерево</span>
-                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.files.length))}</span>
-                    </div>
-                    ${renderRepositoryWorkingTree(repositoryContext.files)}
-                </section>
-            </div>
-            <section class="repository-workspace__notes" data-repository-workspace-section="annotations">
-                <div class="repository-workspace__section-header">
-                    <span class="control-label">Подсказки контекста</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.annotations.length))}</span>
-                </div>
-                ${renderRepositoryAnnotationRail(repositoryContext.annotations)}
-            </section>
-        </section>
     `;
 }
 
@@ -806,14 +746,7 @@ function renderWorkspaceTerminal({
     const currentBranch = resolveCurrentBranchName(repositoryContext.branches);
 
     return `
-        <section class="workspace-terminal" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
-            <div class="workspace-terminal__chrome">
-                <span class="workspace-console__traffic workspace-console__traffic--close" aria-hidden="true"></span>
-                <span class="workspace-console__traffic workspace-console__traffic--min" aria-hidden="true"></span>
-                <span class="workspace-console__traffic workspace-console__traffic--max" aria-hidden="true"></span>
-                <span class="workspace-terminal__tab">git terminal</span>
-                <span class="workspace-terminal__badge">${escapeHtml(statusLabel)}</span>
-            </div>
+        <section class="workspace-terminal workspace-terminal--plain" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
             <div class="workspace-terminal__body" data-workspace-command-history>
                 <div class="workspace-terminal__history">
                     ${transcriptItems.map((entry) => entry.kind === "command" ? `
@@ -1175,143 +1108,6 @@ function renderRepositoryAnnotationRail(annotations) {
         <div class="workspace-annotation-rail" data-repository-annotation-rail>
             ${annotations.map((annotation) => `
                 <article class="workspace-annotation-rail__item">
-                    <span class="control-label">${escapeHtml(annotation.label ?? "Аннотация")}</span>
-                    <p class="panel-copy">${escapeHtml(annotation.message ?? "Сообщение аннотации недоступно.")}</p>
-                </article>
-            `).join("")}
-        </div>
-    `;
-}
-
-function renderWorkspaceActivityPanel(workspacePlayback, repositoryContext) {
-    const activityItems = deriveWorkspaceActivityItems(workspacePlayback, repositoryContext);
-
-    return `
-        <section class="workspace-activity" data-workspace-activity-state="${escapeHtml(workspacePlayback.status)}">
-            <div class="workspace-activity__header">
-                <div class="workspace-activity__heading">
-                    <span class="control-label">Workspace activity</span>
-                    <h4 class="workspace-activity__title">${escapeHtml(formatWorkspacePlaybackHeadline(workspacePlayback.status))}</h4>
-                </div>
-                <span class="workspace-card__badge">${escapeHtml(formatWorkspacePlaybackStatus(workspacePlayback.status))}</span>
-            </div>
-            <div class="workspace-activity__body">
-                ${activityItems.length
-            ? `
-                        <div class="workspace-activity__timeline" data-workspace-activity-timeline>
-                            ${activityItems.map((item, index) => `
-                                <article class="workspace-activity__item" data-workspace-activity-kind="${escapeHtml(item.kind)}">
-                                    <div class="workspace-activity__track" aria-hidden="true">
-                                        <span class="workspace-activity__dot"></span>
-                                        <span class="workspace-activity__line ${index === activityItems.length - 1 ? "workspace-activity__line--last" : ""}"></span>
-                                    </div>
-                                    <div class="workspace-activity__copy">
-                                        <strong>${escapeHtml(item.title)}</strong>
-                                        <p class="panel-copy">${escapeHtml(item.message)}</p>
-                                    </div>
-                                </article>
-                            `).join("")}
-                        </div>
-                    `
-            : `
-                        <div class="repository-context__empty">
-                            <span class="control-label">Изменений пока нет</span>
-                            <p class="panel-copy">Workspace activity появится после запуска сессии и проверенной команды.</p>
-                        </div>
-                    `}
-            </div>
-        </section>
-    `;
-}
-
-function renderRepositorySupplementaryContext(repositoryContext) {
-    return `
-        <div class="repository-context">
-            <section class="repository-context__section" data-repository-section="files">
-                <div class="repository-context__section-header">
-                    <span class="control-label">Файлы и статусы</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.files.length))}</span>
-                </div>
-                ${renderRepositoryFiles(repositoryContext.files)}
-            </section>
-            <section class="repository-context__section" data-repository-section="commits">
-                <div class="repository-context__section-header">
-                    <span class="control-label">Последние коммиты</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.commits.length))}</span>
-                </div>
-                ${renderRepositoryCommits(repositoryContext.commits)}
-            </section>
-            <section class="repository-context__section" data-repository-section="annotations">
-                <div class="repository-context__section-header">
-                    <span class="control-label">Авторские аннотации</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.annotations.length))}</span>
-                </div>
-                ${renderRepositoryAnnotations(repositoryContext.annotations)}
-            </section>
-        </div>
-    `;
-}
-
-function renderRepositoryFiles(files) {
-    if (!files.length) {
-        return renderRepositoryEmptyState(
-            "Файлы не указаны",
-            "В текущем payload нет сигналов по рабочему дереву."
-        );
-    }
-
-    return `
-        <div class="repository-file-list" data-repository-file-list>
-            ${files.map((file) => `
-                <article class="repository-file-card" data-repository-file-status="${escapeHtml(normalizeRepositoryFileStatus(file.status))}">
-                    <div class="repository-file-card__header">
-                        <strong>${escapeHtml(file.path ?? "Неизвестный путь")}</strong>
-                        <span class="repository-status-pill repository-status-pill--${escapeHtml(normalizeRepositoryFileStatus(file.status))}">
-                            ${escapeHtml(formatRepositoryFileStatus(file.status))}
-                        </span>
-                    </div>
-                    <p class="panel-copy">${escapeHtml(describeRepositoryFileStatus(file.status))}</p>
-                </article>
-            `).join("")}
-        </div>
-    `;
-}
-
-function renderRepositoryCommits(commits) {
-    if (!commits.length) {
-        return renderRepositoryEmptyState(
-            "Коммиты не указаны",
-            "В текущем payload нет authored-подсказок по истории."
-        );
-    }
-
-    return `
-        <div class="repository-commit-list" data-repository-commit-list>
-            ${commits.map((commit) => `
-                <article class="repository-commit-card">
-                    <div class="repository-commit-card__header">
-                        <strong>${escapeHtml(commit.id ?? "unknown")}</strong>
-                        <span class="repository-status-pill">commit</span>
-                    </div>
-                    <p class="panel-copy">${escapeHtml(commit.summary ?? "Описание коммита не указано.")}</p>
-                </article>
-            `).join("")}
-        </div>
-    `;
-}
-
-function renderRepositoryAnnotations(annotations) {
-    if (!annotations.length) {
-        return renderRepositoryEmptyState(
-            "Аннотации не указаны",
-            "Сценарий пока не добавил авторские пояснения к контексту."
-        );
-    }
-
-    return `
-        <div class="repository-annotation-list" data-repository-annotation-list>
-            ${annotations.map((annotation) => `
-                <article class="repository-annotation-card">
                     <span class="control-label">${escapeHtml(annotation.label ?? "Аннотация")}</span>
                     <p class="panel-copy">${escapeHtml(annotation.message ?? "Сообщение аннотации недоступно.")}</p>
                 </article>

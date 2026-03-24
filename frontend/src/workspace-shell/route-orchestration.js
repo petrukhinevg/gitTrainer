@@ -1,4 +1,5 @@
 import { shouldResetLessonScrollForRouteChange } from "./route-scroll-policy.js";
+import { SANDBOX_ROUTE_HASH, SANDBOX_SCENARIO_SLUG } from "./sandbox-route.js";
 
 export function createWorkspaceRouteOrchestrator({
     state,
@@ -82,6 +83,14 @@ export function parseWorkspaceRoute(hash) {
         return {
             name: "progress",
             scenarioSlug: null,
+            focus: null
+        };
+    }
+
+    if (hash === SANDBOX_ROUTE_HASH) {
+        return {
+            name: "exercise",
+            scenarioSlug: SANDBOX_SCENARIO_SLUG,
             focus: null
         };
     }

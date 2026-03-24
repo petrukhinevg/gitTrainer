@@ -1,5 +1,10 @@
 import { renderLessonLane } from "./lesson-layout.js";
 import {
+    isSandboxScenarioSlug,
+    isSandboxShortcutActive,
+    SANDBOX_ROUTE_HASH
+} from "../sandbox-route.js";
+import {
     encodeHashSegment,
     escapeHtml,
     formatTag
@@ -70,7 +75,10 @@ function renderTrainingFlow(state, tagOptions) {
             <div class="flow-block-list" data-flow-block-list>
                 ${renderWelcomeFlowBlock(state)}
                 ${renderProgressFlowBlock(state)}
-                ${state.catalog.items.map((item, index) => renderScenarioFlowBlock({
+                ${renderSandboxFlowBlock(state)}
+                ${state.catalog.items
+                    .filter((item) => !isSandboxScenarioSlug(item.slug))
+                    .map((item, index) => renderScenarioFlowBlock({
                     state,
                     item,
                     index,
@@ -161,6 +169,16 @@ function renderProgressFlowBlock(state) {
         <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="#/progress">
             <span class="flow-block__eyebrow">Прогресс</span>
             <strong class="flow-block__title">Посмотреть статус практики</strong>
+        </a>
+    `;
+}
+
+function renderSandboxFlowBlock(state) {
+    const isActive = isSandboxShortcutActive(state);
+    return `
+        <a class="flow-block ${isActive ? "flow-block--active" : ""}" href="${SANDBOX_ROUTE_HASH}">
+            <span class="flow-block__eyebrow">Песочница</span>
+            <strong class="flow-block__title">Свободно потренироваться</strong>
         </a>
     `;
 }

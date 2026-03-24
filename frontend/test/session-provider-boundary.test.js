@@ -162,6 +162,22 @@ test("local fixture provider keeps retry-feedback shape stable across attempts",
     assert.match(secondAttempt.terminalOutput.stdout, /(src\/ui\/header\.css|docs\/release-checklist\.md)/);
 });
 
+test("local fixture sandbox accepts quoted git commands in permissive mode", async () => {
+    const provider = createLocalFixtureSessionProvider({
+        now: () => new Date("2026-03-21T10:15:00Z")
+    });
+
+    const session = await provider.startSession({ scenarioSlug: "merge-sandbox-outline" });
+    const submission = await provider.submitAnswer(session.sessionId, {
+        answerType: "command_text",
+        answer: "git commit --allow-empty -m \"feat: branch commit\""
+    });
+
+    assert.equal(submission.outcome.correctness, "correct");
+    assert.equal(submission.outcome.code, "sandbox-command-accepted");
+    assert.match(submission.terminalOutput.stdout, /fixture command executed|Saved working directory|fatal:/i);
+});
+
 test("backend provider normalizes sparse success payload through shared boundary seam", async () => {
     const provider = createBackendApiSessionProvider(
         async () => ({

@@ -90,23 +90,82 @@ final class GitCliSupport {
             );
         }
 
-        List<String> tokens = new ArrayList<>(List.of(normalized.split("\\s+")));
+        if (normalized.contains("$(")) {
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-quoted-args-not-supported",
+                    "Shell-подстановки вроде `$(...)` не поддерживаются."
+            );
+        }
+
+        List<String> tokens = splitGitCommandTokens(normalized);
         if (tokens.isEmpty() || !"git".equals(tokens.getFirst().toLowerCase(Locale.ROOT))) {
             throw new ValidationRunnerExecutionException(
                     "validation-runner-command-must-start-with-git",
                     "Команда должна начинаться с `git`, например `git status`."
             );
         }
-        tokens.forEach(token -> {
-            if (token.contains("\"") || token.contains("'") || token.contains("$(")) {
-                throw new ValidationRunnerExecutionException(
-                        "validation-runner-quoted-args-not-supported",
-                        "Пока поддерживается только простая Git-команда без shell-quoted аргументов."
-                );
-            }
-        });
         tokens.set(0, resolveGitExecutable());
         return tokens;
+    }
+
+    private static List<String> splitGitCommandTokens(String rawCommand) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
+        Character activeQuote = null;
+
+        for (int index = 0; index < rawCommand.length(); index += 1) {
+            char character = rawCommand.charAt(index);
+            if (activeQuote != null) {
+                if (character == activeQuote) {
+                    activeQuote = null;
+                    continue;
+                }
+                if (
+                        character == '\\'
+                                && activeQuote == '"'
+                                && index + 1 < rawCommand.length()
+                ) {
+                    char escapedCharacter = rawCommand.charAt(index + 1);
+                    if (escapedCharacter == '"' || escapedCharacter == '\\') {
+                        currentToken.append(escapedCharacter);
+                        index += 1;
+                        continue;
+                    }
+                }
+                currentToken.append(character);
+                continue;
+            }
+
+            if (Character.isWhitespace(character)) {
+                flushGitCommandToken(tokens, currentToken);
+                continue;
+            }
+
+            if (character == '"' || character == '\'') {
+                activeQuote = character;
+                continue;
+            }
+
+            currentToken.append(character);
+        }
+
+        if (activeQuote != null) {
+            throw new ValidationRunnerExecutionException(
+                    "validation-runner-quoted-args-not-supported",
+                    "Команда содержит незакрытую кавычку."
+            );
+        }
+
+        flushGitCommandToken(tokens, currentToken);
+        return tokens;
+    }
+
+    private static void flushGitCommandToken(List<String> tokens, StringBuilder currentToken) {
+        if (currentToken.isEmpty()) {
+            return;
+        }
+        tokens.add(currentToken.toString());
+        currentToken.setLength(0);
     }
 
     static String resolveGitExecutable() {

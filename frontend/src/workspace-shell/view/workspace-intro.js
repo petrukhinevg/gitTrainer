@@ -8,7 +8,7 @@ export function renderRouteNotFound() {
         <section class="workspace-intro panel">
             <p class="panel-label">Навигация</p>
             <h2>Неизвестный маршрут</h2>
-            <p>Сейчас доступны только <code>#/catalog</code>, <code>#/progress</code> и <code>#/exercise/&lt;код-сценария&gt;</code>.</p>
+            <p>Сейчас доступны <code>#/catalog</code>, <code>#/progress</code>, <code>#/sandbox</code> и <code>#/exercise/&lt;код-сценария&gt;</code>.</p>
         </section>
     `;
 }

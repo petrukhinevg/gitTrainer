@@ -2,11 +2,72 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 
-import { createBackendApiCatalogProvider } from "../src/catalog/catalog-provider.js";
-import { createBackendApiDetailProvider } from "../src/detail/detail-provider.js";
-import { createBackendApiProgressProvider } from "../src/progress/progress-provider.js";
-import { createBackendApiSessionProvider } from "../src/session/session-provider.js";
+import {
+    createBackendApiCatalogProvider,
+    createLocalFixtureCatalogProvider
+} from "../src/catalog/catalog-provider.js";
+import {
+    createBackendApiDetailProvider,
+    createLocalFixtureDetailProvider
+} from "../src/detail/detail-provider.js";
+import {
+    createBackendApiProgressProvider,
+    createLocalFixtureProgressProvider
+} from "../src/progress/progress-provider.js";
+import {
+    createBackendApiSessionProvider,
+    createLocalFixtureSessionProvider
+} from "../src/session/session-provider.js";
 import { createCatalogWorkspaceController } from "../src/workspace-shell/controller.js";
+
+test("маршрут #/sandbox открывает рабочую песочницу через существующий сценарий", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/sandbox"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "local-fixture",
+            catalogProviderFactories: {
+                "local-fixture": () => createLocalFixtureCatalogProvider()
+            },
+            detailProviderFactories: {
+                "local-fixture": () => createLocalFixtureDetailProvider()
+            },
+            sessionProviderFactories: {
+                "local-fixture": () => createLocalFixtureSessionProvider()
+            },
+            progressProviderFactories: {
+                "local-fixture": () => createLocalFixtureProgressProvider()
+            },
+            tagOptions: ["branching", "history", "planning", "navigation", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        assert.match(appRoot.textContent, /Тестовый блок про слияние без спешки/);
+        assert.ok(
+            appRoot.querySelector('[data-submission-draft-form]'),
+            "Песочница должна открывать рабочую форму отправки, а не пустую заглушку"
+        );
+        assert.ok(
+            appRoot.querySelector('[href="#/sandbox"].flow-block--active'),
+            "Shortcut песочницы должен оставаться активным"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-scenario-toggle="merge-sandbox-outline"]'),
+            null,
+            "Служебный sandbox-сценарий не должен дублироваться в общем списке заданий"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
 
 test("проходит backend-api smoke path catalog -> exercise -> submit -> progress", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
@@ -88,16 +149,27 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
         await flushAsyncWork();
 
         assert.ok(
-            appRoot.querySelector('[data-repository-branch-graph="ready"]'),
-            "Экран упражнения должен показать branch graph"
-        );
-        assert.ok(
             appRoot.querySelector('[data-repository-workspace-visual="ready"]'),
             "Экран упражнения должен показать визуальную workspace-схему"
         );
         assert.ok(
             appRoot.querySelector('[data-repository-commit-tree]'),
             "Viewer должен построить commit tree"
+        );
+        assert.equal(
+            appRoot.querySelector('.practice-pane--viewer .workspace-card__header'),
+            null,
+            "Верхняя часть viewer не должна показывать отдельную карточку-обвязку"
+        );
+        assert.equal(
+            appRoot.querySelector('.workspace-terminal__chrome'),
+            null,
+            "Терминал не должен показывать декоративную chrome-шапку"
+        );
+        assert.doesNotMatch(
+            appRoot.textContent ?? "",
+            /Workspace activity|Git workspace/,
+            "Нижняя часть practice panel не должна показывать удалённые секции"
         );
         const commitTree = appRoot.querySelector('[data-repository-commit-tree]');
         const commandHistory = appRoot.querySelector('[data-workspace-command-history]');
@@ -326,16 +398,22 @@ test("правая колонка переключается на live workspace
         assert.match(appRoot.textContent, /Файлы: 2/);
         assert.match(appRoot.textContent, /feature\/test-stash-panel/);
         assert.ok(
-            appRoot.querySelector('[data-repository-workspace-section="files"] [data-repository-working-tree]'),
-            "Viewer должен показать рабочее дерево внутри workspace-схемы"
-        );
-        assert.ok(
             appRoot.querySelector('[data-repository-commit-tree]'),
-            "Viewer должен сохранить commit tree рядом с рабочим деревом"
+            "Viewer должен сохранить commit tree в верхней части панели"
         );
         assert.ok(
             appRoot.querySelector('[data-workspace-command-history]'),
             "Viewer должен показать terminal history под деревом"
+        );
+        assert.equal(
+            appRoot.querySelector('.workspace-terminal__chrome'),
+            null,
+            "Терминал в viewer должен оставаться без декоративной chrome-шапки"
+        );
+        assert.doesNotMatch(
+            appRoot.textContent ?? "",
+            /Workspace activity|Git workspace/,
+            "Нижняя часть practice panel не должна показывать удалённые секции"
         );
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
@@ -349,8 +427,6 @@ test("правая колонка переключается на live workspace
         await flushAsyncWork();
 
         assert.match(appRoot.textContent, /Файлы: 0/);
-        assert.match(appRoot.textContent, /В stash сохранено записей: 1\./);
-        assert.match(appRoot.textContent, /Рабочее дерево выглядит чистым|Рабочее дерево чистое/);
         assert.equal(
             appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
             "updated"
@@ -360,8 +436,8 @@ test("правая колонка переключается на live workspace
             "После stash history должна показать успешную команду"
         );
         assert.match(appRoot.textContent, /git stash push -u/);
-        assert.match(appRoot.textContent, /Рабочее дерево очищено/);
-        assert.match(appRoot.textContent, /Сдвинулись указатели дерева|Явных изменений в snapshot нет|Появилась новая системная подсказка/);
+        assert.match(appRoot.textContent, /Изменения и untracked-файлы безопасно убраны в stash/);
+        assert.match(appRoot.textContent, /Команда принята, и viewer уже показывает обновлённый snapshot рабочей копии/);
     } finally {
         restoreGlobals();
         dom.window.close();

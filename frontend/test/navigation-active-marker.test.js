@@ -64,6 +64,40 @@ test("маркер выбирает активную подзадачу прио
     }
 });
 
+test("маркер выбирает shortcut песочницы для sandbox route", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            route: "exercise",
+            selectedScenarioSlug: "merge-sandbox-outline",
+            selectedFocus: null,
+            expandedScenarioSlugs: []
+        }),
+        null,
+        ["branching", "navigation"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+    const restoreGlobals = installNavigationMarkerGlobals(dom.window);
+
+    try {
+        const mapRoot = dom.window.document.querySelector("[data-tag-connection-map]");
+        const sandboxLink = dom.window.document.querySelector('[href="#/sandbox"]');
+        const progressLink = dom.window.document.querySelector('[href="#/progress"]');
+
+        syncNavigationMarkerTarget({
+            mapRoot,
+            route: "exercise",
+            selectedScenarioSlug: "merge-sandbox-outline",
+            selectedFocus: null
+        });
+
+        assert.equal(sandboxLink?.dataset.navigationMarkerTarget, "true");
+        assert.equal(progressLink?.hasAttribute("data-navigation-marker-target"), false);
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("маркер следует за явно выбранной целью и не зависит от active-классов", () => {
     const dom = new JSDOM(createMarkerFixtureWithSiblingScenario(), { pretendToBeVisual: true });
     const { window } = dom;

@@ -33,6 +33,7 @@ import {
     renderCatalogWorkspaceShell,
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
+import { isSandboxShortcutActive, SANDBOX_ROUTE_HASH } from "./sandbox-route.js";
 
 const SAFE_FALLBACK_PROVIDER_NAME = "local-fixture";
 const PREFERRED_PROVIDER_ORDER = Object.freeze([
@@ -1607,7 +1608,8 @@ function prepareNavigationMarkerForScenarioCollapse(appRoot, slug) {
 function syncNavigationRouteShortcutState(surfaceRoot, state) {
     const routeShortcutStates = [
         ["#/catalog", state.route === "catalog"],
-        ["#/progress", state.route === "progress"]
+        ["#/progress", state.route === "progress"],
+        [SANDBOX_ROUTE_HASH, isSandboxShortcutActive(state)]
     ];
 
     routeShortcutStates.forEach(([href, isActive]) => {

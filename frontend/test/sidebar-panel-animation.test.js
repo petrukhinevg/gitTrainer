@@ -4,6 +4,42 @@ import { JSDOM } from "jsdom";
 
 import { renderSidebarPanelContent } from "../src/workspace-shell/view/sidebar-panel.js";
 
+test("песочница рендерится сразу после блока прогресса", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            route: "catalog",
+            catalogItems: [
+                {
+                    slug: "merge-sandbox-outline",
+                    title: "Тестовый sandbox",
+                    tags: ["branching", "planning"]
+                },
+                {
+                    slug: "branch-safety",
+                    title: "Подтверди текущую ветку",
+                    tags: ["branching", "navigation"]
+                }
+            ]
+        }),
+        null,
+        ["branching", "navigation", "planning"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+
+    try {
+        const links = Array.from(dom.window.document.querySelectorAll(".flow-block-list > a[href]"));
+        const sandboxScenarioToggle = dom.window.document.querySelector('[data-scenario-toggle="merge-sandbox-outline"]');
+
+        assert.deepEqual(
+            links.map((link) => link.getAttribute("href")),
+            ["#/catalog", "#/progress", "#/sandbox"]
+        );
+        assert.equal(sandboxScenarioToggle, null);
+    } finally {
+        dom.window.close();
+    }
+});
+
 test("раскрытые дочерние блоки получают последовательные индексы для stagger-анимации", () => {
     const markup = renderSidebarPanelContent(createReadyState({ expandingScenarioSlug: "branch-safety" }), null, ["branching", "navigation"]);
     const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);

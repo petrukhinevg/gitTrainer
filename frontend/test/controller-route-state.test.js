@@ -5,6 +5,7 @@ import {
     parseWorkspaceRoute,
     resetRouteScopedWorkspaceState
 } from "../src/workspace-shell/route-orchestration.js";
+import { SANDBOX_SCENARIO_SLUG } from "../src/workspace-shell/sandbox-route.js";
 
 test("parseWorkspaceRoute извлекает slug и focus из exercise hash", () => {
     assert.deepEqual(
@@ -13,6 +14,17 @@ test("parseWorkspaceRoute извлекает slug и focus из exercise hash", 
             name: "exercise",
             scenarioSlug: "branch-safety",
             focus: "step-2"
+        }
+    );
+});
+
+test("parseWorkspaceRoute распознаёт sandbox route", () => {
+    assert.deepEqual(
+        parseWorkspaceRoute("#/sandbox"),
+        {
+            name: "exercise",
+            scenarioSlug: SANDBOX_SCENARIO_SLUG,
+            focus: null
         }
     );
 });

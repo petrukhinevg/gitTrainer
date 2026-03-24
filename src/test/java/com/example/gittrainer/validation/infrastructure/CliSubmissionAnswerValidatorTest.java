@@ -62,4 +62,12 @@ class CliSubmissionAnswerValidatorTest {
                 new SubmittedAnswer("command_text", "git show-ref --tags")
         ).outcome().correctness()).isEqualTo("correct");
     }
+
+    @Test
+    void acceptsQuotedSandboxCommandInPermissiveSandboxMode() {
+        assertThat(submissionAnswerValidator.validate(
+                "merge-sandbox-outline",
+                new SubmittedAnswer("command_text", "git branch --list \"main\"")
+        ).outcome().correctness()).isEqualTo("correct");
+    }
 }

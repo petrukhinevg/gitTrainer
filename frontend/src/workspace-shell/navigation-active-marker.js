@@ -1,4 +1,8 @@
 import { escapeSelectorValue } from "./dom-helpers.js";
+import {
+    isSandboxScenarioSlug,
+    SANDBOX_ROUTE_HASH
+} from "./sandbox-route.js";
 
 export function bindNavigationActiveMarker({
     appRoot,
@@ -430,6 +434,10 @@ function resolveNavigationMarkerTargetElement({
     selectedScenarioSlug,
     selectedFocus
 }) {
+    if (route === "exercise" && isSandboxScenarioSlug(selectedScenarioSlug)) {
+        return mapRoot.querySelector(`[href="${SANDBOX_ROUTE_HASH}"]`);
+    }
+
     if (route === "catalog" || route === "progress") {
         return mapRoot.querySelector(`[href="#/${escapeSelectorValue(route)}"]`);
     }

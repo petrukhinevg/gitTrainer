@@ -121,7 +121,7 @@ final class ApiProblemDetailFactory {
             case "validation-runner-command-must-start-with-git" ->
                     "Здесь нужна именно Git-команда, начинающаяся с `git`.";
             case "validation-runner-quoted-args-not-supported" ->
-                    "Используйте простую Git-команду без shell-кавычек и подстановок.";
+                    "Кавычки в аргументах допустимы, но shell-подстановки и незакрытые кавычки не поддерживаются.";
             default -> exception.getMessage();
         };
     }

@@ -12,6 +12,7 @@ import java.util.Set;
 public final class GitCommandProbeValidator {
 
     private static final String GIT_COMMAND_PROBE = "git_command_probe";
+    private static final String SANDBOX_SCENARIO_SLUG = "merge-sandbox-outline";
 
     private GitCommandProbeValidator() {
     }
@@ -25,6 +26,7 @@ public final class GitCommandProbeValidator {
         if (commandSequence.matchedRule() == null && persistedWorkspace != null) {
             return executeUnexpectedAgainstWorkspace(
                     persistedWorkspace,
+                    request.scenarioSlug(),
                     commandSequence.normalizedAnswer(),
                     GitCliSupport.tokenizeGitCommand(request.answer().value())
             );
@@ -48,6 +50,7 @@ public final class GitCommandProbeValidator {
                 replayAllowedCommands(commandSequence.commandTokens(), workspace);
                 return executeUnexpectedAgainstWorkspace(
                         workspace,
+                        request.scenarioSlug(),
                         commandSequence.normalizedAnswer(),
                         GitCliSupport.tokenizeGitCommand(request.answer().value())
                 );
@@ -128,11 +131,26 @@ public final class GitCommandProbeValidator {
 
     private static CliValidationResponse executeUnexpectedAgainstWorkspace(
             Path workspace,
+            String scenarioSlug,
             String normalizedAnswer,
             List<String> tokens
     ) {
         try {
             GitCliSupport.CommandResult commandResult = GitCliSupport.runCommand(tokens, workspace);
+            if (SANDBOX_SCENARIO_SLUG.equals(scenarioSlug) && commandResult.exitCode() == 0) {
+                return new CliValidationResponse(
+                        "evaluated",
+                        "correct",
+                        "sandbox-command-accepted",
+                        "Команда выполнена в песочнице. Продолжайте экспериментировать с репозиторием.",
+                        List.of(
+                                new CliValidationObservation("normalized-answer", normalizedAnswer),
+                                new CliValidationObservation("stdout", commandResult.stdout().trim())
+                        ),
+                        List.of(),
+                        null
+                );
+            }
             return unexpectedCommandResponse(normalizedAnswer, commandResult);
         } catch (IOException exception) {
             throw new ValidationRunnerExecutionException(

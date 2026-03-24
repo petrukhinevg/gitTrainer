@@ -186,6 +186,17 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
     }
 
     const acceptedCommands = ACCEPTED_COMMANDS_BY_SCENARIO[scenarioSlug];
+    const normalizedAnswer = normalizeCommand(answer);
+
+    if (scenarioSlug === "merge-sandbox-outline" && normalizedAnswer.startsWith("git ")) {
+        return {
+            status: "evaluated",
+            correctness: "correct",
+            code: "sandbox-command-accepted",
+            message: "Команда принята в песочнице. Можно продолжать эксперименты с Git."
+        };
+    }
+
     if (!acceptedCommands?.length) {
         return {
             status: "evaluated",
@@ -195,7 +206,6 @@ function evaluateFixtureSubmission(scenarioSlug, answerType, answer) {
         };
     }
 
-    const normalizedAnswer = normalizeCommand(answer);
     if (acceptedCommands.some((expectedCommand) => normalizeCommand(expectedCommand) === normalizedAnswer)) {
         return {
             status: "evaluated",
