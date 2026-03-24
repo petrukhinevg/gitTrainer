@@ -180,6 +180,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
                 .andExpect(jsonPath("$.workspace.repositoryContext.commits.length()").value(2))
                 .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].id").value("a1c9e31"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes.length()").value(2))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes[0].id").value("a1c9e31"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(3))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].path").value("notes/status-checklist.md"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].status").value("untracked"))
@@ -204,6 +206,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("feature/history-cleanup"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал для preview истории"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему rebase ещё рано"));
     }

@@ -123,7 +123,30 @@
 
 .practice-repository-viewer {
     min-height: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(31, 23, 32, 0.16) transparent;
+}
+
+.practice-repository-viewer::-webkit-scrollbar {
+    width: 10px;
+}
+
+.practice-repository-viewer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.practice-repository-viewer::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background: rgba(31, 23, 32, 0.16);
+}
+
+.practice-repository-viewer::-webkit-scrollbar-thumb:hover {
+    background: rgba(31, 23, 32, 0.24);
 }
 
 .practice-composer__scroll {
@@ -452,6 +475,501 @@
     background: rgba(255, 239, 214, 0.72);
 }
 
+.repository-workspace,
+.workspace-console,
+.workspace-console__chrome,
+.workspace-console__body,
+.workspace-console__line,
+.workspace-activity,
+.workspace-activity__header,
+.workspace-activity__heading,
+.workspace-activity__body,
+.workspace-activity__timeline,
+.workspace-activity__item,
+.workspace-activity__track,
+.workspace-activity__copy,
+.repository-workspace__hero,
+.repository-workspace__hero-copy,
+.repository-workspace__hero-meta,
+.repository-workspace__grid,
+.repository-workspace__section,
+.repository-workspace__section-header,
+.repository-workspace__notes,
+.workspace-commit-tree,
+.workspace-commit-tree__row,
+.workspace-commit-tree__lanes,
+.workspace-commit-tree__lane-cell,
+.workspace-commit-tree__content,
+.workspace-commit-tree__header,
+.workspace-commit-tree__meta,
+.workspace-commit-tree__refs,
+.workspace-file-stack,
+.workspace-file-stack__item,
+.workspace-file-stack__body,
+.workspace-file-stack__header,
+.workspace-annotation-rail,
+.workspace-annotation-rail__item {
+    display: grid;
+    gap: 10px;
+}
+
+.repository-workspace {
+    padding: 2px 2px 14px;
+    gap: 14px;
+}
+
+.workspace-console {
+    gap: 0;
+    border: 1px solid rgba(31, 23, 32, 0.1);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(29, 27, 31, 0.97), rgba(39, 36, 42, 0.94));
+    color: #f4ece4;
+    overflow: hidden;
+}
+
+.workspace-console__chrome {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.workspace-console__traffic {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+}
+
+.workspace-console__traffic--close {
+    background: #ff6159;
+}
+
+.workspace-console__traffic--min {
+    background: #ffbd2e;
+}
+
+.workspace-console__traffic--max {
+    background: #28c840;
+}
+
+.workspace-console__tab,
+.workspace-console__badge,
+.workspace-console__prompt,
+.workspace-console__command {
+    font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.workspace-console__tab,
+.workspace-console__badge {
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.workspace-console__tab {
+    color: rgba(244, 236, 228, 0.74);
+}
+
+.workspace-console__badge {
+    color: #ffd8c3;
+}
+
+.workspace-console__body {
+    gap: 10px;
+    padding: 14px 16px 16px;
+}
+
+.workspace-console__line {
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.workspace-console__prompt {
+    color: #8fdaa0;
+    font-size: 0.82rem;
+}
+
+.workspace-console__command {
+    color: #fff4ea;
+    font-size: 0.84rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.workspace-console__summary {
+    color: rgba(244, 236, 228, 0.76);
+}
+
+.workspace-console__cursor {
+    width: 9px;
+    height: 1.05em;
+    background: rgba(255, 244, 234, 0.9);
+    animation: workspace-console-cursor 1s steps(1, end) infinite;
+}
+
+@keyframes workspace-console-cursor {
+    0%, 49% {
+        opacity: 1;
+    }
+
+    50%, 100% {
+        opacity: 0;
+    }
+}
+
+.repository-workspace--running .repository-workspace__section,
+.repository-workspace--running .repository-workspace__notes,
+.repository-workspace--booting .repository-workspace__section,
+.repository-workspace--booting .repository-workspace__notes {
+    position: relative;
+    overflow: hidden;
+}
+
+.repository-workspace--running .repository-workspace__section::after,
+.repository-workspace--running .repository-workspace__notes::after,
+.repository-workspace--booting .repository-workspace__section::after,
+.repository-workspace--booting .repository-workspace__notes::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.28) 48%, transparent 100%);
+    transform: translateX(-100%);
+    animation: workspace-scan-sheen 1.35s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes workspace-scan-sheen {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.repository-workspace__hero {
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(190, 91, 43, 0.1), transparent 42%),
+        linear-gradient(180deg, rgba(255, 250, 241, 0.92), rgba(247, 240, 231, 0.74));
+}
+
+.repository-workspace__title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.repository-workspace__hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.repository-workspace__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: auto;
+    padding: 0;
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.67rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.repository-workspace__grid {
+    grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.9fr);
+    align-items: start;
+    gap: 12px;
+}
+
+.repository-workspace__section,
+.repository-workspace__notes {
+    min-height: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 252, 246, 0.78);
+}
+
+.repository-workspace__section-header {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+}
+
+.repository-workspace__section--graph {
+    grid-row: span 2;
+}
+
+.workspace-commit-tree {
+    gap: 12px;
+}
+
+.workspace-commit-tree__row {
+    display: grid;
+    grid-template-columns: calc(var(--commit-tree-lanes, 1) * 22px) minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: start;
+    padding: 10px 0;
+    border-top: 1px solid rgba(31, 23, 32, 0.08);
+}
+
+.workspace-commit-tree__row:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.workspace-commit-tree__row--current .workspace-commit-tree__content {
+    background: rgba(255, 244, 232, 0.92);
+}
+
+.workspace-commit-tree__row--new .workspace-commit-tree__content {
+    background: rgba(236, 250, 240, 0.96);
+}
+
+.workspace-commit-tree__row--active .workspace-commit-tree__content {
+    background: rgba(255, 247, 234, 0.96);
+    box-shadow: 0 0 0 1px rgba(190, 91, 43, 0.12);
+}
+
+.workspace-commit-tree__lanes {
+    grid-template-columns: repeat(var(--commit-tree-lanes, 1), 22px);
+    align-items: stretch;
+    min-height: 100%;
+}
+
+.workspace-commit-tree__lane-cell {
+    position: relative;
+    min-height: 66px;
+}
+
+.workspace-commit-tree__content {
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(248, 243, 236, 0.84);
+}
+
+.workspace-commit-tree__header {
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.workspace-commit-tree__refs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.workspace-commit-tree__ref {
+    display: inline-flex;
+    align-items: center;
+    min-height: auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(57, 89, 121, 0.12);
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.workspace-commit-tree__ref--current {
+    background: rgba(190, 91, 43, 0.18);
+    color: var(--ink-strong);
+}
+
+.workspace-commit-tree__ref--head {
+    background: rgba(57, 89, 121, 0.18);
+}
+
+.workspace-commit-tree__ref--remote {
+    background: rgba(77, 123, 96, 0.16);
+}
+
+.workspace-commit-tree__ref--tag {
+    background: rgba(138, 75, 17, 0.16);
+}
+
+.workspace-commit-tree__ref--stash {
+    background: rgba(122, 47, 53, 0.16);
+}
+
+.workspace-commit-tree__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workspace-commit-tree__dot {
+    position: absolute;
+    top: calc(50% - 5px);
+    left: calc(50% - 5px);
+    z-index: 2;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(190, 91, 43, 0.12);
+}
+
+.workspace-commit-tree__line {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    background: linear-gradient(180deg, rgba(57, 89, 121, 0.3), rgba(57, 89, 121, 0.12));
+}
+
+.workspace-commit-tree__line--top {
+    top: 0;
+    height: 50%;
+}
+
+.workspace-commit-tree__line--bottom {
+    top: 50%;
+    height: 50%;
+}
+
+.workspace-commit-tree__line--horizontal {
+    top: calc(50% - 1px);
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: 2px;
+    background: rgba(57, 89, 121, 0.22);
+}
+
+.workspace-commit-tree__line--target {
+    top: 50%;
+    height: 18px;
+}
+
+.workspace-file-stack__header {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 8px;
+}
+
+.workspace-file-stack__item {
+    grid-template-columns: 10px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+    padding: 10px 0;
+    border-top: 1px solid rgba(31, 23, 32, 0.08);
+}
+
+.workspace-file-stack__item:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.workspace-file-stack__marker {
+    width: 10px;
+    min-height: 56px;
+    border-radius: 999px;
+    background: rgba(57, 89, 121, 0.18);
+}
+
+.workspace-file-stack__marker--modified {
+    background: linear-gradient(180deg, rgba(138, 75, 17, 0.9), rgba(138, 75, 17, 0.22));
+}
+
+.workspace-file-stack__marker--untracked {
+    background: linear-gradient(180deg, rgba(190, 91, 43, 0.92), rgba(190, 91, 43, 0.2));
+}
+
+.workspace-file-stack__marker--staged {
+    background: linear-gradient(180deg, rgba(36, 87, 61, 0.9), rgba(36, 87, 61, 0.2));
+}
+
+.workspace-file-stack__marker--deleted,
+.workspace-file-stack__marker--conflicted {
+    background: linear-gradient(180deg, rgba(122, 47, 53, 0.9), rgba(122, 47, 53, 0.2));
+}
+
+.workspace-file-stack__marker--renamed {
+    background: linear-gradient(180deg, rgba(57, 89, 121, 0.9), rgba(57, 89, 121, 0.2));
+}
+
+.workspace-annotation-rail {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.workspace-annotation-rail__item {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(247, 240, 231, 0.82);
+}
+
+.workspace-activity {
+    padding: 14px 16px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 252, 246, 0.72);
+}
+
+.workspace-activity__header {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 10px;
+}
+
+.workspace-activity__title {
+    margin: 0;
+    font-size: 0.94rem;
+}
+
+.workspace-activity__timeline {
+    gap: 12px;
+}
+
+.workspace-activity__item {
+    grid-template-columns: 16px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+}
+
+.workspace-activity__track {
+    justify-items: center;
+    gap: 0;
+}
+
+.workspace-activity__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(190, 91, 43, 0.12);
+}
+
+.workspace-activity__line {
+    width: 2px;
+    min-height: 28px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(190, 91, 43, 0.28), rgba(190, 91, 43, 0.08));
+}
+
+.workspace-activity__line--last {
+    background: transparent;
+}
+
+.workspace-activity__copy {
+    gap: 6px;
+}
+
 .repository-context,
 .repository-context__section,
 .repository-context__section-header,
@@ -676,6 +1194,14 @@
 }
 
 @media (max-width: 900px) {
+    .repository-workspace__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .repository-workspace__section--graph {
+        grid-row: auto;
+    }
+
     .lesson-lane--practice .lesson-lane__body {
         overflow: visible;
     }
@@ -717,6 +1243,31 @@
 }
 
 @media (max-width: 720px) {
+    .workspace-console__chrome {
+        grid-template-columns: auto auto auto 1fr;
+    }
+
+    .workspace-console__badge {
+        grid-column: 1 / -1;
+    }
+
+    .repository-workspace__hero,
+    .repository-workspace__section,
+    .repository-workspace__notes,
+    .workspace-activity {
+        padding: 12px 14px;
+    }
+
+    .repository-workspace__hero-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .workspace-console__line {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
     .practice-shell__meta,
     .workspace-card__actions,
     .practice-composer__actions {
@@ -732,6 +1283,17 @@
         grid-template-columns: 14px 18px minmax(0, 1fr);
     }
 
+    .workspace-commit-tree__row {
+        grid-template-columns: 1fr;
+        row-gap: 10px;
+    }
+
+    .workspace-commit-tree__lanes {
+        justify-content: start;
+    }
+
+    .workspace-commit-tree__header,
+    .workspace-file-stack__header,
     .repository-context__section-header,
     .repository-file-card__header,
     .repository-commit-card__header {

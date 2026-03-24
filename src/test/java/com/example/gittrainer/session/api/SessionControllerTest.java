@@ -156,7 +156,9 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.retryFeedback.hint.level").value("none"))
                 .andExpect(jsonPath("$.retryFeedback.hint.reveals").isEmpty())
                 .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes.length()").isNotEmpty())
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes[0].id").isNotEmpty());
     }
 
     @Test
@@ -172,6 +174,7 @@ class SessionControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes[0].refs[0].name").isNotEmpty())
                 .andExpect(jsonPath("$.workspace.repositoryContext.files.length()").value(3))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[0].path").value("README.md"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[0].status").value("modified"))
@@ -195,6 +198,7 @@ class SessionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.outcome.correctness").value("correct"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.status").value("live-session"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes.length()").isNotEmpty())
                 .andExpect(jsonPath("$.workspace.repositoryContext.files").isEmpty())
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[2].label").value("Stash"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations[2].message")

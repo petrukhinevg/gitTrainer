@@ -7,6 +7,7 @@ record ScenarioRepositoryContextResponse(
         List<ScenarioRepositoryBranchResponse> branches,
         List<ScenarioRepositoryCommitResponse> commits,
         List<ScenarioRepositoryFileResponse> files,
-        List<ScenarioWorkspaceAnnotationResponse> annotations
+        List<ScenarioWorkspaceAnnotationResponse> annotations,
+        ScenarioCommitGraphResponse graph
 ) {
 }

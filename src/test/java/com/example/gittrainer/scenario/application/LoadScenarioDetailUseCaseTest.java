@@ -53,7 +53,14 @@ class LoadScenarioDetailUseCaseTest {
                 List.of()
         );
         ScenarioWorkspaceDetail.ScenarioRepositoryContext repositoryContext =
-                new ScenarioWorkspaceDetail.ScenarioRepositoryContext("authored-fixture", List.of(), List.of(), List.of(), List.of());
+                new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
+                        "authored-fixture",
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        null
+                );
 
         when(scenarioCatalogGateway.loadCatalog(new CatalogBrowseQuery(null, null, null, "default")))
                 .thenReturn(List.of(summary));

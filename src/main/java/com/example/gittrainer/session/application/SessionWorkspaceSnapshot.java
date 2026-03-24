@@ -11,7 +11,8 @@ public record SessionWorkspaceSnapshot(
             List<Branch> branches,
             List<Commit> commits,
             List<FileEntry> files,
-            List<Annotation> annotations
+            List<Annotation> annotations,
+            CommitGraph graph
     ) {
 
         public RepositoryContext {
@@ -31,6 +32,33 @@ public record SessionWorkspaceSnapshot(
     public record Commit(
             String id,
             String summary
+    ) {
+    }
+
+    public record CommitGraph(
+            List<CommitNode> nodes
+    ) {
+        public CommitGraph {
+            nodes = nodes == null ? List.of() : List.copyOf(nodes);
+        }
+    }
+
+    public record CommitNode(
+            String id,
+            String summary,
+            List<String> parentIds,
+            List<CommitRef> refs
+    ) {
+        public CommitNode {
+            parentIds = parentIds == null ? List.of() : List.copyOf(parentIds);
+            refs = refs == null ? List.of() : List.copyOf(refs);
+        }
+    }
+
+    public record CommitRef(
+            String name,
+            String type,
+            boolean current
     ) {
     }
 

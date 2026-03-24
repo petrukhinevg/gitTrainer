@@ -73,6 +73,10 @@ export function renderWorkspacePanelSections(state) {
         bootstrapState,
         submissionState
     ));
+    const workspacePlayback = normalizeWorkspacePlayback(
+        state.session?.workspacePlayback,
+        repositoryContext
+    );
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
     const retryFeedback = resolveRetryFeedback(feedbackPanelState, bootstrapState, submissionState);
     const submitDisabled = isSubmitDisabled(bootstrapState, submissionState);
@@ -87,7 +91,7 @@ export function renderWorkspacePanelSections(state) {
                 </div>
                 <div class="practice-shell__viewer-body">
                     <div class="practice-repository-viewer" data-repository-context>
-                        ${renderRepositoryBranchPanel(repositoryContext)}
+                        ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
                     </div>
                 </div>
             </section>
@@ -119,7 +123,13 @@ export function renderWorkspacePanelSections(state) {
                 <div class="practice-composer__scroll" data-practice-surface-scroll>
                     ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
                     ${renderBootstrapNotice(bootstrapState)}
-                    ${renderPracticeRepositorySupplement(repositoryContext, bootstrapState, submissionState, lifecycle)}
+                    ${renderPracticeRepositorySupplement(
+                        repositoryContext,
+                        workspacePlayback,
+                        bootstrapState,
+                        submissionState,
+                        lifecycle
+                    )}
                     <div class="practice-composer__results">
                         ${renderSubmissionTransportOutput(
                             state.submissionDraft.preparedSubmission,
@@ -678,21 +688,65 @@ function renderBranchGraph(branches) {
     `;
 }
 
-function renderRepositoryBranchPanel(repositoryContext) {
+function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
     return `
-        <div class="repository-context">
-            <section class="repository-context__section" data-repository-section="branches">
-                <div class="repository-context__section-header">
-                    <span class="control-label">Ветки</span>
-                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.branches.length))}</span>
+        <section
+            class="repository-workspace repository-workspace--${escapeHtml(workspacePlayback.status)}"
+            data-repository-workspace-visual="ready"
+            data-workspace-playback-status="${escapeHtml(workspacePlayback.status)}"
+        >
+            ${renderWorkspacePlaybackConsole(workspacePlayback, repositoryContext)}
+            <div class="repository-workspace__hero">
+                <div class="repository-workspace__hero-copy">
+                    <span class="control-label">Git workspace</span>
+                    <h3 class="repository-workspace__title">${escapeHtml(resolveCurrentBranchName(repositoryContext.branches))}</h3>
+                    <p class="panel-copy">${escapeHtml(describeRepositoryWorkspace(repositoryContext))}</p>
                 </div>
-                ${renderBranchGraph(repositoryContext.branches)}
+                <div class="repository-workspace__hero-meta">
+                    <span class="repository-workspace__chip">Статус: ${escapeHtml(formatRepositoryStatus(repositoryContext.status))}</span>
+                    <span class="repository-workspace__chip">Ветки: ${escapeHtml(String(repositoryContext.branches.length))}</span>
+                    <span class="repository-workspace__chip">Коммиты: ${escapeHtml(String(repositoryContext.commits.length))}</span>
+                    <span class="repository-workspace__chip">Файлы: ${escapeHtml(String(repositoryContext.files.length))}</span>
+                </div>
+            </div>
+            <div class="repository-workspace__grid">
+                <section
+                    class="repository-workspace__section repository-workspace__section--graph"
+                    data-repository-workspace-section="graph"
+                >
+                    <div class="repository-workspace__section-header">
+                        <span class="control-label">Дерево коммитов</span>
+                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.graph.nodes.length))}</span>
+                    </div>
+                    ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
+                </section>
+                <section class="repository-workspace__section" data-repository-workspace-section="branches">
+                    <div class="repository-workspace__section-header">
+                        <span class="control-label">Ветки</span>
+                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.branches.length))}</span>
+                    </div>
+                    ${renderBranchGraph(repositoryContext.branches)}
+                </section>
+                <section class="repository-workspace__section" data-repository-workspace-section="files">
+                    <div class="repository-workspace__section-header">
+                        <span class="control-label">Рабочее дерево</span>
+                        <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.files.length))}</span>
+                    </div>
+                    ${renderRepositoryWorkingTree(repositoryContext.files)}
+                </section>
+            </div>
+            <section class="repository-workspace__notes" data-repository-workspace-section="annotations">
+                <div class="repository-workspace__section-header">
+                    <span class="control-label">Подсказки контекста</span>
+                    <span class="workspace-card__badge">${escapeHtml(String(repositoryContext.annotations.length))}</span>
+                </div>
+                ${renderRepositoryAnnotationRail(repositoryContext.annotations)}
             </section>
-        </div>
+        </section>
     `;
 }
 
-function renderPracticeRepositorySupplement(repositoryContext, bootstrapState, submissionState, lifecycle) {
+function renderPracticeRepositorySupplement(repositoryContext, workspacePlayback, bootstrapState, submissionState, lifecycle) {
     return `
         <div class="practice-context-details">
             <div class="practice-shell__meta practice-shell__meta--viewer">
@@ -703,8 +757,282 @@ function renderPracticeRepositorySupplement(repositoryContext, bootstrapState, s
                 <span class="practice-shell__chip">Сессия: ${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
             </div>
             ${renderViewerStatusStrip(bootstrapState, lifecycle)}
-            ${renderRepositorySupplementaryContext(repositoryContext)}
+            ${renderWorkspaceActivityPanel(workspacePlayback, repositoryContext)}
         </div>
+    `;
+}
+
+function renderWorkspacePlaybackConsole(workspacePlayback, repositoryContext) {
+    const command = workspacePlayback.command ?? resolveWorkspaceDefaultCommand(workspacePlayback.status);
+    const statusLabel = formatWorkspacePlaybackStatus(workspacePlayback.status);
+    const statusCopy = describeWorkspacePlaybackStatus(workspacePlayback, repositoryContext);
+
+    return `
+        <section class="workspace-console" data-workspace-console-state="${escapeHtml(workspacePlayback.status)}">
+            <div class="workspace-console__chrome">
+                <span class="workspace-console__traffic workspace-console__traffic--close" aria-hidden="true"></span>
+                <span class="workspace-console__traffic workspace-console__traffic--min" aria-hidden="true"></span>
+                <span class="workspace-console__traffic workspace-console__traffic--max" aria-hidden="true"></span>
+                <span class="workspace-console__tab">workspace.git</span>
+                <span class="workspace-console__badge">${escapeHtml(statusLabel)}</span>
+            </div>
+            <div class="workspace-console__body">
+                <div class="workspace-console__line">
+                    <span class="workspace-console__prompt">git-trainer%</span>
+                    <code class="workspace-console__command">${escapeHtml(command)}</code>
+                    ${workspacePlayback.status === "running" || workspacePlayback.status === "booting"
+            ? '<span class="workspace-console__cursor" aria-hidden="true"></span>'
+            : ""}
+                </div>
+                <p class="panel-copy workspace-console__summary">${escapeHtml(statusCopy)}</p>
+            </div>
+        </section>
+    `;
+}
+
+function buildCommitTreeLayout(graph) {
+    const nodes = Array.isArray(graph?.nodes) ? graph.nodes : [];
+    if (!nodes.length) {
+        return {
+            laneCount: 1,
+            rows: []
+        };
+    }
+
+    let activeLanes = [];
+    let maxLane = 0;
+    const rows = nodes.map((node) => {
+        let lane = activeLanes.indexOf(node.id);
+        if (lane === -1) {
+            lane = activeLanes.length;
+            activeLanes = [...activeLanes, node.id];
+        }
+
+        const activeBefore = [...activeLanes];
+        const activeAfter = [...activeLanes];
+        const parentLanes = [];
+        if (node.parentIds.length === 0) {
+            activeAfter.splice(lane, 1);
+        } else {
+            activeAfter[lane] = node.parentIds[0];
+            parentLanes.push(activeAfter.indexOf(node.parentIds[0]));
+            for (let index = 1; index < node.parentIds.length; index += 1) {
+                const parentId = node.parentIds[index];
+                let parentLane = activeAfter.indexOf(parentId);
+                if (parentLane === -1) {
+                    parentLane = lane + index;
+                    activeAfter.splice(parentLane, 0, parentId);
+                }
+                parentLanes.push(parentLane);
+            }
+        }
+
+        maxLane = Math.max(maxLane, lane, ...parentLanes);
+        const row = {
+            node,
+            lane,
+            parentLanes,
+            activeBefore,
+            activeAfter
+        };
+        activeLanes = activeAfter;
+        return row;
+    });
+
+    return {
+        laneCount: Math.max(maxLane + 1, 1),
+        rows
+    };
+}
+
+function renderCommitLaneCell(row, laneIndex) {
+    const hasTop = laneIndex < row.activeBefore.length;
+    const hasBottom = laneIndex < row.activeAfter.length;
+    const isNodeLane = row.lane === laneIndex;
+    const horizontal = row.parentLanes.some((parentLane) => isLaneWithinSegment(laneIndex, row.lane, parentLane));
+    const parentTarget = row.parentLanes.includes(laneIndex) && laneIndex !== row.lane;
+
+    return `
+        <span class="workspace-commit-tree__lane-cell ${isNodeLane ? "workspace-commit-tree__lane-cell--node" : ""}">
+            ${hasTop ? '<span class="workspace-commit-tree__line workspace-commit-tree__line--top"></span>' : ""}
+            ${hasBottom ? '<span class="workspace-commit-tree__line workspace-commit-tree__line--bottom"></span>' : ""}
+            ${horizontal ? '<span class="workspace-commit-tree__line workspace-commit-tree__line--horizontal"></span>' : ""}
+            ${parentTarget ? '<span class="workspace-commit-tree__line workspace-commit-tree__line--target"></span>' : ""}
+            ${isNodeLane ? '<span class="workspace-commit-tree__dot"></span>' : ""}
+        </span>
+    `;
+}
+
+function isLaneWithinSegment(laneIndex, fromLane, toLane) {
+    if (fromLane === toLane) {
+        return false;
+    }
+
+    const start = Math.min(fromLane, toLane);
+    const end = Math.max(fromLane, toLane);
+    return laneIndex >= start && laneIndex <= end;
+}
+
+function resolveCommitTreeRowClass(row, workspacePlayback) {
+    if (workspacePlayback.status === "running" && workspacePlayback.previousContext?.graph?.nodes) {
+        return row.node.id === workspacePlayback.previousContext.graph.nodes[0]?.id
+            ? "workspace-commit-tree__row--active"
+            : "";
+    }
+
+    const previousNodeIds = new Set(
+        Array.isArray(workspacePlayback.previousContext?.graph?.nodes)
+            ? workspacePlayback.previousContext.graph.nodes.map((node) => node.id)
+            : []
+    );
+    if (workspacePlayback.status === "updated" && !previousNodeIds.has(row.node.id)) {
+        return "workspace-commit-tree__row--new";
+    }
+
+    return row.node.refs.some((ref) => ref.current)
+        ? "workspace-commit-tree__row--current"
+        : "";
+}
+
+function renderRepositoryCommitTree(graph, workspacePlayback) {
+    const layout = buildCommitTreeLayout(graph);
+    if (!layout.rows.length) {
+        return renderRepositoryEmptyState(
+            "Граф коммитов недоступен",
+            "В текущем payload нет данных для commit tree."
+        );
+    }
+
+    return `
+        <div
+            class="workspace-commit-tree"
+            data-repository-commit-tree
+            style="--commit-tree-lanes:${layout.laneCount};"
+        >
+            ${layout.rows.map((row, index) => `
+                <article
+                    class="workspace-commit-tree__row ${resolveCommitTreeRowClass(row, workspacePlayback)}"
+                    data-commit-node-id="${escapeHtml(row.node.id)}"
+                >
+                    <div class="workspace-commit-tree__lanes" aria-hidden="true">
+                        ${Array.from({ length: layout.laneCount }, (_, laneIndex) =>
+            renderCommitLaneCell(row, laneIndex)
+        ).join("")}
+                    </div>
+                    <div class="workspace-commit-tree__content">
+                        <div class="workspace-commit-tree__header">
+                            <strong>${escapeHtml(row.node.id ?? "unknown")}</strong>
+                            <div class="workspace-commit-tree__refs">
+                                ${row.node.refs.map((ref) => `
+                                    <span class="workspace-commit-tree__ref workspace-commit-tree__ref--${escapeHtml(ref.type)} ${ref.current ? "workspace-commit-tree__ref--current" : ""}">
+                                        ${escapeHtml(ref.name)}
+                                    </span>
+                                `).join("")}
+                            </div>
+                        </div>
+                        <p class="panel-copy">${escapeHtml(row.node.summary ?? "Описание коммита не указано.")}</p>
+                        <div class="workspace-commit-tree__meta">
+                            <span class="repository-status-pill">${escapeHtml(index === 0 ? "HEAD" : `HEAD~${index}`)}</span>
+                            ${row.node.parentIds.length
+            ? `<span class="repository-status-pill">parents: ${escapeHtml(row.node.parentIds.join(", "))}</span>`
+            : '<span class="repository-status-pill">root</span>'}
+                        </div>
+                    </div>
+                </article>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderRepositoryWorkingTree(files) {
+    if (!files.length) {
+        return renderRepositoryEmptyState(
+            "Рабочее дерево чистое",
+            "В текущем snapshot нет незакоммиченных изменений."
+        );
+    }
+
+    return `
+        <div class="workspace-file-stack" data-repository-working-tree>
+            ${files.map((file) => {
+                const normalizedStatus = normalizeRepositoryFileStatus(file.status);
+                return `
+                    <article class="workspace-file-stack__item" data-repository-file-node="${escapeHtml(normalizedStatus)}">
+                        <span class="workspace-file-stack__marker workspace-file-stack__marker--${escapeHtml(normalizedStatus)}" aria-hidden="true"></span>
+                        <div class="workspace-file-stack__body">
+                            <div class="workspace-file-stack__header">
+                                <strong>${escapeHtml(file.path ?? "Неизвестный путь")}</strong>
+                                <span class="repository-status-pill repository-status-pill--${escapeHtml(normalizedStatus)}">
+                                    ${escapeHtml(formatRepositoryFileStatus(file.status))}
+                                </span>
+                            </div>
+                            <p class="panel-copy">${escapeHtml(describeRepositoryFileStatus(file.status))}</p>
+                        </div>
+                    </article>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function renderRepositoryAnnotationRail(annotations) {
+    if (!annotations.length) {
+        return renderRepositoryEmptyState(
+            "Подсказок пока нет",
+            "Сценарий не добавил авторские пояснения к текущему workspace."
+        );
+    }
+
+    return `
+        <div class="workspace-annotation-rail" data-repository-annotation-rail>
+            ${annotations.map((annotation) => `
+                <article class="workspace-annotation-rail__item">
+                    <span class="control-label">${escapeHtml(annotation.label ?? "Аннотация")}</span>
+                    <p class="panel-copy">${escapeHtml(annotation.message ?? "Сообщение аннотации недоступно.")}</p>
+                </article>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderWorkspaceActivityPanel(workspacePlayback, repositoryContext) {
+    const activityItems = deriveWorkspaceActivityItems(workspacePlayback, repositoryContext);
+
+    return `
+        <section class="workspace-activity" data-workspace-activity-state="${escapeHtml(workspacePlayback.status)}">
+            <div class="workspace-activity__header">
+                <div class="workspace-activity__heading">
+                    <span class="control-label">Workspace activity</span>
+                    <h4 class="workspace-activity__title">${escapeHtml(formatWorkspacePlaybackHeadline(workspacePlayback.status))}</h4>
+                </div>
+                <span class="workspace-card__badge">${escapeHtml(formatWorkspacePlaybackStatus(workspacePlayback.status))}</span>
+            </div>
+            <div class="workspace-activity__body">
+                ${activityItems.length
+            ? `
+                        <div class="workspace-activity__timeline" data-workspace-activity-timeline>
+                            ${activityItems.map((item, index) => `
+                                <article class="workspace-activity__item" data-workspace-activity-kind="${escapeHtml(item.kind)}">
+                                    <div class="workspace-activity__track" aria-hidden="true">
+                                        <span class="workspace-activity__dot"></span>
+                                        <span class="workspace-activity__line ${index === activityItems.length - 1 ? "workspace-activity__line--last" : ""}"></span>
+                                    </div>
+                                    <div class="workspace-activity__copy">
+                                        <strong>${escapeHtml(item.title)}</strong>
+                                        <p class="panel-copy">${escapeHtml(item.message)}</p>
+                                    </div>
+                                </article>
+                            `).join("")}
+                        </div>
+                    `
+            : `
+                        <div class="repository-context__empty">
+                            <span class="control-label">Изменений пока нет</span>
+                            <p class="panel-copy">Workspace activity появится после запуска сессии и проверенной команды.</p>
+                        </div>
+                    `}
+            </div>
+        </section>
     `;
 }
 
@@ -813,16 +1141,97 @@ function renderRepositoryEmptyState(title, copy) {
     `;
 }
 
+function normalizeWorkspacePlayback(playback, fallbackContext) {
+    const safePlayback = playback ?? {};
+    const normalizedCurrent = normalizeRepositoryContext(safePlayback.currentContext ?? fallbackContext);
+    const previousContext = safePlayback.previousContext == null
+        ? null
+        : normalizeRepositoryContext(safePlayback.previousContext);
+
+    return {
+        status: typeof safePlayback.status === "string" && safePlayback.status.trim() !== ""
+            ? safePlayback.status
+            : "idle",
+        currentContext: normalizedCurrent,
+        previousContext,
+        command: typeof safePlayback.command === "string" && safePlayback.command.trim() !== ""
+            ? safePlayback.command.trim()
+            : null,
+        outcomeCorrectness: typeof safePlayback.outcomeCorrectness === "string" && safePlayback.outcomeCorrectness.trim() !== ""
+            ? safePlayback.outcomeCorrectness
+            : null,
+        updatedAt: safePlayback.updatedAt ?? null
+    };
+}
+
 function normalizeRepositoryContext(repositoryContext) {
     const safeContext = repositoryContext ?? {};
+    const branches = Array.isArray(safeContext.branches) ? safeContext.branches : [];
+    const commits = Array.isArray(safeContext.commits) ? safeContext.commits : [];
     return {
         status: typeof safeContext.status === "string" && safeContext.status.trim() !== ""
             ? safeContext.status
             : "unavailable",
-        branches: Array.isArray(safeContext.branches) ? safeContext.branches : [],
-        commits: Array.isArray(safeContext.commits) ? safeContext.commits : [],
+        branches,
+        commits,
         files: Array.isArray(safeContext.files) ? safeContext.files : [],
-        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : []
+        annotations: Array.isArray(safeContext.annotations) ? safeContext.annotations : [],
+        graph: normalizeRepositoryGraph(safeContext.graph, branches, commits)
+    };
+}
+
+function normalizeRepositoryGraph(graph, branches, commits) {
+    const safeGraph = graph ?? {};
+    const nodes = Array.isArray(safeGraph.nodes)
+        ? safeGraph.nodes
+            .filter((node) => node && typeof node === "object")
+            .map((node) => ({
+                id: typeof node.id === "string" && node.id.trim() !== ""
+                    ? node.id
+                    : "unknown",
+                summary: typeof node.summary === "string" ? node.summary : "",
+                parentIds: Array.isArray(node.parentIds)
+                    ? node.parentIds.filter((parentId) => typeof parentId === "string" && parentId.trim() !== "")
+                    : [],
+                refs: Array.isArray(node.refs)
+                    ? node.refs
+                        .filter((ref) => ref && typeof ref === "object")
+                        .map((ref) => ({
+                            name: typeof ref.name === "string" && ref.name.trim() !== "" ? ref.name : "ref",
+                            type: typeof ref.type === "string" && ref.type.trim() !== "" ? ref.type : "branch",
+                            current: Boolean(ref.current)
+                        }))
+                    : []
+            }))
+        : [];
+
+    if (nodes.length) {
+        return { nodes };
+    }
+
+    return synthesizeRepositoryGraph(branches, commits);
+}
+
+function synthesizeRepositoryGraph(branches, commits) {
+    if (!Array.isArray(commits) || commits.length === 0) {
+        return { nodes: [] };
+    }
+
+    return {
+        nodes: commits.map((commit, index) => ({
+            id: typeof commit?.id === "string" ? commit.id : `commit-${index + 1}`,
+            summary: typeof commit?.summary === "string" ? commit.summary : "",
+            parentIds: index + 1 < commits.length && typeof commits[index + 1]?.id === "string"
+                ? [commits[index + 1].id]
+                : [],
+            refs: index === 0
+                ? (Array.isArray(branches) ? branches : []).map((branch) => ({
+                    name: typeof branch?.name === "string" ? branch.name : "branch",
+                    type: typeof branch?.name === "string" && branch.name.startsWith("origin/") ? "remote" : "branch",
+                    current: Boolean(branch?.current)
+                }))
+                : []
+        }))
     };
 }
 
@@ -881,6 +1290,368 @@ function describeRepositoryFileStatus(status) {
     }
 }
 
+function resolveWorkspaceDefaultCommand(status) {
+    switch (status) {
+        case "booting":
+            return "prepare workspace";
+        case "running":
+            return "executing command";
+        case "updated":
+            return "workspace updated";
+        case "retryable-error":
+        case "terminal-error":
+            return "command failed";
+        case "ready":
+            return "session attached";
+        default:
+            return "open scenario";
+    }
+}
+
+function formatWorkspacePlaybackStatus(status) {
+    switch (status) {
+        case "booting":
+            return "booting";
+        case "ready":
+            return "attached";
+        case "running":
+            return "running";
+        case "updated":
+            return "applied";
+        case "retryable-error":
+            return "retryable";
+        case "terminal-error":
+            return "failed";
+        default:
+            return "idle";
+    }
+}
+
+function formatWorkspacePlaybackHeadline(status) {
+    switch (status) {
+        case "booting":
+            return "Подключаем session-backed workspace";
+        case "ready":
+            return "Workspace синхронизирован";
+        case "running":
+            return "Команда выполняется";
+        case "updated":
+            return "Состояние workspace обновлено";
+        case "retryable-error":
+            return "Команду можно повторить";
+        case "terminal-error":
+            return "Выполнение остановлено";
+        default:
+            return "Workspace ждёт первую команду";
+    }
+}
+
+function describeWorkspacePlaybackStatus(workspacePlayback, repositoryContext) {
+    switch (workspacePlayback.status) {
+        case "booting":
+            return "Создаём рабочую копию сценария и подготавливаем Git-состояние для первой отправки.";
+        case "ready":
+            return `Workspace подключён. Активная ветка: ${resolveCurrentBranchName(repositoryContext.branches)}. Можно отправлять следующую Git-команду.`;
+        case "running":
+            return `Команда ${workspacePlayback.command ? `"${workspacePlayback.command}"` : "пользователя"} выполняется на snapshot текущей сессии.`;
+        case "updated":
+            return workspacePlayback.outcomeCorrectness === "correct"
+                ? "Команда принята, и viewer уже показывает обновлённый snapshot рабочей копии."
+                : "Команда обработана. Viewer показывает новое состояние workspace после попытки.";
+        case "retryable-error":
+            return "Снимок workspace сохранён, но команду не удалось довести до результата. Попробуйте повторную отправку.";
+        case "terminal-error":
+            return "UI не получил корректный результат команды. Для продолжения может потребоваться перезапуск сессии.";
+        default:
+            return "После первой команды здесь появится живая история изменений workspace.";
+    }
+}
+
+function deriveWorkspaceActivityItems(workspacePlayback, repositoryContext) {
+    const currentContext = workspacePlayback.currentContext ?? repositoryContext;
+    const previousContext = workspacePlayback.previousContext;
+
+    if (workspacePlayback.status === "booting") {
+        return [
+            {
+                kind: "boot",
+                title: "Создаём workspace",
+                message: "Собираем Git-состояние сценария и подключаем session-backed репозиторий."
+            }
+        ];
+    }
+
+    if (workspacePlayback.status === "running") {
+        return [
+            {
+                kind: "command",
+                title: "Команда отправлена",
+                message: workspacePlayback.command
+                    ? `Выполняем: ${workspacePlayback.command}. Viewer ждёт обновлённый snapshot.`
+                    : "Viewer ждёт обновлённый snapshot после отправки команды."
+            },
+            {
+                kind: "snapshot",
+                title: "Базовый snapshot зафиксирован",
+                message: `Текущая ветка ${resolveCurrentBranchName(currentContext.branches)} сохранена как точка сравнения.`
+            }
+        ];
+    }
+
+    if (!previousContext) {
+        return [
+            {
+                kind: "ready",
+                title: "Workspace готов",
+                message: `Подключена ветка ${resolveCurrentBranchName(currentContext.branches)}. В рабочем дереве ${currentContext.files.length} ${pluralizeFiles(currentContext.files.length)}.`
+            }
+        ];
+    }
+
+    const items = [];
+    const graphChange = describeGraphDelta(previousContext, currentContext);
+    if (graphChange) {
+        items.push(graphChange);
+    }
+
+    const branchChange = describeBranchDelta(previousContext, currentContext);
+    if (branchChange) {
+        items.push(branchChange);
+    }
+
+    const fileChange = describeFileDelta(previousContext, currentContext);
+    if (fileChange) {
+        items.push(fileChange);
+    }
+
+    const stashChange = describeAnnotationDelta(previousContext, currentContext, "stash", "stash");
+    if (stashChange) {
+        items.push(stashChange);
+    }
+
+    const workingTreeAnnotationChange = describeAnnotationDelta(previousContext, currentContext, "рабочее дерево", "working-tree");
+    if (workingTreeAnnotationChange) {
+        items.push(workingTreeAnnotationChange);
+    }
+
+    if (!items.length) {
+        items.push({
+            kind: "steady",
+            title: "Явных изменений в snapshot нет",
+            message: "Команда не изменила наблюдаемую структуру веток, файлов и аннотаций workspace."
+        });
+    }
+
+    return items;
+}
+
+function describeGraphDelta(previousContext, currentContext) {
+    const previousGraph = previousContext.graph?.nodes ?? [];
+    const currentGraph = currentContext.graph?.nodes ?? [];
+
+    if (!previousGraph.length && currentGraph.length) {
+        return {
+            kind: "graph",
+            title: "Появилось дерево коммитов",
+            message: `Viewer построил commit tree из ${currentGraph.length} ${pluralizeCommits(currentGraph.length)}.`
+        };
+    }
+
+    const previousIds = new Set(previousGraph.map((node) => node.id));
+    const currentIds = new Set(currentGraph.map((node) => node.id));
+    const newIds = currentGraph.filter((node) => !previousIds.has(node.id)).map((node) => node.id);
+
+    if (newIds.length) {
+        return {
+            kind: "graph",
+            title: "В графе появились новые коммиты",
+            message: `Commit tree дополнился: ${newIds.join(", ")}.`
+        };
+    }
+
+    const previousRefSignature = serializeGraphRefs(previousGraph);
+    const currentRefSignature = serializeGraphRefs(currentGraph);
+    if (previousRefSignature !== currentRefSignature) {
+        return {
+            kind: "graph",
+            title: "Сдвинулись указатели дерева",
+            message: "У commit tree изменились ref-метки веток, тегов или stash после команды."
+        };
+    }
+
+    return null;
+}
+
+function serializeGraphRefs(nodes) {
+    return nodes
+        .map((node) => `${node.id}:${(node.refs ?? [])
+            .map((ref) => `${ref.type}:${ref.name}:${ref.current ? "1" : "0"}`)
+            .sort()
+            .join(",")}`)
+        .join("|");
+}
+
+function describeBranchDelta(previousContext, currentContext) {
+    const previousBranch = resolveCurrentBranchName(previousContext.branches);
+    const currentBranch = resolveCurrentBranchName(currentContext.branches);
+
+    if (previousBranch !== currentBranch) {
+        return {
+            kind: "branch",
+            title: "Сменилась активная ветка",
+            message: `Viewer переключился с ${previousBranch} на ${currentBranch}.`
+        };
+    }
+
+    if (previousContext.branches.length !== currentContext.branches.length) {
+        return {
+            kind: "branch",
+            title: "Обновился набор веток",
+            message: `Количество видимых веток изменилось: ${previousContext.branches.length} -> ${currentContext.branches.length}.`
+        };
+    }
+
+    return null;
+}
+
+function describeFileDelta(previousContext, currentContext) {
+    const previousFiles = Array.isArray(previousContext.files) ? previousContext.files : [];
+    const currentFiles = Array.isArray(currentContext.files) ? currentContext.files : [];
+
+    if (previousFiles.length && !currentFiles.length) {
+        return {
+            kind: "files",
+            title: "Рабочее дерево очищено",
+            message: `Все ${previousFiles.length} ${pluralizeFiles(previousFiles.length)} исчезли из списка изменений.`
+        };
+    }
+
+    if (previousFiles.length !== currentFiles.length) {
+        return {
+            kind: "files",
+            title: "Изменился набор файлов",
+            message: `Количество путей в рабочем дереве изменилось: ${previousFiles.length} -> ${currentFiles.length}.`
+        };
+    }
+
+    const previousSignature = previousFiles
+        .map((file) => `${file.path}:${normalizeRepositoryFileStatus(file.status)}`)
+        .sort()
+        .join("|");
+    const currentSignature = currentFiles
+        .map((file) => `${file.path}:${normalizeRepositoryFileStatus(file.status)}`)
+        .sort()
+        .join("|");
+
+    if (previousSignature !== currentSignature) {
+        return {
+            kind: "files",
+            title: "Статусы файлов обновились",
+            message: "Viewer получил новый набор file-status маркеров после выполнения команды."
+        };
+    }
+
+    return null;
+}
+
+function describeAnnotationDelta(previousContext, currentContext, labelNeedle, kind) {
+    const previousAnnotation = findAnnotationByLabel(previousContext.annotations, labelNeedle);
+    const currentAnnotation = findAnnotationByLabel(currentContext.annotations, labelNeedle);
+
+    if (!previousAnnotation && !currentAnnotation) {
+        return null;
+    }
+
+    if (!previousAnnotation && currentAnnotation) {
+        return {
+            kind,
+            title: "Появилась новая системная подсказка",
+            message: currentAnnotation.message ?? "Viewer получил новую аннотацию workspace."
+        };
+    }
+
+    if (previousAnnotation && !currentAnnotation) {
+        return {
+            kind,
+            title: "Аннотация больше не активна",
+            message: `Подсказка "${previousAnnotation.label}" исчезла из текущего snapshot.`
+        };
+    }
+
+    if (previousAnnotation.message !== currentAnnotation.message) {
+        return {
+            kind,
+            title: "Обновилась системная аннотация",
+            message: currentAnnotation.message ?? "Сообщение аннотации изменилось."
+        };
+    }
+
+    return null;
+}
+
+function findAnnotationByLabel(annotations, needle) {
+    if (!Array.isArray(annotations)) {
+        return null;
+    }
+
+    const normalizedNeedle = String(needle ?? "").trim().toLowerCase();
+    return annotations.find((annotation) => String(annotation?.label ?? "").trim().toLowerCase().includes(normalizedNeedle))
+        ?? null;
+}
+
+function describeRepositoryWorkspace(repositoryContext) {
+    const branchSummary = summarizeBranchTopology(repositoryContext.branches);
+    const workingTreeSummary = summarizeWorkingTree(repositoryContext.files);
+
+    return `${branchSummary} ${workingTreeSummary}`;
+}
+
+function summarizeBranchTopology(branches) {
+    if (!Array.isArray(branches) || branches.length === 0) {
+        return "Данные по веткам пока не пришли.";
+    }
+
+    const currentBranchName = resolveCurrentBranchName(branches);
+    if (branches.length === 1) {
+        return `Активна единственная ветка ${currentBranchName}.`;
+    }
+
+    return `Активная ветка ${currentBranchName}; рядом доступно ещё ${branches.length - 1} ${pluralizeBranches(branches.length - 1)}.`;
+}
+
+function summarizeWorkingTree(files) {
+    if (!Array.isArray(files) || files.length === 0) {
+        return "Рабочее дерево выглядит чистым.";
+    }
+
+    const counts = files.reduce((summary, file) => {
+        const status = normalizeRepositoryFileStatus(file?.status);
+        summary.total += 1;
+        summary[status] = (summary[status] ?? 0) + 1;
+        return summary;
+    }, { total: 0 });
+    const fragments = [];
+
+    if (counts.modified) {
+        fragments.push(`${counts.modified} изменён${counts.modified === 1 ? "" : "о"}`);
+    }
+    if (counts.staged) {
+        fragments.push(`${counts.staged} в индексе`);
+    }
+    if (counts.untracked) {
+        fragments.push(`${counts.untracked} не отслеживается`);
+    }
+    if (counts.conflicted) {
+        fragments.push(`${counts.conflicted} конфликт${counts.conflicted === 1 ? "" : "а"}`);
+    }
+
+    if (!fragments.length) {
+        return `В рабочем дереве ${counts.total} ${pluralizeFiles(counts.total)} с нестандартным состоянием.`;
+    }
+
+    return `В рабочем дереве ${counts.total} ${pluralizeFiles(counts.total)}: ${fragments.join(", ")}.`;
+}
+
 function resolveCurrentBranchName(branches) {
     const currentBranch = Array.isArray(branches)
         ? branches.find((branch) => branch?.current)
@@ -889,6 +1660,18 @@ function resolveCurrentBranchName(branches) {
     return typeof currentBranch?.name === "string" && currentBranch.name.trim() !== ""
         ? currentBranch.name
         : "неизвестно";
+}
+
+function pluralizeBranches(count) {
+    return count === 1 ? "ветка" : count >= 2 && count <= 4 ? "ветки" : "веток";
+}
+
+function pluralizeFiles(count) {
+    return count === 1 ? "файл" : count >= 2 && count <= 4 ? "файла" : "файлов";
+}
+
+function pluralizeCommits(count) {
+    return count === 1 ? "коммит" : count >= 2 && count <= 4 ? "коммита" : "коммитов";
 }
 
 function normalizeBootstrapState(bootstrapState) {

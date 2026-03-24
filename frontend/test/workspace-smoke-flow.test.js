@@ -91,6 +91,18 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             appRoot.querySelector('[data-repository-branch-graph="ready"]'),
             "Экран упражнения должен показать branch graph"
         );
+        assert.ok(
+            appRoot.querySelector('[data-repository-workspace-visual="ready"]'),
+            "Экран упражнения должен показать визуальную workspace-схему"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-repository-commit-tree]'),
+            "Viewer должен построить commit tree"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
+            "ready"
+        );
         assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
@@ -302,6 +314,14 @@ test("правая колонка переключается на live workspace
         assert.match(appRoot.textContent, /живая сессия/i);
         assert.match(appRoot.textContent, /Файлы: 2/);
         assert.match(appRoot.textContent, /feature\/test-stash-panel/);
+        assert.ok(
+            appRoot.querySelector('[data-repository-workspace-section="files"] [data-repository-working-tree]'),
+            "Viewer должен показать рабочее дерево внутри workspace-схемы"
+        );
+        assert.ok(
+            appRoot.querySelector('[data-repository-commit-tree]'),
+            "Viewer должен сохранить commit tree рядом с рабочим деревом"
+        );
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
         assert.ok(answerField, "Поле ввода stash-команды должно быть доступно");
@@ -315,6 +335,13 @@ test("правая колонка переключается на live workspace
 
         assert.match(appRoot.textContent, /Файлы: 0/);
         assert.match(appRoot.textContent, /В stash сохранено записей: 1\./);
+        assert.match(appRoot.textContent, /Рабочее дерево выглядит чистым|Рабочее дерево чистое/);
+        assert.equal(
+            appRoot.querySelector('[data-workspace-console-state]')?.getAttribute("data-workspace-console-state"),
+            "updated"
+        );
+        assert.match(appRoot.textContent, /Рабочее дерево очищено/);
+        assert.match(appRoot.textContent, /Сдвинулись указатели дерева|Явных изменений в snapshot нет|Появилась новая системная подсказка/);
     } finally {
         restoreGlobals();
         dom.window.close();

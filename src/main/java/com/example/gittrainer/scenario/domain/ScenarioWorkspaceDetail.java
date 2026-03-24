@@ -63,7 +63,8 @@ public record ScenarioWorkspaceDetail(
             List<ScenarioRepositoryBranch> branches,
             List<ScenarioRepositoryCommit> commits,
             List<ScenarioRepositoryFile> files,
-            List<ScenarioWorkspaceAnnotation> annotations
+            List<ScenarioWorkspaceAnnotation> annotations,
+            ScenarioCommitGraph graph
     ) {
         public ScenarioRepositoryContext {
             branches = branches == null ? List.of() : List.copyOf(branches);
@@ -77,6 +78,33 @@ public record ScenarioWorkspaceDetail(
     }
 
     public record ScenarioRepositoryCommit(String id, String summary) {
+    }
+
+    public record ScenarioCommitGraph(
+            List<ScenarioCommitNode> nodes
+    ) {
+        public ScenarioCommitGraph {
+            nodes = nodes == null ? List.of() : List.copyOf(nodes);
+        }
+    }
+
+    public record ScenarioCommitNode(
+            String id,
+            String summary,
+            List<String> parentIds,
+            List<ScenarioCommitRef> refs
+    ) {
+        public ScenarioCommitNode {
+            parentIds = parentIds == null ? List.of() : List.copyOf(parentIds);
+            refs = refs == null ? List.of() : List.copyOf(refs);
+        }
+    }
+
+    public record ScenarioCommitRef(
+            String name,
+            String type,
+            boolean current
+    ) {
     }
 
     public record ScenarioRepositoryFile(String path, String status) {

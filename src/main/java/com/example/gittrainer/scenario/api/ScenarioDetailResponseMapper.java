@@ -72,10 +72,68 @@ public class ScenarioDetailResponseMapper {
                                                 annotation.label(),
                                                 annotation.message()
                                         ))
-                                        .toList()
+                                        .toList(),
+                                toCommitGraphResponse(detail.repositoryContext())
                         )
                 )
         );
+    }
+
+    private ScenarioCommitGraphResponse toCommitGraphResponse(ScenarioWorkspaceDetail.ScenarioRepositoryContext context) {
+        ScenarioWorkspaceDetail.ScenarioCommitGraph graph = context.graph() != null
+                ? context.graph()
+                : synthesizeGraph(context);
+        return new ScenarioCommitGraphResponse(
+                graph.nodes().stream()
+                        .map(node -> new ScenarioCommitNodeResponse(
+                                node.id(),
+                                node.summary(),
+                                node.parentIds(),
+                                node.refs().stream()
+                                        .map(ref -> new ScenarioCommitRefResponse(
+                                                ref.name(),
+                                                ref.type(),
+                                                ref.current()
+                                        ))
+                                        .toList()
+                        ))
+                        .toList()
+        );
+    }
+
+    private ScenarioWorkspaceDetail.ScenarioCommitGraph synthesizeGraph(
+            ScenarioWorkspaceDetail.ScenarioRepositoryContext context
+    ) {
+        java.util.List<ScenarioWorkspaceDetail.ScenarioRepositoryCommit> commits = context.commits();
+        if (commits.isEmpty()) {
+            return new ScenarioWorkspaceDetail.ScenarioCommitGraph(java.util.List.of());
+        }
+
+        java.util.List<ScenarioWorkspaceDetail.ScenarioCommitNode> nodes = new java.util.ArrayList<>();
+        for (int index = 0; index < commits.size(); index++) {
+            ScenarioWorkspaceDetail.ScenarioRepositoryCommit commit = commits.get(index);
+            java.util.List<String> parentIds = index + 1 < commits.size()
+                    ? java.util.List.of(commits.get(index + 1).id())
+                    : java.util.List.of();
+            java.util.List<ScenarioWorkspaceDetail.ScenarioCommitRef> refs = index == 0
+                    ? context.branches().stream()
+                            .map(branch -> new ScenarioWorkspaceDetail.ScenarioCommitRef(
+                                    branch.name(),
+                                    branch.name().contains("/") && branch.name().startsWith("origin/")
+                                            ? "remote"
+                                            : "branch",
+                                    branch.current()
+                            ))
+                            .toList()
+                    : java.util.List.of();
+            nodes.add(new ScenarioWorkspaceDetail.ScenarioCommitNode(
+                    commit.id(),
+                    commit.summary(),
+                    parentIds,
+                    refs
+            ));
+        }
+        return new ScenarioWorkspaceDetail.ScenarioCommitGraph(nodes);
     }
 
     private String toWireDifficulty(ScenarioDifficulty difficulty) {

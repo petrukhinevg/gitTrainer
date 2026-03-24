@@ -19,6 +19,7 @@ import java.util.Optional;
 public class GitSessionWorkspaceSnapshotReader implements SessionWorkspaceSnapshotReader {
 
     private static final int MAX_COMMITS = 6;
+    private static final int MAX_GRAPH_COMMITS = 24;
 
     private final SessionWorkspaceManager sessionWorkspaceManager;
 
@@ -38,6 +39,7 @@ public class GitSessionWorkspaceSnapshotReader implements SessionWorkspaceSnapsh
             List<SessionWorkspaceSnapshot.Commit> commits = readCommits(workspace);
             List<SessionWorkspaceSnapshot.FileEntry> files = readFiles(workspace);
             List<SessionWorkspaceSnapshot.Annotation> annotations = readAnnotations(workspace, branches, files);
+            SessionWorkspaceSnapshot.CommitGraph graph = readCommitGraph(workspace, branches);
 
             return new SessionWorkspaceSnapshot(
                     new SessionWorkspaceSnapshot.RepositoryContext(
@@ -45,7 +47,8 @@ public class GitSessionWorkspaceSnapshotReader implements SessionWorkspaceSnapsh
                             branches,
                             commits,
                             files,
-                            annotations
+                            annotations,
+                            graph
                     )
             );
         } catch (InterruptedException exception) {
@@ -68,7 +71,8 @@ public class GitSessionWorkspaceSnapshotReader implements SessionWorkspaceSnapsh
                         List.of(new SessionWorkspaceSnapshot.Annotation(
                                 "Live workspace недоступен",
                                 "Не удалось прочитать текущее состояние session-backed репозитория."
-                        ))
+                        )),
+                        new SessionWorkspaceSnapshot.CommitGraph(List.of())
                 )
         );
     }
@@ -110,11 +114,103 @@ public class GitSessionWorkspaceSnapshotReader implements SessionWorkspaceSnapsh
                 .toList();
     }
 
+    private SessionWorkspaceSnapshot.CommitGraph readCommitGraph(
+            Path workspace,
+            List<SessionWorkspaceSnapshot.Branch> branches
+    ) throws IOException, InterruptedException {
+        CommandResult result = runGit(
+                workspace,
+                "log",
+                "--all",
+                "--date-order",
+                "--decorate=short",
+                "--pretty=format:%h|%p|%D|%s",
+                "-n",
+                String.valueOf(MAX_GRAPH_COMMITS)
+        );
+        if (result.exitCode() != 0) {
+            return new SessionWorkspaceSnapshot.CommitGraph(List.of());
+        }
+
+        return new SessionWorkspaceSnapshot.CommitGraph(
+                result.stdout().lines()
+                        .map(String::trim)
+                        .filter(line -> !line.isBlank())
+                        .map(line -> toCommitNode(line, branches))
+                        .toList()
+        );
+    }
+
     private SessionWorkspaceSnapshot.Commit toCommit(String rawLine) {
         String[] parts = rawLine.split("\\|", 2);
         String id = parts.length > 0 ? parts[0].trim() : "unknown";
         String summary = parts.length > 1 ? parts[1].trim() : "";
         return new SessionWorkspaceSnapshot.Commit(id, summary);
+    }
+
+    private SessionWorkspaceSnapshot.CommitNode toCommitNode(
+            String rawLine,
+            List<SessionWorkspaceSnapshot.Branch> branches
+    ) {
+        String[] parts = rawLine.split("\\|", 4);
+        String id = parts.length > 0 ? parts[0].trim() : "unknown";
+        List<String> parentIds = parts.length > 1 && !parts[1].isBlank()
+                ? List.of(parts[1].trim().split("\\s+"))
+                : List.of();
+        String decorations = parts.length > 2 ? parts[2].trim() : "";
+        String summary = parts.length > 3 ? parts[3].trim() : "";
+        return new SessionWorkspaceSnapshot.CommitNode(
+                id,
+                summary,
+                parentIds,
+                parseRefs(decorations, branches)
+        );
+    }
+
+    private List<SessionWorkspaceSnapshot.CommitRef> parseRefs(
+            String decorations,
+            List<SessionWorkspaceSnapshot.Branch> branches
+    ) {
+        if (decorations == null || decorations.isBlank()) {
+            return List.of();
+        }
+
+        List<SessionWorkspaceSnapshot.CommitRef> refs = new ArrayList<>();
+        for (String rawDecoration : decorations.split(",")) {
+            String decoration = rawDecoration.trim();
+            if (decoration.isBlank()) {
+                continue;
+            }
+
+            if (decoration.startsWith("HEAD -> ")) {
+                refs.add(new SessionWorkspaceSnapshot.CommitRef("HEAD", "head", true));
+                String branchName = decoration.substring("HEAD -> ".length()).trim();
+                refs.add(new SessionWorkspaceSnapshot.CommitRef(branchName, "branch", true));
+                continue;
+            }
+            if (decoration.startsWith("tag: ")) {
+                refs.add(new SessionWorkspaceSnapshot.CommitRef(
+                        decoration.substring("tag: ".length()).trim(),
+                        "tag",
+                        false
+                ));
+                continue;
+            }
+            if ("HEAD".equals(decoration)) {
+                refs.add(new SessionWorkspaceSnapshot.CommitRef("HEAD", "head", true));
+                continue;
+            }
+            if ("refs/stash".equals(decoration)) {
+                refs.add(new SessionWorkspaceSnapshot.CommitRef("stash", "stash", false));
+                continue;
+            }
+
+            boolean current = branches.stream()
+                    .anyMatch(branch -> branch.current() && branch.name().equals(decoration));
+            String type = decoration.startsWith("origin/") ? "remote" : "branch";
+            refs.add(new SessionWorkspaceSnapshot.CommitRef(decoration, type, current));
+        }
+        return List.copyOf(refs);
     }
 
     private List<SessionWorkspaceSnapshot.FileEntry> readFiles(Path workspace)

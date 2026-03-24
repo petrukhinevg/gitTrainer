@@ -109,8 +109,62 @@ public class SessionResponseMapper {
                                         annotation.label(),
                                         annotation.message()
                                 ))
-                                .toList()
+                                .toList(),
+                        toCommitGraphResponse(repositoryContext)
                 )
         );
+    }
+
+    private static SessionCommitGraphResponse toCommitGraphResponse(SessionWorkspaceSnapshot.RepositoryContext context) {
+        SessionWorkspaceSnapshot.CommitGraph graph = context.graph() != null
+                ? context.graph()
+                : synthesizeGraph(context);
+        return new SessionCommitGraphResponse(
+                graph.nodes().stream()
+                        .map(node -> new SessionCommitNodeResponse(
+                                node.id(),
+                                node.summary(),
+                                node.parentIds(),
+                                node.refs().stream()
+                                        .map(ref -> new SessionCommitRefResponse(
+                                                ref.name(),
+                                                ref.type(),
+                                                ref.current()
+                                        ))
+                                        .toList()
+                        ))
+                        .toList()
+        );
+    }
+
+    private static SessionWorkspaceSnapshot.CommitGraph synthesizeGraph(SessionWorkspaceSnapshot.RepositoryContext context) {
+        java.util.List<SessionWorkspaceSnapshot.Commit> commits = context.commits();
+        if (commits.isEmpty()) {
+            return new SessionWorkspaceSnapshot.CommitGraph(java.util.List.of());
+        }
+
+        java.util.List<SessionWorkspaceSnapshot.CommitNode> nodes = new java.util.ArrayList<>();
+        for (int index = 0; index < commits.size(); index++) {
+            SessionWorkspaceSnapshot.Commit commit = commits.get(index);
+            java.util.List<String> parentIds = index + 1 < commits.size()
+                    ? java.util.List.of(commits.get(index + 1).id())
+                    : java.util.List.of();
+            java.util.List<SessionWorkspaceSnapshot.CommitRef> refs = index == 0
+                    ? context.branches().stream()
+                            .map(branch -> new SessionWorkspaceSnapshot.CommitRef(
+                                    branch.name(),
+                                    branch.name().startsWith("origin/") ? "remote" : "branch",
+                                    branch.current()
+                            ))
+                            .toList()
+                    : java.util.List.of();
+            nodes.add(new SessionWorkspaceSnapshot.CommitNode(
+                    commit.id(),
+                    commit.summary(),
+                    parentIds,
+                    refs
+            ));
+        }
+        return new SessionWorkspaceSnapshot.CommitGraph(nodes);
     }
 }

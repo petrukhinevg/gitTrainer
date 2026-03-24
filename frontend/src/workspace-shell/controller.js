@@ -611,6 +611,12 @@ export function createCatalogWorkspaceController({
             error: null,
             scenarioSlug
         };
+        state.session.workspacePlayback = {
+            ...createInitialWorkspacePlaybackState(),
+            status: "booting",
+            currentContext: state.detail.data?.workspace?.repositoryContext ?? null,
+            updatedAt: new Date().toISOString()
+        };
         resetSubmissionRequestState();
         render();
 
@@ -629,6 +635,14 @@ export function createCatalogWorkspaceController({
                 error: null,
                 scenarioSlug
             };
+            state.session.workspacePlayback = {
+                status: "ready",
+                currentContext: response?.workspace?.repositoryContext ?? null,
+                previousContext: null,
+                command: null,
+                outcomeCorrectness: null,
+                updatedAt: new Date().toISOString()
+            };
             resetSubmissionRequestState();
         } catch (error) {
             if (requestId !== latestSessionBootstrapRequestId || scenarioSlug !== state.selectedScenarioSlug) {
@@ -641,6 +655,13 @@ export function createCatalogWorkspaceController({
                 response: null,
                 error: normalizedFailure,
                 scenarioSlug
+            };
+            state.session.workspacePlayback = {
+                ...state.session.workspacePlayback,
+                status: `${normalizedFailure.failureKind}-error`,
+                command: null,
+                outcomeCorrectness: null,
+                updatedAt: new Date().toISOString()
             };
         }
 
@@ -673,16 +694,28 @@ export function createCatalogWorkspaceController({
         }
 
         const requestId = ++latestSubmissionRequestId;
+        const activeRepositoryContext = state.session.submission.response?.workspace?.repositoryContext
+            ?? state.session.bootstrap.response?.workspace?.repositoryContext
+            ?? state.detail.data?.workspace?.repositoryContext
+            ?? null;
         state.session.submission = {
             status: "pending",
             response: null,
             error: null,
             lastPayload: preparedSubmission
         };
+        state.session.workspacePlayback = {
+            status: "running",
+            currentContext: activeRepositoryContext,
+            previousContext: activeRepositoryContext,
+            command: preparedSubmission.answer,
+            outcomeCorrectness: null,
+            updatedAt: new Date().toISOString()
+        };
         state.session.feedbackPanel = createFeedbackPanelState({
             previousFeedbackPanel: state.session.feedbackPanel,
             detail: state.detail.data,
-            repositoryContext: state.session.bootstrap.response?.workspace?.repositoryContext ?? null,
+            repositoryContext: activeRepositoryContext,
             scenarioSlug: state.selectedScenarioSlug,
             preparedSubmission,
             status: "submitting",
@@ -707,6 +740,14 @@ export function createCatalogWorkspaceController({
                 response,
                 error: null,
                 lastPayload: preparedSubmission
+            };
+            state.session.workspacePlayback = {
+                status: "updated",
+                currentContext: response?.workspace?.repositoryContext ?? activeRepositoryContext,
+                previousContext: activeRepositoryContext,
+                command: preparedSubmission.answer,
+                outcomeCorrectness: response?.outcome?.correctness ?? null,
+                updatedAt: new Date().toISOString()
             };
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
@@ -740,10 +781,18 @@ export function createCatalogWorkspaceController({
                 error: normalizedFailure,
                 lastPayload: preparedSubmission
             };
+            state.session.workspacePlayback = {
+                status: `${normalizedFailure.failureKind}-error`,
+                currentContext: activeRepositoryContext,
+                previousContext: activeRepositoryContext,
+                command: preparedSubmission.answer,
+                outcomeCorrectness: null,
+                updatedAt: new Date().toISOString()
+            };
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
-                repositoryContext: state.session.bootstrap.response?.workspace?.repositoryContext ?? null,
+                repositoryContext: activeRepositoryContext,
                 scenarioSlug: state.selectedScenarioSlug,
                 preparedSubmission,
                 status: "request-failure",
@@ -1671,7 +1720,8 @@ function createInitialSessionState() {
             scenarioSlug: null
         },
         submission: createInitialSubmissionRequestState(),
-        feedbackPanel: createInitialFeedbackPanelState()
+        feedbackPanel: createInitialFeedbackPanelState(),
+        workspacePlayback: createInitialWorkspacePlaybackState()
     };
 }
 
@@ -1703,6 +1753,17 @@ function createInitialFeedbackPanelState() {
         contextSnapshot: null,
         retryFeedback: null,
         revealedHintCount: 0,
+        updatedAt: null
+    };
+}
+
+function createInitialWorkspacePlaybackState() {
+    return {
+        status: "idle",
+        currentContext: null,
+        previousContext: null,
+        command: null,
+        outcomeCorrectness: null,
         updatedAt: null
     };
 }

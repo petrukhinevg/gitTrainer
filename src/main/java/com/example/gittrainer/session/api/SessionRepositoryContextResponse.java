@@ -7,6 +7,7 @@ record SessionRepositoryContextResponse(
         List<SessionRepositoryBranchResponse> branches,
         List<SessionRepositoryCommitResponse> commits,
         List<SessionRepositoryFileResponse> files,
-        List<SessionWorkspaceAnnotationResponse> annotations
+        List<SessionWorkspaceAnnotationResponse> annotations,
+        SessionCommitGraphResponse graph
 ) {
 }
