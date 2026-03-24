@@ -43,7 +43,7 @@ class SessionControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.sessionId").isNotEmpty())
                 .andExpect(jsonPath("$.scenario.slug").value("status-basics"))
-                .andExpect(jsonPath("$.scenario.title").value("Сначала проверь рабочее дерево"))
+                .andExpect(jsonPath("$.scenario.title").value("Проверь изменения перед первым Git-действием"))
                 .andExpect(jsonPath("$.scenario.source").value("mvp-fixture"))
                 .andExpect(jsonPath("$.lifecycle.status").value("active"))
                 .andExpect(jsonPath("$.lifecycle.startedAt").isNotEmpty())

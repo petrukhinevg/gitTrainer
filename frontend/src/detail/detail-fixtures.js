@@ -1,596 +1,828 @@
 export const FIXTURE_SCENARIO_DETAILS = Object.freeze({
     "status-basics": {
-        id: "status-basics",
-        slug: "status-basics",
-        title: "Сначала проверь рабочее дерево",
-        summary: "Посмотри на шумный репозиторий и выбери следующую безопасную Git-команду до любых изменений.",
-        difficulty: "beginner",
-        tags: ["status", "working-tree", "basics"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "status-basics",
+        "slug": "status-basics",
+        "title": "Проверь изменения перед первым Git-действием",
+        "summary": "В `main` уже изменены `README.md` и `src/main.js`, а `notes/status-checklist.md` ещё не отслеживается. Сначала покажи короткий статус, а не меняй репозиторий.",
+        "difficulty": "beginner",
+        "tags": [
+            "status",
+            "working-tree",
+            "basics"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Сначала проверьте состояние рабочего дерева и только после этого выбирайте следующий шаг.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Вы на `main`. Перед любым `add`, `checkout` или очисткой нужно коротко проверить, какие файлы уже изменены и какие ещё не отслеживаются.",
+                "instructions": [
                     {
-                        id: "inspect-working-tree-first",
-                        text: "Начните с команды проверки состояния, а не с переключения ветки или изменения файлов."
+                        "id": "inspect-working-tree-first",
+                        "text": "Не меняйте репозиторий. Первый ответ должен быть командой чтения статуса."
                     },
                     {
-                        id: "confirm-short-status-signals",
-                        text: "Сверьте краткий `git status --short` и зафиксируйте, какие файлы изменены, а какие ещё не отслеживаются."
+                        "id": "confirm-short-status-signals",
+                        "text": "Используйте короткий формат, чтобы сразу увидеть `README.md`, `src/main.js` и новый `notes/status-checklist.md`."
                     },
                     {
-                        id: "avoid-mutation-commands",
-                        text: "Избегайте команд, которые меняют историю или рабочее дерево, пока не подтверждён безопасный шаг проверки."
+                        "id": "avoid-mutation-commands",
+                        "text": "Ожидается безопасный следующий шаг из семейства `git status`, без stage, checkout и cleanup."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Начните с проверки рабочего дерева",
-                        detail: "Первая команда должна только читать состояние репозитория и ничего не менять."
+                        "position": 1,
+                        "title": "Заметьте, что вы уже на `main`",
+                        "detail": "Переключать ветки не нужно. Сначала разберитесь с текущим рабочим деревом."
                     },
                     {
-                        position: 2,
-                        title: "Сверьте сигналы short-статуса",
-                        detail: "Подтвердите по `git status --short`, какие пути изменены и какие остаются неотслеживаемыми."
+                        "position": 2,
+                        "title": "Подтвердите изменённые tracked-файлы",
+                        "detail": "Команда должна показать, что `README.md` и `src/main.js` уже изменены."
                     },
                     {
-                        position: 3,
-                        title: "Зафиксируйте безопасный первый шаг",
-                        detail: "Для этого сценария ожидается команда из семейства `git status` как честный следующий шаг."
+                        "position": 3,
+                        "title": "Не забудьте про новый файл",
+                        "detail": "`notes/status-checklist.md` пока не отслеживается и тоже должен попасть в обзор."
                     },
                     {
-                        position: 4,
-                        title: "Добавьте тестовую проверку формулировки",
-                        detail: "Этот дополнительный шаг нужен только для проверки более длинного списка подзадач в левой колонке."
+                        "position": 4,
+                        "title": "Выберите компактный вывод",
+                        "detail": "Для этой задачи нужен короткий status, а не длинное описание состояния."
                     },
                     {
-                        position: 5,
-                        title: "Оставьте финал без изменений состояния",
-                        detail: "Даже тестовое продолжение списка должно оставаться в режиме чтения репозитория, а не выполнения изменений."
+                        "position": 5,
+                        "title": "Оставьте репозиторий без изменений",
+                        "detail": "После ответа рабочее дерево должно остаться в том же состоянии: задача только про проверку."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Целевой результат",
-                        message: "Нужно показать безопасную проверку рабочего дерева до любого stage, checkout или очистки."
+                        "label": "Что нужно увидеть",
+                        "message": "В рабочем дереве сейчас два modified-файла и один untracked-файл."
                     },
                     {
-                        label: "Подсказка по проверке",
-                        message: "Здесь оценивается команда проверки состояния (`git status`), а не команда изменения."
+                        "label": "Какой шаг ожидается",
+                        "message": "Правильный ответ — короткий `git status`, который ничего не меняет в репозитории."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "main", current: true },
-                    { name: "docs/review-notes", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "main",
+                        "current": true
+                    },
+                    {
+                        "name": "docs/review-notes",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "a1c9e31", summary: "docs: добавить черновик заметок по ревью" },
-                    { id: "f72ab44", summary: "app: удержать оболочку рабочего пространства стабильной" }
+                "commits": [
+                    {
+                        "id": "a1c9e31",
+                        "summary": "docs: добавить черновик заметок по ревью"
+                    },
+                    {
+                        "id": "f72ab44",
+                        "summary": "app: удержать оболочку рабочего пространства стабильной"
+                    }
                 ],
-                files: [
-                    { path: "README.md", status: "modified" },
-                    { path: "notes/status-checklist.md", status: "untracked" },
-                    { path: "src/main.js", status: "modified" }
+                "files": [
+                    {
+                        "path": "README.md",
+                        "status": "modified"
+                    },
+                    {
+                        "path": "notes/status-checklist.md",
+                        "status": "untracked"
+                    },
+                    {
+                        "path": "src/main.js",
+                        "status": "modified"
+                    }
                 ],
-                annotations: [
-                    { label: "Подсказка рабочего дерева", message: "Два отслеживаемых файла изменены, а один файл с чеклистом всё ещё не отслеживается." },
-                    { label: "Подсказка для решения", message: "В этом сценарии ценится команда проверки до любого `stage` или очистки." }
+                "annotations": [
+                    {
+                        "label": "Сигнал рабочего дерева",
+                        "message": "`README.md` и `src/main.js` уже изменены, а `notes/status-checklist.md` ещё не добавлен в Git."
+                    },
+                    {
+                        "label": "Почему нельзя спешить",
+                        "message": "До проверки статуса любой `git add`, `checkout` или очистка будет действием вслепую."
+                    }
                 ]
             }
         }
     },
     "branch-safety": {
-        id: "branch-safety",
-        slug: "branch-safety",
-        title: "Выбери правильную ветку перед правками",
-        summary: "Определи активную ветку, сопоставь её с задачей и реши, оставаться ли на месте или сначала переключиться.",
-        difficulty: "beginner",
-        tags: ["branching", "navigation", "basics"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "branch-safety",
+        "slug": "branch-safety",
+        "title": "Подтверди ветку и незавершённый hotfix",
+        "summary": "Вы уже на `release/hotfix-7`, а `src/ui/header.css` и `docs/release-checklist.md` изменены. Сначала подтвердите ветку и только потом решайте, можно ли переключаться.",
+        "difficulty": "beginner",
+        "tags": [
+            "branching",
+            "navigation",
+            "basics"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Решите, продолжать ли задачу на текущей ветке или после переключения.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Перед любым `checkout` нужно подтвердить, что работа уже открыта в `release/hotfix-7`, и собрать branch-aware status незавершённых правок.",
+                "instructions": [
                     {
-                        id: "read-current-branch",
-                        text: "Посмотрите на текущую ветку до любых правок файлов или индексации."
+                        "id": "confirm-active-branch-before-switching",
+                        "text": "Сначала покажите, какая ветка активна сейчас. Без этого решение о переключении будет догадкой."
                     },
                     {
-                        id: "compare-task-intent",
-                        text: "Сопоставьте назначение ветки с задачей, чтобы обосновать, оставаться ли на месте или переключаться."
+                        "id": "connect-open-edits-to-branch-purpose",
+                        "text": "Свяжите `release/hotfix-7` с уже изменёнными `src/ui/header.css` и `docs/release-checklist.md`."
                     },
                     {
-                        id: "avoid-implicit-switch",
-                        text: "Не считайте переключение ветки правильным, пока состояние репозитория и цель задачи не совпадут."
+                        "id": "keep-next-step-observable",
+                        "text": "Задача заканчивается на безопасной проверке branch-контекста. Делать `checkout` здесь ещё не нужно."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Поймите, где вы находитесь",
-                        detail: "Начните с активной ветки и сигналов того, что рабочее дерево уже используется."
+                        "position": 1,
+                        "title": "Подтвердите активную ветку",
+                        "detail": "Первым шагом явно покажите, что работа уже открыта в `release/hotfix-7`."
                     },
                     {
-                        position: 2,
-                        title: "Сопоставьте ветку и задачу",
-                        detail: "Свяжите имя текущей ветки с описанием задачи, прежде чем предлагать `checkout`."
+                        "position": 2,
+                        "title": "Сопоставьте ветку с изменёнными файлами",
+                        "detail": "`src/ui/header.css` и `docs/release-checklist.md` выглядят как незавершённый hotfix-контекст, а не новая feature-задача."
                     },
                     {
-                        position: 3,
-                        title: "Сформулируйте решение по ветке",
-                        detail: "Кратко объясните, нужно ли остаться на ветке или переключиться и почему это безопаснее."
+                        "position": 3,
+                        "title": "Соберите branch-aware status",
+                        "detail": "Нужна короткая команда, которая показывает и ветку, и незавершённые изменения."
                     },
                     {
-                        position: 4,
-                        title: "Добавьте тестовый комментарий к выбору",
-                        detail: "Этот шаг расширяет список задач для проверки UI и не требует новой смысловой развилки."
+                        "position": 4,
+                        "title": "Оставьте переключение на потом",
+                        "detail": "После такой проверки уже можно будет обсуждать `checkout`, но этот сценарий завершается раньше."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Граница решения",
-                        message: "Навигация по веткам должна быть осознанной и объяснённой, а не автоматической."
+                        "label": "Что проверяем",
+                        "message": "Сначала подтверждаем активную ветку, потом убеждаемся, что в ней уже есть незавершённый hotfix."
+                    },
+                    {
+                        "label": "Какой шаг ожидается",
+                        "message": "Сценарий ведёт к branch-aware status, но только после явного подтверждения текущей ветки."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "release/hotfix-7", current: true },
-                    { name: "feature/menu-refresh", current: false },
-                    { name: "main", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "release/hotfix-7",
+                        "current": true
+                    },
+                    {
+                        "name": "feature/menu-refresh",
+                        "current": false
+                    },
+                    {
+                        "name": "main",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "b74e2d0", summary: "hotfix: восстановить отступы заголовка" },
-                    { id: "197a0f4", summary: "release: отметить чеклист выкладки" }
+                "commits": [
+                    {
+                        "id": "b74e2d0",
+                        "summary": "hotfix: восстановить отступы заголовка"
+                    },
+                    {
+                        "id": "197a0f4",
+                        "summary": "release: отметить чеклист выкладки"
+                    }
                 ],
-                files: [
-                    { path: "src/ui/header.css", status: "modified" },
-                    { path: "docs/release-checklist.md", status: "modified" }
+                "files": [
+                    {
+                        "path": "src/ui/header.css",
+                        "status": "modified"
+                    },
+                    {
+                        "path": "docs/release-checklist.md",
+                        "status": "modified"
+                    }
                 ],
-                annotations: [
-                    { label: "Назначение ветки", message: "Текущая ветка предназначена для hotfix и уже содержит изменения, связанные с релизом." },
-                    { label: "Напряжение задачи", message: "Нужно решить, относится ли запрошенная работа сюда или должна идти в feature-ветку." }
+                "annotations": [
+                    {
+                        "label": "Что видно в репозитории",
+                        "message": "Сейчас активна `release/hotfix-7`, и оба изменённых файла выглядят как незавершённая release-работа."
+                    },
+                    {
+                        "label": "Почему нельзя переключаться сразу",
+                        "message": "Пока вы не подтвердили текущую ветку и не увидели изменения рядом с ней, любой `checkout` смешивает hotfix и feature-контекст."
+                    }
                 ]
             }
         }
     },
     "history-cleanup-preview": {
-        id: "history-cleanup-preview",
-        slug: "history-cleanup-preview",
-        title: "Просмотри план очистки истории",
-        summary: "Разбери запутанный стек коммитов и подготовься к дальнейшей очистке, пока ещё не меняя историю.",
-        difficulty: "intermediate",
-        tags: ["history", "cleanup", "planning"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "history-cleanup-preview",
+        "slug": "history-cleanup-preview",
+        "title": "Собери preview истории перед cleanup",
+        "summary": "В `feature/history-cleanup` наверху лежат `fixup!` и WIP-коммиты. Сначала покажи компактный граф истории, а не запускай `rebase -i`.",
+        "difficulty": "intermediate",
+        "tags": [
+            "history",
+            "cleanup",
+            "planning"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Подготовьте последовательный план очистки, пока ещё не переписывая историю.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Нужно безопасно посмотреть верхушку истории и увидеть, какие коммиты пойдут в cleanup, не переписывая их.",
+                "instructions": [
                     {
-                        id: "inspect-commit-stack",
-                        text: "Посмотрите на недавний стек коммитов и найдите повторяющиеся или неаккуратные изменения."
+                        "id": "preview-commit-graph-before-rewrite",
+                        "text": "Оставайтесь в режиме просмотра. Никакого `rebase`, `reset` или `commit --amend`."
                     },
                     {
-                        id: "plan-before-rewrite",
-                        text: "Опишите последовательность очистки до выбора любой команды переписывания истории."
+                        "id": "use-fixup-and-wip-as-cues",
+                        "text": "Команда должна явно показать `fixup!` и WIP рядом с основными коммитами, чтобы было видно будущий cleanup."
                     },
                     {
-                        id: "keep-remote-risk-visible",
-                        text: "Учитывайте, могли ли переписываемые коммиты уже быть опубликованы другим."
+                        "id": "keep-next-step-in-preview-mode",
+                        "text": "Лучший следующий шаг — компактный `git log` с графом и декорациями, без переписывания истории."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Прочитайте стек сверху вниз",
-                        detail: "Сначала пройдитесь по текущей истории по порядку и только потом предлагайте план очистки."
+                        "position": 1,
+                        "title": "Посмотрите на верхушку ветки",
+                        "detail": "Нужно увидеть последние коммиты в `feature/history-cleanup`, а не сразу планировать `rebase -i`."
                     },
                     {
-                        position: 2,
-                        title: "Сгруппируйте цели очистки",
-                        detail: "Разделите кандидатов на `fixup`, кандидатов на перестановку и коммиты, которые трогать не нужно."
+                        "position": 2,
+                        "title": "Найдите `fixup!` и WIP-сигналы",
+                        "detail": "Именно эти коммиты подсказывают, какие части истории ещё надо будет уплотнить."
                     },
                     {
-                        position: 3,
-                        title: "Назовите безопасный следующий шаг",
-                        detail: "Выберите команду планирования или проверки, которая должна идти до любого переписывания."
+                        "position": 3,
+                        "title": "Соберите компактный граф",
+                        "detail": "Выберите такой `git log`, который показывает форму стека и декорации веток в одном выводе."
                     },
                     {
-                        position: 4,
-                        title: "Оставьте ещё один тестовый ориентир",
-                        detail: "Дополнительная подзадача удерживает длинный список в навигации и проверяет стабильность раскрытого состояния."
+                        "position": 4,
+                        "title": "Не переписывайте историю раньше времени",
+                        "detail": "Сценарий заканчивается на preview. Переписывание коммитов остаётся следующим, но не текущим шагом."
                     },
                     {
-                        position: 5,
-                        title: "Завершите план условным черновиком",
-                        detail: "Пусть финальный пункт останется тестовым: он нужен, чтобы у родителя было больше дочерних элементов, как в реальной структуре."
+                        "position": 5,
+                        "title": "Сформулируйте основу для cleanup",
+                        "detail": "После preview должно быть понятно, какие коммиты вы бы потом склеивали или переставляли."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Режим планирования",
-                        message: "Эта задача заканчивается на качестве плана и не выполняет переписывание."
+                        "label": "Что нужно увидеть",
+                        "message": "В истории уже видны `fixup!` и WIP-коммиты, поэтому сначала нужен понятный preview графа."
+                    },
+                    {
+                        "label": "Какой шаг ожидается",
+                        "message": "Правильный ответ — команда из семейства `git log`, которая ничего не меняет, но показывает форму истории."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "feature/history-cleanup", current: true },
-                    { name: "main", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "feature/history-cleanup",
+                        "current": true
+                    },
+                    {
+                        "name": "main",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "c102d6b", summary: "fixup! ui: переименовать бейдж оболочки" },
-                    { id: "91fe2ad", summary: "ui: переименовать бейдж оболочки" },
-                    { id: "43bc8c1", summary: "wip: ещё раз подправить отступы" }
+                "commits": [
+                    {
+                        "id": "c102d6b",
+                        "summary": "fixup! ui: переименовать бейдж оболочки"
+                    },
+                    {
+                        "id": "91fe2ad",
+                        "summary": "ui: переименовать бейдж оболочки"
+                    },
+                    {
+                        "id": "43bc8c1",
+                        "summary": "wip: ещё раз подправить отступы"
+                    }
                 ],
-                files: [
-                    { path: "frontend/src/styles.css", status: "modified" },
-                    { path: "frontend/src/workspace-shell/view.js", status: "modified" }
+                "files": [
+                    {
+                        "path": "frontend/src/styles.css",
+                        "status": "modified"
+                    },
+                    {
+                        "path": "frontend/src/workspace-shell/view.js",
+                        "status": "modified"
+                    }
                 ],
-                annotations: [
-                    { label: "Подсказка по истории", message: "Среди последних коммитов есть `fixup` и лишнее WIP-изменение, что намекает на будущую очистку." },
-                    { label: "Подсказка по безопасности", message: "Пользователь всё ещё находится в режиме планирования и не должен переписывать историю." }
+                "annotations": [
+                    {
+                        "label": "Сигнал для cleanup",
+                        "message": "`fixup!` рядом с основным UI-коммитом и отдельный WIP уже показывают, что история просит аккуратного просмотра."
+                    },
+                    {
+                        "label": "Почему rebase пока рано",
+                        "message": "Пока вы не увидели стек в компактном графе, любой `rebase -i` скрывает обязательный шаг анализа."
+                    }
                 ]
             }
         }
     },
     "remote-sync-preview": {
-        id: "remote-sync-preview",
-        slug: "remote-sync-preview",
-        title: "Проверь удалённое состояние перед pull",
-        summary: "Сравни признаки опережения и отставания и реши, что уместнее перед синхронизацией: fetch или pull.",
-        difficulty: "intermediate",
-        tags: ["remote", "inspection", "planning"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "remote-sync-preview",
+        "slug": "remote-sync-preview",
+        "title": "Сначала обнови `origin/main` перед интеграцией",
+        "summary": "Локальная `main` уже ушла вперёд, но данные об `origin/main` могут быть устаревшими. Сначала сделай `fetch`, а уже потом думай про `pull`.",
+        "difficulty": "intermediate",
+        "tags": [
+            "remote",
+            "inspection",
+            "planning"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Объясните следующую команду для синхронизации после чтения признаков опережения или отставания.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Сначала обновите remote-tracking refs и только после этого решайте, нужен ли `pull`, `merge` или `rebase`.",
+                "instructions": [
                     {
-                        id: "check-tracking",
-                        text: "Посмотрите, как локальная ветка соотносится с отслеживаемой удалённой веткой."
+                        "id": "refresh-remote-state-before-integration",
+                        "text": "Не интегрируйте удалённые коммиты сразу. Первый шаг здесь — отдельный `fetch`."
                     },
                     {
-                        id: "read-divergence",
-                        text: "Определите, опережает ветка, отстаёт или разошлась, прежде чем выбирать команду синхронизации."
+                        "id": "treat-local-ahead-and-remote-behind-as-incomplete-view",
+                        "text": "Задача не про `pull`; она про получение актуального состояния `origin/main`."
                     },
                     {
-                        id: "separate-fetch-from-merge",
-                        text: "Разделяйте решения о `fetch` и `merge`, пока состояние репозитория не стало понятным."
+                        "id": "keep-next-step-in-preview-mode",
+                        "text": "После команды локальная история не должна смешаться с удалённой: сначала только обновите refs."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Проверьте связь с отслеживаемой удалённой веткой",
-                        detail: "Сначала прочитайте состояние отслеживаемой удалённой ветки и только потом предлагайте `pull` или `fetch`."
+                        "position": 1,
+                        "title": "Заметьте, что данные об `origin/main` могут устареть",
+                        "detail": "По текущему контексту видно расхождение, но пока нет гарантии, что локальная картина удалённой ветки свежая."
                     },
                     {
-                        position: 2,
-                        title: "Интерпретируйте опережение и отставание",
-                        detail: "Используйте признаки опережения или отставания, чтобы объяснить, нужна ли интеграция прямо сейчас."
+                        "position": 2,
+                        "title": "Обновите remote-tracking refs",
+                        "detail": "Сделайте безопасный шаг, который получит свежие данные с удалённого репозитория без интеграции в локальную ветку."
                     },
                     {
-                        position: 3,
-                        title: "Выберите команду синхронизации",
-                        detail: "Назовите самый безопасный следующий шаг, исходя из того, нужно ли сначала получить новые данные с удалённого репозитория."
+                        "position": 3,
+                        "title": "Отделите fetch от merge",
+                        "detail": "После `fetch` уже можно будет обсуждать интеграцию, но не раньше."
                     },
                     {
-                        position: 4,
-                        title: "Проверьте тестовый пост-скрипт решения",
-                        detail: "Ещё один шаг добавлен только для проверки длинных веток навигации и не меняет общий смысл сценария."
+                        "position": 4,
+                        "title": "Оставьте решение о pull на следующий шаг",
+                        "detail": "Этот сценарий заканчивается сразу после обновления удалённого состояния."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Дисциплина работы с удалённым репозиторием",
-                        message: "Получение информации и интеграция изменений в этом упражнении рассматриваются как разные решения."
+                        "label": "Что проверяем",
+                        "message": "Сначала получаем свежие remote refs, затем уже оцениваем divergence."
+                    },
+                    {
+                        "label": "Какой шаг ожидается",
+                        "message": "Правильный ответ — команда из семейства `git fetch`, без `pull`, `merge` и `rebase`."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "main", current: true },
-                    { name: "origin/main", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "main",
+                        "current": true
+                    },
+                    {
+                        "name": "origin/main",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "87d20aa", summary: "docs: уточнить чеклист синхронизации" },
-                    { id: "3fd81e5", summary: "feat: подготовить баннер статуса удалённого репозитория" }
+                "commits": [
+                    {
+                        "id": "87d20aa",
+                        "summary": "docs: уточнить чеклист синхронизации"
+                    },
+                    {
+                        "id": "3fd81e5",
+                        "summary": "feat: подготовить баннер статуса удалённого репозитория"
+                    }
                 ],
-                files: [
-                    { path: "docs/sync-playbook.md", status: "clean" },
-                    { path: "frontend/src/banner.js", status: "clean" }
+                "files": [
+                    {
+                        "path": "docs/sync-playbook.md",
+                        "status": "clean"
+                    },
+                    {
+                        "path": "frontend/src/banner.js",
+                        "status": "clean"
+                    }
                 ],
-                annotations: [
-                    { label: "Подсказка по удалённому репозиторию", message: "Локальная `main` опережает на один коммит, а в `origin/main` есть ещё не полученные удалённые изменения." },
-                    { label: "Подсказка для решения", message: "Нужно решить, стоит ли сначала выполнить `fetch`, прежде чем выбирать интегрирующую команду." }
+                "annotations": [
+                    {
+                        "label": "Сигнал неполной картины",
+                        "message": "Локальная `main` уже опережает известный `origin/main`, но на удалённом есть ещё не полученные изменения."
+                    },
+                    {
+                        "label": "Почему `pull` пока рано",
+                        "message": "`pull` смешивает получение новых данных и интеграцию. Сначала нужен отдельный `fetch`."
+                    }
                 ]
             }
         }
     },
     "stash-checkpoint-draft": {
-        id: "stash-checkpoint-draft",
-        slug: "stash-checkpoint-draft",
-        title: "Тестовый блок про временное сохранение",
-        summary: "Добавочный fixture-блок для проверки UI: ещё один родитель с несколькими дочерними шагами и нейтральным текстом.",
-        difficulty: "beginner",
-        tags: ["status", "cleanup", "planning"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "stash-checkpoint-draft",
+        "slug": "stash-checkpoint-draft",
+        "title": "Убери черновик в stash перед переключением",
+        "summary": "В `feature/test-stash-panel` изменён `frontend/src/demo-panel.js` и появился новый `notes/ui-placeholder.txt`. Сначала проверь статус, затем сохрани всё в stash вместе с untracked-файлом.",
+        "difficulty": "beginner",
+        "tags": [
+            "stash",
+            "working-tree",
+            "safety"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Проверить, что новый тестовый родитель отображается и разворачивается так же, как остальные сценарии.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Нужно подтвердить, что в ветке есть и changed, и untracked файлы, а затем убрать их в stash так, чтобы рабочее дерево стало чистым.",
+                "instructions": [
                     {
-                        id: "read-placeholder-context",
-                        text: "Прочитайте тестовый контекст и убедитесь, что блок ведёт себя как обычный authored fixture."
+                        "id": "inspect-dirty-worktree-before-stash",
+                        "text": "Сначала убедитесь, что в `feature/test-stash-panel` есть и изменённый tracked-файл, и новый untracked-файл."
                     },
                     {
-                        id: "keep-sandbox-tone",
-                        text: "Текст может быть условным, но структура должна оставаться такой же, как у остальных сценариев."
+                        "id": "include-untracked-files-in-checkpoint",
+                        "text": "Stash должен забрать не только `frontend/src/demo-panel.js`, но и `notes/ui-placeholder.txt`."
                     },
                     {
-                        id: "preserve-subtask-shape",
-                        text: "Каждая дочерняя задача нужна для проверки раскрытия, переходов по focus и визуальной линии навигации."
+                        "id": "leave-branch-ready-for-next-step",
+                        "text": "После stash рабочее дерево должно стать чистым, чтобы ветку можно было безопасно переключать или продолжать позже."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Прочитайте тестовое описание",
-                        detail: "Первый шаг ничего не доказывает по Git-смыслу, но нужен для проверки общего шаблона контента."
+                        "position": 1,
+                        "title": "Проверьте текущее грязное состояние",
+                        "detail": "Перед stash зафиксируйте, что в репозитории есть и modified, и untracked изменения."
                     },
                     {
-                        position: 2,
-                        title: "Откройте дочерние пункты в навигации",
-                        detail: "Этот пункт нужен, чтобы у нового родителя было несколько ссылок focus и он выглядел как существующие блоки."
+                        "position": 2,
+                        "title": "Сохраните всё в stash",
+                        "detail": "Выберите такую команду, которая уберёт и tracked, и untracked файлы в один checkpoint."
                     },
                     {
-                        position: 3,
-                        title: "Сверьте нейтральную команду",
-                        detail: "Для локального fixture-режима здесь можно использовать безопасную тестовую команду из семейства `git stash`."
+                        "position": 3,
+                        "title": "Оставьте ветку чистой",
+                        "detail": "После stash локальный шум должен исчезнуть, а изменения остаться доступными для возврата позже."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Тестовое назначение",
-                        message: "Сценарий добавлен только для проверки UI и локальных fixture-flow, без строгой предметной нагрузки."
+                        "label": "Что проверяем",
+                        "message": "Обычный просмотр статуса допустим как промежуточный шаг, но задача завершается только после stash."
+                    },
+                    {
+                        "label": "Какой результат нужен",
+                        "message": "Нужно убрать в stash и изменённый файл, и новый untracked-файл, чтобы рабочее дерево стало чистым."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "feature/test-stash-panel", current: true },
-                    { name: "main", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "feature/test-stash-panel",
+                        "current": true
+                    },
+                    {
+                        "name": "main",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "5d91af0", summary: "test: добавить временный контент для панели" },
-                    { id: "88ce113", summary: "ui: подготовить черновой блок навигации" }
+                "commits": [
+                    {
+                        "id": "5d91af0",
+                        "summary": "test: добавить временный контент для панели"
+                    },
+                    {
+                        "id": "88ce113",
+                        "summary": "ui: подготовить черновой блок навигации"
+                    }
                 ],
-                files: [
-                    { path: "frontend/src/demo-panel.js", status: "modified" },
-                    { path: "notes/ui-placeholder.txt", status: "untracked" }
+                "files": [
+                    {
+                        "path": "frontend/src/demo-panel.js",
+                        "status": "modified"
+                    },
+                    {
+                        "path": "notes/ui-placeholder.txt",
+                        "status": "untracked"
+                    }
                 ],
-                annotations: [
-                    { label: "Контекст для теста", message: "Данные подобраны так, чтобы сценарий выглядел правдоподобно, но не требовал настоящего доменного смысла." },
-                    { label: "Безопасный следующий шаг", message: "В local fixture здесь достаточно тестовой команды из области stash." }
+                "annotations": [
+                    {
+                        "label": "Что лежит в рабочем дереве",
+                        "message": "`frontend/src/demo-panel.js` уже изменён, а `notes/ui-placeholder.txt` существует только локально и тоже не должен потеряться."
+                    },
+                    {
+                        "label": "Безопасный следующий шаг",
+                        "message": "Сначала подтвердите статус, затем сохраните tracked и untracked изменения в stash."
+                    }
                 ]
             }
         }
     },
     "merge-sandbox-outline": {
-        id: "merge-sandbox-outline",
-        slug: "merge-sandbox-outline",
-        title: "Тестовый блок про слияние без спешки",
-        summary: "Служебный сценарий для тестирования навигации: раскрывается как обычный блок, но несёт упрощённый учебный текст.",
-        difficulty: "intermediate",
-        tags: ["branching", "history", "planning"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "merge-sandbox-outline",
+        "slug": "merge-sandbox-outline",
+        "title": "Сравни diff перед попыткой merge",
+        "summary": "Вы на `feature/mock-merge-window` с незавершёнными правками. Перед merge безопасно посмотреть diff с `main` или общий граф веток, а не запускать слияние сразу.",
+        "difficulty": "intermediate",
+        "tags": [
+            "branching",
+            "history",
+            "planning"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Добавить ещё один родительский блок со средней длиной списка шагов и привычным устройством данных.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Нужно понять, чем `feature/mock-merge-window` отличается от `main`, и сделать это через preview-команду, не выполняя merge.",
+                "instructions": [
                     {
-                        id: "inspect-merge-shape",
-                        text: "Сначала считайте фикстурный контекст и не пытайтесь превращать этот блок в полноценный merge-тренажёр."
+                        "id": "inspect-merge-shape",
+                        "text": "Сначала подтвердите контекст ветки, а затем откройте preview различий или истории."
                     },
                     {
-                        id: "stay-in-preview-mode",
-                        text: "Как и в других preview-сценариях, здесь достаточно безопасного шага чтения и общего плана."
+                        "id": "stay-in-preview-mode",
+                        "text": "Задача заканчивается на просмотре diff или графа. Никакого `git merge` здесь выполнять не нужно."
                     },
                     {
-                        id: "use-test-copy",
-                        text: "Текст оставлен нейтральным специально, чтобы его можно было использовать для визуального тестирования разных состояний."
+                        "id": "use-test-copy",
+                        "text": "Подойдёт команда, которая либо показывает diff между `main` и `feature/mock-merge-window`, либо строит понятный граф веток."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Соберите тестовый контекст веток",
-                        detail: "Первый шаг нужен для одинаковой структуры: у сценария есть обзор, а затем несколько дочерних подзадач."
+                        "position": 1,
+                        "title": "Подтвердите текущую ветку",
+                        "detail": "Сначала зафиксируйте, что вы на `feature/mock-merge-window`, а не на `main` или `release/demo`."
                     },
                     {
-                        position: 2,
-                        title: "Посмотрите на форму истории",
-                        detail: "Этот шаг имитирует чтение графа коммитов и даёт ещё одну точку перехода в сайдбаре."
+                        "position": 2,
+                        "title": "Сравните feature с `main`",
+                        "detail": "Посмотрите, какие изменения накопились перед потенциальным merge, и не трогайте историю."
                     },
                     {
-                        position: 3,
-                        title: "Выберите нейтральный следующий шаг",
-                        detail: "Для локальной проверки достаточно безвредной команды чтения истории, которая не меняет репозиторий."
+                        "position": 3,
+                        "title": "Выберите diff или граф",
+                        "detail": "Правильный ответ — безопасный preview: либо различия, либо граф веток."
                     },
                     {
-                        position: 4,
-                        title: "Оставьте запасной тестовый шаг",
-                        detail: "Дополнительный пункт нужен только для проверки длинной раскрытой группы и анимации списка."
+                        "position": 4,
+                        "title": "Оставьте merge на следующий шаг",
+                        "detail": "После preview уже можно обсуждать слияние, но этот сценарий останавливается раньше."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Назначение блока",
-                        message: "Этот сценарий расширяет тестовую карту и повторяет устройство существующих authored fixtures."
+                        "label": "Что проверяем",
+                        "message": "Сначала нужно увидеть форму расхождения между `main` и `feature/mock-merge-window`, не меняя репозиторий."
+                    },
+                    {
+                        "label": "Какой шаг ожидается",
+                        "message": "Подойдёт `git diff main...feature/mock-merge-window` или просмотр полного графа веток."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "feature/mock-merge-window", current: true },
-                    { name: "main", current: false },
-                    { name: "release/demo", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "feature/mock-merge-window",
+                        "current": true
+                    },
+                    {
+                        "name": "main",
+                        "current": false
+                    },
+                    {
+                        "name": "release/demo",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "fbe4309", summary: "test: набросать фикстуру для merge preview" },
-                    { id: "2cc9b15", summary: "feat: добавить условный баннер синхронизации" }
+                "commits": [
+                    {
+                        "id": "fbe4309",
+                        "summary": "test: набросать фикстуру для merge preview"
+                    },
+                    {
+                        "id": "2cc9b15",
+                        "summary": "feat: добавить условный баннер синхронизации"
+                    }
                 ],
-                files: [
-                    { path: "frontend/src/merge-banner.js", status: "modified" },
-                    { path: "docs/mock-merge-plan.md", status: "modified" }
+                "files": [
+                    {
+                        "path": "frontend/src/merge-banner.js",
+                        "status": "modified"
+                    },
+                    {
+                        "path": "docs/mock-merge-plan.md",
+                        "status": "modified"
+                    }
                 ],
-                annotations: [
-                    { label: "Тестовая ветка", message: "Данные репозитория оставлены условными, чтобы блок выглядел как обычный учебный сценарий." },
-                    { label: "Подход к ответу", message: "В локальном режиме здесь достаточно команды просмотра истории или различий." }
+                "annotations": [
+                    {
+                        "label": "Что видно в репозитории",
+                        "message": "Активна `feature/mock-merge-window`, рядом есть `main` и `release/demo`, а в рабочем дереве уже лежат незавершённые изменения."
+                    },
+                    {
+                        "label": "Почему merge пока рано",
+                        "message": "Без предварительного diff или графа вы не понимаете ни объём отличий, ни форму истории перед слиянием."
+                    }
                 ]
             }
         }
     },
     "tag-checkpoint-preview": {
-        id: "tag-checkpoint-preview",
-        slug: "tag-checkpoint-preview",
-        title: "Тестовый блок про теги и ориентиры",
-        summary: "Ещё один fixture-родитель для проверки длинной ленты: внутри только тестовые шаги без особой смысловой нагрузки.",
-        difficulty: "beginner",
-        tags: ["navigation", "inspection", "remote"],
-        meta: {
-            source: "local-fixture",
-            stub: false
+        "id": "tag-checkpoint-preview",
+        "slug": "tag-checkpoint-preview",
+        "title": "Проверь релизные теги перед выбором точки",
+        "summary": "История чистая, но в репозитории уже есть `release/demo-v1` и `checkpoint/ui-shell`. Сначала посмотри список тегов, а не создавай новый.",
+        "difficulty": "beginner",
+        "tags": [
+            "navigation",
+            "inspection",
+            "remote"
+        ],
+        "meta": {
+            "source": "local-fixture",
+            "stub": false
         },
-        workspace: {
-            shell: {
-                leftPanelTitle: "Карта сценария",
-                centerPanelTitle: "Урок",
-                rightPanelTitle: "Практика"
+        "workspace": {
+            "shell": {
+                "leftPanelTitle": "Карта сценария",
+                "centerPanelTitle": "Урок",
+                "rightPanelTitle": "Практика"
             },
-            task: {
-                status: "authored-fixture",
-                goal: "Проверить ещё один короткий сценарий с двумя-тремя шагами, чтобы лента родителей стала длиннее.",
-                instructions: [
+            "task": {
+                "status": "authored-fixture",
+                "goal": "Нужно безопасно увидеть существующие теги и выбрать ориентир для релизной точки, не меняя историю.",
+                "instructions": [
                     {
-                        id: "inspect-tag-list",
-                        text: "Посмотрите на список ориентиров и убедитесь, что UI корректно обрабатывает дополнительный fixture-сценарий."
+                        "id": "inspect-tag-list",
+                        "text": "Рабочее дерево чистое, поэтому задача не про правки, а про чтение уже существующих тегов."
                     },
                     {
-                        id: "keep-copy-light",
-                        text: "Здесь допустим нейтральный тестовый текст, если структура поля и секций совпадает с остальными сценариями."
+                        "id": "keep-copy-light",
+                        "text": "Команда должна показать, какие теги уже есть в репозитории: `release/demo-v1` и `checkpoint/ui-shell`."
                     },
                     {
-                        id: "prefer-read-only-command",
-                        text: "Следующий шаг всё так же должен быть безопасным и не менять историю в локальной сессии."
+                        "id": "prefer-read-only-command",
+                        "text": "Не создавайте и не перемещайте теги. Сначала просто просмотрите список."
                     }
                 ],
-                steps: [
+                "steps": [
                     {
-                        position: 1,
-                        title: "Откройте список тестовых ориентиров",
-                        detail: "Первая подзадача существует для структуры и не требует содержательного решения сверх проверки чтения."
+                        "position": 1,
+                        "title": "Убедитесь, что история чистая",
+                        "detail": "Здесь не нужно сохранять изменения или переключать ветки: задача целиком про чтение ориентиров."
                     },
                     {
-                        position: 2,
-                        title: "Сверьте условный тег с описанием",
-                        detail: "Этот шаг добавляет ещё одну focus-ссылку и помогает проверить переходы между соседними родителями."
+                        "position": 2,
+                        "title": "Посмотрите существующие теги",
+                        "detail": "Нужно явно увидеть, какие release/checkpoint-теги уже привязаны к истории."
                     },
                     {
-                        position: 3,
-                        title: "Назовите безопасную команду просмотра",
-                        detail: "Для локального режима здесь достаточно команды чтения вроде `git tag --list` или похожего безопасного просмотра."
+                        "position": 3,
+                        "title": "Выберите безопасный просмотр",
+                        "detail": "Подойдёт read-only команда вроде `git tag --list` или `git show-ref --tags`."
                     }
                 ],
-                annotations: [
+                "annotations": [
                     {
-                        label: "Fixture-нагрузка",
-                        message: "Сценарий добавлен для тестирования длины маршрута и поведения левой колонки."
+                        "label": "Что проверяем",
+                        "message": "Сценарий про выбор существующей контрольной точки, а не про создание нового тега."
+                    },
+                    {
+                        "label": "Какой шаг ожидается",
+                        "message": "Правильный ответ — безопасная команда просмотра списка тегов или tag refs."
                     }
                 ]
             },
-            repositoryContext: {
-                status: "authored-fixture",
-                branches: [
-                    { name: "main", current: true },
-                    { name: "origin/main", current: false }
+            "repositoryContext": {
+                "status": "authored-fixture",
+                "branches": [
+                    {
+                        "name": "main",
+                        "current": true
+                    },
+                    {
+                        "name": "origin/main",
+                        "current": false
+                    }
                 ],
-                commits: [
-                    { id: "11b7d31", summary: "test: добавить условный тег релизного ориентира" },
-                    { id: "d34aa0c", summary: "docs: обновить заметки по контрольным точкам" }
+                "commits": [
+                    {
+                        "id": "11b7d31",
+                        "summary": "test: добавить условный тег релизного ориентира"
+                    },
+                    {
+                        "id": "d34aa0c",
+                        "summary": "docs: обновить заметки по контрольным точкам"
+                    }
                 ],
-                files: [
-                    { path: "docs/release-tags.md", status: "clean" },
-                    { path: "frontend/src/tag-chip.js", status: "clean" }
+                "files": [
+                    {
+                        "path": "docs/release-tags.md",
+                        "status": "clean"
+                    },
+                    {
+                        "path": "frontend/src/tag-chip.js",
+                        "status": "clean"
+                    }
                 ],
-                annotations: [
-                    { label: "Тестовая проверка", message: "Контекст сделан спокойным, чтобы сценарий можно было использовать просто как дополнительный навигационный узел." },
-                    { label: "Подсказка по ответу", message: "В локальном режиме ожидается безопасный просмотр списка тегов." }
+                "annotations": [
+                    {
+                        "label": "Что уже есть в истории",
+                        "message": "Рабочее дерево чистое, а в истории уже подготовлены как минимум два тега: `release/demo-v1` и `checkpoint/ui-shell`."
+                    },
+                    {
+                        "label": "Почему не нужно создавать тег сразу",
+                        "message": "Сначала надо понять, какие ориентиры уже существуют, и только потом решать, нужен ли новый тег."
+                    }
                 ]
             }
         }

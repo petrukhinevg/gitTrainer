@@ -29,7 +29,7 @@ class ScenarioTaskContentFixtureSourceTest {
     void providesHistoryCleanupTaskContentThatLeadsWithHistoryPreview() {
         ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("history-cleanup-preview");
 
-        assertThat(fixture.goal()).contains("граф коммитов");
+        assertThat(fixture.goal()).contains("верхушку истории");
         assertThat(fixture.instructions())
                 .extracting(ScenarioTaskContent.ScenarioTaskInstruction::id)
                 .containsExactly(
@@ -37,10 +37,10 @@ class ScenarioTaskContentFixtureSourceTest {
                         "use-fixup-and-wip-as-cues",
                         "keep-next-step-in-preview-mode"
                 );
-        assertThat(fixture.steps().getFirst().title()).isEqualTo("Просмотрите верхушку истории");
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Посмотрите на верхушку ветки");
         assertThat(fixture.annotations())
                 .extracting(ScenarioTaskContent.ScenarioTaskAnnotation::label)
-                .containsExactly("Что считается безопасным шагом", "Граница сценария");
+                .containsExactly("Что нужно увидеть", "Какой шаг ожидается");
     }
 
     @Test
@@ -55,17 +55,17 @@ class ScenarioTaskContentFixtureSourceTest {
                         "treat-local-ahead-and-remote-behind-as-incomplete-view",
                         "keep-next-step-in-preview-mode"
                 );
-        assertThat(fixture.steps().getFirst().title()).isEqualTo("Обновите удалённые refs");
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Заметьте, что данные об `origin/main` могут устареть");
         assertThat(fixture.annotations())
                 .extracting(ScenarioTaskContent.ScenarioTaskAnnotation::label)
-                .containsExactly("Что считается безопасным шагом", "Граница сценария");
+                .containsExactly("Что проверяем", "Какой шаг ожидается");
     }
 
     @Test
     void providesBranchSafetyTaskContentThatLeadsWithBranchInspection() {
         ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("branch-safety");
 
-        assertThat(fixture.goal()).contains("подтвердите активную ветку");
+        assertThat(fixture.goal()).contains("`release/hotfix-7`");
         assertThat(fixture.instructions())
                 .extracting(ScenarioTaskContent.ScenarioTaskInstruction::id)
                 .containsExactly(
@@ -73,10 +73,10 @@ class ScenarioTaskContentFixtureSourceTest {
                         "connect-open-edits-to-branch-purpose",
                         "keep-next-step-observable"
                 );
-        assertThat(fixture.steps().getFirst().title()).isEqualTo("Подтвердите текущую ветку");
+        assertThat(fixture.steps().getFirst().title()).isEqualTo("Подтвердите активную ветку");
         assertThat(fixture.annotations())
                 .extracting(ScenarioTaskContent.ScenarioTaskAnnotation::label)
-                .containsExactly("Что считается безопасным шагом", "Граница решения");
+                .containsExactly("Что проверяем", "Какой шаг ожидается");
     }
 
     @Test

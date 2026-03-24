@@ -44,7 +44,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
                 );
         assertThat(fixture.annotations())
                 .extracting(ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation::label)
-                .containsExactly("Сигнал для preview истории", "Почему rebase ещё рано");
+                .containsExactly("Сигнал для cleanup", "Почему rebase пока рано");
     }
 
     @Test
@@ -60,7 +60,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
                 .containsExactly("clean", "clean");
         assertThat(fixture.annotations())
                 .extracting(ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation::label)
-                .containsExactly("Сигнал устаревшего remote-tracking состояния", "Почему pull ещё рано");
+                .containsExactly("Сигнал неполной картины", "Почему `pull` пока рано");
     }
 
     @Test
@@ -77,7 +77,7 @@ class ScenarioRepositoryContextFixtureSourceTest {
                 .containsExactly("src/ui/header.css", "docs/release-checklist.md");
         assertThat(fixture.annotations())
                 .extracting(ScenarioWorkspaceDetail.ScenarioWorkspaceAnnotation::label)
-                .containsExactly("Сигнал активной ветки", "Почему нельзя переключаться вслепую");
+                .containsExactly("Что видно в репозитории", "Почему нельзя переключаться сразу");
     }
 
     @Test

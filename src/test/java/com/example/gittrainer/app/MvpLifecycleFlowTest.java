@@ -136,8 +136,8 @@ class MvpLifecycleFlowTest {
         Map<String, Object> task = mapValue(workspace, "task");
         Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
 
-        assertThat(stringValue(task, "goal")).contains("рабочего дерева");
-        assertThat(stringValue(task, "goal")).contains("следующий шаг");
+        assertThat(stringValue(task, "goal")).contains("`main`");
+        assertThat(stringValue(task, "goal")).contains("не отслеживаются");
         assertThat(listValue(task, "instructions")).isNotEmpty();
         assertThat(listValue(task, "steps")).isNotEmpty();
         assertThat(listValue(task, "annotations")).isNotEmpty();
@@ -185,11 +185,11 @@ class MvpLifecycleFlowTest {
         Map<String, Object> task = mapValue(workspace, "task");
         Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
 
-        assertThat(stringValue(task, "goal")).contains("подтвердите активную ветку");
-        assertThat(stringValue(task, "goal")).contains("hotfix");
+        assertThat(stringValue(task, "goal")).contains("`release/hotfix-7`");
+        assertThat(stringValue(task, "goal")).contains("branch-aware status");
         assertThat(listValue(task, "annotations"))
                 .extracting(item -> stringValue(castMap(item), "label"))
-                .contains("Что считается безопасным шагом");
+                .contains("Что проверяем");
         assertThat(listValue(repositoryContext, "branches"))
                 .extracting(item -> stringValue(castMap(item), "name"))
                 .contains("release/hotfix-7", "feature/menu-refresh");
@@ -247,11 +247,11 @@ class MvpLifecycleFlowTest {
         Map<String, Object> task = mapValue(workspace, "task");
         Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
 
-        assertThat(stringValue(task, "goal")).contains("граф коммитов");
-        assertThat(stringValue(task, "goal")).contains("переписывания истории");
+        assertThat(stringValue(task, "goal")).contains("верхушку истории");
+        assertThat(stringValue(task, "goal")).contains("не переписывая");
         assertThat(listValue(task, "annotations"))
                 .extracting(item -> stringValue(castMap(item), "label"))
-                .contains("Что считается безопасным шагом");
+                .contains("Что нужно увидеть");
         assertThat(listValue(repositoryContext, "commits"))
                 .extracting(item -> stringValue(castMap(item), "summary"))
                 .contains("fixup! ui: переименовать бейдж оболочки", "wip: ещё раз подправить отступы");
@@ -294,11 +294,11 @@ class MvpLifecycleFlowTest {
         Map<String, Object> task = mapValue(workspace, "task");
         Map<String, Object> repositoryContext = mapValue(workspace, "repositoryContext");
 
-        assertThat(stringValue(task, "goal")).contains("fetch");
-        assertThat(stringValue(task, "goal")).contains("remote-tracking");
+        assertThat(stringValue(task, "goal")).contains("remote-tracking refs");
+        assertThat(stringValue(task, "goal")).contains("`pull`");
         assertThat(listValue(task, "annotations"))
                 .extracting(item -> stringValue(castMap(item), "label"))
-                .contains("Что считается безопасным шагом");
+                .contains("Что проверяем");
         assertThat(listValue(repositoryContext, "branches"))
                 .extracting(item -> stringValue(castMap(item), "name"))
                 .contains("main", "origin/main");

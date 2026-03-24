@@ -38,7 +38,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(7))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
-                .andExpect(jsonPath("$.items[2].slug").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[2].slug").value("tag-checkpoint-preview"))
                 .andExpect(jsonPath("$.items[2].tags[1]").value("inspection"));
     }
 
@@ -78,8 +78,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(4))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("stash-checkpoint-draft"))
-                .andExpect(jsonPath("$.items[3].id").value("tag-checkpoint-preview"));
+                .andExpect(jsonPath("$.items[2].id").value("tag-checkpoint-preview"))
+                .andExpect(jsonPath("$.items[3].id").value("stash-checkpoint-draft"));
     }
 
     @Test
@@ -91,10 +91,10 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.items.length()").value(7))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[1].id").value("status-basics"))
-                .andExpect(jsonPath("$.items[2].id").value("stash-checkpoint-draft"))
-                .andExpect(jsonPath("$.items[3].id").value("tag-checkpoint-preview"))
-                .andExpect(jsonPath("$.items[4].id").value("history-cleanup-preview"))
-                .andExpect(jsonPath("$.items[5].id").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[2].id").value("tag-checkpoint-preview"))
+                .andExpect(jsonPath("$.items[3].id").value("stash-checkpoint-draft"))
+                .andExpect(jsonPath("$.items[4].id").value("remote-sync-preview"))
+                .andExpect(jsonPath("$.items[5].id").value("history-cleanup-preview"))
                 .andExpect(jsonPath("$.items[6].id").value("merge-sandbox-outline"));
     }
 
@@ -162,18 +162,18 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.shell.centerPanelTitle").value("Урок"))
                 .andExpect(jsonPath("$.workspace.shell.rightPanelTitle").value("Практика"))
                 .andExpect(jsonPath("$.workspace.task.status").value("authored-fixture"))
-                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала проверьте состояние рабочего дерева и только после этого выбирайте следующий шаг."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Вы на `main`. Перед любым `add`, `checkout` или очисткой нужно коротко проверить, какие файлы уже изменены и какие ещё не отслеживаются."))
                 .andExpect(jsonPath("$.workspace.task.instructions.length()").value(3))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("inspect-working-tree-first"))
-                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с команды проверки состояния, а не с переключения ветки или изменения файлов."))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Не меняйте репозиторий. Первый ответ должен быть командой чтения статуса."))
                 .andExpect(jsonPath("$.workspace.task.instructions[1].id").value("confirm-short-status-signals"))
                 .andExpect(jsonPath("$.workspace.task.steps.length()").value(5))
                 .andExpect(jsonPath("$.workspace.task.steps[0].position").value(1))
-                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Начните с проверки рабочего дерева"))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Заметьте, что вы уже на `main`"))
                 .andExpect(jsonPath("$.workspace.task.steps[1].position").value(2))
                 .andExpect(jsonPath("$.workspace.task.annotations.length()").value(2))
-                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Целевой результат"))
-                .andExpect(jsonPath("$.workspace.task.annotations[1].label").value("Подсказка по проверке"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что нужно увидеть"))
+                .andExpect(jsonPath("$.workspace.task.annotations[1].label").value("Какой шаг ожидается"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.status").value("authored-fixture"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(2))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
@@ -186,8 +186,8 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].path").value("notes/status-checklist.md"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.files[1].status").value("untracked"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.annotations.length()").value(2))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Подсказка рабочего дерева"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Подсказка для решения"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал рабочего дерева"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему нельзя спешить"));
     }
 
     @Test
@@ -197,18 +197,18 @@ class ScenarioCatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value("history-cleanup-preview"))
-                .andExpect(jsonPath("$.title").value("Просмотри историю перед очисткой"))
-                .andExpect(jsonPath("$.summary").value("Сначала собери компактный preview последних коммитов с `fixup!` и WIP-сигналами, а уже потом решай, как чистить историю."))
-                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала просмотрите недавний граф коммитов с `fixup!` и WIP-сигналами, а уже потом формулируйте план очистки без переписывания истории."))
+                .andExpect(jsonPath("$.title").value("Собери preview истории перед cleanup"))
+                .andExpect(jsonPath("$.summary").value("В `feature/history-cleanup` наверху лежат `fixup!` и WIP-коммиты. Сначала покажи компактный граф истории, а не запускай `rebase -i`."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Нужно безопасно посмотреть верхушку истории и увидеть, какие коммиты пойдут в cleanup, не переписывая их."))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("preview-commit-graph-before-rewrite"))
-                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с команды чтения истории, а не с `rebase -i`, чтобы сначала увидеть стек проблемных коммитов."))
-                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Просмотрите верхушку истории"))
-                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Оставайтесь в режиме просмотра. Никакого `rebase`, `reset` или `commit --amend`."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Посмотрите на верхушку ветки"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что нужно увидеть"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("feature/history-cleanup"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.commits[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.graph.nodes[0].summary").value("fixup! ui: переименовать бейдж оболочки"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал для preview истории"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему rebase ещё рано"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал для cleanup"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему rebase пока рано"));
     }
 
     @Test
@@ -218,17 +218,17 @@ class ScenarioCatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value("remote-sync-preview"))
-                .andExpect(jsonPath("$.title").value("Сначала обнови удалённое состояние"))
-                .andExpect(jsonPath("$.summary").value("Подтверди, что локальные данные об `origin/main` могли устареть, и начни с `fetch`, а не с немедленного `pull`."))
-                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала обновите remote-tracking состояние отдельным `fetch`, а уже потом решайте, нужен ли `pull` или другая интеграция."))
+                .andExpect(jsonPath("$.title").value("Сначала обнови `origin/main` перед интеграцией"))
+                .andExpect(jsonPath("$.summary").value("Локальная `main` уже ушла вперёд, но данные об `origin/main` могут быть устаревшими. Сначала сделай `fetch`, а уже потом думай про `pull`."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала обновите remote-tracking refs и только после этого решайте, нужен ли `pull`, `merge` или `rebase`."))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("refresh-remote-state-before-integration"))
-                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Начните с отдельного получения новых remote refs, а не с `pull`, чтобы сначала обновить наблюдаемое состояние."))
-                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Обновите удалённые refs"))
-                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Не интегрируйте удалённые коммиты сразу. Первый шаг здесь — отдельный `fetch`."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Заметьте, что данные об `origin/main` могут устареть"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что проверяем"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[1].name").value("origin/main"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал устаревшего remote-tracking состояния"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему pull ещё рано"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал неполной картины"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему `pull` пока рано"));
     }
 
     @Test
@@ -238,17 +238,17 @@ class ScenarioCatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value("branch-safety"))
-                .andExpect(jsonPath("$.title").value("Подтверди текущую ветку перед правками"))
-                .andExpect(jsonPath("$.summary").value("Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение."))
-                .andExpect(jsonPath("$.workspace.task.goal").value("Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение."))
+                .andExpect(jsonPath("$.title").value("Подтверди ветку и незавершённый hotfix"))
+                .andExpect(jsonPath("$.summary").value("Вы уже на `release/hotfix-7`, а `src/ui/header.css` и `docs/release-checklist.md` изменены. Сначала подтвердите ветку и только потом решайте, можно ли переключаться."))
+                .andExpect(jsonPath("$.workspace.task.goal").value("Перед любым `checkout` нужно подтвердить, что работа уже открыта в `release/hotfix-7`, и собрать branch-aware status незавершённых правок."))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("confirm-active-branch-before-switching"))
-                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Сначала подтвердите активную ветку командой чтения, а не пытайтесь сразу выполнить `checkout`."))
-                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Подтвердите текущую ветку"))
-                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что считается безопасным шагом"))
+                .andExpect(jsonPath("$.workspace.task.instructions[0].text").value("Сначала покажите, какая ветка активна сейчас. Без этого решение о переключении будет догадкой."))
+                .andExpect(jsonPath("$.workspace.task.steps[0].title").value("Подтвердите активную ветку"))
+                .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что проверяем"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("release/hotfix-7"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Сигнал активной ветки"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему нельзя переключаться вслепую"));
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[0].label").value("Что видно в репозитории"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.annotations[1].label").value("Почему нельзя переключаться сразу"));
     }
 
     @Test

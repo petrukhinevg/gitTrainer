@@ -2,7 +2,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
     items: [
         {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Выбери правильную ветку перед правками",
+            scenarioTitle: "Подтверди ветку и незавершённый hotfix",
             status: "in_progress",
             attemptCount: 1,
             completionCount: 0,
@@ -10,7 +10,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "status-basics",
-            scenarioTitle: "Сначала проверь рабочее дерево",
+            scenarioTitle: "Проверь изменения перед первым Git-действием",
             status: "completed",
             attemptCount: 2,
             completionCount: 1,
@@ -18,7 +18,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "history-cleanup-preview",
-            scenarioTitle: "Просмотри план очистки истории",
+            scenarioTitle: "Собери preview истории перед cleanup",
             status: "not_started",
             attemptCount: 0,
             completionCount: 0,
@@ -26,7 +26,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "stash-checkpoint-draft",
-            scenarioTitle: "Тестовый блок про временное сохранение",
+            scenarioTitle: "Убери черновик в stash перед переключением",
             status: "not_started",
             attemptCount: 0,
             completionCount: 0,
@@ -34,7 +34,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "merge-sandbox-outline",
-            scenarioTitle: "Тестовый блок про слияние без спешки",
+            scenarioTitle: "Сравни diff перед попыткой merge",
             status: "in_progress",
             attemptCount: 1,
             completionCount: 0,
@@ -42,7 +42,7 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         },
         {
             scenarioSlug: "tag-checkpoint-preview",
-            scenarioTitle: "Тестовый блок про теги и ориентиры",
+            scenarioTitle: "Проверь релизные теги перед выбором точки",
             status: "not_started",
             attemptCount: 0,
             completionCount: 0,
@@ -52,21 +52,21 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
     recentActivity: [
         {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Выбери правильную ветку перед правками",
+            scenarioTitle: "Подтверди ветку и незавершённый hotfix",
             status: "in_progress",
             eventType: "attempted",
             happenedAt: "2026-03-17T00:00:00.000Z"
         },
         {
             scenarioSlug: "status-basics",
-            scenarioTitle: "Сначала проверь рабочее дерево",
+            scenarioTitle: "Проверь изменения перед первым Git-действием",
             status: "completed",
             eventType: "completed",
             happenedAt: "2026-03-16T20:30:00.000Z"
         },
         {
             scenarioSlug: "merge-sandbox-outline",
-            scenarioTitle: "Тестовый блок про слияние без спешки",
+            scenarioTitle: "Сравни diff перед попыткой merge",
             status: "in_progress",
             eventType: "attempted",
             happenedAt: "2026-03-18T09:15:00.000Z"
@@ -76,22 +76,22 @@ export const FIXTURE_PROGRESS_SUMMARY = Object.freeze({
         solved: [
             {
                 scenarioSlug: "status-basics",
-                scenarioTitle: "Сначала проверь рабочее дерево"
+                scenarioTitle: "Проверь изменения перед первым Git-действием"
             }
         ],
         attempted: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Выбери правильную ветку перед правками"
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix"
             },
             {
                 scenarioSlug: "merge-sandbox-outline",
-                scenarioTitle: "Тестовый блок про слияние без спешки"
+                scenarioTitle: "Сравни diff перед попыткой merge"
             }
         ],
         next: {
             scenarioSlug: "branch-safety",
-            scenarioTitle: "Выбери правильную ветку перед правками"
+            scenarioTitle: "Подтверди ветку и незавершённый hotfix"
         },
         rationale: "Продолжайте сценарий, в котором уже есть незавершённый прогресс."
     },

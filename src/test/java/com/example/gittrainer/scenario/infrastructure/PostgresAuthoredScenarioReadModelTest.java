@@ -104,7 +104,7 @@ class PostgresAuthoredScenarioReadModelTest {
                         "merge-sandbox-outline",
                         "tag-checkpoint-preview"
                 );
-        assertThat(taskContent.goal()).contains("рабочего дерева");
+        assertThat(taskContent.goal()).contains("`main`");
         assertThat(taskContent.instructions()).hasSize(3);
         assertThat(repositoryContext.branches()).extracting(ScenarioWorkspaceDetail.ScenarioRepositoryBranch::name)
                 .contains("main");

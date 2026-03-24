@@ -948,7 +948,7 @@ function createCatalogPayload() {
             {
                 id: "branch-safety",
                 slug: "branch-safety",
-                title: "Подтверди текущую ветку перед правками",
+                title: "Подтверди ветку и незавершённый hotfix",
                 summary: "Сначала выясни, на какой ветке уже есть незавершённые изменения.",
                 difficulty: "beginner",
                 tags: ["branching", "navigation"]
@@ -956,7 +956,7 @@ function createCatalogPayload() {
             {
                 id: "remote-sync-preview",
                 slug: "remote-sync-preview",
-                title: "Сначала обнови удалённое состояние",
+                title: "Сначала обнови `origin/main` перед интеграцией",
                 summary: "Начни с fetch, а не с немедленного pull.",
                 difficulty: "intermediate",
                 tags: ["remote", "planning"]
@@ -980,7 +980,7 @@ function createCatalogPayload() {
 function createBranchSafetyDetailPayload() {
     return createDetailPayload({
         slug: "branch-safety",
-        title: "Подтверди текущую ветку перед правками",
+        title: "Подтверди ветку и незавершённый hotfix",
         stepTitle: "Подтвердите текущую ветку"
     });
 }
@@ -988,7 +988,7 @@ function createBranchSafetyDetailPayload() {
 function createRemoteSyncDetailPayload() {
     return createDetailPayload({
         slug: "remote-sync-preview",
-        title: "Сначала обнови удалённое состояние",
+        title: "Сначала обнови `origin/main` перед интеграцией",
         stepTitle: "Освежите удалённые ссылки"
     });
 }

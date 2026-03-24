@@ -40,7 +40,7 @@ class LoadScenarioDetailUseCaseTest {
         ScenarioSummary summary = new ScenarioSummary(
                 "status-basics",
                 "status-basics",
-                "Сначала проверь рабочее дерево",
+                "Проверь изменения перед первым Git-действием",
                 "Посмотри на шумный репозиторий и выбери следующую безопасную Git-команду до любых изменений.",
                 ScenarioDifficulty.BEGINNER,
                 List.of("status", "working-tree", "basics")
@@ -74,7 +74,7 @@ class LoadScenarioDetailUseCaseTest {
         assertThat(result.source()).isEqualTo("mvp-fixture");
         assertThat(result.stub()).isTrue();
         assertThat(result.detail().slug()).isEqualTo("status-basics");
-        assertThat(result.detail().title()).isEqualTo("Сначала проверь рабочее дерево");
+        assertThat(result.detail().title()).isEqualTo("Проверь изменения перед первым Git-действием");
         assertThat(result.detail().task()).isEqualTo(taskPreview);
         assertThat(result.detail().repositoryContext()).isEqualTo(repositoryContext);
 

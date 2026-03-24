@@ -24,7 +24,7 @@ test("левая панель сохраняет фиксированную об
                     {
                         id: "branch-safety",
                         slug: "branch-safety",
-                        title: "Подтверди текущую ветку перед правками",
+                        title: "Подтверди ветку и незавершённый hotfix",
                         summary: "Сначала выясни, на какой ветке уже есть незавершённые изменения.",
                         difficulty: "beginner",
                         tags: ["branching", "navigation"]

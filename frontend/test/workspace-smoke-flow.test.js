@@ -49,7 +49,7 @@ test("маршрут #/sandbox открывает рабочую песочни�
         await controller.bootstrap();
         await flushAsyncWork();
 
-        assert.match(appRoot.textContent, /Тестовый блок про слияние без спешки/);
+        assert.match(appRoot.textContent, /Сравни diff перед попыткой merge/);
         assert.ok(
             appRoot.querySelector('[data-submission-draft-form]'),
             "Песочница должна открывать рабочую форму отправки, а не пустую заглушку"
@@ -168,7 +168,7 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
         );
         assert.match(
             appRoot.querySelector("[data-workspace-terminal-header]")?.textContent ?? "",
-            /Git Terminal - Подтверди текущую ветку перед правками/,
+            /Git Terminal - Подтверди ветку и незавершённый hotfix/,
             "Терминал должен показывать заголовок с названием текущего задания"
         );
         assert.equal(
@@ -204,7 +204,7 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             0,
             "В terminal history не должно оставаться сервисных output-сообщений"
         );
-        assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
+        assert.match(appRoot.textContent, /Подтверди ветку и незавершённый hotfix/);
 
         const answerField = appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]');
         assert.ok(answerField, "Поле ввода ответа должно быть доступно");
@@ -266,7 +266,7 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             appRoot.querySelector('[data-progress-status-marker="completed"]'),
             "Экран прогресса должен показывать completed marker"
         );
-        assert.match(appRoot.textContent, /Подтверди текущую ветку перед правками/);
+        assert.match(appRoot.textContent, /Подтверди ветку и незавершённый hotfix/);
         assert.match(appRoot.textContent, /Рекомендация/iu);
 
         assert.deepEqual(requests.slice(0, 3), [
@@ -721,7 +721,9 @@ test("перетаскивание маркера навигации откры�
         await flushAsyncWork();
 
         assert.equal(dom.window.location.hash, "#/exercise/remote-sync-preview");
-        assert.match(appRoot.textContent, /Сначала обнови удалённое состояние/);
+        assert.ok(
+            (appRoot.textContent ?? "").includes("Сначала обнови `origin/main` перед интеграцией")
+        );
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -849,7 +851,7 @@ function createCatalogPayload() {
             {
                 id: "branch-safety",
                 slug: "branch-safety",
-                title: "Подтверди текущую ветку перед правками",
+                title: "Подтверди ветку и незавершённый hotfix",
                 summary: "Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение.",
                 difficulty: "beginner",
                 tags: ["branching", "navigation", "basics"]
@@ -857,7 +859,7 @@ function createCatalogPayload() {
             {
                 id: "remote-sync-preview",
                 slug: "remote-sync-preview",
-                title: "Сначала обнови удалённое состояние",
+                title: "Сначала обнови `origin/main` перед интеграцией",
                 summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
                 difficulty: "intermediate",
                 tags: ["remote", "planning"]
@@ -865,7 +867,7 @@ function createCatalogPayload() {
             {
                 id: "stash-checkpoint-draft",
                 slug: "stash-checkpoint-draft",
-                title: "Убери черновик в stash",
+                title: "Убери черновик в stash перед переключением",
                 summary: "Сначала зафиксируй текущий рабочий контекст, а затем убери изменения и untracked файлы в stash.",
                 difficulty: "intermediate",
                 tags: ["stash", "safety", "workspace"]
@@ -882,7 +884,7 @@ function createBranchSafetyDetailPayload() {
     return {
         id: "branch-safety",
         slug: "branch-safety",
-        title: "Подтверди текущую ветку перед правками",
+        title: "Подтверди ветку и незавершённый hotfix",
         summary: "Сначала выясни, на какой ветке уже есть незавершённые изменения, и только потом решай, допустимо ли переключение.",
         difficulty: "beginner",
         tags: ["branching", "navigation", "basics"],
@@ -948,7 +950,7 @@ function createRemoteSyncDetailPayload() {
     return {
         id: "remote-sync-preview",
         slug: "remote-sync-preview",
-        title: "Сначала обнови удалённое состояние",
+        title: "Сначала обнови `origin/main` перед интеграцией",
         summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
         difficulty: "intermediate",
         tags: ["remote", "planning"],
@@ -997,7 +999,7 @@ function createStashDetailPayload() {
     return {
         id: "stash-checkpoint-draft",
         slug: "stash-checkpoint-draft",
-        title: "Убери черновик в stash",
+        title: "Убери черновик в stash перед переключением",
         summary: "Сначала зафиксируй текущий рабочий контекст, а затем убери изменения и untracked файлы в stash.",
         difficulty: "intermediate",
         tags: ["stash", "safety", "workspace"],
@@ -1053,10 +1055,10 @@ function createStartSessionPayload(scenarioSlug = "branch-safety") {
         scenario: {
             slug: scenarioSlug,
             title: scenarioSlug === "remote-sync-preview"
-                ? "Сначала обнови удалённое состояние"
+                ? "Сначала обнови `origin/main` перед интеграцией"
                 : scenarioSlug === "stash-checkpoint-draft"
-                    ? "Убери черновик в stash"
-                : "Подтверди текущую ветку перед правками",
+                    ? "Убери черновик в stash перед переключением"
+                : "Подтверди ветку и незавершённый hotfix",
             source: "mvp-fixture"
         },
         lifecycle: {
@@ -1302,7 +1304,7 @@ function createInitialProgressPayload() {
         items: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Подтверди текущую ветку перед правками",
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix",
                 status: "in_progress",
                 attemptCount: 0,
                 completionCount: 0,
@@ -1312,7 +1314,7 @@ function createInitialProgressPayload() {
         recentActivity: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Подтверди текущую ветку перед правками",
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix",
                 status: "in_progress",
                 eventType: "started",
                 happenedAt: "2026-03-21T00:23:59.526366Z"
@@ -1323,12 +1325,12 @@ function createInitialProgressPayload() {
             attempted: [
                 {
                     scenarioSlug: "branch-safety",
-                    scenarioTitle: "Подтверди текущую ветку перед правками"
+                    scenarioTitle: "Подтверди ветку и незавершённый hotfix"
                 }
             ],
             next: {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Подтверди текущую ветку перед правками"
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix"
             },
             rationale: "Продолжайте сценарий, который уже начали, чтобы не терять контекст."
         },
@@ -1343,7 +1345,7 @@ function createCompletedProgressPayload() {
         items: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Подтверди текущую ветку перед правками",
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix",
                 status: "completed",
                 attemptCount: 1,
                 completionCount: 1,
@@ -1353,7 +1355,7 @@ function createCompletedProgressPayload() {
         recentActivity: [
             {
                 scenarioSlug: "branch-safety",
-                scenarioTitle: "Подтверди текущую ветку перед правками",
+                scenarioTitle: "Подтверди ветку и незавершённый hotfix",
                 status: "completed",
                 eventType: "completed",
                 happenedAt: "2026-03-21T00:24:05.818771Z"
@@ -1363,13 +1365,13 @@ function createCompletedProgressPayload() {
             solved: [
                 {
                     scenarioSlug: "branch-safety",
-                    scenarioTitle: "Подтверди текущую ветку перед правками"
+                    scenarioTitle: "Подтверди ветку и незавершённый hotfix"
                 }
             ],
             attempted: [],
             next: {
                 scenarioSlug: "remote-sync-preview",
-                scenarioTitle: "Сначала обнови удалённое состояние"
+                scenarioTitle: "Сначала обнови `origin/main` перед интеграцией"
             },
             rationale: "Продолжайте сценарий, который уже начали, чтобы не терять контекст."
         },

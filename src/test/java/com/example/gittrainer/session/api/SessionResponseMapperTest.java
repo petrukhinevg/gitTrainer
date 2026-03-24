@@ -60,7 +60,7 @@ class SessionResponseMapperTest {
                 new TrainingSession(
                         "session_1",
                         "status-basics",
-                        "Сначала проверь рабочее дерево",
+                        "Проверь изменения перед первым Git-действием",
                         "mvp-fixture",
                         Instant.parse("2026-03-17T00:00:00Z"),
                         SessionState.ACTIVE,
