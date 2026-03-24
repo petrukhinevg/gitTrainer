@@ -305,8 +305,12 @@ body {
 .lesson-layout--navigation-collapsing .lesson-lane--lesson,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson {
     transform: none;
-    padding-left: 0;
     box-shadow: none;
+}
+
+.lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
+.lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
+    padding-left: var(--lesson-collapsed-left-inset);
 }
 
 .lesson-lane__header,

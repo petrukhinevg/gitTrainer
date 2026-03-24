@@ -9,7 +9,8 @@ export class PanelLayoutConfig {
 
     // Средняя панель: основное содержимое урока.
     static MIDDLE_PANEL = Object.freeze({
-        minWidthPx: 300
+        minWidthPx: 300,
+        collapsedLeftInsetPx: 18
     });
 
     // Правая панель: практика, терминал и repository viewer.
@@ -19,7 +20,7 @@ export class PanelLayoutConfig {
 
     // Общие брейкпоинты для перестройки layout.
     static BREAKPOINTS = Object.freeze({
-        stackedLayoutPx: 1300,
+        stackedLayoutPx: 1000,
         compactPanelsPx: 960,
         mobilePanelsPx: 720
     });
@@ -77,6 +78,7 @@ export function buildPanelLayoutInlineStyle() {
         `--panel-motion-easing: ${PANEL_LAYOUT_CONFIG.animation.easing}`,
         `--navigation-active-marker-easing: ${PANEL_LAYOUT_CONFIG.animation.activeMarkerEasing}`,
         `--lesson-lane-min-width: ${PANEL_LAYOUT_CONFIG.middlePanel.minWidthPx}px`,
+        `--lesson-collapsed-left-inset: ${PANEL_LAYOUT_CONFIG.middlePanel.collapsedLeftInsetPx}px`,
         `--practice-lane-current-width: ${PANEL_LAYOUT_CONFIG.rightPanel.laneWidthPx}px`,
         `--flow-subtask-enter-duration: ${PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterMs}ms`,
         `--flow-subtask-enter-stagger: ${PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterStaggerMs}ms`,
