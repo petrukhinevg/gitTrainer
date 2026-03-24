@@ -10,16 +10,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class ScenarioTaskContentFixtureSourceTest {
+class TestScenarioTaskContentSourceTest {
 
     @Autowired
-    private ScenarioTaskContentFixtureSource scenarioTaskContentFixtureSource;
+    private TestScenarioTaskContentSource scenarioTaskContentFixtureSource;
 
     @Test
     void providesAuthoredTaskContentFixtureForKnownScenario() {
         ScenarioTaskContent fixture = scenarioTaskContentFixtureSource.loadTaskContent("status-basics");
 
-        assertThat(fixture.status()).isEqualTo("authored-fixture");
+        assertThat(fixture.status()).isEqualTo("db-seeded");
         assertThat(fixture.instructions()).hasSize(3);
         assertThat(fixture.steps()).hasSize(5);
         assertThat(fixture.annotations()).hasSize(2);

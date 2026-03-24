@@ -44,7 +44,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.sessionId").isNotEmpty())
                 .andExpect(jsonPath("$.scenario.slug").value("status-basics"))
                 .andExpect(jsonPath("$.scenario.title").value("Проверь изменения перед первым Git-действием"))
-                .andExpect(jsonPath("$.scenario.source").value("mvp-fixture"))
+                .andExpect(jsonPath("$.scenario.source").value("db-seeded"))
                 .andExpect(jsonPath("$.lifecycle.status").value("active"))
                 .andExpect(jsonPath("$.lifecycle.startedAt").isNotEmpty())
                 .andExpect(jsonPath("$.lifecycle.submissionCount").value(0))
@@ -117,7 +117,7 @@ class SessionControllerTest {
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))
-                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
+                .andExpect(jsonPath("$.sourceName").value("db-seeded-unavailable"));
     }
 
     @Test

@@ -35,11 +35,9 @@ import {
 } from "./view.js";
 import { isSandboxShortcutActive, SANDBOX_ROUTE_HASH } from "./sandbox-route.js";
 
-const SAFE_FALLBACK_PROVIDER_NAME = "local-fixture";
+const SAFE_FALLBACK_PROVIDER_NAME = "backend-api";
 const PREFERRED_PROVIDER_ORDER = Object.freeze([
-    "backend-api",
-    "local-fixture",
-    "fixture-unavailable"
+    "backend-api"
 ]);
 const DEFAULT_QUERY = Object.freeze({
     difficulty: null,
@@ -2172,8 +2170,6 @@ function resolveFailureKind({ failureDisposition, retryable, failureKind, status
 function toUserFacingRecoveryMessage(message, fallbackMessage) {
     const resolvedMessage = normalizeOptionalValue(message) ?? fallbackMessage;
     return resolvedMessage
-        .replace(/local-fixture/gi, "локальные фикстуры")
-        .replace(/fixture-unavailable/gi, "недоступный источник")
         .replace(/Попробуйте\s+\w+\s+provider\.?$/i, "Повторите чуть позже.")
         .replace(/Выберите другой provider/gi, "Выберите другой источник")
         .replace(/provider/gi, "источник");

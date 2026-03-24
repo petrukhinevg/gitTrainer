@@ -9,10 +9,10 @@ import com.example.gittrainer.session.domain.RetryGuidance;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.TrainingSession;
-import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.TestRetryFeedbackCatalog;
 import com.example.gittrainer.session.infrastructure.InMemorySessionRepository;
 import com.example.gittrainer.session.infrastructure.InMemorySessionSubmissionRepository;
-import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
+import com.example.gittrainer.session.infrastructure.TestRetryFeedbackSource;
 import com.example.gittrainer.validation.application.SubmissionAnswerValidator;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import com.example.gittrainer.validation.domain.SubmissionValidationResult;
@@ -44,7 +44,7 @@ class SubmitAnswerUseCaseCommandHistoryTest {
         ProgressRepository progressRepository = new NoOpProgressRepository();
         SubmissionAnswerValidator validator = mock(SubmissionAnswerValidator.class);
         RetryGuidanceResolver retryGuidanceResolver = new RetryGuidanceResolver(
-                new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+                new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
         );
         SubmitAnswerUseCase useCase = new SubmitAnswerUseCase(
                 sessionRepository,
@@ -70,7 +70,7 @@ class SubmitAnswerUseCaseCommandHistoryTest {
                 SubmissionValidationResult.evaluated(
                         "spec-1",
                         "exact_command_match",
-                        "in-process-fixture",
+                        "in-process-test",
                         1,
                         SubmissionOutcome.correct("expected-command", "ok")
                 )

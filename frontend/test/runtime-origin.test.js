@@ -26,7 +26,7 @@ test("выбирает backend-api по умолчанию для http origin", 
     );
 });
 
-test("возвращает local-fixture для file origin", () => {
+test("оставляет backend-api источником даже для file origin", () => {
     const bootstrap = resolveRuntimeProviderBootstrap({
         protocol: "file:",
         origin: "null"
@@ -34,17 +34,17 @@ test("возвращает local-fixture для file origin", () => {
 
     assert.deepEqual(bootstrap, {
         backendOrigin: null,
-        defaultProviderName: "local-fixture"
+        defaultProviderName: "backend-api"
     });
 });
 
-test("возвращает local-fixture для пустого browser origin", () => {
+test("оставляет backend-api источником для пустого browser origin", () => {
     assert.equal(
         resolveDefaultProviderName({
             protocol: "",
             origin: ""
         }),
-        "local-fixture"
+        "backend-api"
     );
 });
 

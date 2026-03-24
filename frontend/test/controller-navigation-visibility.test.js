@@ -31,7 +31,7 @@ test("левая панель сохраняет фиксированную об
                     }
                 ],
                 meta: {
-                    source: "mvp-fixture",
+                    source: "db-seeded",
                     query: {}
                 }
             });

@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Repository
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresSessionSubmissionRepository implements SessionSubmissionRepository {
 
     private final JdbcClient jdbcClient;

@@ -2,22 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 
-import {
-    createBackendApiCatalogProvider,
-    createLocalFixtureCatalogProvider
-} from "../src/catalog/catalog-provider.js";
-import {
-    createBackendApiDetailProvider,
-    createLocalFixtureDetailProvider
-} from "../src/detail/detail-provider.js";
-import {
-    createBackendApiProgressProvider,
-    createLocalFixtureProgressProvider
-} from "../src/progress/progress-provider.js";
-import {
-    createBackendApiSessionProvider,
-    createLocalFixtureSessionProvider
-} from "../src/session/session-provider.js";
+import { createBackendApiCatalogProvider } from "../src/catalog/catalog-provider.js";
+import { createBackendApiDetailProvider } from "../src/detail/detail-provider.js";
+import { createBackendApiProgressProvider } from "../src/progress/progress-provider.js";
+import { createBackendApiSessionProvider } from "../src/session/session-provider.js";
 import { createCatalogWorkspaceController } from "../src/workspace-shell/controller.js";
 
 test("маршрут #/sandbox открывает рабочую песочницу через существующий сценарий", async () => {
@@ -30,18 +18,18 @@ test("маршрут #/sandbox открывает рабочую песочни�
     try {
         const controller = createCatalogWorkspaceController({
             appRoot,
-            defaultProviderName: "local-fixture",
+            defaultProviderName: "backend-api",
             catalogProviderFactories: {
-                "local-fixture": () => createLocalFixtureCatalogProvider()
+                "backend-api": () => createSandboxCatalogProvider()
             },
             detailProviderFactories: {
-                "local-fixture": () => createLocalFixtureDetailProvider()
+                "backend-api": () => createSandboxDetailProvider()
             },
             sessionProviderFactories: {
-                "local-fixture": () => createLocalFixtureSessionProvider()
+                "backend-api": () => createSandboxSessionProvider()
             },
             progressProviderFactories: {
-                "local-fixture": () => createLocalFixtureProgressProvider()
+                "backend-api": () => createSandboxProgressProvider()
             },
             tagOptions: ["branching", "history", "planning", "navigation", "remote"]
         });
@@ -148,7 +136,7 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             appRoot.querySelector('[data-scenario-toggle="branch-safety"]'),
             "Каталог должен отрисовать сценарий branch-safety"
         );
-        assert.match(appRoot.textContent, /Backend API остаётся основным пользовательским путём/);
+        assert.match(appRoot.textContent, /Каталог и практика работают через backend API/);
 
         await navigateToHash(dom.window, "#/exercise/branch-safety");
         await flushAsyncWork();
@@ -874,8 +862,69 @@ function createCatalogPayload() {
             }
         ],
         meta: {
-            source: "mvp-fixture",
+            source: "db-seeded",
             query: {}
+        }
+    };
+}
+
+function createSandboxCatalogProvider() {
+    return {
+        name: "backend-api",
+        async browseCatalog() {
+            return {
+                items: createCatalogPayload().items,
+                meta: {
+                    source: "backend-api",
+                    query: {}
+                }
+            };
+        }
+    };
+}
+
+function createSandboxDetailProvider() {
+    return {
+        name: "backend-api",
+        async loadScenarioDetail(slug) {
+            if (slug !== "merge-sandbox-outline") {
+                throw new Error(`Unexpected sandbox detail request: ${slug}`);
+            }
+
+            return createMergeSandboxDetailPayload();
+        }
+    };
+}
+
+function createSandboxSessionProvider() {
+    return {
+        name: "backend-api",
+        async startSession({ scenarioSlug }) {
+            if (scenarioSlug !== "merge-sandbox-outline") {
+                throw new Error(`Unexpected sandbox session request: ${scenarioSlug}`);
+            }
+
+            return createStartSessionPayload("merge-sandbox-outline");
+        },
+        async submitAnswer(sessionId, submission) {
+            if (sessionId !== "session-1") {
+                throw new Error(`Unexpected sandbox session id: ${sessionId}`);
+            }
+
+            if (submission.answerType !== "command_text") {
+                throw new Error(`Unexpected answer type: ${submission.answerType}`);
+            }
+
+            return createSandboxSubmissionPayload(submission.answer);
+        }
+    };
+}
+
+function createSandboxProgressProvider() {
+    return {
+        name: "backend-api",
+        async loadProgressSummary() {
+            return createInitialProgressPayload();
         }
     };
 }
@@ -889,7 +938,7 @@ function createBranchSafetyDetailPayload() {
         difficulty: "beginner",
         tags: ["branching", "navigation", "basics"],
         meta: {
-            source: "mvp-fixture",
+            source: "db-seeded",
             stub: true
         },
         workspace: {
@@ -899,7 +948,7 @@ function createBranchSafetyDetailPayload() {
                 rightPanelTitle: "Практика"
             },
             task: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 goal: "Сначала подтвердите активную ветку и признаки незавершённой hotfix-работы, а уже потом решайте, допустимо ли переключение.",
                 instructions: [
                     {
@@ -922,7 +971,7 @@ function createBranchSafetyDetailPayload() {
                 ]
             },
             repositoryContext: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 branches: [
                     { name: "release/hotfix-7", current: true },
                     { name: "feature/menu-refresh", current: false },
@@ -946,16 +995,16 @@ function createBranchSafetyDetailPayload() {
     };
 }
 
-function createRemoteSyncDetailPayload() {
+function createMergeSandboxDetailPayload() {
     return {
-        id: "remote-sync-preview",
-        slug: "remote-sync-preview",
-        title: "Сначала обнови `origin/main` перед интеграцией",
-        summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
+        id: "merge-sandbox-outline",
+        slug: "merge-sandbox-outline",
+        title: "Сравни diff перед попыткой merge",
+        summary: "Вы на `feature/mock-merge-window` с незавершёнными правками. Перед merge безопасно посмотреть diff с `main` или общий граф веток, а не запускать слияние сразу.",
         difficulty: "intermediate",
-        tags: ["remote", "planning"],
+        tags: ["branching", "history", "planning"],
         meta: {
-            source: "mvp-fixture",
+            source: "backend-api",
             stub: true
         },
         workspace: {
@@ -965,7 +1014,67 @@ function createRemoteSyncDetailPayload() {
                 rightPanelTitle: "Практика"
             },
             task: {
-                status: "authored-fixture",
+                status: "db-seeded",
+                goal: "Сначала сравните незавершённую ветку с main и только потом решайте, нужен ли merge.",
+                instructions: [
+                    {
+                        id: "inspect-before-merge",
+                        text: "Начните с команды чтения diff или графа веток."
+                    }
+                ],
+                steps: [
+                    {
+                        position: 1,
+                        title: "Посмотрите расхождение с main",
+                        detail: "Сначала оцените текущие отличия, а не запускайте merge вслепую."
+                    }
+                ],
+                annotations: []
+            },
+            repositoryContext: {
+                status: "db-seeded",
+                branches: [
+                    { name: "feature/mock-merge-window", current: true },
+                    { name: "main", current: false }
+                ],
+                commits: [
+                    { id: "d48cf83", summary: "feat: draft merge preview panel" }
+                ],
+                files: [
+                    { path: "frontend/src/merge/preview.js", status: "modified" },
+                    { path: "docs/merge-playbook.md", status: "modified" }
+                ],
+                annotations: [
+                    {
+                        label: "Незавершённый черновик",
+                        message: "Ветка ещё не готова к merge: сначала сравните изменения с main."
+                    }
+                ]
+            }
+        }
+    };
+}
+
+function createRemoteSyncDetailPayload() {
+    return {
+        id: "remote-sync-preview",
+        slug: "remote-sync-preview",
+        title: "Сначала обнови `origin/main` перед интеграцией",
+        summary: "Подтверди, что локальные данные об origin/main могли устареть, и начни с fetch, а не с немедленного pull.",
+        difficulty: "intermediate",
+        tags: ["remote", "planning"],
+        meta: {
+            source: "db-seeded",
+            stub: true
+        },
+        workspace: {
+            shell: {
+                leftPanelTitle: "Карта сценария",
+                centerPanelTitle: "Урок",
+                rightPanelTitle: "Практика"
+            },
+            task: {
+                status: "db-seeded",
                 goal: "Сначала подтверди актуальность удалённых ссылок, а не запускай синхронизацию вслепую.",
                 instructions: [
                     {
@@ -983,7 +1092,7 @@ function createRemoteSyncDetailPayload() {
                 annotations: []
             },
             repositoryContext: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 branches: [
                     { name: "main", current: true }
                 ],
@@ -1004,7 +1113,7 @@ function createStashDetailPayload() {
         difficulty: "intermediate",
         tags: ["stash", "safety", "workspace"],
         meta: {
-            source: "mvp-fixture",
+            source: "db-seeded",
             stub: true
         },
         workspace: {
@@ -1014,7 +1123,7 @@ function createStashDetailPayload() {
                 rightPanelTitle: "Практика"
             },
             task: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 goal: "Подтвердите текущие изменения и безопасно уберите их в stash вместе с untracked файлами.",
                 instructions: [
                     {
@@ -1032,7 +1141,7 @@ function createStashDetailPayload() {
                 annotations: []
             },
             repositoryContext: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 branches: [
                     { name: "feature/test-stash-panel", current: true }
                 ],
@@ -1058,8 +1167,10 @@ function createStartSessionPayload(scenarioSlug = "branch-safety") {
                 ? "Сначала обнови `origin/main` перед интеграцией"
                 : scenarioSlug === "stash-checkpoint-draft"
                     ? "Убери черновик в stash перед переключением"
-                : "Подтверди ветку и незавершённый hotfix",
-            source: "mvp-fixture"
+                    : scenarioSlug === "merge-sandbox-outline"
+                        ? "Сравни diff перед попыткой merge"
+                    : "Подтверди ветку и незавершённый hotfix",
+            source: "db-seeded"
         },
         lifecycle: {
             status: "active",
@@ -1167,6 +1278,46 @@ function createSubmissionPayload() {
                         message: "Сессия сейчас открыта на `release/hotfix-7`."
                     }
                 ]
+            }
+        }
+    };
+}
+
+function createSandboxSubmissionPayload(answer) {
+    return {
+        submissionId: "submission-1",
+        submittedAnswer: {
+            answerType: "command_text",
+            answer
+        },
+        outcome: {
+            correctness: "correct",
+            code: "sandbox-command-accepted",
+            message: "Команда подходит для безопасного изучения состояния перед merge."
+        },
+        terminalOutput: {
+            stdout: "git diff main...HEAD\nfrontend/src/merge/preview.js\n",
+            stderr: ""
+        },
+        retryFeedback: {
+            status: "resolved",
+            retryState: {
+                status: "complete",
+                attemptNumber: 1,
+                eligibility: "completed"
+            },
+            explanation: {
+                status: "resolved",
+                title: "Повторное объяснение не требуется",
+                tone: "positive",
+                message: "Проверка состояния перед merge выполнена корректно.",
+                details: []
+            },
+            hint: {
+                status: "resolved",
+                level: "baseline",
+                message: "Подсказки больше не нужны.",
+                reveals: []
             }
         }
     };
@@ -1335,7 +1486,7 @@ function createInitialProgressPayload() {
             rationale: "Продолжайте сценарий, который уже начали, чтобы не терять контекст."
         },
         meta: {
-            source: "mvp-fixture"
+            source: "db-seeded"
         }
     };
 }
@@ -1376,7 +1527,7 @@ function createCompletedProgressPayload() {
             rationale: "Продолжайте сценарий, который уже начали, чтобы не терять контекст."
         },
         meta: {
-            source: "mvp-fixture"
+            source: "db-seeded"
         }
     };
 }

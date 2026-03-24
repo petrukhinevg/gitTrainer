@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
-@Profile("test | local-memory")
+@Profile("test")
 public class InMemorySessionRepository implements SessionRepository {
 
     private final Map<String, TrainingSession> sessions = new ConcurrentHashMap<>();

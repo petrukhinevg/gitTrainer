@@ -10,7 +10,6 @@ import {
     formatDifficulty,
     formatProviderName,
     formatProviderOptionLabel,
-    isDiagnosticProvider,
     formatTag
 } from "./render-helpers.js";
 
@@ -444,23 +443,26 @@ function renderWelcomePage(state, { tagOptions, providerOptions }) {
 }
 
 function renderCatalogControlPanel(state, { tagOptions, providerOptions }) {
+    const shouldRenderProviderSelector = providerOptions.length > 1;
     return `
         <section class="lesson-block lesson-block--reading catalog-controls">
             <div class="lesson-section__header">
                 <span class="control-label">Управление каталогом</span>
-                <h4 class="lesson-block__title">Фильтруйте сценарии и при необходимости меняйте источник</h4>
+                <h4 class="lesson-block__title">Фильтруйте сценарии и открывайте нужную практику</h4>
             </div>
             <form class="catalog-controls__form" data-catalog-controls-form>
                 <div class="catalog-controls__grid">
-                    <label class="catalog-controls__field">
-                        <span class="control-label">Источник</span>
-                        <select name="providerName">
-                            ${providerOptions.map((providerName) => `
-                                <option value="${escapeHtml(providerName)}"${providerName === state.providerName ? " selected" : ""}>${escapeHtml(formatProviderOptionLabel(providerName))}</option>
-                            `).join("")}
-                        </select>
-                        <span class="catalog-controls__field-note">${escapeHtml(describeProviderSelection(state.providerName))}</span>
-                    </label>
+                    ${shouldRenderProviderSelector ? `
+                        <label class="catalog-controls__field">
+                            <span class="control-label">Источник</span>
+                            <select name="providerName">
+                                ${providerOptions.map((providerName) => `
+                                    <option value="${escapeHtml(providerName)}"${providerName === state.providerName ? " selected" : ""}>${escapeHtml(formatProviderOptionLabel(providerName))}</option>
+                                `).join("")}
+                            </select>
+                            <span class="catalog-controls__field-note">${escapeHtml(describeProviderSelection(state.providerName))}</span>
+                        </label>
+                    ` : ""}
                     <label class="catalog-controls__field">
                         <span class="control-label">Сложность</span>
                         <select name="difficulty">
@@ -522,71 +524,42 @@ function describeCatalogQuery(state) {
 
 function describeProviderSelection(providerName) {
     if (providerName === "backend-api") {
-        return "Основной demo flow идёт через сервер. Диагностические режимы оставлены только для локальной проверки и fallback.";
-    }
-
-    if (providerName === "local-fixture") {
-        return "Диагностический режим с локальными данными. Основной пользовательский путь продолжает идти через сервер.";
-    }
-
-    if (providerName === "fixture-unavailable") {
-        return "Диагностический режим для проверки recovery UX при недоступном источнике.";
+        return "Каталог, детали сценария, запуск сессии и прогресс загружаются с сервера.";
     }
 
     return "Источник выбран вручную для текущего сеанса каталога.";
 }
 
 function renderProviderModeNotice(providerName) {
-    if (providerName === "backend-api") {
-        return `
-            <section class="lesson-block lesson-block--reading">
-                <div class="lesson-section__header">
-                    <span class="control-label">Источник по умолчанию</span>
-                    <h4 class="lesson-block__title">Backend API остаётся основным пользовательским путём</h4>
-                </div>
-                <p class="panel-copy">Каталог, детали сценария, запуск сессии и прогресс по умолчанию идут через единый backend-поток. Fixture-режимы сохранены только для диагностики и fallback-проверок.</p>
-            </section>
-        `;
-    }
-
     return `
         <section class="lesson-block lesson-block--reading">
             <div class="lesson-section__header">
-                <span class="control-label">Диагностический режим</span>
-                <h4 class="lesson-block__title">Сейчас выбран не основной источник</h4>
+                <span class="control-label">Источник данных</span>
+                <h4 class="lesson-block__title">Каталог и практика работают через backend API</h4>
             </div>
-            <div class="practice-inline-note practice-inline-note--warning">
-                <p class="panel-copy">${escapeHtml(describeProviderSelection(providerName))}</p>
-            </div>
+            <p class="panel-copy">${escapeHtml(describeProviderSelection(providerName))}</p>
         </section>
     `;
 }
 
 function renderProviderRecoveryNotice(providerName, { route }) {
-    if (providerName === "backend-api") {
-        const recoveryCopy = route === "catalog"
-            ? "Если сервер временно недоступен, используйте селектор «Источник» на этом экране и переключитесь на локальные фикстуры только для диагностики или dev-проверки."
-            : "Если сервер временно недоступен, вернитесь в каталог и через селектор «Источник» переключитесь на локальные фикстуры только для диагностики или dev-проверки.";
-        return `
-            <div class="practice-inline-note practice-inline-note--warning">
-                <p class="panel-copy">${escapeHtml(recoveryCopy)}</p>
-            </div>
-        `;
-    }
-
-    if (!isDiagnosticProvider(providerName)) {
+    if (!providerName) {
         return "";
     }
 
-    const returnLabel = route === "catalog"
-        ? "Основной поток доступен через источник «Сервер»."
-        : "Вернитесь в каталог, когда захотите снова пойти по основному пути.";
-
     return `
         <div class="practice-inline-note practice-inline-note--warning">
-            <p class="panel-copy">${escapeHtml(returnLabel)} Текущий источник оставлен как резервный диагностический режим и не считается основным пользовательским сценарием.</p>
+            <p class="panel-copy">${escapeHtml(resolveProviderRecoveryCopy(route))}</p>
         </div>
     `;
+}
+
+function resolveProviderRecoveryCopy(route) {
+    if (route === "catalog") {
+        return "Если сервер недоступен, проверьте, что приложение открыто через локальный HTTP-сервер и backend запущен.";
+    }
+
+    return "Если сервер недоступен, вернитесь в каталог и проверьте, что frontend открыт через локальный HTTP-сервер, а backend отвечает.";
 }
 
 function resolveFocusedLessonContent(detail, selectedFocus) {
@@ -723,8 +696,8 @@ function formatRoute(value) {
 
 function formatTaskStatus(value) {
     switch (value) {
-        case "authored-fixture":
-            return "локальная фикстура";
+        case "db-seeded":
+            return "из БД";
         default:
             return value ?? "неизвестно";
     }

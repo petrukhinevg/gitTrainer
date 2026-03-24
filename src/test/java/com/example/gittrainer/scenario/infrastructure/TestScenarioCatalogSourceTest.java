@@ -9,16 +9,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class ScenarioCatalogFixtureSourceTest {
+class TestScenarioCatalogSourceTest {
 
     @Autowired
-    private ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;
+    private TestScenarioCatalogSource scenarioCatalogFixtureSource;
 
     @Test
     void providesAuthoredFixtureCatalogForMvpBrowsing() {
-        ScenarioCatalogFixture fixture = scenarioCatalogFixtureSource.defaultCatalog();
+        TestScenarioCatalog fixture = scenarioCatalogFixtureSource.defaultCatalog();
 
-        assertThat(fixture.sourceName()).isEqualTo("mvp-fixture");
+        assertThat(fixture.sourceName()).isEqualTo("db-seeded");
         assertThat(fixture.items())
                 .extracting(item -> item.id())
                 .containsExactly(
@@ -34,9 +34,9 @@ class ScenarioCatalogFixtureSourceTest {
 
     @Test
     void providesEmptyFixtureUsingSameCatalogSchema() {
-        ScenarioCatalogFixture fixture = scenarioCatalogFixtureSource.emptyCatalog();
+        TestScenarioCatalog fixture = scenarioCatalogFixtureSource.emptyCatalog();
 
-        assertThat(fixture.sourceName()).isEqualTo("mvp-fixture-empty");
+        assertThat(fixture.sourceName()).isEqualTo("db-seeded-empty");
         assertThat(fixture.items()).isEmpty();
     }
 

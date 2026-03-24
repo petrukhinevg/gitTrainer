@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gittrainer.validator.cli.executable=/bin/echo",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
 })
-@ActiveProfiles("local-memory")
+@ActiveProfiles("test")
 class SessionControllerCliSandboxPolicyTest {
 
     private final WebApplicationContext webApplicationContext;

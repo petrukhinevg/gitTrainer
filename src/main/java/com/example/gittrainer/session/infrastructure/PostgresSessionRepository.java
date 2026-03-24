@@ -13,7 +13,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Repository
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresSessionRepository implements SessionRepository {
 
     private final JdbcClient jdbcClient;

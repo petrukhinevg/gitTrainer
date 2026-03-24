@@ -9,8 +9,8 @@ import com.example.gittrainer.session.domain.StrongerHintEligibility;
 import com.example.gittrainer.session.domain.SubmittedAnswer;
 import com.example.gittrainer.session.domain.SessionState;
 import com.example.gittrainer.session.domain.TrainingSession;
-import com.example.gittrainer.session.infrastructure.FixtureRetryFeedbackCatalog;
-import com.example.gittrainer.session.infrastructure.RetryFeedbackFixtureSource;
+import com.example.gittrainer.session.infrastructure.TestRetryFeedbackCatalog;
+import com.example.gittrainer.session.infrastructure.TestRetryFeedbackSource;
 import com.example.gittrainer.validation.domain.SubmissionOutcome;
 import com.example.gittrainer.validation.domain.SubmissionTerminalOutput;
 import org.junit.jupiter.api.Test;
@@ -25,10 +25,10 @@ class SessionResponseMapperTest {
             new SessionRetryFeedbackFactory(
                     new RetryStateResponseMapper(),
                     new RetryExplanationResponseFactory(
-                            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+                            new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
                     ),
                     new RetryHintResponseFactory(
-                            new FixtureRetryFeedbackCatalog(new RetryFeedbackFixtureSource())
+                            new TestRetryFeedbackCatalog(new TestRetryFeedbackSource())
                     )
             ),
             sessionId -> java.util.Optional.empty()
@@ -61,7 +61,7 @@ class SessionResponseMapperTest {
                         "session_1",
                         "status-basics",
                         "Проверь изменения перед первым Git-действием",
-                        "mvp-fixture",
+                        "db-seeded",
                         Instant.parse("2026-03-17T00:00:00Z"),
                         SessionState.ACTIVE,
                         2,

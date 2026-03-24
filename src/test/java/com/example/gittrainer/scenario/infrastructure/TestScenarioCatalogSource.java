@@ -4,30 +4,30 @@ import com.example.gittrainer.scenario.application.ScenarioSourceUnavailableExce
 import org.springframework.stereotype.Component;
 
 @Component
-public class ScenarioCatalogFixtureSource {
+public class TestScenarioCatalogSource {
 
-    private static final ScenarioCatalogFixture EMPTY_CATALOG = new ScenarioCatalogFixture(
-            "mvp-fixture-empty",
+    private static final TestScenarioCatalog EMPTY_CATALOG = new TestScenarioCatalog(
+            "db-seeded-empty",
             java.util.List.of()
     );
 
     private final AuthoredScenarioResourceLoader resourceLoader;
 
-    public ScenarioCatalogFixtureSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public TestScenarioCatalogSource(AuthoredScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
-    public ScenarioCatalogFixture defaultCatalog() {
+    public TestScenarioCatalog defaultCatalog() {
         return resourceLoader.defaultCatalog();
     }
 
-    public ScenarioCatalogFixture emptyCatalog() {
+    public TestScenarioCatalog emptyCatalog() {
         return EMPTY_CATALOG;
     }
 
-    public ScenarioCatalogFixture unavailableCatalog() {
+    public TestScenarioCatalog unavailableCatalog() {
         throw new ScenarioSourceUnavailableException(
-                "mvp-fixture-unavailable",
+                "db-seeded-unavailable",
                 "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
         );
     }

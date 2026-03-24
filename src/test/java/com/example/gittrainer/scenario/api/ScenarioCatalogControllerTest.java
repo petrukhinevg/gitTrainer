@@ -34,7 +34,7 @@ class ScenarioCatalogControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
+                .andExpect(jsonPath("$.meta.source").value("db-seeded"))
                 .andExpect(jsonPath("$.items.length()").value(7))
                 .andExpect(jsonPath("$.items[0].id").value("branch-safety"))
                 .andExpect(jsonPath("$.items[0].difficulty").value("beginner"))
@@ -129,7 +129,7 @@ class ScenarioCatalogControllerTest {
                         .param("source", "empty")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.meta.source").value("mvp-fixture-empty"))
+                .andExpect(jsonPath("$.meta.source").value("db-seeded-empty"))
                 .andExpect(jsonPath("$.items.length()").value(0));
     }
 
@@ -144,7 +144,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))
-                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
+                .andExpect(jsonPath("$.sourceName").value("db-seeded-unavailable"));
     }
 
     @Test
@@ -156,12 +156,12 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.id").value("status-basics"))
                 .andExpect(jsonPath("$.slug").value("status-basics"))
                 .andExpect(jsonPath("$.difficulty").value("beginner"))
-                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"))
+                .andExpect(jsonPath("$.meta.source").value("db-seeded"))
                 .andExpect(jsonPath("$.meta.stub").value(true))
                 .andExpect(jsonPath("$.workspace.shell.leftPanelTitle").value("Карта сценария"))
                 .andExpect(jsonPath("$.workspace.shell.centerPanelTitle").value("Урок"))
                 .andExpect(jsonPath("$.workspace.shell.rightPanelTitle").value("Практика"))
-                .andExpect(jsonPath("$.workspace.task.status").value("authored-fixture"))
+                .andExpect(jsonPath("$.workspace.task.status").value("db-seeded"))
                 .andExpect(jsonPath("$.workspace.task.goal").value("Вы на `main`. Перед любым `add`, `checkout` или очисткой нужно коротко проверить, какие файлы уже изменены и какие ещё не отслеживаются."))
                 .andExpect(jsonPath("$.workspace.task.instructions.length()").value(3))
                 .andExpect(jsonPath("$.workspace.task.instructions[0].id").value("inspect-working-tree-first"))
@@ -174,7 +174,7 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.workspace.task.annotations.length()").value(2))
                 .andExpect(jsonPath("$.workspace.task.annotations[0].label").value("Что нужно увидеть"))
                 .andExpect(jsonPath("$.workspace.task.annotations[1].label").value("Какой шаг ожидается"))
-                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("authored-fixture"))
+                .andExpect(jsonPath("$.workspace.repositoryContext.status").value("db-seeded"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches.length()").value(2))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].name").value("main"))
                 .andExpect(jsonPath("$.workspace.repositoryContext.branches[0].current").value(true))
@@ -274,6 +274,6 @@ class ScenarioCatalogControllerTest {
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))
-                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
+                .andExpect(jsonPath("$.sourceName").value("db-seeded-unavailable"));
     }
 }

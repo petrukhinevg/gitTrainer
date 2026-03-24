@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresScenarioValidationSpecSource implements ScenarioValidationSpecSource {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();

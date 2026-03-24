@@ -14,21 +14,21 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("test | local-memory")
+@Profile("test")
 @ConditionalOnProperty(
         prefix = "gittrainer.validator.cli",
         name = "enabled",
         havingValue = "false",
         matchIfMissing = true
 )
-public class FixtureSubmissionAnswerValidator implements SubmissionAnswerValidator {
+public class TestSubmissionAnswerValidator implements SubmissionAnswerValidator {
 
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
-    private static final String RUNNER_KIND = "in-process-fixture";
+    private static final String RUNNER_KIND = "in-process-test";
     private final ScenarioValidationSpecSource specSource;
     private final SessionWorkspaceManager sessionWorkspaceManager;
 
-    public FixtureSubmissionAnswerValidator(
+    public TestSubmissionAnswerValidator(
             ScenarioValidationSpecSource specSource,
             SessionWorkspaceManager sessionWorkspaceManager
     ) {

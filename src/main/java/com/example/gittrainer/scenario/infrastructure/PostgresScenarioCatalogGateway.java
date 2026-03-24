@@ -17,13 +17,13 @@ import java.util.Locale;
 
 @Primary
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresScenarioCatalogGateway implements ScenarioCatalogGateway {
 
     private static final String DEFAULT_SOURCE_KEY = "default";
-    private static final String DEFAULT_SOURCE_NAME = "mvp-fixture";
-    private static final String EMPTY_SOURCE_NAME = "mvp-fixture-empty";
-    private static final String UNAVAILABLE_SOURCE_NAME = "mvp-fixture-unavailable";
+    private static final String DEFAULT_SOURCE_NAME = "db-seeded";
+    private static final String EMPTY_SOURCE_NAME = "db-seeded-empty";
+    private static final String UNAVAILABLE_SOURCE_NAME = "db-seeded-unavailable";
 
     private final JdbcClient jdbcClient;
     private final AuthoredScenarioJsonMapper jsonMapper;

@@ -48,7 +48,7 @@ test("средняя кнопка на теге фиксирует выбор и
                     }
                 ],
                 meta: {
-                    source: "mvp-fixture",
+                    source: "db-seeded",
                     query: {}
                 }
             });
@@ -67,7 +67,7 @@ test("средняя кнопка на теге фиксирует выбор и
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -489,7 +489,7 @@ function createFetchImpl() {
                     }
                 ],
                 meta: {
-                    source: "mvp-fixture",
+                    source: "db-seeded",
                     query: {}
                 }
             });
@@ -508,7 +508,7 @@ function createFetchImpl() {
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -524,7 +524,7 @@ function createDetailPayload(title, stepTitles) {
         difficulty: "beginner",
         tags: [],
         meta: {
-            source: "mvp-fixture"
+            source: "db-seeded"
         },
         workspace: {
             shell: {
@@ -533,7 +533,7 @@ function createDetailPayload(title, stepTitles) {
                 rightPanelTitle: "Практика"
             },
             task: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 goal: "goal",
                 instructions: [],
                 steps: stepTitles.map((stepTitle, index) => ({
@@ -544,7 +544,7 @@ function createDetailPayload(title, stepTitles) {
                 annotations: []
             },
             repositoryContext: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 branches: [],
                 commits: [],
                 files: [],

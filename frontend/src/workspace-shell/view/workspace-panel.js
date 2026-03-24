@@ -2070,8 +2070,8 @@ function resolveSubmissionBoundaryCopy(submissionBoundary) {
 
 function formatRepositoryStatus(value) {
     switch (value) {
-        case "authored-fixture":
-            return "фикстура";
+        case "db-seeded":
+            return "из БД";
         case "live-session":
             return "живая сессия";
         case "unavailable":

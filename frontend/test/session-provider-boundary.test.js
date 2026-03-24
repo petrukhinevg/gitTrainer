@@ -3,10 +3,8 @@ import assert from "node:assert/strict";
 
 import {
     createBackendApiSessionProvider,
-    createLocalFixtureSessionProvider,
     SessionTransportError
 } from "../src/session/session-provider.js";
-import { createPlaceholderRetryFeedback } from "../src/session/session-fixture-retry-feedback.js";
 import {
     normalizeRetryFeedbackBoundary,
     normalizeStartSessionResponse,
@@ -126,56 +124,52 @@ test("normalizeSubmissionResponse preserves stable retry-feedback defaults", () 
     });
 });
 
-test("local fixture provider keeps retry-feedback shape stable across attempts", async () => {
-    const provider = createLocalFixtureSessionProvider({
-        now: () => new Date("2026-03-21T10:15:00Z")
+test("normalizeRetryFeedbackBoundary stabilizes sparse guided payload", () => {
+    const feedback = normalizeRetryFeedbackBoundary({
+        status: "guided",
+        retryState: {
+            attemptNumber: 2
+        },
+        explanation: {
+            message: "Команду ещё нужно уточнить."
+        },
+        hint: {
+            reveals: [
+                {
+                    message: "Сначала подтвердите рабочую ветку."
+                }
+            ]
+        }
     });
 
-    const session = await provider.startSession({ scenarioSlug: "branch-safety" });
-    assert.deepEqual(session.submission.placeholderRetryFeedback, normalizeRetryFeedbackBoundary(
-        createPlaceholderRetryFeedback({
-            scenarioSlug: "branch-safety",
-            attemptNumber: 0
-        })
-    ));
-
-    const firstAttempt = await provider.submitAnswer(session.sessionId, {
-        answerType: "command_text",
-        answer: "git branch"
+    assert.deepEqual(feedback, {
+        status: "guided",
+        retryState: {
+            status: "idle",
+            attemptNumber: 2,
+            eligibility: "not-needed"
+        },
+        explanation: {
+            status: "placeholder",
+            title: "Подсказка для повтора",
+            tone: "neutral",
+            message: "Команду ещё нужно уточнить.",
+            details: []
+        },
+        hint: {
+            status: "placeholder",
+            level: "baseline",
+            message: "Прогресс подсказок остаётся в ожидании, пока пользователь не получит проверенную обратную связь.",
+            reveals: [
+                {
+                    id: "hint-1",
+                    label: "Показать подсказку",
+                    title: "Подсказка",
+                    message: "Сначала подтвердите рабочую ветку."
+                }
+            ]
+        }
     });
-    assert.equal(firstAttempt.retryFeedback.status, "guided");
-    assert.equal(firstAttempt.retryFeedback.retryState.status, "retry-available");
-    assert.equal(firstAttempt.retryFeedback.retryState.attemptNumber, 1);
-    assert.equal(firstAttempt.retryFeedback.hint.reveals.length, 1);
-    assert.match(firstAttempt.terminalOutput.stdout, /fixture command executed|## /i);
-
-    const secondAttempt = await provider.submitAnswer(session.sessionId, {
-        answerType: "command_text",
-        answer: "git status"
-    });
-    assert.equal(secondAttempt.retryFeedback.status, "guided");
-    assert.equal(secondAttempt.retryFeedback.retryState.status, "retry-available");
-    assert.equal(secondAttempt.retryFeedback.retryState.attemptNumber, 2);
-    assert.equal(secondAttempt.retryFeedback.hint.level, "strong");
-    assert.equal(secondAttempt.retryFeedback.hint.reveals.length, 2);
-    assert.match(secondAttempt.terminalOutput.stdout, /^## /);
-    assert.match(secondAttempt.terminalOutput.stdout, /(src\/ui\/header\.css|docs\/release-checklist\.md)/);
-});
-
-test("local fixture sandbox accepts quoted git commands in permissive mode", async () => {
-    const provider = createLocalFixtureSessionProvider({
-        now: () => new Date("2026-03-21T10:15:00Z")
-    });
-
-    const session = await provider.startSession({ scenarioSlug: "merge-sandbox-outline" });
-    const submission = await provider.submitAnswer(session.sessionId, {
-        answerType: "command_text",
-        answer: "git commit --allow-empty -m \"feat: branch commit\""
-    });
-
-    assert.equal(submission.outcome.correctness, "correct");
-    assert.equal(submission.outcome.code, "sandbox-command-accepted");
-    assert.match(submission.terminalOutput.stdout, /fixture command executed|Saved working directory|fatal:/i);
 });
 
 test("backend provider normalizes sparse success payload through shared boundary seam", async () => {

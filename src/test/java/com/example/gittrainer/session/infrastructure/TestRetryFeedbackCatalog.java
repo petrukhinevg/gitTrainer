@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-@Profile("test | local-memory")
-public class FixtureRetryFeedbackCatalog implements RetryFeedbackCatalog {
+@Profile("test")
+public class TestRetryFeedbackCatalog implements RetryFeedbackCatalog {
 
-    private final RetryFeedbackFixtureSource retryFeedbackFixtureSource;
+    private final TestRetryFeedbackSource retryFeedbackFixtureSource;
 
-    public FixtureRetryFeedbackCatalog(RetryFeedbackFixtureSource retryFeedbackFixtureSource) {
+    public TestRetryFeedbackCatalog(TestRetryFeedbackSource retryFeedbackFixtureSource) {
         this.retryFeedbackFixtureSource = retryFeedbackFixtureSource;
     }
 

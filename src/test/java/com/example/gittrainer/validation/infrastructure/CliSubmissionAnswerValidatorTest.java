@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "gittrainer.validator.cli.enabled=true",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
 })
-@ActiveProfiles("local-memory")
+@ActiveProfiles("test")
 class CliSubmissionAnswerValidatorTest {
 
     @Autowired

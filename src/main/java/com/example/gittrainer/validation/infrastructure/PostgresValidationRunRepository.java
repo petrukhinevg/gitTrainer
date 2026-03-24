@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Timestamp;
 
 @Repository
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresValidationRunRepository implements ValidationRunRepository {
 
     private final JdbcClient jdbcClient;

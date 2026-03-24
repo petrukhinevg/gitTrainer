@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Primary
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresRetryFeedbackCatalog implements RetryFeedbackCatalog {
 
     private final JdbcClient jdbcClient;

@@ -92,7 +92,7 @@ class PostgresAuthoredScenarioReadModelTest {
                 .query(Long.class)
                 .single();
 
-        assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("mvp-fixture");
+        assertThat(scenarioCatalogGateway.sourceName(query)).isEqualTo("db-seeded");
         assertThat(catalog)
                 .extracting(ScenarioSummary::slug)
                 .contains(

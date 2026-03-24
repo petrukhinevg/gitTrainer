@@ -4,7 +4,7 @@ import { JSDOM } from "jsdom";
 
 import { createCatalogWorkspaceController } from "../src/workspace-shell/controller.js";
 
-test("сохраняет достижимый fallback flow после ошибки backend-api каталога", async () => {
+test("сохраняет каталог доступным при ошибке backend-api без fallback-провайдеров", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"
     });
@@ -21,37 +21,8 @@ test("сохраняет достижимый fallback flow после ошиб�
                     async browseCatalog() {
                         catalogRequests.push("backend-api");
                         throw new Error(
-                            "Backend API недоступен для текущего способа открытия страницы. Запустите приложение через локальный сервер или переключитесь на local-fixture."
+                            "Backend API недоступен для текущего способа открытия страницы. Откройте приложение через локальный HTTP-сервер."
                         );
-                    }
-                }),
-                "local-fixture": () => ({
-                    async browseCatalog() {
-                        catalogRequests.push("local-fixture");
-                        return {
-                            items: [
-                                {
-                                    slug: "branch-safety",
-                                    title: "Branch safety",
-                                    difficulty: "beginner",
-                                    tags: ["branching"]
-                                }
-                            ],
-                            meta: {
-                                source: "local-fixture",
-                                query: {
-                                    difficulty: null,
-                                    sort: null,
-                                    tags: []
-                                }
-                            }
-                        };
-                    }
-                }),
-                "fixture-unavailable": () => ({
-                    async browseCatalog() {
-                        catalogRequests.push("fixture-unavailable");
-                        throw new Error("Источник каталога сейчас недоступен. Повторите чуть позже.");
                     }
                 })
             },
@@ -81,27 +52,14 @@ test("сохраняет достижимый fallback flow после ошиб�
         await flushAsyncWork();
 
         const providerForm = appRoot.querySelector("[data-catalog-controls-form]");
-        assert.ok(providerForm, "Каталог должен сохранять provider controls даже при ошибке backend-api");
+        assert.ok(providerForm, "Каталог должен сохранять форму фильтров даже при ошибке backend-api");
 
         const providerSelect = providerForm.querySelector('select[name="providerName"]');
-        assert.equal(providerSelect?.value, "backend-api");
-        assert.match(appRoot.textContent, /Сервер \(основной путь\)/);
-        assert.match(appRoot.textContent, /Локальные фикстуры \(диагностика\)/);
-        assert.match(appRoot.textContent, /Недоступный источник \(fallback-проверка\)/);
-        assert.match(appRoot.textContent, /селектор «Источник»/);
-        assert.match(appRoot.textContent, /локальные фикстуры/i);
-        assert.ok(!appRoot.textContent.includes("local-fixture"), "Recovery copy не должна показывать техническое имя provider");
-
-        providerSelect.value = "local-fixture";
-        providerSelect.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
-        await flushAsyncWork();
-
-        assert.deepEqual(catalogRequests, ["backend-api", "local-fixture"]);
-        assert.ok(
-            appRoot.querySelector('[data-scenario-toggle="branch-safety"]'),
-            "После ручного переключения на fallback каталог должен снова становиться достижимым"
-        );
-        assert.match(appRoot.textContent, /Диагностический режим/);
+        assert.equal(providerSelect, null, "При единственном источнике селектор источника не нужен");
+        assert.match(appRoot.textContent ?? "", /Каталог и практика работают через backend API/);
+        assert.match(appRoot.textContent ?? "", /локальный HTTP-сервер/);
+        assert.doesNotMatch(appRoot.textContent ?? "", /local-fixture|fixture-unavailable/i);
+        assert.deepEqual(catalogRequests, ["backend-api"]);
     } finally {
         restoreGlobals();
         dom.window.close();
@@ -166,9 +124,7 @@ function createSharedProviderFactories(overrides = {}) {
     });
 
     return {
-        "backend-api": createProvider("backend-api"),
-        "local-fixture": createProvider("local-fixture"),
-        "fixture-unavailable": createProvider("fixture-unavailable")
+        "backend-api": createProvider("backend-api")
     };
 }
 

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 class AuthoredScenarioJsonMapper {
 
     private final ObjectMapper objectMapper = JsonMapper.builder()

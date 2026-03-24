@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Repository
-@Profile("test | local-memory")
+@Profile("test")
 public class InMemoryProgressRepository implements ProgressRepository {
 
     private final ConcurrentHashMap<String, ScenarioProgressRecord> recordsByScenario = new ConcurrentHashMap<>();

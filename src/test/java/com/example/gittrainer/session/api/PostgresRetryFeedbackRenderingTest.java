@@ -59,7 +59,7 @@ class PostgresRetryFeedbackRenderingTest {
                         "session-db-1",
                         "remote-sync-preview",
                         "Сначала обнови `origin/main` перед интеграцией",
-                        "mvp-fixture",
+                        "db-seeded",
                         Instant.parse("2026-03-22T07:00:00Z"),
                         SessionState.ACTIVE,
                         1,

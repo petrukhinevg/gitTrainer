@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "gittrainer.validator.cli.executable=/definitely-missing-cli-binary",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
 })
-@ActiveProfiles("local-memory")
+@ActiveProfiles("test")
 class SubmitAnswerUseCaseValidationRunFailureTest {
 
     @Autowired
@@ -51,6 +51,6 @@ class SubmitAnswerUseCaseValidationRunFailureTest {
         assertThat(validationRunRepository.findAll().getFirst().outcomeCode())
                 .isEqualTo("validation-runner-invalid-executable");
         assertThat(validationRunRepository.findAll().getFirst().validatorSpecId())
-                .isEqualTo("fixture:status-basics:command_text");
+                .isEqualTo("test:status-basics:command_text");
     }
 }

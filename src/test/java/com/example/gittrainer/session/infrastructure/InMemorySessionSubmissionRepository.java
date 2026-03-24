@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
-@Profile("test | local-memory")
+@Profile("test")
 public class InMemorySessionSubmissionRepository implements SessionSubmissionRepository {
 
     private final Map<String, TrainingSessionSubmission> submissionsById = new ConcurrentHashMap<>();

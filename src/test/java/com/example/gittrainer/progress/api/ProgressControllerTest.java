@@ -45,6 +45,6 @@ class ProgressControllerTest {
                 .andExpect(jsonPath("$.recommendations.next.scenarioSlug").isNotEmpty())
                 .andExpect(jsonPath("$.recommendations.next.scenarioTitle").isNotEmpty())
                 .andExpect(jsonPath("$.recommendations.rationale").isNotEmpty())
-                .andExpect(jsonPath("$.meta.source").value("mvp-fixture"));
+                .andExpect(jsonPath("$.meta.source").value("db-seeded"));
     }
 }

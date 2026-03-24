@@ -16,7 +16,7 @@ import java.util.List;
 
 @Primary
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 @ConditionalOnProperty(
         prefix = "gittrainer.validator.cli",
         name = "enabled",

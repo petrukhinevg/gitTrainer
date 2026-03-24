@@ -16,10 +16,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class FixtureSubmissionAnswerValidatorTest {
+class TestSubmissionAnswerValidatorTest {
 
-    private final FixtureSubmissionAnswerValidator validator =
-            new FixtureSubmissionAnswerValidator(new FixtureScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
+    private final TestSubmissionAnswerValidator validator =
+            new TestSubmissionAnswerValidator(new TestScenarioValidationSpecSource(), new NoOpSessionWorkspaceManager());
 
     @Test
     void marksFullStatusCommandAsPartial() {
@@ -95,14 +95,14 @@ class FixtureSubmissionAnswerValidatorTest {
 
     @Test
     void marksBranchStatusAsCorrectAfterBranchReadingForBranchSafety(@TempDir Path tempDir) {
-        ScenarioValidationSpecSource specSource = new FixtureScenarioValidationSpecSource();
+        ScenarioValidationSpecSource specSource = new TestScenarioValidationSpecSource();
         SessionWorkspaceManager workspaceManager =
                 new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
                         tempDir.toString(),
                         specSource
                 );
-        FixtureSubmissionAnswerValidator branchValidator =
-                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        TestSubmissionAnswerValidator branchValidator =
+                new TestSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "branch-session";
         workspaceManager.initializeWorkspace(sessionId, "branch-safety");
 
@@ -204,7 +204,7 @@ class FixtureSubmissionAnswerValidatorTest {
 
     @Test
     void marksScenarioCorrectWhenAllowedCommandHistoryReachesExpectedRepoState() {
-        FixtureSubmissionAnswerValidator historyAwareValidator = new FixtureSubmissionAnswerValidator(
+        TestSubmissionAnswerValidator historyAwareValidator = new TestSubmissionAnswerValidator(
                 historySpecSource(),
                 new NoOpSessionWorkspaceManager()
         );
@@ -228,8 +228,8 @@ class FixtureSubmissionAnswerValidatorTest {
                         tempDir.toString(),
                         specSource
                 );
-        FixtureSubmissionAnswerValidator historyAwareValidator =
-                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        TestSubmissionAnswerValidator historyAwareValidator =
+                new TestSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "session-1";
         workspaceManager.initializeWorkspace(sessionId, "remote-sync-apply");
 
@@ -254,14 +254,14 @@ class FixtureSubmissionAnswerValidatorTest {
 
     @Test
     void marksRealStashScenarioAsPartialBeforeCheckpointAndCorrectAfterCheckpoint(@TempDir Path tempDir) {
-        ScenarioValidationSpecSource specSource = new FixtureScenarioValidationSpecSource();
+        ScenarioValidationSpecSource specSource = new TestScenarioValidationSpecSource();
         SessionWorkspaceManager workspaceManager =
                 new com.example.gittrainer.session.infrastructure.FilesystemSessionWorkspaceManager(
                         tempDir.toString(),
                         specSource
                 );
-        FixtureSubmissionAnswerValidator stashValidator =
-                new FixtureSubmissionAnswerValidator(specSource, workspaceManager);
+        TestSubmissionAnswerValidator stashValidator =
+                new TestSubmissionAnswerValidator(specSource, workspaceManager);
         String sessionId = "stash-session";
         workspaceManager.initializeWorkspace(sessionId, "stash-checkpoint-draft");
 
@@ -290,7 +290,7 @@ class FixtureSubmissionAnswerValidatorTest {
                 return Optional.empty();
             }
             return Optional.of(new ScenarioValidationSpec(
-                    "fixture:remote-sync-apply:command_text",
+                    "test:remote-sync-apply:command_text",
                     scenarioSlug,
                     answerType,
                     "git_repo_state_probe",

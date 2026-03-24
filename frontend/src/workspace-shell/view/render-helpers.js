@@ -11,12 +11,8 @@ export function formatDifficulty(value) {
 
 export function formatProviderName(value) {
     switch (String(value ?? "").trim().toLowerCase()) {
-        case "local-fixture":
-            return "Локальные фикстуры";
         case "backend-api":
             return "Сервер";
-        case "fixture-unavailable":
-            return "Недоступный источник";
         default:
             return value ? String(value) : "Неизвестный источник";
     }
@@ -25,19 +21,10 @@ export function formatProviderName(value) {
 export function formatProviderOptionLabel(value) {
     switch (String(value ?? "").trim().toLowerCase()) {
         case "backend-api":
-            return "Сервер (основной путь)";
-        case "local-fixture":
-            return "Локальные фикстуры (диагностика)";
-        case "fixture-unavailable":
-            return "Недоступный источник (fallback-проверка)";
+            return "Сервер";
         default:
             return formatProviderName(value);
     }
-}
-
-export function isDiagnosticProvider(value) {
-    const normalizedValue = String(value ?? "").trim().toLowerCase();
-    return normalizedValue === "local-fixture" || normalizedValue === "fixture-unavailable";
 }
 
 export function formatTag(value) {

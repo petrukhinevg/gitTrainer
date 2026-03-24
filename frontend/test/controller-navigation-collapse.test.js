@@ -48,7 +48,7 @@ test("при сворачивании сценария левая панель �
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -160,7 +160,7 @@ test("при выборе дочернего блока уже открытые 
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -285,7 +285,7 @@ test("можно запустить раскрытие следующего ро
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -379,7 +379,7 @@ test("кнопка между тегами и заданиями сворачи�
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -487,7 +487,7 @@ test("collapse-all и restore используют анимации родите
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -609,7 +609,7 @@ test("при переходе в соседнюю уже открытую гру
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -730,7 +730,7 @@ test("последовательное раскрытие нескольких �
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -861,7 +861,7 @@ test("переход между дочерними задачами разных
                 items: [],
                 recentActivity: [],
                 recommendations: null,
-                meta: { source: "mvp-fixture" }
+                meta: { source: "db-seeded" }
             });
         }
 
@@ -971,7 +971,7 @@ function createCatalogPayload() {
             }
         ],
         meta: {
-            source: "mvp-fixture",
+            source: "db-seeded",
             query: {}
         }
     };
@@ -1010,7 +1010,7 @@ function createDetailPayload({ slug, title, stepTitle }) {
         difficulty: "beginner",
         tags: [],
         meta: {
-            source: "mvp-fixture",
+            source: "db-seeded",
             stub: true
         },
         workspace: {
@@ -1020,7 +1020,7 @@ function createDetailPayload({ slug, title, stepTitle }) {
                 rightPanelTitle: "Практика"
             },
             task: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 goal: title,
                 instructions: [
                     {
@@ -1038,7 +1038,7 @@ function createDetailPayload({ slug, title, stepTitle }) {
                 annotations: []
             },
             repositoryContext: {
-                status: "authored-fixture",
+                status: "db-seeded",
                 branches: [],
                 commits: [],
                 files: [],

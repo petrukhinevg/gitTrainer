@@ -6,11 +6,11 @@ import com.example.gittrainer.scenario.application.ScenarioTaskContentNotAuthore
 import org.springframework.stereotype.Component;
 
 @Component
-public class ScenarioTaskContentFixtureSource implements ScenarioTaskContentGateway {
+public class TestScenarioTaskContentSource implements ScenarioTaskContentGateway {
 
     private final AuthoredScenarioResourceLoader resourceLoader;
 
-    public ScenarioTaskContentFixtureSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public TestScenarioTaskContentSource(AuthoredScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 

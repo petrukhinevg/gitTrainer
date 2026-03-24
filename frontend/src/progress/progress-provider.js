@@ -1,23 +1,4 @@
-import { FIXTURE_PROGRESS_SUMMARY } from "./progress-fixtures.js";
 import { createBackendApiClient } from "../api/backend-api-client.js";
-
-export function createLocalFixtureProgressProvider() {
-    return {
-        name: "local-fixture",
-        async loadProgressSummary() {
-            return normalizeProgressSummaryResponse(structuredClone(FIXTURE_PROGRESS_SUMMARY));
-        }
-    };
-}
-
-export function createUnavailableFixtureProgressProvider() {
-    return {
-        name: "fixture-unavailable",
-        async loadProgressSummary() {
-            throw new Error("Сводка прогресса сейчас недоступна. Повторите чуть позже.");
-        }
-    };
-}
 
 export function createBackendApiProgressProvider(fetchImpl = window.fetch.bind(window)) {
     const client = createBackendApiClient(fetchImpl);

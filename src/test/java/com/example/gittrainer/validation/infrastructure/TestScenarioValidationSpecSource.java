@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-@Profile("test | local-memory")
-public class FixtureScenarioValidationSpecSource implements ScenarioValidationSpecSource {
+@Profile("test")
+public class TestScenarioValidationSpecSource implements ScenarioValidationSpecSource {
 
     @Override
     public Optional<ScenarioValidationSpec> findSpec(String scenarioSlug, String answerType) {
-        return AuthoredScenarioValidationLibrary.findSpec("fixture", scenarioSlug, answerType);
+        return AuthoredScenarioValidationLibrary.findSpec("test", scenarioSlug, answerType);
     }
 }

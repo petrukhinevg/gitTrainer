@@ -46,7 +46,7 @@ class LoadScenarioDetailUseCaseTest {
                 List.of("status", "working-tree", "basics")
         );
         ScenarioWorkspaceDetail.ScenarioTaskPreview taskPreview = new ScenarioWorkspaceDetail.ScenarioTaskPreview(
-                "authored-fixture",
+                "db-seeded",
                 "goal",
                 List.of(),
                 List.of(),
@@ -54,7 +54,7 @@ class LoadScenarioDetailUseCaseTest {
         );
         ScenarioWorkspaceDetail.ScenarioRepositoryContext repositoryContext =
                 new ScenarioWorkspaceDetail.ScenarioRepositoryContext(
-                        "authored-fixture",
+                        "db-seeded",
                         List.of(),
                         List.of(),
                         List.of(),
@@ -65,13 +65,13 @@ class LoadScenarioDetailUseCaseTest {
         when(scenarioCatalogGateway.loadCatalog(new CatalogBrowseQuery(null, null, null, "default")))
                 .thenReturn(List.of(summary));
         when(scenarioCatalogGateway.sourceName(new CatalogBrowseQuery(null, null, null, "default")))
-                .thenReturn("mvp-fixture");
+                .thenReturn("db-seeded");
         when(scenarioTaskContentAssembler.assemble("status-basics")).thenReturn(taskPreview);
         when(scenarioRepositoryContextGateway.loadRepositoryContext("status-basics")).thenReturn(repositoryContext);
 
         ScenarioDetailResult result = loadScenarioDetailUseCase.load(query);
 
-        assertThat(result.source()).isEqualTo("mvp-fixture");
+        assertThat(result.source()).isEqualTo("db-seeded");
         assertThat(result.stub()).isTrue();
         assertThat(result.detail().slug()).isEqualTo("status-basics");
         assertThat(result.detail().title()).isEqualTo("Проверь изменения перед первым Git-действием");

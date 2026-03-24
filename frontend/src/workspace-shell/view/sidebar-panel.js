@@ -45,9 +45,7 @@ function renderTrainingFlow(state, tagOptions) {
     }
 
     if (state.catalog.status === "error") {
-        const recoveryCopy = state.providerName === "backend-api"
-            ? "Серверный каталог недоступен. В центральной колонке переключите источник на локальные фикстуры, если нужно продолжить диагностику."
-            : "Сменить источник можно в центральной колонке, не покидая этот экран.";
+        const recoveryCopy = "Серверный каталог недоступен. Проверьте, что backend запущен, а приложение открыто через локальный HTTP-сервер.";
         return `
             <section class="lesson-rail__summary">
                 <span class="control-label">Ошибка</span>

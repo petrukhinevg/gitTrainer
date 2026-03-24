@@ -21,12 +21,12 @@ public class AuthoredScenarioResourceLoader {
 
     private static final String RESOURCE_PATH = "scenario/authored-scenarios.json";
 
-    private final ScenarioCatalogFixture defaultCatalog;
+    private final TestScenarioCatalog defaultCatalog;
     private final Map<String, AuthoredScenarioResourceItem> itemsBySlug;
 
     public AuthoredScenarioResourceLoader() {
         AuthoredScenarioResourceBundle bundle = readBundle();
-        this.defaultCatalog = new ScenarioCatalogFixture(
+        this.defaultCatalog = new TestScenarioCatalog(
                 bundle.sourceName(),
                 bundle.items().stream()
                         .map(AuthoredScenarioResourceItem::toSummary)
@@ -41,7 +41,7 @@ public class AuthoredScenarioResourceLoader {
                 ));
     }
 
-    public ScenarioCatalogFixture defaultCatalog() {
+    public TestScenarioCatalog defaultCatalog() {
         return defaultCatalog;
     }
 

@@ -10,17 +10,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-class ScenarioRepositoryContextFixtureSourceTest {
+class TestScenarioRepositoryContextSourceTest {
 
     @Autowired
-    private ScenarioRepositoryContextFixtureSource scenarioRepositoryContextFixtureSource;
+    private TestScenarioRepositoryContextSource scenarioRepositoryContextFixtureSource;
 
     @Test
     void providesAuthoredRepositoryContextFixtureForKnownScenario() {
         ScenarioWorkspaceDetail.ScenarioRepositoryContext fixture =
                 scenarioRepositoryContextFixtureSource.loadRepositoryContext("status-basics");
 
-        assertThat(fixture.status()).isEqualTo("authored-fixture");
+        assertThat(fixture.status()).isEqualTo("db-seeded");
         assertThat(fixture.branches()).hasSize(2);
         assertThat(fixture.commits()).hasSize(2);
         assertThat(fixture.files()).hasSize(3);

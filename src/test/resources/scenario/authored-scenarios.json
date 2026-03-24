@@ -1,5 +1,5 @@
 {
-  "sourceName": "mvp-fixture",
+  "sourceName": "db-seeded",
   "items": [
     {
       "id": "status-basics",
@@ -13,7 +13,7 @@
         "basics"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Вы на `main`. Перед любым `add`, `checkout` или очисткой нужно коротко проверить, какие файлы уже изменены и какие ещё не отслеживаются.",
         "instructions": [
           {
@@ -73,7 +73,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "main",
@@ -132,7 +132,7 @@
         "basics"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Перед любым `checkout` нужно подтвердить, что работа уже открыта в `release/hotfix-7`, и собрать branch-aware status незавершённых правок.",
         "instructions": [
           {
@@ -187,7 +187,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "release/hotfix-7",
@@ -246,7 +246,7 @@
         "planning"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Нужно безопасно посмотреть верхушку истории и увидеть, какие коммиты пойдут в cleanup, не переписывая их.",
         "instructions": [
           {
@@ -306,7 +306,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "feature/history-cleanup",
@@ -365,7 +365,7 @@
         "planning"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Сначала обновите remote-tracking refs и только после этого решайте, нужен ли `pull`, `merge` или `rebase`.",
         "instructions": [
           {
@@ -420,7 +420,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "main",
@@ -475,7 +475,7 @@
         "safety"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Нужно подтвердить, что в ветке есть и changed, и untracked файлы, а затем убрать их в stash так, чтобы рабочее дерево стало чистым.",
         "instructions": [
           {
@@ -525,7 +525,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "feature/test-stash-panel",
@@ -580,7 +580,7 @@
         "planning"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Нужно понять, чем `feature/mock-merge-window` отличается от `main`, и сделать это через preview-команду, не выполняя merge.",
         "instructions": [
           {
@@ -635,7 +635,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "feature/mock-merge-window",
@@ -694,7 +694,7 @@
         "remote"
       ],
       "task": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "goal": "Нужно безопасно увидеть существующие теги и выбрать ориентир для релизной точки, не меняя историю.",
         "instructions": [
           {
@@ -744,7 +744,7 @@
         ]
       },
       "repositoryContext": {
-        "status": "authored-fixture",
+        "status": "db-seeded",
         "branches": [
           {
             "name": "main",

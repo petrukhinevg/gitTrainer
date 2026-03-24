@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,\
         org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
         """)
-@ActiveProfiles("local-memory")
+@ActiveProfiles("test")
 class SubmitAnswerUseCaseValidationRunTest {
 
     @Autowired
@@ -43,7 +43,7 @@ class SubmitAnswerUseCaseValidationRunTest {
         assertThat(validationRunRepository.findAll().getFirst().sessionId()).isEqualTo(startedSession.session().sessionId());
         assertThat(validationRunRepository.findAll().getFirst().submissionId()).isEqualTo(result.submissionId());
         assertThat(validationRunRepository.findAll().getFirst().runnerStatus()).isEqualTo("evaluated");
-        assertThat(validationRunRepository.findAll().getFirst().runnerKind()).isEqualTo("in-process-fixture");
+        assertThat(validationRunRepository.findAll().getFirst().runnerKind()).isEqualTo("in-process-test");
         assertThat(validationRunRepository.findAll().getFirst().outcomeCode()).isEqualTo("expected-command");
     }
 }

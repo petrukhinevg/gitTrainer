@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Primary
 @Component
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresScenarioTaskContentGateway implements ScenarioTaskContentGateway {
 
     private final JdbcClient jdbcClient;

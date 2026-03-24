@@ -49,7 +49,7 @@ class ProgressApiExceptionHandlingTest {
                 .andExpect(jsonPath("$.code").value("scenario-source-unavailable"))
                 .andExpect(jsonPath("$.failureDisposition").value("retryable"))
                 .andExpect(jsonPath("$.retryable").value(true))
-                .andExpect(jsonPath("$.sourceName").value("mvp-fixture-unavailable"));
+                .andExpect(jsonPath("$.sourceName").value("db-seeded-unavailable"));
     }
 
     @TestConfiguration
@@ -62,14 +62,14 @@ class ProgressApiExceptionHandlingTest {
                 @Override
                 public List<ScenarioSummary> loadCatalog(CatalogBrowseQuery query) {
                     throw new ScenarioSourceUnavailableException(
-                            "mvp-fixture-unavailable",
+                            "db-seeded-unavailable",
                             "Источник каталога сейчас недоступен. Выберите другой источник или повторите позже."
                     );
                 }
 
                 @Override
                 public String sourceName(CatalogBrowseQuery query) {
-                    return "mvp-fixture-unavailable";
+                    return "db-seeded-unavailable";
                 }
             };
         }

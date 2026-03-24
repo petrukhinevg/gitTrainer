@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
-@Profile("test | local-memory")
+@Profile("test")
 public class InMemoryValidationRunRepository implements ValidationRunRepository {
 
     private final Map<String, ValidationRunRecord> runsById = new ConcurrentHashMap<>();

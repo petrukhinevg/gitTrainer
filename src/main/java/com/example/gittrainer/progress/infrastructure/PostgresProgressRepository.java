@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-@Profile("!test & !local-memory")
+@Profile("!test")
 public class PostgresProgressRepository implements ProgressRepository {
 
     private final JdbcClient jdbcClient;

@@ -396,7 +396,7 @@ class MvpLifecycleFlowTest {
         Map<String, Object> recommendations = mapValue(progressResponse, "recommendations");
         Map<String, Object> nextRecommendation = mapValue(recommendations, "next");
 
-        assertThat(stringValue(progressMeta, "source")).isEqualTo("mvp-fixture");
+        assertThat(stringValue(progressMeta, "source")).isEqualTo("db-seeded");
         assertThat(stringValue(completedStatusBasics, "status")).isEqualTo("completed");
         assertThat(intValue(completedStatusBasics, "attemptCount")).isEqualTo(initialAttemptCount + 1);
         assertThat(intValue(completedStatusBasics, "completionCount")).isEqualTo(initialCompletionCount + 1);

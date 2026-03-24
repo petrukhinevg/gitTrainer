@@ -4,12 +4,12 @@ import com.example.gittrainer.scenario.domain.ScenarioSummary;
 
 import java.util.List;
 
-public record ScenarioCatalogFixture(
+public record TestScenarioCatalog(
         String sourceName,
         List<ScenarioSummary> items
 ) {
 
-    public ScenarioCatalogFixture {
+    public TestScenarioCatalog {
         items = items == null ? List.of() : List.copyOf(items);
     }
 }

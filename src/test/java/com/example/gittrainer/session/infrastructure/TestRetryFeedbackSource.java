@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-public class RetryFeedbackFixtureSource {
+public class TestRetryFeedbackSource {
 
     public Optional<RetryGuidanceProfile> findIncorrectGuidance(String scenarioSlug) {
         return AuthoredRetryFeedbackLibrary.findIncorrectGuidance(scenarioSlug);

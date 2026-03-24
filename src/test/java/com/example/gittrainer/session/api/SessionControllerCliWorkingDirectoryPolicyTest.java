@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "gittrainer.validator.cli.working-directory=/definitely-missing-validator-working-directory",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
 })
-@ActiveProfiles("local-memory")
+@ActiveProfiles("test")
 class SessionControllerCliWorkingDirectoryPolicyTest {
 
     private final WebApplicationContext webApplicationContext;

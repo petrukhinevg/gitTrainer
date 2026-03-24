@@ -6,11 +6,11 @@ import com.example.gittrainer.scenario.domain.ScenarioWorkspaceDetail;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ScenarioRepositoryContextFixtureSource implements ScenarioRepositoryContextGateway {
+public class TestScenarioRepositoryContextSource implements ScenarioRepositoryContextGateway {
 
     private final AuthoredScenarioResourceLoader resourceLoader;
 
-    public ScenarioRepositoryContextFixtureSource(AuthoredScenarioResourceLoader resourceLoader) {
+    public TestScenarioRepositoryContextSource(AuthoredScenarioResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 

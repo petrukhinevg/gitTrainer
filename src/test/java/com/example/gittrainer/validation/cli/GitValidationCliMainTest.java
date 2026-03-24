@@ -26,7 +26,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status --short"),
                 new ScenarioValidationSpec(
-                        "fixture:status-basics:command_text",
+                        "test:status-basics:command_text",
                         "status-basics",
                         "command_text",
                         "exact_command_match",
@@ -81,7 +81,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git branch --show-current"),
                 new ScenarioValidationSpec(
-                        "fixture:branch-safety:command_text",
+                        "test:branch-safety:command_text",
                         "branch-safety",
                         "command_text",
                         "git_command_probe",
@@ -159,7 +159,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git branch --show-current")),
                 new SubmittedAnswer("command_text", "git status -sb"),
                 new ScenarioValidationSpec(
-                        "fixture:branch-safety:command_text",
+                        "test:branch-safety:command_text",
                         "branch-safety",
                         "command_text",
                         "git_command_probe",
@@ -235,7 +235,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status"),
                 new ScenarioValidationSpec(
-                        "fixture:history-cleanup-preview:command_text",
+                        "test:history-cleanup-preview:command_text",
                         "history-cleanup-preview",
                         "command_text",
                         "git_command_probe",
@@ -312,7 +312,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git fetch origin"),
                 new ScenarioValidationSpec(
-                        "fixture:remote-sync-preview:command_text",
+                        "test:remote-sync-preview:command_text",
                         "remote-sync-preview",
                         "command_text",
                         "git_repo_state_probe",
@@ -401,7 +401,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git status -sb"),
                 new ScenarioValidationSpec(
-                        "fixture:remote-sync-preview:command_text",
+                        "test:remote-sync-preview:command_text",
                         "remote-sync-preview",
                         "command_text",
                         "git_repo_state_probe",
@@ -476,7 +476,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git fetch origin")),
                 new SubmittedAnswer("command_text", "git reset --hard origin/main"),
                 new ScenarioValidationSpec(
-                        "fixture:remote-sync-apply:command_text",
+                        "test:remote-sync-apply:command_text",
                         "remote-sync-apply",
                         "command_text",
                         "git_repo_state_probe",
@@ -556,7 +556,7 @@ class GitValidationCliMainTest {
                 List.of(new SubmittedAnswer("command_text", "git status -sb")),
                 new SubmittedAnswer("command_text", "git stash push -u"),
                 new ScenarioValidationSpec(
-                        "fixture:stash-checkpoint-draft:command_text",
+                        "test:stash-checkpoint-draft:command_text",
                         "stash-checkpoint-draft",
                         "command_text",
                         "git_command_probe",
@@ -632,7 +632,7 @@ class GitValidationCliMainTest {
                 List.of(),
                 new SubmittedAnswer("command_text", "git show-ref --tags"),
                 new ScenarioValidationSpec(
-                        "fixture:tag-checkpoint-preview:command_text",
+                        "test:tag-checkpoint-preview:command_text",
                         "tag-checkpoint-preview",
                         "command_text",
                         "git_command_probe",

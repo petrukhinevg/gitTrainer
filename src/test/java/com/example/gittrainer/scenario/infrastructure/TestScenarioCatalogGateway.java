@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("test | local-memory")
-public class FixtureScenarioCatalogGateway implements ScenarioCatalogGateway {
+@Profile("test")
+public class TestScenarioCatalogGateway implements ScenarioCatalogGateway {
 
-    private final ScenarioCatalogFixtureSource scenarioCatalogFixtureSource;
+    private final TestScenarioCatalogSource scenarioCatalogFixtureSource;
 
-    public FixtureScenarioCatalogGateway(ScenarioCatalogFixtureSource scenarioCatalogFixtureSource) {
+    public TestScenarioCatalogGateway(TestScenarioCatalogSource scenarioCatalogFixtureSource) {
         this.scenarioCatalogFixtureSource = scenarioCatalogFixtureSource;
     }
 
@@ -28,7 +28,7 @@ public class FixtureScenarioCatalogGateway implements ScenarioCatalogGateway {
         return resolveFixture(query).sourceName();
     }
 
-    private ScenarioCatalogFixture resolveFixture(CatalogBrowseQuery query) {
+    private TestScenarioCatalog resolveFixture(CatalogBrowseQuery query) {
         String source = query.source();
         if (source == null || source.isBlank() || source.equalsIgnoreCase("default")) {
             return scenarioCatalogFixtureSource.defaultCatalog();

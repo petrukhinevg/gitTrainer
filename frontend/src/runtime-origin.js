@@ -1,11 +1,11 @@
 const BACKEND_API_UNAVAILABLE_MESSAGE =
-    "Backend API недоступен для текущего способа открытия страницы. Запустите приложение через локальный сервер или в каталоге переключите источник на локальные фикстуры.";
+    "Backend API недоступен для текущего способа открытия страницы. Откройте приложение через локальный HTTP-сервер.";
 
 export function resolveRuntimeProviderBootstrap(locationLike = globalThis?.window?.location) {
     const backendOrigin = resolveBrowserOrigin(locationLike);
     return {
         backendOrigin,
-        defaultProviderName: backendOrigin ? "backend-api" : "local-fixture"
+        defaultProviderName: "backend-api"
     };
 }
 
