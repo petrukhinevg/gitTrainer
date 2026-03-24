@@ -165,7 +165,7 @@ body {
 
 .lesson-layout__lane--practice {
     grid-area: practice;
-    border-left: 1px solid var(--border);
+    border-left: 0;
     z-index: 3;
 }
 
@@ -310,11 +310,9 @@ body {
 
 .lesson-layout--navigation-collapsing .lesson-lane--lesson,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson {
-    transform: translateX(-10px);
-    padding-left: 26px;
-    box-shadow:
-        -18px 0 28px rgba(57, 89, 121, 0.12),
-        var(--shadow);
+    transform: none;
+    padding-left: 0;
+    box-shadow: none;
 }
 
 .lesson-lane__header,
@@ -408,48 +406,7 @@ body {
     justify-content: space-between;
 }
 
-@media (max-width: 1460px) {
-    .lesson-layout--exercise {
-        grid-template-areas:
-            "lesson practice";
-        grid-template-columns: minmax(var(--lesson-lane-min-width), 1fr) var(--practice-lane-current-width);
-    }
-
-    .lesson-layout--exercise .lesson-layout__lane--navigation {
-        min-width: 0;
-        max-width: 0;
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        overflow: hidden;
-    }
-
-    .lesson-layout--exercise .lesson-layout__tag-connection-overlay {
-        opacity: 0;
-        filter: blur(1px);
-    }
-
-    .lesson-layout--exercise .lesson-lane--navigation {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transform: translateX(-10px);
-        filter: saturate(0.94);
-    }
-
-    .lesson-layout--exercise .lesson-lane--lesson {
-        transform: none;
-        box-shadow: none;
-        padding-left: 18px;
-    }
-
-    .lesson-layout--exercise .lesson-lane--lesson .lesson-lane__body,
-    .lesson-layout--exercise .lesson-lane--lesson .lesson-lane__scroll-content {
-        padding-right: 0;
-    }
-}
-
-@media (max-width: 1120px) {
+@media (max-width: 1280px) {
     body {
         overflow: auto;
     }

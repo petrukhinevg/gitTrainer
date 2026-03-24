@@ -950,6 +950,97 @@ test("при переключении сценария viewer не показы�
     }
 });
 
+test("автоматически скрывает левую панель при сужении окна и возвращает её после расширения", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    Object.defineProperty(dom.window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: 1800
+    });
+
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            return jsonResponse(createStartSessionPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
+            false,
+            "На широком окне левая панель должна оставаться открытой"
+        );
+
+        dom.window.innerWidth = 1500;
+        dom.window.dispatchEvent(new dom.window.Event("resize"));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
+            true,
+            "При нехватке места левая панель должна скрываться автоматически"
+        );
+
+        dom.window.innerWidth = 1800;
+        dom.window.dispatchEvent(new dom.window.Event("resize"));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
+            false,
+            "После расширения окна автоматически скрытая панель должна возвращаться"
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function createCatalogPayload() {
     return {
         items: [
