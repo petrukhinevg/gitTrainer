@@ -67,11 +67,14 @@ export function bindNavigationActiveMarker({
         pendingOptions = null;
 
         const previousState = navigationLane.__navigationActiveMarkerState ?? null;
-        const nextState = resolveNavigationActiveMarkerState({
+        const resolvedState = resolveNavigationActiveMarkerState({
             layoutRoot,
             mapRoot,
             dragTargetDescriptor
         });
+        // Во время resize цель может на один кадр отдать нулевую геометрию.
+        // В таком случае сохраняем прошлое положение, а не прячем маркер.
+        const nextState = resolvedState ?? previousState ?? createHiddenNavigationActiveMarkerState();
         applyNavigationActiveMarkerState(marker, nextState, { instant, previousState });
         navigationLane.__navigationActiveMarkerState = nextState;
     };
@@ -241,7 +244,7 @@ export function resolveNavigationActiveMarkerState({ layoutRoot, mapRoot, dragTa
 
     const geometry = measureNavigationActiveMarkerGeometry({ mapRoot, target });
     if (!geometry) {
-        return createHiddenNavigationActiveMarkerState();
+        return null;
     }
 
     return {

@@ -364,6 +364,57 @@ test("обычный redraw не должен терять анимацию из
     }
 });
 
+test("resize не должен прятать маркер, если геометрия цели временно недоступна", () => {
+    const dom = new JSDOM(createMarkerFixture(), { pretendToBeVisual: true });
+    const { window } = dom;
+    const restoreGlobals = installNavigationMarkerGlobals(window);
+
+    try {
+        const appRoot = window.document.querySelector("[data-app-root]");
+        const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const marker = appRoot.querySelector("[data-navigation-active-marker]");
+        const scenarioToggle = appRoot.querySelector("[data-scenario-toggle]");
+        const subtaskLink = appRoot.querySelector("[data-scenario-focus]");
+
+        assignRect(mapRoot, createRect(0, 40, 280, 520));
+        assignRect(scenarioToggle, createRect(24, 120, 220, 52));
+        assignRect(subtaskLink, createRect(40, 236, 204, 46));
+
+        bindNavigationActiveMarker({ appRoot });
+        flushRafQueue(window);
+
+        assert.equal(marker.dataset.visible, "true");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
+
+        assignRect(subtaskLink, createRect(40, 236, 204, 0));
+        window.dispatchEvent(new window.Event("resize"));
+        flushRafQueue(window);
+
+        assert.equal(marker.dataset.visible, "true");
+        assert.equal(
+            marker.style.getPropertyValue("--navigation-active-marker-top"),
+            "196px",
+            "Во время transient resize маркер должен удерживать прошлую позицию"
+        );
+        assert.equal(
+            marker.style.getPropertyValue("--navigation-active-marker-height"),
+            "46px",
+            "Во время transient resize маркер не должен схлопываться"
+        );
+
+        assignRect(subtaskLink, createRect(40, 248, 204, 50));
+        window.dispatchEvent(new window.Event("resize"));
+        flushRafQueue(window);
+
+        assert.equal(marker.dataset.visible, "true");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "208px");
+        assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "50px");
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 test("длинный переход маркера получает более длинную анимацию, чем короткий", () => {
     const shortDuration = resolveNavigationActiveMarkerMotionDuration(
         { visible: true, top: 80, height: 46 },

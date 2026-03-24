@@ -13,13 +13,13 @@ export class PanelLayoutConfig {
 
     // Средняя панель: основное содержимое урока.
     static MIDDLE_PANEL = Object.freeze({
-        minWidthPx: 300,
+        minWidthPx: 400,
         collapsedLeftInsetPx: 18
     });
 
     // Правая панель: практика, терминал и repository viewer.
     static RIGHT_PANEL = Object.freeze({
-        defaultWidthPx: 670,
+        defaultWidthPx: 800,
         narrowedWidthPx: 500
     });
 

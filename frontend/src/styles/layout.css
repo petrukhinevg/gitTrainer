@@ -30,14 +30,38 @@ body {
 }
 
 .lesson-layout {
+    /* Fallback-значения для статического анализа IDE; реальные токены приходят из panel-layout-config.js. */
+    --navigation-lane-width: 340px;
     --navigation-lane-current-width: var(--navigation-lane-width);
+    --navigation-toolbar-height: 24px;
+    --navigation-collapse-duration: 500ms;
+    --navigation-collapse-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --panel-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --navigation-active-marker-easing: cubic-bezier(0.2, 0.9, 0.25, 1);
+    --lesson-lane-min-width: 400px;
+    --lesson-collapsed-left-inset: 18px;
+    --practice-lane-default-width: 800px;
+    --practice-lane-min-width: 500px;
+    --practice-lane-current-min-width: var(--practice-lane-min-width);
+    --practice-lane-current-width: var(--practice-lane-default-width);
+    --flow-subtask-enter-duration: 220ms;
+    --flow-subtask-enter-stagger: 36ms;
+    --flow-node-filter-duration: 220ms;
+    --flow-node-layout-duration: 280ms;
+    --flow-subtask-shift-duration: 220ms;
+    --panel-overlay-fade-duration: 180ms;
+    --panel-overlay-path-duration: 240ms;
+    --panel-overlay-dot-delay-duration: 60ms;
+    --navigation-active-marker-min-height: 24px;
+    --navigation-active-marker-top: 0px;
+    --navigation-active-marker-height: 0px;
     display: grid;
     position: relative;
     grid-template-areas: "navigation lesson practice";
     grid-template-columns:
         var(--navigation-lane-current-width)
         minmax(var(--lesson-lane-min-width), 1fr)
-        minmax(var(--practice-lane-min-width), var(--practice-lane-default-width));
+        minmax(var(--practice-lane-current-min-width), var(--practice-lane-current-width));
     gap: 0;
     width: 100%;
     height: 100%;
@@ -56,8 +80,8 @@ body {
 }
 
 .lesson-layout--practice-hidden {
-    --practice-lane-min-width: 0px;
-    --practice-lane-default-width: 0px;
+    --practice-lane-current-min-width: 0px;
+    --practice-lane-current-width: 0px;
 }
 
 .lesson-layout__lane {
@@ -166,11 +190,11 @@ body {
     grid-area: practice;
     border-left: 0;
     z-index: 3;
-}
-
-.lesson-layout--practice-hidden .lesson-layout__lane--practice {
-    visibility: hidden;
-    pointer-events: none;
+    min-width: var(--practice-lane-current-min-width);
+    max-width: var(--practice-lane-current-width);
+    transition:
+        min-width var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        max-width var(--navigation-collapse-duration) var(--navigation-collapse-easing);
 }
 
 .lesson-lane {
@@ -268,14 +292,29 @@ body {
 
 .lesson-lane--practice {
     width: 100%;
-    min-width: var(--practice-lane-min-width);
-    max-width: var(--practice-lane-default-width);
+    min-width: var(--practice-lane-current-min-width);
+    max-width: var(--practice-lane-current-width);
     padding-left: 8px;
     padding-right: 5px;
+    transition:
+        opacity 140ms ease,
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        filter var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        visibility 0s linear 0s,
+        min-width var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        max-width var(--navigation-collapse-duration) var(--navigation-collapse-easing);
+}
+
+.lesson-layout--practice-hidden .lesson-layout__lane--practice {
+    pointer-events: none;
 }
 
 .lesson-layout--practice-hidden .lesson-lane--practice {
     opacity: 0;
+    visibility: hidden;
+    transform: translateX(10px);
+    filter: saturate(0.94);
+    transition-delay: 0s, 0s, 0s, var(--navigation-collapse-duration), 0s, 0s;
 }
 
 .lesson-lane--practice .lesson-lane__scroll-content {
