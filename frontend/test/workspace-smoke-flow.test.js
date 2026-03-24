@@ -154,6 +154,11 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             null,
             "Верхняя часть viewer не должна показывать отдельную карточку-обвязку"
         );
+        assert.equal(
+            appRoot.querySelector('.practice-pane--surface .workspace-card--composer > .workspace-card__header'),
+            null,
+            "Нижняя правая панель не должна показывать заголовок 'Контекст и результат'"
+        );
         assert.match(
             appRoot.querySelector("[data-workspace-terminal-header]")?.textContent ?? "",
             /Git Terminal - Подтверди ветку и незавершённый hotfix/,
@@ -175,6 +180,11 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
         assert.ok(
             Boolean(commitTree?.compareDocumentPosition(commandHistory) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING),
             "Commit tree должен располагаться выше terminal history"
+        );
+        assert.equal(
+            appRoot.querySelector("[data-practice-surface-spoiler]")?.hasAttribute("open"),
+            false,
+            "Нижняя правая панель должна быть скрыта под спойлером по умолчанию"
         );
         const terminalEditor = appRoot.querySelector(".workspace-terminal__editor");
         assert.equal(
@@ -232,6 +242,11 @@ test("проходит backend-api smoke path catalog -> exercise -> submit -> p
             appRoot.querySelector(".workspace-terminal__history")?.scrollTop,
             240,
             "После отправки terminal history должна прокручиваться к последней команде и ответу"
+        );
+        assert.match(
+            appRoot.querySelector('[data-workspace-terminal-output="correct"]')?.textContent ?? "",
+            /Правильное состояние ветки достигнуто\./,
+            "После correct-результата терминал должен показать системное сообщение о достижении нужного состояния"
         );
 
         const retryFeedback = appRoot.querySelector('[data-retry-feedback-panel][data-retry-feedback-status="resolved"]');
@@ -373,6 +388,11 @@ test("отправляет ответ по Enter в поле команды", as
         assert.ok(
             appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
             "После Enter-submit history должна пометить команду как correct"
+        );
+        assert.match(
+            appRoot.querySelector('[data-workspace-terminal-output="correct"]')?.textContent ?? "",
+            /Правильное состояние ветки достигнуто\./,
+            "После Enter-submit консоль тоже должна показать системное сообщение о достижении нужного состояния"
         );
         assert.equal(
             appRoot.querySelector('[data-submission-draft-form] textarea[name="answer"]')?.value,
@@ -589,10 +609,10 @@ test("правая колонка переключается на live workspace
             appRoot.querySelector('[data-workspace-command-history] [data-workspace-command-status="correct"]'),
             "После stash history должна показать успешную команду"
         );
-        assert.equal(
-            appRoot.querySelectorAll("[data-workspace-terminal-output]").length,
-            0,
-            "Даже в live-session terminal history должна содержать только команды и их ответы"
+        assert.match(
+            appRoot.querySelector('[data-workspace-terminal-output="correct"]')?.textContent ?? "",
+            /Правильное состояние ветки достигнуто\./,
+            "После успешного live-session ответа консоль должна показать системное сообщение о достигнутом состоянии"
         );
         assert.match(appRoot.textContent, /git stash push -u/);
         assert.match(appRoot.textContent, /Изменения и untracked-файлы безопасно убраны в stash/);
@@ -826,6 +846,103 @@ test("во время drag скрываются дочерние панели и
             appRoot.querySelector('[data-scenario-toggle="remote-sync-preview"]')
                 ?.hasAttribute("data-navigation-marker-preview-target"),
             false
+        );
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
+test("при переключении сценария viewer не показывает промежуточный detail graph до attach session", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    let resolvePendingSession = null;
+    const fetchImpl = async (url, options = {}) => {
+        const requestUrl = new URL(url);
+        const method = String(options.method ?? "GET").toUpperCase();
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse(createCatalogPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/branch-safety") {
+            return jsonResponse(createBranchSafetyDetailPayload());
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/scenarios/remote-sync-preview") {
+            return jsonResponse(createRemoteSyncDetailPayload());
+        }
+
+        if (method === "POST" && requestUrl.pathname === "/api/sessions") {
+            const payload = JSON.parse(String(options.body ?? "{}"));
+
+            if (payload.scenarioSlug === "remote-sync-preview") {
+                return new Promise((resolve) => {
+                    resolvePendingSession = () => resolve(jsonResponse(createStartSessionPayload(payload.scenarioSlug)));
+                });
+            }
+
+            return jsonResponse(createStartSessionPayload(payload.scenarioSlug));
+        }
+
+        if (method === "GET" && requestUrl.pathname === "/api/progress") {
+            return jsonResponse(createInitialProgressPayload());
+        }
+
+        throw new Error(`Unexpected request: ${method} ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["basics", "branching", "navigation", "planning", "remote"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/branch-safety");
+        await flushAsyncWork();
+        await navigateToHash(dom.window, "#/exercise/remote-sync-preview");
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector('[data-workspace-playback-status="booting"]')?.getAttribute("data-workspace-playback-status"),
+            "booting"
+        );
+        assert.equal(
+            appRoot.querySelector('[data-repository-commit-tree]'),
+            null,
+            "До ответа startSession viewer не должен показывать промежуточный commit tree из detail payload"
+        );
+        assert.match(
+            appRoot.textContent ?? "",
+            /Граф коммитов недоступен/,
+            "Во время attach должен показываться нейтральный empty state вместо ложного дерева"
+        );
+
+        resolvePendingSession?.();
+        await flushAsyncWork();
+
+        assert.ok(
+            appRoot.querySelector('[data-repository-commit-tree]'),
+            "После attach session commit tree должен появиться"
         );
     } finally {
         restoreGlobals();

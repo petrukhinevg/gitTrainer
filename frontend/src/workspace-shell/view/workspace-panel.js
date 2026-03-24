@@ -77,8 +77,11 @@ export function renderWorkspacePanelSections(state) {
         submissionState
     ));
     const workspacePlayback = normalizeWorkspacePlayback(
-        state.session?.workspacePlayback,
-        repositoryContext
+        state.session?.workspacePlayback
+    );
+    const viewerRepositoryContext = resolveViewerRepositoryContext(
+        repositoryContext,
+        workspacePlayback
     );
     const commandHistory = normalizeCommandHistory(state.session?.commandHistory);
     const lifecycle = submissionState.response?.lifecycle ?? bootstrapState.response?.lifecycle ?? null;
@@ -90,7 +93,7 @@ export function renderWorkspacePanelSections(state) {
         viewer: `
             <div class="practice-shell__viewer-body practice-shell__viewer-body--plain">
                 <div class="practice-repository-viewer" data-repository-context>
-                    ${renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback)}
+                    ${renderRepositoryWorkspaceCanvas(viewerRepositoryContext, workspacePlayback)}
                     ${renderWorkspaceTerminal({
             scenarioTitle: detail.title,
             submissionDraft: state.submissionDraft,
@@ -107,27 +110,28 @@ export function renderWorkspacePanelSections(state) {
         `,
         surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer" data-practice-surface-scroll>
-                <div class="workspace-card__header">
-                    <span class="control-label">Контекст и результат</span>
-                    <span class="workspace-card__badge">${escapeHtml(formatTransportBadge(resolveTransportBadge(bootstrapState, submissionState)))}</span>
-                </div>
-                <div class="practice-composer__scroll practice-composer__scroll--surface">
-                    ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
-                    ${renderBootstrapNotice(bootstrapState)}
-                    ${renderPracticeRepositorySupplement(
-                        repositoryContext,
-                        workspacePlayback,
-                        bootstrapState,
-                        submissionState,
-                        lifecycle
-                    )}
-                    ${renderSubmissionTransportOutput(
-                        state.submissionDraft.preparedSubmission,
-                        submissionState,
-                        bootstrapState.response?.submission?.supportedAnswerTypes ?? []
-                    )}
-                    ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
-                </div>
+                <details class="practice-composer__spoiler" data-practice-surface-spoiler>
+                    <summary class="practice-composer__spoiler-summary">Показать контекст, результат и подсказки</summary>
+                    <div class="practice-composer__spoiler-body">
+                        <div class="practice-composer__scroll practice-composer__scroll--surface">
+                            ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
+                            ${renderBootstrapNotice(bootstrapState)}
+                            ${renderPracticeRepositorySupplement(
+                                repositoryContext,
+                                workspacePlayback,
+                                bootstrapState,
+                                submissionState,
+                                lifecycle
+                            )}
+                            ${renderSubmissionTransportOutput(
+                                state.submissionDraft.preparedSubmission,
+                                submissionState,
+                                bootstrapState.response?.submission?.supportedAnswerTypes ?? []
+                            )}
+                            ${renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionState)}
+                        </div>
+                    </div>
+                </details>
             </section>
         `
     };
@@ -800,14 +804,23 @@ function renderWorkspaceTerminal({
 function buildWorkspaceTerminalTranscript({
     commandHistory
 }) {
-    return commandHistory.map((entry) => ({
-            id: entry.id,
-            kind: "command",
-            command: entry.command,
-            status: entry.status,
-            summary: entry.summary,
-            terminalOutput: entry.terminalOutput
-        }));
+    return commandHistory.map((entry) => (
+        entry.kind === "system"
+            ? {
+                id: entry.id,
+                kind: "system",
+                text: entry.text,
+                tone: entry.tone
+            }
+            : {
+                id: entry.id,
+                kind: "command",
+                command: entry.command,
+                status: entry.status,
+                summary: entry.summary,
+                terminalOutput: entry.terminalOutput
+            }
+    ));
 }
 
 function renderWorkspaceTerminalStreams(terminalOutput) {
@@ -1087,9 +1100,11 @@ function renderRepositoryEmptyState(title, copy) {
     `;
 }
 
-function normalizeWorkspacePlayback(playback, fallbackContext) {
+function normalizeWorkspacePlayback(playback) {
     const safePlayback = playback ?? {};
-    const normalizedCurrent = normalizeRepositoryContext(safePlayback.currentContext ?? fallbackContext);
+    const normalizedCurrent = safePlayback.currentContext == null
+        ? null
+        : normalizeRepositoryContext(safePlayback.currentContext);
     const previousContext = safePlayback.previousContext == null
         ? null
         : normalizeRepositoryContext(safePlayback.previousContext);
@@ -1110,27 +1125,55 @@ function normalizeWorkspacePlayback(playback, fallbackContext) {
     };
 }
 
+function resolveViewerRepositoryContext(repositoryContext, workspacePlayback) {
+    if (workspacePlayback.status === "booting" && workspacePlayback.currentContext == null) {
+        return normalizeRepositoryContext(null);
+    }
+
+    return repositoryContext;
+}
+
 function normalizeCommandHistory(commandHistory) {
     return Array.isArray(commandHistory)
         ? commandHistory
             .filter((entry) => entry && typeof entry === "object")
-            .map((entry, index) => ({
-                id: typeof entry.id === "string" && entry.id.trim() !== ""
-                    ? entry.id
-                    : `command-${index + 1}`,
-                command: typeof entry.command === "string" && entry.command.trim() !== ""
-                    ? entry.command.trim()
-                    : "unknown command",
-                status: typeof entry.status === "string" && entry.status.trim() !== ""
-                    ? entry.status
-                    : "idle",
-                summary: typeof entry.summary === "string" && entry.summary.trim() !== ""
-                    ? entry.summary
-                    : "",
-                terminalOutput: normalizeCommandTerminalOutput(entry.terminalOutput),
-                createdAt: entry.createdAt ?? null,
-                completedAt: entry.completedAt ?? null
-            }))
+            .map((entry, index) => {
+                if (entry.kind === "system") {
+                    return {
+                        id: typeof entry.id === "string" && entry.id.trim() !== ""
+                            ? entry.id
+                            : `system-${index + 1}`,
+                        kind: "system",
+                        text: typeof entry.text === "string" && entry.text.trim() !== ""
+                            ? entry.text.trim()
+                            : "Системное сообщение недоступно.",
+                        tone: typeof entry.tone === "string" && entry.tone.trim() !== ""
+                            ? entry.tone
+                            : "system",
+                        createdAt: entry.createdAt ?? null,
+                        completedAt: entry.completedAt ?? null
+                    };
+                }
+
+                return {
+                    id: typeof entry.id === "string" && entry.id.trim() !== ""
+                        ? entry.id
+                        : `command-${index + 1}`,
+                    kind: "command",
+                    command: typeof entry.command === "string" && entry.command.trim() !== ""
+                        ? entry.command.trim()
+                        : "unknown command",
+                    status: typeof entry.status === "string" && entry.status.trim() !== ""
+                        ? entry.status
+                        : "idle",
+                    summary: typeof entry.summary === "string" && entry.summary.trim() !== ""
+                        ? entry.summary
+                        : "",
+                    terminalOutput: normalizeCommandTerminalOutput(entry.terminalOutput),
+                    createdAt: entry.createdAt ?? null,
+                    completedAt: entry.completedAt ?? null
+                };
+            })
         : [];
 }
 

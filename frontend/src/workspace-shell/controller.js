@@ -823,7 +823,7 @@ export function createCatalogWorkspaceController({
         state.session.workspacePlayback = {
             ...createInitialWorkspacePlaybackState(),
             status: "booting",
-            currentContext: state.detail.data?.workspace?.repositoryContext ?? null,
+            currentContext: null,
             updatedAt: new Date().toISOString()
         };
         resetSubmissionRequestState();
@@ -973,6 +973,16 @@ export function createCatalogWorkspaceController({
                     completedAt: response?.submittedAt ?? new Date().toISOString()
                 }
             );
+            if (response?.outcome?.correctness === "correct") {
+                state.session.commandHistory = [
+                    ...state.session.commandHistory,
+                    createSystemCommandHistoryEntry(
+                        `system-${requestId}`,
+                        resolveCorrectStateConsoleMessage(response?.workspace?.repositoryContext),
+                        response?.submittedAt ?? new Date().toISOString()
+                    )
+                ];
+            }
             state.session.feedbackPanel = createFeedbackPanelState({
                 previousFeedbackPanel: state.session.feedbackPanel,
                 detail: state.detail.data,
@@ -2009,6 +2019,7 @@ function createInitialWorkspacePlaybackState() {
 
 function createCommandHistoryEntry(entryId, preparedSubmission) {
     return {
+        kind: "command",
         id: entryId,
         command: preparedSubmission.answer,
         status: "running",
@@ -2016,6 +2027,17 @@ function createCommandHistoryEntry(entryId, preparedSubmission) {
         terminalOutput: null,
         createdAt: preparedSubmission.preparedAt,
         completedAt: null
+    };
+}
+
+function createSystemCommandHistoryEntry(entryId, text, completedAt) {
+    return {
+        kind: "system",
+        id: entryId,
+        text,
+        tone: "correct",
+        createdAt: completedAt,
+        completedAt
     };
 }
 
@@ -2047,6 +2069,13 @@ function resolveCommandHistorySummary(command, correctness) {
     return correctness === "correct"
         ? `Команда ${command} принята. Viewer уже показывает новое состояние веток и дерева.`
         : "";
+}
+
+function resolveCorrectStateConsoleMessage(repositoryContext) {
+    const branches = Array.isArray(repositoryContext?.branches) ? repositoryContext.branches : [];
+    return branches.length > 0
+        ? "Правильное состояние ветки достигнуто."
+        : "Целевое состояние репозитория достигнуто.";
 }
 
 function createFeedbackPanelState({

@@ -327,6 +327,50 @@
     overflow: visible;
 }
 
+.practice-composer__spoiler {
+    display: grid;
+    gap: 10px;
+    min-height: 0;
+}
+
+.practice-composer__spoiler-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--workspace-panel-accent) 22%, rgba(31, 23, 32, 0.14));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--workspace-panel-accent) 6%, rgba(255, 252, 246, 0.82));
+    color: var(--ink-strong);
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.practice-composer__spoiler-summary::-webkit-details-marker {
+    display: none;
+}
+
+.practice-composer__spoiler-summary::after {
+    content: "+";
+    flex: none;
+    color: var(--ink-soft);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.practice-composer__spoiler[open] .practice-composer__spoiler-summary::after {
+    content: "-";
+}
+
+.practice-composer__spoiler-body {
+    min-height: 0;
+}
+
 .repository-workspace::-webkit-scrollbar,
 .practice-pane--surface .workspace-card--composer::-webkit-scrollbar,
 .practice-composer__scroll::-webkit-scrollbar {
