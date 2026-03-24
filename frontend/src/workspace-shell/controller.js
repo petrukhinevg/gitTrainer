@@ -27,6 +27,7 @@ import {
 import { redrawNavigationActiveMarker } from "./navigation-active-marker.js";
 import { resolveNavigationActiveMarkerTarget } from "./navigation-active-marker.js";
 import { syncNavigationMarkerTarget } from "./navigation-active-marker.js";
+import { PANEL_LAYOUT_MODE, resolvePanelLayoutMode } from "./panel-layout-config.js";
 import { redrawNavigationTagConnections } from "./tag-connection-overlay.js";
 import {
     renderCatalogWorkspace,
@@ -71,6 +72,7 @@ export function createCatalogWorkspaceController({
     progressProviderFactories,
     tagOptions
 }) {
+    const initialPanelLayoutMode = resolvePanelLayoutMode();
     const state = {
         route: "catalog",
         selectedScenarioSlug: null,
@@ -79,8 +81,11 @@ export function createCatalogWorkspaceController({
         expandingScenarioSlugs: [],
         collapsedNavigationScenarioSnapshot: null,
         isNavigationCollapsed: false,
+        isCompactNavigationVisible: false,
+        isNavigationEffectivelyCollapsed: initialPanelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED,
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
+        panelLayoutMode: initialPanelLayoutMode,
         pinnedNavigationTag: null,
         heldNavigationTag: null,
         heldNavigationTagExpandedSnapshot: null,
@@ -183,6 +188,7 @@ export function createCatalogWorkspaceController({
     async function bootstrap() {
         window.addEventListener("hashchange", handleRouteChange);
         window.addEventListener("resize", handleViewportResize);
+        syncResponsivePanelLayoutState();
 
         if (!window.location.hash) {
             window.location.hash = "#/catalog";
@@ -197,11 +203,22 @@ export function createCatalogWorkspaceController({
     }
 
     function handleViewportResize() {
+        const responsiveLayoutState = syncResponsivePanelLayoutState();
+
+        if (responsiveLayoutState.hasLayoutChanged) {
+            syncLayoutChrome();
+        }
+
+        if (responsiveLayoutState.shouldScheduleNavigationReveal) {
+            scheduleNavigationReveal();
+        }
+
         redrawNavigationActiveMarker(appRoot);
         redrawNavigationTagConnections(appRoot);
     }
 
     function render() {
+        syncResponsivePanelLayoutState();
         const activeDraftFieldSnapshot = captureDraftFieldSnapshot(document.activeElement);
         if (activeDraftFieldSnapshot) {
             pendingDraftFieldSnapshot = activeDraftFieldSnapshot;
@@ -293,22 +310,40 @@ export function createCatalogWorkspaceController({
         }
 
         const isPracticeHidden = state.route !== "exercise";
-        layout.classList.toggle("lesson-layout--navigation-collapsed", state.isNavigationCollapsed);
+        const isNavigationCollapsed = state.isNavigationEffectivelyCollapsed;
+        const isCompactTwoPanelLayout = state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED;
+        const isNavigationToggleVisible = state.panelLayoutMode !== PANEL_LAYOUT_MODE.STACKED;
+        const isCompactNavigationVisible = isCompactTwoPanelLayout && state.isCompactNavigationVisible;
+
+        layout.classList.toggle("lesson-layout--navigation-collapsed", isNavigationCollapsed);
         layout.classList.toggle("lesson-layout--navigation-collapsing", state.isNavigationCollapsing);
         layout.classList.toggle(
             "lesson-layout--navigation-transitioning",
-            !state.isNavigationCollapsed && !state.isNavigationExpandedReady
+            !isNavigationCollapsed && !state.isNavigationExpandedReady
         );
+        layout.classList.toggle("lesson-layout--compact-two-panel", isCompactTwoPanelLayout);
+        layout.classList.toggle("lesson-layout--compact-navigation-visible", isCompactNavigationVisible);
         layout.classList.toggle("lesson-layout--practice-hidden", isPracticeHidden);
 
         const navigationLane = layout.querySelector(".lesson-layout__lane--navigation");
         if (navigationLane instanceof HTMLElement) {
-            if (state.isNavigationCollapsed) {
+            if (isNavigationCollapsed) {
                 navigationLane.setAttribute("aria-hidden", "true");
                 navigationLane.setAttribute("inert", "");
             } else {
                 navigationLane.removeAttribute("aria-hidden");
                 navigationLane.removeAttribute("inert");
+            }
+        }
+
+        const lessonLane = layout.querySelector(".lesson-layout__lane--lesson");
+        if (lessonLane instanceof HTMLElement) {
+            if (isCompactNavigationVisible) {
+                lessonLane.setAttribute("aria-hidden", "true");
+                lessonLane.setAttribute("inert", "");
+            } else {
+                lessonLane.removeAttribute("aria-hidden");
+                lessonLane.removeAttribute("inert");
             }
         }
 
@@ -325,13 +360,15 @@ export function createCatalogWorkspaceController({
 
         const navigationToggle = layout.querySelector("[data-navigation-visibility-toggle]");
         if (navigationToggle instanceof HTMLElement && navigationToggle.tagName === "BUTTON") {
-            const actionLabel = state.isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель";
+            const actionLabel = resolveNavigationToggleActionLabel();
             navigationToggle.setAttribute("aria-label", actionLabel);
             navigationToggle.setAttribute("title", actionLabel);
-            navigationToggle.setAttribute("aria-expanded", state.isNavigationCollapsed ? "false" : "true");
-            navigationToggle.dataset.navigationVisibilityState = state.isNavigationCollapsed ? "collapsed" : "expanded";
+            navigationToggle.setAttribute("aria-expanded", isNavigationCollapsed ? "false" : "true");
+            navigationToggle.dataset.navigationVisibilityState = isNavigationCollapsed ? "collapsed" : "expanded";
+            navigationToggle.hidden = !isNavigationToggleVisible;
+            navigationToggle.toggleAttribute("aria-hidden", !isNavigationToggleVisible);
             navigationToggle.querySelector("[data-navigation-visibility-label]")?.replaceChildren(
-                state.isNavigationCollapsed ? ">" : "<"
+                resolveNavigationToggleLabel()
             );
         }
     }
@@ -358,7 +395,7 @@ export function createCatalogWorkspaceController({
     function finishNavigationReveal() {
         cancelPendingNavigationReveal();
 
-        if (state.isNavigationCollapsed) {
+        if (state.isNavigationEffectivelyCollapsed) {
             return;
         }
 
@@ -373,7 +410,7 @@ export function createCatalogWorkspaceController({
         cancelPendingNavigationCollapse();
 
         const layout = appRoot.querySelector(".lesson-layout");
-        if (!(layout instanceof HTMLElement) || state.isNavigationCollapsed) {
+        if (!(layout instanceof HTMLElement) || state.isNavigationEffectivelyCollapsed) {
             return;
         }
 
@@ -1357,14 +1394,50 @@ export function createCatalogWorkspaceController({
     }
 
     function toggleNavigationVisibility() {
+        if (state.panelLayoutMode === PANEL_LAYOUT_MODE.STACKED) {
+            return;
+        }
+
         const layout = appRoot.querySelector(".lesson-layout");
         const navigationLane = layout?.querySelector(".lesson-layout__lane--navigation");
+        const lessonLane = layout?.querySelector(".lesson-layout__lane--lesson");
         const navigationToggle = layout?.querySelector("[data-navigation-visibility-toggle]");
         const focusedInsideNavigation = navigationLane instanceof HTMLElement && navigationLane.contains(document.activeElement);
+        const focusedInsideLesson = lessonLane instanceof HTMLElement && lessonLane.contains(document.activeElement);
+
+        if (state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+            state.isCompactNavigationVisible = !state.isCompactNavigationVisible;
+            state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
+            state.isNavigationCollapsing = false;
+            state.isNavigationExpandedReady = true;
+            syncLayoutChrome();
+            redrawNavigationActiveMarker(appRoot);
+            redrawNavigationTagConnections(appRoot);
+
+            if (
+                state.isNavigationEffectivelyCollapsed
+                && focusedInsideNavigation
+                && navigationToggle instanceof HTMLElement
+                && navigationToggle.tagName === "BUTTON"
+            ) {
+                navigationToggle.focus({ preventScroll: true });
+            }
+
+            if (
+                !state.isNavigationEffectivelyCollapsed
+                && focusedInsideLesson
+                && navigationToggle instanceof HTMLElement
+                && navigationToggle.tagName === "BUTTON"
+            ) {
+                navigationToggle.focus({ preventScroll: true });
+            }
+            return;
+        }
 
         if (state.isNavigationCollapsed) {
             cancelPendingNavigationCollapse();
             state.isNavigationCollapsed = false;
+            state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = false;
             syncLayoutChrome();
@@ -1374,6 +1447,7 @@ export function createCatalogWorkspaceController({
         } else {
             cancelPendingNavigationReveal();
             state.isNavigationCollapsed = true;
+            state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
             state.isNavigationCollapsing = true;
             state.isNavigationExpandedReady = true;
             syncLayoutChrome();
@@ -1389,6 +1463,73 @@ export function createCatalogWorkspaceController({
         ) {
             navigationToggle.focus({ preventScroll: true });
         }
+    }
+
+    function syncResponsivePanelLayoutState() {
+        const previousPanelLayoutMode = state.panelLayoutMode;
+        const previousEffectiveNavigationState = state.isNavigationEffectivelyCollapsed;
+        const nextPanelLayoutMode = resolvePanelLayoutMode();
+
+        if (
+            previousPanelLayoutMode !== PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED
+            && nextPanelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED
+        ) {
+            state.isCompactNavigationVisible = false;
+        }
+
+        state.panelLayoutMode = nextPanelLayoutMode;
+        state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState(nextPanelLayoutMode);
+        const shouldScheduleNavigationReveal = nextPanelLayoutMode === PANEL_LAYOUT_MODE.WIDE
+            && previousPanelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED
+            && !state.isNavigationEffectivelyCollapsed;
+
+        if (nextPanelLayoutMode !== PANEL_LAYOUT_MODE.WIDE) {
+            cancelPendingNavigationReveal();
+            cancelPendingNavigationCollapse();
+            state.isNavigationCollapsing = false;
+            state.isNavigationExpandedReady = true;
+        } else if (shouldScheduleNavigationReveal) {
+            state.isNavigationCollapsing = false;
+            state.isNavigationExpandedReady = false;
+        }
+
+        return {
+            hasLayoutChanged: previousPanelLayoutMode !== nextPanelLayoutMode
+                || previousEffectiveNavigationState !== state.isNavigationEffectivelyCollapsed,
+            shouldScheduleNavigationReveal
+        };
+    }
+
+    function resolveEffectiveNavigationState(panelLayoutMode = state.panelLayoutMode) {
+        if (panelLayoutMode === PANEL_LAYOUT_MODE.STACKED) {
+            return false;
+        }
+
+        if (panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+            return !state.isCompactNavigationVisible;
+        }
+
+        return state.isNavigationCollapsed;
+    }
+
+    function resolveNavigationToggleActionLabel() {
+        if (state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+            return state.isNavigationEffectivelyCollapsed
+                ? "Показать левую панель"
+                : "Показать среднюю панель";
+        }
+
+        return state.isNavigationEffectivelyCollapsed
+            ? "Показать левую панель"
+            : "Скрыть левую панель";
+    }
+
+    function resolveNavigationToggleLabel() {
+        if (state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+            return state.isNavigationEffectivelyCollapsed ? ">" : "<";
+        }
+
+        return state.isNavigationEffectivelyCollapsed ? ">" : "<";
     }
 
     function beginNavigationTagHold(tag) {

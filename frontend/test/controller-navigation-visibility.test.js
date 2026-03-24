@@ -15,6 +15,12 @@ test("левая панель сохраняет фиксированную об
     const restoreGlobals = installDomGlobals(dom.window);
     const appRoot = dom.window.document.querySelector("#app");
 
+    Object.defineProperty(dom.window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: 1400
+    });
+
     const fetchImpl = async (url) => {
         const requestUrl = new URL(url);
 

@@ -4,6 +4,10 @@ function resolveThreeColumnBreakpoint({ leftWidthPx, middleMinWidthPx, rightWidt
     return leftWidthPx + middleMinWidthPx + rightWidthPx;
 }
 
+function resolveTwoColumnBreakpoint({ middleMinWidthPx, rightWidthPx }) {
+    return middleMinWidthPx + rightWidthPx;
+}
+
 export class PanelLayoutConfig {
     // Левая панель: навигация, toggle и связанные размеры.
     static LEFT_PANEL = Object.freeze({
@@ -55,13 +59,23 @@ export class PanelLayoutConfig {
 }
 
 const PANEL_LAYOUT_BREAKPOINTS = Object.freeze({
-    stackedLayoutPx: resolveThreeColumnBreakpoint({
+    collapseNavigationPx: resolveThreeColumnBreakpoint({
         leftWidthPx: PanelLayoutConfig.LEFT_PANEL.laneWidthPx,
+        middleMinWidthPx: PanelLayoutConfig.MIDDLE_PANEL.minWidthPx,
+        rightWidthPx: PanelLayoutConfig.RIGHT_PANEL.narrowedWidthPx
+    }),
+    stackedLayoutPx: resolveTwoColumnBreakpoint({
         middleMinWidthPx: PanelLayoutConfig.MIDDLE_PANEL.minWidthPx,
         rightWidthPx: PanelLayoutConfig.RIGHT_PANEL.narrowedWidthPx
     }),
     compactPanelsPx: 960,
     mobilePanelsPx: 720
+});
+
+export const PANEL_LAYOUT_MODE = Object.freeze({
+    WIDE: "wide",
+    NAVIGATION_COLLAPSED: "navigation-collapsed",
+    STACKED: "stacked"
 });
 
 export const PANEL_LAYOUT_CONFIG = Object.freeze({
@@ -76,6 +90,22 @@ export const NAVIGATION_TOGGLE_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.navi
 export const NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.navigationLayoutToggleMs;
 export const FLOW_SUBTASK_ENTER_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterMs;
 export const FLOW_SUBTASK_ENTER_STAGGER_MS = PANEL_LAYOUT_CONFIG.animation.flowSubtaskEnterStaggerMs;
+
+export function resolvePanelLayoutMode(viewportWidth = globalThis.window?.innerWidth ?? 0) {
+    if (!Number.isFinite(viewportWidth)) {
+        return PANEL_LAYOUT_MODE.WIDE;
+    }
+
+    if (viewportWidth <= PANEL_LAYOUT_CONFIG.breakpoints.stackedLayoutPx) {
+        return PANEL_LAYOUT_MODE.STACKED;
+    }
+
+    if (viewportWidth <= PANEL_LAYOUT_CONFIG.breakpoints.collapseNavigationPx) {
+        return PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED;
+    }
+
+    return PANEL_LAYOUT_MODE.WIDE;
+}
 
 export function buildPanelLayoutInlineStyle() {
     return [

@@ -960,7 +960,7 @@ test("при переключении сценария viewer не показы�
     }
 });
 
-test("изменение ширины окна не скрывает левую панель автоматически", async () => {
+test("изменение ширины окна сначала скрывает левую панель, а затем возвращает ее в stacked layout", async () => {
     const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
         url: "http://localhost:5173/#/catalog"
     });
@@ -1026,14 +1026,100 @@ test("изменение ширины окна не скрывает левую 
             "На широком окне левая панель должна оставаться открытой"
         );
 
-        dom.window.innerWidth = 1500;
+        dom.window.innerWidth = 900;
+        dom.window.dispatchEvent(new dom.window.Event("resize"));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
+            true,
+            "На промежуточной ширине левая панель должна скрываться автоматически"
+        );
+        assert.equal(
+            appRoot.querySelector(".lesson-layout__lane--navigation")?.getAttribute("aria-hidden"),
+            "true",
+            "На промежуточной ширине левая панель должна исключаться из доступности"
+        );
+        assert.equal(
+            appRoot.querySelector("[data-navigation-visibility-toggle]")?.hasAttribute("hidden"),
+            false,
+            "На промежуточной ширине верхний toggle должен оставаться видимым"
+        );
+        assert.match(
+            appRoot.querySelector("[data-navigation-visibility-toggle]")?.getAttribute("aria-label") ?? "",
+            /Показать левую панель/,
+            "В промежуточном режиме toggle должен уметь раскрыть левую панель"
+        );
+
+        appRoot.querySelector("[data-navigation-visibility-toggle]")?.dispatchEvent(
+            new dom.window.MouseEvent("click", { bubbles: true })
+        );
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--compact-navigation-visible"),
+            true,
+            "В промежуточном режиме toggle должен показывать левую панель вместо средней"
+        );
+        assert.equal(
+            appRoot.querySelector(".lesson-layout__lane--navigation")?.hasAttribute("aria-hidden"),
+            false,
+            "После раскрытия левая панель должна снова стать доступной"
+        );
+        assert.equal(
+            appRoot.querySelector(".lesson-layout__lane--lesson")?.getAttribute("aria-hidden"),
+            "true",
+            "При раскрытой левой панели средняя панель должна временно скрываться"
+        );
+        assert.match(
+            appRoot.querySelector("[data-navigation-visibility-toggle]")?.getAttribute("aria-label") ?? "",
+            /Показать среднюю панель/,
+            "Повторный toggle должен возвращать среднюю панель"
+        );
+
+        appRoot.querySelector("[data-navigation-visibility-toggle]")?.dispatchEvent(
+            new dom.window.MouseEvent("click", { bubbles: true })
+        );
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--compact-navigation-visible"),
+            false,
+            "Повторный toggle должен возвращать исходный двухпанельный режим"
+        );
+
+        dom.window.innerWidth = 1800;
+        dom.window.dispatchEvent(new dom.window.Event("resize"));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-transitioning"),
+            true,
+            "При переходе из двухпанельного режима в трёхпанельный layout должен сначала пройти фазу полного раскрытия"
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 560));
+        await flushAsyncWork();
+
+        assert.equal(
+            appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-transitioning"),
+            false,
+            "После завершения раскрытия переходный класс должен сниматься"
+        );
+
+        dom.window.innerWidth = 650;
         dom.window.dispatchEvent(new dom.window.Event("resize"));
         await flushAsyncWork();
 
         assert.equal(
             appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
             false,
-            "При сужении окна левая панель не должна скрываться автоматически"
+            "На совсем узкой ширине layout должен перейти в stacked mode и вернуть левую панель"
+        );
+        assert.equal(
+            appRoot.querySelector(".lesson-layout__lane--navigation")?.hasAttribute("aria-hidden"),
+            false,
+            "В stacked mode левая панель снова должна участвовать в потоке документа"
         );
 
         dom.window.innerWidth = 1800;
@@ -1043,7 +1129,12 @@ test("изменение ширины окна не скрывает левую 
         assert.equal(
             appRoot.querySelector(".lesson-layout")?.classList.contains("lesson-layout--navigation-collapsed"),
             false,
-            "После повторного расширения окна левая панель должна оставаться открытой"
+            "После повторного расширения окна левая панель должна снова быть открытой"
+        );
+        assert.equal(
+            appRoot.querySelector("[data-navigation-visibility-toggle]")?.hasAttribute("hidden"),
+            false,
+            "На широком окне ручной toggle должен возвращаться"
         );
     } finally {
         restoreGlobals();

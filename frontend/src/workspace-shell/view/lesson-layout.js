@@ -7,15 +7,21 @@ import {
 } from "./render-helpers.js";
 
 export function renderLessonLayout({ state, navigationLane, lessonLane, practiceLane }) {
-    const isNavigationCollapsed = Boolean(state.isNavigationCollapsed);
+    const isNavigationToggleVisible = state.panelLayoutMode !== "stacked";
+    const isNavigationCollapsed = Boolean(state.isNavigationEffectivelyCollapsed ?? state.isNavigationCollapsed);
     const isNavigationCollapsing = Boolean(state.isNavigationCollapsing);
     const isNavigationTransitioning = !isNavigationCollapsed && state.isNavigationExpandedReady === false;
     const isPracticeHidden = state.route !== "exercise";
+    const isCompactTwoPanelLayout = state.panelLayoutMode === "navigation-collapsed";
+    const isCompactNavigationVisible = isCompactTwoPanelLayout && Boolean(state.isCompactNavigationVisible);
+    const navigationToggleLabel = state.panelLayoutMode === "navigation-collapsed"
+        ? (isNavigationCollapsed ? "Показать левую панель" : "Показать среднюю панель")
+        : (isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель");
 
     return `
         ${renderPanelLayoutResponsiveStyle()}
         <section
-            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
+            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isCompactTwoPanelLayout ? "lesson-layout--compact-two-panel" : ""} ${isCompactNavigationVisible ? "lesson-layout--compact-navigation-visible" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
             aria-label="Рабочее пространство урока"
             style="${escapeHtml(buildPanelLayoutInlineStyle())}"
         >
@@ -26,8 +32,9 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
                 data-navigation-visibility-state="${isNavigationCollapsed ? "collapsed" : "expanded"}"
                 aria-controls="lesson-navigation-lane"
                 aria-expanded="${isNavigationCollapsed ? "false" : "true"}"
-                aria-label="${isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель"}"
-                title="${isNavigationCollapsed ? "Показать левую панель" : "Скрыть левую панель"}"
+                aria-label="${navigationToggleLabel}"
+                title="${navigationToggleLabel}"
+                ${isNavigationToggleVisible ? "" : "hidden aria-hidden=\"true\""}
             >
                 <span class="lesson-layout__navigation-toggle-icon" data-navigation-visibility-label>
                     ${isNavigationCollapsed ? ">" : "<"}

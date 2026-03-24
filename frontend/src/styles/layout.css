@@ -61,7 +61,14 @@ body {
     grid-template-columns:
         var(--navigation-lane-current-width)
         minmax(var(--lesson-lane-min-width), 1fr)
-        minmax(var(--practice-lane-current-min-width), var(--practice-lane-current-width));
+        minmax(
+            var(--practice-lane-current-min-width),
+            clamp(
+                var(--practice-lane-current-min-width),
+                calc((100% - var(--navigation-lane-current-width)) / 2),
+                var(--practice-lane-current-width)
+            )
+        );
     gap: 0;
     width: 100%;
     height: 100%;
@@ -322,6 +329,102 @@ body {
     padding-right: 5px;
 }
 
+.lesson-layout--compact-two-panel {
+    grid-template-areas: "lesson practice";
+    grid-template-columns:
+        minmax(var(--lesson-lane-min-width), 1fr)
+        minmax(
+            var(--practice-lane-current-min-width),
+            clamp(
+                var(--practice-lane-current-min-width),
+                50%,
+                var(--practice-lane-current-width)
+            )
+        );
+}
+
+.lesson-layout--compact-two-panel .lesson-layout__lane--navigation,
+.lesson-layout--compact-two-panel .lesson-layout__lane--lesson {
+    grid-area: lesson;
+    min-width: 0;
+    max-width: none;
+}
+
+.lesson-layout--compact-two-panel .lesson-layout__lane--navigation {
+    z-index: 2;
+}
+
+.lesson-layout--compact-two-panel .lesson-layout__lane--lesson {
+    z-index: 1;
+}
+
+.lesson-layout--compact-two-panel .lesson-lane--navigation,
+.lesson-layout--compact-two-panel .lesson-lane--lesson {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    transition:
+        opacity 140ms ease,
+        transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        filter var(--navigation-collapse-duration) var(--navigation-collapse-easing),
+        visibility 0s linear 0s,
+        box-shadow var(--navigation-collapse-duration) var(--navigation-collapse-easing);
+}
+
+.lesson-layout--compact-two-panel .lesson-lane--navigation {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    filter: none;
+}
+
+.lesson-layout--compact-two-panel .lesson-lane--lesson {
+    padding-left: var(--lesson-collapsed-left-inset);
+    padding-right: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    filter: none;
+}
+
+.lesson-layout--compact-two-panel .lesson-lane--lesson .lesson-lane__scroll-content {
+    padding-left: 0;
+}
+
+.lesson-layout--compact-two-panel:not(.lesson-layout--compact-navigation-visible) .lesson-lane--lesson {
+    transition-delay: 0s, 0s, 0s, 0s, 0s;
+}
+
+.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsed .lesson-lane--navigation {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-10px);
+    filter: saturate(0.94);
+    transition-delay: 0s, 0s, 0s, var(--navigation-collapse-duration), 0s;
+}
+
+.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-layout__lane--lesson {
+    pointer-events: none;
+}
+
+.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-lane--navigation {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+    filter: none;
+    transition-delay: 0s, 0s, 0s, 0s, 0s;
+}
+
+.lesson-layout--compact-two-panel.lesson-layout--compact-navigation-visible .lesson-lane--lesson {
+    opacity: 0;
+    visibility: hidden;
+    transform: none;
+    filter: saturate(0.94);
+    transition-delay: 0s, 0s, 0s, var(--navigation-collapse-duration), 0s;
+}
+
 .lesson-layout--navigation-collapsed:not(.lesson-layout--navigation-collapsing) .lesson-layout__tag-connection-overlay,
 .lesson-layout--navigation-transitioning .lesson-layout__tag-connection-overlay {
     opacity: 0;
@@ -364,6 +467,11 @@ body {
 .lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
 .lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
     padding-left: var(--lesson-collapsed-left-inset);
+}
+
+.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsing .lesson-lane--lesson .lesson-lane__scroll-content,
+.lesson-layout--compact-two-panel.lesson-layout--navigation-collapsed .lesson-lane--lesson .lesson-lane__scroll-content {
+    padding-left: 0;
 }
 
 .lesson-lane__header,
