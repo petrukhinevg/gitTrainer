@@ -551,7 +551,7 @@
     padding: 6px 8px;
     border: 1px solid rgba(31, 23, 32, 0.3);
     border-radius: 12px;
-    background: rgba(211, 207, 199, 0.68);
+    background: var(--shell-flow-block-surface);
     color: #111;
     text-decoration: none;
     transform-origin: left center;
@@ -696,13 +696,13 @@
 
 .flow-block--active:not([data-flow-block-active-tag]) {
     border-color: rgba(31, 23, 32, 0.3);
-    background: rgba(211, 207, 199, 0.68);
+    background: var(--shell-flow-block-surface);
     box-shadow: none;
 }
 
 .flow-block--active:not([data-flow-block-active-tag]):hover {
     border-color: rgba(31, 23, 32, 0.3);
-    background: rgba(211, 207, 199, 0.68);
+    background: var(--shell-flow-block-surface);
 }
 
 .flow-block[data-navigation-marker-preview-target="true"],

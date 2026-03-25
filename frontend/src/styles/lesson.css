@@ -209,6 +209,9 @@
 
 .progress-top-strip {
     --progress-top-strip-accent: var(--accent-cool);
+    --progress-top-strip-shell-fill: var(--shell-flow-block-surface);
+    --progress-top-strip-shell-surface: color-mix(in srgb, var(--progress-top-strip-shell-fill) 44%, var(--paper));
+    --progress-top-strip-shell-divider-color: color-mix(in srgb, var(--progress-top-strip-shell-fill) 72%, var(--border));
     --progress-top-strip-surface: color-mix(in srgb, var(--progress-top-strip-accent) 10%, var(--paper));
     --progress-top-strip-fill: color-mix(in srgb, var(--progress-top-strip-accent) 18%, var(--paper));
     --progress-top-strip-divider-color: color-mix(in srgb, var(--progress-top-strip-accent) 30%, var(--border));
@@ -237,6 +240,20 @@
 
 .progress-top-strip[data-top-strip-route="exercise"] {
     --progress-top-strip-accent: #395979;
+}
+
+.progress-top-strip[data-top-strip-route="catalog"],
+.progress-top-strip[data-top-strip-route="progress"],
+.progress-top-strip[data-top-strip-route="exercise"] {
+    --progress-top-strip-surface: var(--progress-top-strip-shell-surface);
+    --progress-top-strip-fill: var(--progress-top-strip-shell-fill);
+    --progress-top-strip-divider-color: var(--progress-top-strip-shell-divider-color);
+}
+
+.progress-top-strip[data-top-strip-accent-tag] {
+    --progress-top-strip-surface: color-mix(in srgb, var(--progress-top-strip-accent) 10%, var(--paper));
+    --progress-top-strip-fill: color-mix(in srgb, var(--progress-top-strip-accent) 18%, var(--paper));
+    --progress-top-strip-divider-color: color-mix(in srgb, var(--progress-top-strip-accent) 30%, var(--border));
 }
 
 .progress-top-strip[data-top-strip-accent-tag="status"] {
