@@ -12,7 +12,8 @@ export function createWorkspaceRouteOrchestrator({
     onExerciseRouteSelected,
     resetRouteScopedState,
     setPendingLessonScrollReset,
-    setPendingNavigationSelectionSyncOnly
+    setPendingNavigationSelectionSyncOnly,
+    setSuppressPracticeVisibilityTransition
 }) {
     async function handleRouteChange() {
         const previousRoute = state.route;
@@ -36,6 +37,9 @@ export function createWorkspaceRouteOrchestrator({
             previousRoute === "exercise"
             && route.name === "exercise"
             && nextScenarioAlreadyExpanded
+        );
+        setSuppressPracticeVisibilityTransition?.(
+            (previousRoute === "exercise") !== (route.name === "exercise")
         );
 
         state.route = route.name;

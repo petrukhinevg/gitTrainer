@@ -20,10 +20,10 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
     `;
 }
 
-export function renderCatalogWorkspaceShell() {
+export function renderCatalogWorkspaceShell(state = { route: "catalog" }) {
     return `
         ${renderLessonLayout({
-            state: { route: "catalog" },
+            state,
             topStrip: "",
             navigationLane: renderSurfaceLaneShell("navigation"),
             lessonLane: renderSurfaceLaneShell("lesson"),

@@ -116,6 +116,16 @@ body {
     grid-column: lesson-start / practice-end;
 }
 
+.lesson-layout--practice-visibility-transition-suppressed {
+    transition: none;
+}
+
+.lesson-layout--practice-visibility-transition-suppressed .lesson-layout__lane--practice,
+.lesson-layout--practice-visibility-transition-suppressed .lesson-lane--practice,
+.lesson-layout--practice-visibility-transition-suppressed .lesson-lane--lesson {
+    transition: none;
+}
+
 .lesson-layout--progress-full-width {
     grid-template-areas:
         "top"

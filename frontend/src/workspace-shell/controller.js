@@ -125,6 +125,8 @@ export function createCatalogWorkspaceController({
     let shellMounted = false;
     let pendingLessonScrollReset = false;
     let pendingNavigationSelectionSyncOnly = false;
+    let suppressPracticeVisibilityTransition = false;
+    let practiceVisibilityTransitionReleaseFrameId = 0;
     let pendingDraftFieldSnapshot = null;
     let isTogglingAllNavigationScenarios = false;
     let renderedRouteKind = null;
@@ -187,6 +189,9 @@ export function createCatalogWorkspaceController({
         },
         setPendingNavigationSelectionSyncOnly: (shouldSyncSelectionOnly) => {
             pendingNavigationSelectionSyncOnly = shouldSyncSelectionOnly;
+        },
+        setSuppressPracticeVisibilityTransition: (shouldSuppress) => {
+            suppressPracticeVisibilityTransition = shouldSuppress;
         }
     });
 
@@ -298,6 +303,10 @@ export function createCatalogWorkspaceController({
         if (pendingDraftFieldSnapshot && restoreDraftFieldSnapshot(appRoot, pendingDraftFieldSnapshot)) {
             pendingDraftFieldSnapshot = null;
         }
+
+        if (suppressPracticeVisibilityTransition) {
+            releasePracticeVisibilityTransitionSuppression();
+        }
     }
 
     function ensureWorkspaceShellMounted() {
@@ -305,7 +314,7 @@ export function createCatalogWorkspaceController({
             return;
         }
 
-        appRoot.innerHTML = renderCatalogWorkspaceShell();
+        appRoot.innerHTML = renderCatalogWorkspaceShell(state);
         shellMounted = true;
     }
 
@@ -334,6 +343,10 @@ export function createCatalogWorkspaceController({
         layout.classList.toggle("lesson-layout--compact-navigation-overlay", isCompactNavigationOverlay);
         layout.classList.toggle("lesson-layout--compact-navigation-visible", isCompactNavigationVisible);
         layout.classList.toggle("lesson-layout--practice-hidden", isPracticeHidden);
+        layout.classList.toggle(
+            "lesson-layout--practice-visibility-transition-suppressed",
+            suppressPracticeVisibilityTransition
+        );
 
         const navigationLane = layout.querySelector(".lesson-layout__lane--navigation");
         if (navigationLane instanceof HTMLElement) {
@@ -391,6 +404,18 @@ export function createCatalogWorkspaceController({
 
         cleanupPendingNavigationReveal?.();
         cleanupPendingNavigationReveal = null;
+    }
+
+    function releasePracticeVisibilityTransitionSuppression() {
+        if (practiceVisibilityTransitionReleaseFrameId) {
+            cancelAnimationFrame(practiceVisibilityTransitionReleaseFrameId);
+        }
+
+        practiceVisibilityTransitionReleaseFrameId = requestAnimationFrame(() => {
+            practiceVisibilityTransitionReleaseFrameId = 0;
+            suppressPracticeVisibilityTransition = false;
+            syncLayoutChrome();
+        });
     }
 
     function cancelPendingCompactNavigationReveal() {

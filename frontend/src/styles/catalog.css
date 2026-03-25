@@ -688,7 +688,7 @@
 }
 
 .flow-block--subtask {
-    background: rgba(255, 250, 241, 0.54);
+    background: color-mix(in srgb, var(--shell-flow-block-surface) 88%, rgba(255, 250, 241, 0.9));
 }
 
 .flow-block--subtask.flow-block--active {
@@ -722,6 +722,37 @@
     border-color: rgba(31, 23, 32, 0.3);
     background: var(--shell-flow-block-surface);
     box-shadow: none;
+}
+
+.flow-block--subtask.flow-block--active:not([data-flow-block-active-tag]) {
+    border-color: rgba(31, 23, 32, 0.38);
+    box-shadow: inset 0 0 0 1px rgba(31, 23, 32, 0.16);
+}
+
+.flow-block-list > .flow-block:nth-child(-n + 3) {
+    background-color: rgba(224, 220, 212, 0.9);
+    background-image: repeating-linear-gradient(
+        -60deg,
+        rgba(229, 226, 220, 0.92) 0 12px,
+        rgba(225, 222, 216, 0.92) 12px 24px
+    );
+}
+
+.flow-block-list > .flow-block:nth-child(-n + 3).flow-block--active:not([data-flow-block-active-tag]) {
+    background-color: rgba(224, 220, 212, 0.9);
+    background-image: repeating-linear-gradient(
+        -60deg,
+        rgba(229, 226, 220, 0.92) 0 12px,
+        rgba(225, 222, 216, 0.92) 12px 24px
+    );
+}
+
+.flow-block-list > .flow-block:nth-child(-n + 3):hover,
+.flow-block-list > .flow-block:nth-child(-n + 3):active,
+.flow-block-list > .flow-block:nth-child(-n + 3).flow-block--active:hover,
+.flow-block-list > .flow-block:nth-child(-n + 3).flow-block--active:active {
+    background-color: rgba(255, 250, 241, 0.96);
+    background-image: none;
 }
 
 .flow-block:hover,

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+    createWorkspaceRouteOrchestrator,
     parseWorkspaceRoute,
     resetRouteScopedWorkspaceState
 } from "../src/workspace-shell/route-orchestration.js";
@@ -97,6 +98,78 @@ test("resetRouteScopedWorkspaceState сбрасывает progress и exercise d
     assert.equal(state.detail.data, null);
     assert.equal(state.detail.error, null);
     assert.equal(invalidationCount, 1);
+});
+
+test("route orchestrator временно отключает анимацию при входе в exercise route", async () => {
+    const state = {
+        route: "catalog",
+        selectedScenarioSlug: null,
+        selectedFocus: null,
+        providerName: "backend-api",
+        expandedScenarioSlugs: []
+    };
+    const suppressFlags = [];
+    const windowObject = {
+        location: {
+            hash: "#/exercise/branch-safety"
+        }
+    };
+    const orchestrator = createWorkspaceRouteOrchestrator({
+        state,
+        render: () => {},
+        windowObject,
+        ensureCatalogLoaded: async () => {},
+        loadProgressSummary: async () => {},
+        loadScenarioDetail: async () => {},
+        ensureExerciseSession: async () => {},
+        onExerciseRouteSelected: () => {},
+        resetRouteScopedState: () => {},
+        setPendingLessonScrollReset: () => {},
+        setPendingNavigationSelectionSyncOnly: () => {},
+        setSuppressPracticeVisibilityTransition: (value) => {
+            suppressFlags.push(value);
+        }
+    });
+
+    await orchestrator.handleRouteChange();
+
+    assert.deepEqual(suppressFlags, [true]);
+});
+
+test("route orchestrator не включает suppression при переходе внутри exercise route", async () => {
+    const state = {
+        route: "exercise",
+        selectedScenarioSlug: "branch-safety",
+        selectedFocus: "overview",
+        providerName: "backend-api",
+        expandedScenarioSlugs: ["history-scan"]
+    };
+    const suppressFlags = [];
+    const windowObject = {
+        location: {
+            hash: "#/exercise/history-scan"
+        }
+    };
+    const orchestrator = createWorkspaceRouteOrchestrator({
+        state,
+        render: () => {},
+        windowObject,
+        ensureCatalogLoaded: async () => {},
+        loadProgressSummary: async () => {},
+        loadScenarioDetail: async () => {},
+        ensureExerciseSession: async () => {},
+        onExerciseRouteSelected: () => {},
+        resetRouteScopedState: () => {},
+        setPendingLessonScrollReset: () => {},
+        setPendingNavigationSelectionSyncOnly: () => {},
+        setSuppressPracticeVisibilityTransition: (value) => {
+            suppressFlags.push(value);
+        }
+    });
+
+    await orchestrator.handleRouteChange();
+
+    assert.deepEqual(suppressFlags, [false]);
 });
 
 function createState(overrides = {}) {
