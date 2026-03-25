@@ -91,6 +91,10 @@ body {
     --practice-lane-current-width: 0px;
 }
 
+.lesson-layout--practice-hidden .lesson-layout__lane--lesson {
+    grid-column: lesson-start / practice-end;
+}
+
 .lesson-layout__lane {
     min-width: 0;
     min-height: 0;
@@ -317,6 +321,7 @@ body {
 
 .lesson-layout--practice-hidden .lesson-layout__lane--practice {
     pointer-events: none;
+    background: transparent;
 }
 
 .lesson-layout--practice-hidden .lesson-lane--practice {

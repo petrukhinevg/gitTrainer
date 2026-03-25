@@ -274,6 +274,10 @@
     transition: opacity var(--panel-overlay-fade-duration) var(--panel-motion-easing);
 }
 
+.lesson-layout__tag-connection-overlay.tag-connection-map__canvas {
+    z-index: 4;
+}
+
 .tag-connection-map__canvas--visible {
     opacity: 1;
 }

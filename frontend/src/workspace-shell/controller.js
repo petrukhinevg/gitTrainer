@@ -115,6 +115,7 @@ export function createCatalogWorkspaceController({
     const sessionProviders = new Map();
     const activeNavigationAnimationSlugs = new Set();
     const scenarioSubtaskEnterCleanupTimeoutIds = new Map();
+    let compactNavigationRevealTimeoutId = 0;
     let navigationRevealTimeoutId = 0;
     let navigationCollapseTimeoutId = 0;
     let cleanupPendingNavigationReveal = null;
@@ -385,6 +386,15 @@ export function createCatalogWorkspaceController({
         cleanupPendingNavigationReveal = null;
     }
 
+    function cancelPendingCompactNavigationReveal() {
+        if (!compactNavigationRevealTimeoutId) {
+            return;
+        }
+
+        window.clearTimeout(compactNavigationRevealTimeoutId);
+        compactNavigationRevealTimeoutId = 0;
+    }
+
     function cancelPendingNavigationCollapse() {
         if (!navigationCollapseTimeoutId) {
             return;
@@ -435,6 +445,7 @@ export function createCatalogWorkspaceController({
     }
 
     function scheduleNavigationCollapseCleanup() {
+        cancelPendingCompactNavigationReveal();
         cancelPendingNavigationCollapse();
         navigationCollapseTimeoutId = window.setTimeout(() => {
             navigationCollapseTimeoutId = 0;
@@ -443,6 +454,20 @@ export function createCatalogWorkspaceController({
             redrawNavigationActiveMarker(appRoot);
             redrawNavigationTagConnections(appRoot);
         }, NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS + 40);
+    }
+
+    function scheduleCompactNavigationReveal() {
+        cancelPendingCompactNavigationReveal();
+        compactNavigationRevealTimeoutId = window.setTimeout(() => {
+            compactNavigationRevealTimeoutId = 0;
+            if (!state.isCompactNavigationVisible || state.panelLayoutMode !== PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+                return;
+            }
+
+            state.isNavigationExpandedReady = true;
+            syncLayoutChrome();
+            redrawNavigationTagConnections(appRoot);
+        }, Math.round(NAVIGATION_LAYOUT_TOGGLE_ANIMATION_MS * 0.75));
     }
 
     function renderWorkspaceSurfaces(selectedCatalogScenario) {
@@ -1412,14 +1437,17 @@ export function createCatalogWorkspaceController({
 
             if (shouldShowCompactNavigation) {
                 cancelPendingNavigationCollapse();
+                cancelPendingCompactNavigationReveal();
                 state.isCompactNavigationVisible = true;
                 state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
                 state.isNavigationCollapsing = false;
-                state.isNavigationExpandedReady = true;
+                state.isNavigationExpandedReady = false;
                 syncLayoutChrome();
                 redrawNavigationActiveMarker(appRoot);
                 redrawNavigationTagConnections(appRoot);
+                scheduleCompactNavigationReveal();
             } else {
+                cancelPendingCompactNavigationReveal();
                 state.isCompactNavigationVisible = false;
                 state.isNavigationEffectivelyCollapsed = resolveEffectiveNavigationState();
                 state.isNavigationCollapsing = true;
@@ -1501,9 +1529,13 @@ export function createCatalogWorkspaceController({
         if (nextPanelLayoutMode !== PANEL_LAYOUT_MODE.WIDE) {
             cancelPendingNavigationReveal();
             cancelPendingNavigationCollapse();
+            if (nextPanelLayoutMode !== PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
+                cancelPendingCompactNavigationReveal();
+            }
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = true;
         } else if (shouldScheduleNavigationReveal) {
+            cancelPendingCompactNavigationReveal();
             state.isNavigationCollapsing = false;
             state.isNavigationExpandedReady = false;
         }

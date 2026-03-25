@@ -1142,6 +1142,17 @@ test("после быстрого скрытия и повторного пок�
         redrawNavigationTagConnections(appRoot);
         stepRafQueue();
 
+        assert.equal(
+            canvas.childNodes.length,
+            0,
+            "Во время reveal layout линии должны убираться сразу, без промежуточного fade-out"
+        );
+        assert.equal(
+            canvas.classList.contains("tag-connection-map__canvas--visible"),
+            false,
+            "Canvas не должен оставаться видимым на переходной фазе"
+        );
+
         layoutRoot.classList.remove("lesson-layout--navigation-transitioning");
         redrawNavigationTagConnections(appRoot);
         stepRafQueue();

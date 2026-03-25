@@ -197,7 +197,7 @@ function shouldRenderNavigationConnections(layoutRoot) {
     }
 
     if (isCompactPanelViewport()) {
-        return true;
+        return !layoutRoot.classList.contains("lesson-layout--navigation-transitioning");
     }
 
     return (
@@ -221,7 +221,11 @@ function renderNavigationTagConnections({
         clearFlowBlockActiveTagState(mapRoot);
         clearFlowSubtaskActiveTagState(mapRoot);
         clearSecondaryBranchSideState(mapRoot);
-        hideCanvas(canvas);
+        if (layoutRoot.classList.contains("lesson-layout--navigation-transitioning")) {
+            clearCanvas(canvas);
+        } else {
+            hideCanvas(canvas);
+        }
         return;
     }
 
