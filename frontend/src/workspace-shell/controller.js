@@ -515,6 +515,11 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        if (surfaceName === "top-strip" && tryPatchTopStripSurface(target, nextMarkup)) {
+            renderedSurfaceCache[cacheKey] = comparableMarkup;
+            return;
+        }
+
         if (surfaceName === "practice-viewer" && tryPatchPracticeViewerSurface(target, nextMarkup, {
             shouldAutoScrollCommandHistory
         })) {
@@ -623,6 +628,45 @@ export function createCatalogWorkspaceController({
 
         patchPracticeViewerWorkspace(currentViewerRoot, nextViewerRoot);
         patchPracticeViewerTerminal(currentViewerRoot, nextViewerRoot, { shouldAutoScrollCommandHistory });
+        return true;
+    }
+
+    function tryPatchTopStripSurface(target, nextMarkup) {
+        const nextRoot = parseMarkupRoot(nextMarkup);
+        const currentStrip = target.firstElementChild;
+        const nextStrip = nextRoot?.firstElementChild;
+        if (!(currentStrip instanceof HTMLElement) || !(nextStrip instanceof HTMLElement)) {
+            return false;
+        }
+
+        currentStrip.className = nextStrip.className;
+        syncElementAttributes(currentStrip, nextStrip, ["class"]);
+
+        const currentMeter = currentStrip.querySelector(".progress-top-strip__meter");
+        const nextMeter = nextStrip.querySelector(".progress-top-strip__meter");
+        const currentMeterValue = currentStrip.querySelector(".progress-top-strip__meter-value");
+        const nextMeterValue = nextStrip.querySelector(".progress-top-strip__meter-value");
+        const currentBody = currentStrip.querySelector(".progress-top-strip__body");
+        const nextBody = nextStrip.querySelector(".progress-top-strip__body");
+        if (
+            !(currentMeter instanceof HTMLElement)
+            || !(nextMeter instanceof HTMLElement)
+            || !(currentMeterValue instanceof HTMLElement)
+            || !(nextMeterValue instanceof HTMLElement)
+            || !(currentBody instanceof HTMLElement)
+            || !(nextBody instanceof HTMLElement)
+        ) {
+            return false;
+        }
+
+        syncElementAttributes(currentMeter, nextMeter, ["class"]);
+        currentMeterValue.className = nextMeterValue.className;
+        syncElementAttributes(currentMeterValue, nextMeterValue, ["class"]);
+
+        if (!currentBody.isEqualNode(nextBody)) {
+            currentBody.replaceWith(nextBody.cloneNode(true));
+        }
+
         return true;
     }
 

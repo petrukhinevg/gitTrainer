@@ -1,4 +1,5 @@
 import { renderLessonLane } from "./lesson-layout.js";
+import { isSandboxScenarioSlug } from "../sandbox-route.js";
 import {
     normalizeTaskAnnotations,
     normalizeTaskInstructions,
@@ -37,26 +38,54 @@ function renderMainPanelFrame(route, body) {
 export function renderLayoutTopStrip(state) {
     const strip = resolveLayoutTopStripState(state);
     const items = Array.isArray(strip.items) ? strip.items : [];
+    const accentTag = resolveTopStripAccentTag(state);
 
     return `
-        <section class="progress-top-strip" aria-label="${escapeHtml(strip.ariaLabel)}">
-            <div class="progress-top-strip__lead">
-                <span class="control-label">${escapeHtml(strip.label)}</span>
-                <strong>${escapeHtml(strip.title)}</strong>
-                <span class="progress-top-strip__status">${escapeHtml(strip.status)}</span>
+        <section
+            class="progress-top-strip"
+            data-top-strip-route="${escapeHtml(state.route ?? "catalog")}"
+            ${accentTag ? `data-top-strip-accent-tag="${escapeHtml(accentTag)}"` : ""}
+            aria-label="${escapeHtml(strip.ariaLabel)}"
+        >
+            <div
+                class="progress-top-strip__meter"
+                role="progressbar"
+                aria-label="${escapeHtml(strip.meterLabel)}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="${escapeHtml(String(strip.progressPercent))}"
+            >
+                <span class="progress-top-strip__meter-value" style="width: ${escapeHtml(String(strip.progressPercent))}%;"></span>
             </div>
-            <div class="progress-top-strip__meta">
-                <div
-                    class="progress-top-strip__meter"
-                    role="progressbar"
-                    aria-label="${escapeHtml(strip.meterLabel)}"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow="${escapeHtml(String(strip.progressPercent))}"
-                >
-                    <span class="progress-top-strip__meter-value" style="width: ${escapeHtml(String(strip.progressPercent))}%;"></span>
+            <div class="progress-top-strip__body">
+                ${strip.previousHref ? `
+                    <a
+                        class="progress-top-strip__nav progress-top-strip__nav--previous"
+                        href="${escapeHtml(strip.previousHref)}"
+                        aria-label="Предыдущее задание"
+                        title="Предыдущее задание"
+                    >
+                        <
+                    </a>
+                ` : ""}
+                <div class="progress-top-strip__lead">
+                    <strong>${escapeHtml(strip.title)}</strong>
                 </div>
-                ${items.map((item) => `<span class="progress-top-strip__item">${escapeHtml(item)}</span>`).join("")}
+                ${strip.nextHref ? `
+                    <a
+                        class="progress-top-strip__nav progress-top-strip__nav--next"
+                        href="${escapeHtml(strip.nextHref)}"
+                        aria-label="Следующее задание"
+                        title="Следующее задание"
+                    >
+                        >
+                    </a>
+                ` : ""}
+                ${items.length ? `
+                    <div class="progress-top-strip__meta">
+                        ${items.map((item) => `<span class="progress-top-strip__item">${escapeHtml(item)}</span>`).join("")}
+                    </div>
+                ` : ""}
             </div>
         </section>
     `;
@@ -756,6 +785,8 @@ function resolveLayoutTopStripState(state) {
 
 function resolveExerciseTopStripState(state) {
     const detail = state.detail.data;
+    const navigationLinks = resolveCollapsedNavigationScenarioLinks(state);
+    const isSandboxRoute = isSandboxScenarioSlug(state.selectedScenarioSlug);
 
     if (!detail) {
         return {
@@ -764,10 +795,12 @@ function resolveExerciseTopStripState(state) {
             title: state.selectedScenarioSlug ?? "Сценарий загружается",
             status: formatCatalogStatus(state.detail.status),
             meterLabel: "Подготовка сценария",
-            progressPercent: state.detail.status === "error" ? 100 : 35,
+            progressPercent: isSandboxRoute ? 0 : state.detail.status === "error" ? 100 : 35,
             items: [
                 `Маршрут: ${formatRoute(state.route)}`
-            ]
+            ],
+            previousHref: navigationLinks.previousHref,
+            nextHref: navigationLinks.nextHref
         };
     }
 
@@ -791,11 +824,10 @@ function resolveExerciseTopStripState(state) {
         title: detail.title,
         status: resolveExerciseProgressStatus(state, lifecycle),
         meterLabel: "Прогресс по шагам сценария",
-        progressPercent,
-        items: [
-            `Фокус: ${resolveExerciseFocusLabel(state.selectedFocus, taskSteps)}`,
-            `Шагов: ${taskSteps.length}`
-        ]
+        progressPercent: isSandboxRoute ? 0 : progressPercent,
+        items: [],
+        previousHref: navigationLinks.previousHref,
+        nextHref: navigationLinks.nextHref
     };
 }
 
@@ -811,31 +843,84 @@ function resolveProgressTopStripState(state) {
         title: "Сводка сценариев",
         status: formatCatalogStatus(state.progress.status),
         meterLabel: "Доля завершенных сценариев",
-        progressPercent: state.progress.status === "ready" ? progressPercent : state.progress.status === "error" ? 100 : 30,
-        items: [
-            `Сценарии: ${totalScenarios}`,
-            `Завершено: ${completedCount}`
-        ]
+        progressPercent: 0,
+        items: [],
+        previousHref: null,
+        nextHref: null
     };
 }
 
 function resolveCatalogTopStripState(state) {
-    const activeFilterCount = Number(Boolean(state.query.difficulty))
-        + Number(Boolean(state.query.sort))
-        + state.query.tags.length;
-
     return {
         ariaLabel: "Состояние каталога",
         label: "Рабочее пространство",
         title: "Каталог сценариев",
         status: formatCatalogStatus(state.catalog.status),
         meterLabel: "Подготовка каталога",
-        progressPercent: state.catalog.status === "ready" ? 100 : state.catalog.status === "error" ? 100 : 40,
-        items: [
-            `Сценарии: ${state.catalog.items.length}`,
-            `Фильтры: ${activeFilterCount}`
-        ]
+        progressPercent: 0,
+        items: [],
+        previousHref: null,
+        nextHref: null
     };
+}
+
+function resolveCollapsedNavigationScenarioLinks(state) {
+    const isNavigationHidden = Boolean(state.isNavigationEffectivelyCollapsed ?? state.isNavigationCollapsed);
+    if (!isNavigationHidden || state.route !== "exercise" || !state.selectedScenarioSlug || isSandboxScenarioSlug(state.selectedScenarioSlug)) {
+        return {
+            previousHref: null,
+            nextHref: null
+        };
+    }
+
+    const scenarioItems = state.catalog.items.filter((item) => !isSandboxScenarioSlug(item.slug));
+    const scenarioIndex = scenarioItems.findIndex((item) => item.slug === state.selectedScenarioSlug);
+    if (scenarioIndex < 0) {
+        return {
+            previousHref: null,
+            nextHref: null
+        };
+    }
+
+    return {
+        previousHref: scenarioIndex > 0
+            ? `#/exercise/${encodeHashSegment(scenarioItems[scenarioIndex - 1].slug)}`
+            : null,
+        nextHref: scenarioIndex < scenarioItems.length - 1
+            ? `#/exercise/${encodeHashSegment(scenarioItems[scenarioIndex + 1].slug)}`
+            : null
+    };
+}
+
+function resolveTopStripAccentTag(state) {
+    const activeTag = normalizeAccentTagToken(state?.heldNavigationTag ?? state?.pinnedNavigationTag);
+    if (!activeTag) {
+        return null;
+    }
+
+    const scenarioTags = resolveSelectedScenarioTags(state);
+    return scenarioTags.includes(activeTag) ? activeTag : null;
+}
+
+function resolveSelectedScenarioTags(state) {
+    if (Array.isArray(state?.detail?.data?.tags)) {
+        return state.detail.data.tags.map(normalizeAccentTagToken).filter(Boolean);
+    }
+
+    if (!state?.selectedScenarioSlug || !Array.isArray(state?.catalog?.items)) {
+        return [];
+    }
+
+    const selectedScenario = state.catalog.items.find((item) => item.slug === state.selectedScenarioSlug);
+    return Array.isArray(selectedScenario?.tags)
+        ? selectedScenario.tags.map(normalizeAccentTagToken).filter(Boolean)
+        : [];
+}
+
+function normalizeAccentTagToken(tag) {
+    return typeof tag === "string" && tag.trim() !== ""
+        ? tag.trim().toLowerCase()
+        : null;
 }
 
 function resolveExerciseStageIndex(selectedFocus, taskSteps) {

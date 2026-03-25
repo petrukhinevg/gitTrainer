@@ -11,7 +11,7 @@ function resolveTwoColumnBreakpoint({ middleMinWidthPx, rightWidthPx }) {
 export class PanelLayoutConfig {
     // Левая панель: навигация, toggle и связанные размеры.
     static LEFT_PANEL = Object.freeze({
-        laneWidthPx: 340,
+        laneWidthPx: 400,
         toolbarHeightPx: 34
     });
 

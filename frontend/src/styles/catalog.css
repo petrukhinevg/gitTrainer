@@ -100,7 +100,7 @@
 }
 
 .scenario-legend__guide[data-navigation-tag-guide="expanded"] .scenario-legend__guide-panel {
-    max-height: 220px;
+    max-height: 320px;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -112,6 +112,15 @@
     border: 1px solid rgba(31, 23, 32, 0.12);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.74);
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.scenario-legend__guide-content .panel-copy,
+.scenario-legend__guide-list {
+    font: inherit;
+    line-height: inherit;
 }
 
 .scenario-legend__guide-list {

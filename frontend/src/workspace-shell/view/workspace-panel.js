@@ -27,14 +27,8 @@ export function renderWorkspacePanelSections(state) {
 
     if (state.detail.status === "loading" || state.detail.status === "idle") {
         return {
-            viewer: renderPlaceholderViewer(
-                "Git-ветки",
-                `Загружаем представление веток для ${escapeHtml(state.selectedScenarioSlug ?? "выбранного задания")}.`
-            ),
-            surface: renderPlaceholderComposer(
-                "Команда",
-                "Поле ввода остаётся на месте, пока загружаются детали задания."
-            )
+            viewer: renderWorkspaceLoadingFill("viewer"),
+            surface: renderWorkspaceLoadingFill("surface")
         };
     }
 
@@ -221,6 +215,12 @@ function renderPlaceholderComposer(title, copy) {
                 </div>
             </div>
         </section>
+    `;
+}
+
+function renderWorkspaceLoadingFill(kind) {
+    return `
+        <div class="practice-loading-fill practice-loading-fill--${escapeHtml(kind)}" aria-hidden="true"></div>
     `;
 }
 
