@@ -8,6 +8,7 @@
     --accent: rgb(0, 48, 93);
     --accent-cool: #395979;
     --shell-flow-block-surface: rgba(211, 207, 199, 0.68);
+    --progress-track-shell-surface: color-mix(in srgb, var(--shell-flow-block-surface) 44%, var(--paper));
     --tag-color-default: #395979;
     --tag-color-status: #498877;
     --tag-color-working-tree: #709a4e;
@@ -19,6 +20,8 @@
     --tag-color-planning: #c04a77;
     --tag-color-remote: #875ed3;
     --tag-color-inspection: #7a7d39;
+    --tag-color-safety: #b04646;
+    --tag-color-stash: #56753a;
     --shadow: 0 20px 45px rgba(47, 31, 19, 0.12);
 }
 

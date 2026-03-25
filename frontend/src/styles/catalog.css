@@ -186,14 +186,14 @@
 
 .scenario-legend__tag--active {
     border-color: var(--tag-accent);
-    background: color-mix(in srgb, var(--tag-accent) 11%, rgba(255, 250, 241, 0.96));
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--tag-accent) 12%, transparent);
+    background: color-mix(in srgb, var(--tag-accent) 17%, rgba(255, 250, 241, 0.96));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--tag-accent) 16%, transparent);
 }
 
 .scenario-legend__tag--active:hover,
 .scenario-legend__tag--active:focus-visible {
     border-color: var(--tag-accent);
-    background: color-mix(in srgb, var(--tag-accent) 11%, rgba(255, 250, 241, 0.96));
+    background: color-mix(in srgb, var(--tag-accent) 17%, rgba(255, 250, 241, 0.96));
 }
 
 .scenario-legend__swatch {
@@ -635,6 +635,18 @@
     --flow-subtask-rail-accent: var(--tag-color-inspection);
 }
 
+.flow-block[data-flow-block-active-tag="safety"],
+.flow-subtask-group[data-flow-subtask-active-tag="safety"] {
+    --flow-block-active-accent: var(--tag-color-safety);
+    --flow-subtask-rail-accent: var(--tag-color-safety);
+}
+
+.flow-block[data-flow-block-active-tag="stash"],
+.flow-subtask-group[data-flow-subtask-active-tag="stash"] {
+    --flow-block-active-accent: var(--tag-color-stash);
+    --flow-subtask-rail-accent: var(--tag-color-stash);
+}
+
 .flow-block[data-flow-block-active-tag] {
     color: var(--flow-block-active-text-color);
     border-color: color-mix(in srgb, var(--flow-block-active-accent) 56%, transparent);
@@ -931,6 +943,14 @@
 
 .scenario-legend__tag--inspection {
     --tag-accent: var(--tag-color-inspection);
+}
+
+.scenario-legend__tag--safety {
+    --tag-accent: var(--tag-color-safety);
+}
+
+.scenario-legend__tag--stash {
+    --tag-accent: var(--tag-color-stash);
 }
 
 .catalog-controls {

@@ -12,7 +12,7 @@ export class PanelLayoutConfig {
     // Левая панель: навигация, toggle и связанные размеры.
     static LEFT_PANEL = Object.freeze({
         laneWidthPx: 400,
-        toolbarHeightPx: 34
+        toolbarHeightPx: 26
     });
 
     // Средняя панель: основное содержимое урока.

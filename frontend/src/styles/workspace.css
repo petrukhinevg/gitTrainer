@@ -4,8 +4,12 @@
     --workspace-command-active-accent: var(--tag-color-default, #395979);
     --workspace-command-active-text-color: color-mix(in srgb, var(--workspace-command-active-accent) 72%, #101418 28%);
     --workspace-panel-border-color: rgba(31, 23, 32, 0.3);
-    --workspace-panel-surface: rgba(220, 216, 209, 0.68);
-    --workspace-panel-surface-strong: rgba(223, 219, 212, 0.72);
+    --workspace-panel-surface: var(--shell-flow-block-surface);
+    --workspace-panel-surface-strong: var(--shell-flow-block-surface);
+    --workspace-panel-radius: 12px;
+    --workspace-accent-block-border-color: rgba(31, 23, 32, 0.3);
+    --workspace-accent-block-surface: var(--shell-flow-block-surface);
+    --workspace-accent-block-shadow: none;
     --workspace-commit-tree-surface: rgba(150, 150, 150, 0.11);
     --workspace-panel-shadow: none;
     --workspace-scrollbar-thumb: rgba(31, 23, 32, 0.16);
@@ -19,7 +23,7 @@
     --workspace-terminal-editor-surface: rgba(255, 255, 255, 0.68);
     --workspace-terminal-editor-shadow: rgba(37, 37, 37, 0.25);
     --workspace-terminal-ink: #2f1f13;
-    --workspace-terminal-ink-soft: rgba(0, 0, 0, 0.7);
+    --workspace-terminal-ink-soft: rgba(0, 0, 0, 0.87);
     --workspace-terminal-ink-muted: rgba(47, 31, 19, 0.52);
     --workspace-terminal-badge: rgba(47, 31, 19, 0.62);
     --workspace-terminal-prompt: #395979;
@@ -93,7 +97,7 @@
     height: 100%;
     min-height: 0;
     padding: 18px 0 0;
-    border-top: 1px solid color-mix(in srgb, var(--workspace-panel-accent) 22%, rgba(31, 23, 32, 0.14));
+    border-top: 1px solid rgba(31, 23, 32, 0.14);
     background: transparent;
 }
 
@@ -123,6 +127,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="status"] {
     --workspace-command-active-accent: var(--tag-color-status);
+    --workspace-panel-accent: var(--tag-color-status);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="status"] {
+    --workspace-panel-accent: var(--tag-color-status);
 }
 
 .practice-stack[data-workspace-active-tag="status"] {
@@ -131,6 +140,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="working-tree"] {
     --workspace-command-active-accent: var(--tag-color-working-tree);
+    --workspace-panel-accent: var(--tag-color-working-tree);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="working-tree"] {
+    --workspace-panel-accent: var(--tag-color-working-tree);
 }
 
 .practice-stack[data-workspace-active-tag="working-tree"] {
@@ -139,6 +153,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="basics"] {
     --workspace-command-active-accent: var(--tag-color-basics);
+    --workspace-panel-accent: var(--tag-color-basics);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="basics"] {
+    --workspace-panel-accent: var(--tag-color-basics);
 }
 
 .practice-stack[data-workspace-active-tag="basics"] {
@@ -147,6 +166,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="branching"] {
     --workspace-command-active-accent: var(--tag-color-branching);
+    --workspace-panel-accent: var(--tag-color-branching);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="branching"] {
+    --workspace-panel-accent: var(--tag-color-branching);
 }
 
 .practice-stack[data-workspace-active-tag="branching"] {
@@ -155,6 +179,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="navigation"] {
     --workspace-command-active-accent: var(--tag-color-navigation);
+    --workspace-panel-accent: var(--tag-color-navigation);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="navigation"] {
+    --workspace-panel-accent: var(--tag-color-navigation);
 }
 
 .practice-stack[data-workspace-active-tag="navigation"] {
@@ -163,6 +192,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="history"] {
     --workspace-command-active-accent: var(--tag-color-history);
+    --workspace-panel-accent: var(--tag-color-history);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="history"] {
+    --workspace-panel-accent: var(--tag-color-history);
 }
 
 .practice-stack[data-workspace-active-tag="history"] {
@@ -171,6 +205,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="cleanup"] {
     --workspace-command-active-accent: var(--tag-color-cleanup);
+    --workspace-panel-accent: var(--tag-color-cleanup);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="cleanup"] {
+    --workspace-panel-accent: var(--tag-color-cleanup);
 }
 
 .practice-stack[data-workspace-active-tag="cleanup"] {
@@ -179,6 +218,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="planning"] {
     --workspace-command-active-accent: var(--tag-color-planning);
+    --workspace-panel-accent: var(--tag-color-planning);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="planning"] {
+    --workspace-panel-accent: var(--tag-color-planning);
 }
 
 .practice-stack[data-workspace-active-tag="planning"] {
@@ -187,6 +231,11 @@
 
 .workspace-terminal[data-workspace-command-active-tag="remote"] {
     --workspace-command-active-accent: var(--tag-color-remote);
+    --workspace-panel-accent: var(--tag-color-remote);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="remote"] {
+    --workspace-panel-accent: var(--tag-color-remote);
 }
 
 .practice-stack[data-workspace-active-tag="remote"] {
@@ -195,18 +244,50 @@
 
 .workspace-terminal[data-workspace-command-active-tag="inspection"] {
     --workspace-command-active-accent: var(--tag-color-inspection);
+    --workspace-panel-accent: var(--tag-color-inspection);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="inspection"] {
+    --workspace-panel-accent: var(--tag-color-inspection);
 }
 
 .practice-stack[data-workspace-active-tag="inspection"] {
     --workspace-panel-accent: var(--tag-color-inspection);
 }
 
+.workspace-terminal[data-workspace-command-active-tag="safety"] {
+    --workspace-command-active-accent: var(--tag-color-safety);
+    --workspace-panel-accent: var(--tag-color-safety);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="safety"] {
+    --workspace-panel-accent: var(--tag-color-safety);
+}
+
+.practice-stack[data-workspace-active-tag="safety"] {
+    --workspace-panel-accent: var(--tag-color-safety);
+}
+
+.workspace-terminal[data-workspace-command-active-tag="stash"] {
+    --workspace-command-active-accent: var(--tag-color-stash);
+    --workspace-panel-accent: var(--tag-color-stash);
+}
+
+.repository-workspace--plain[data-workspace-viewer-active-tag="stash"] {
+    --workspace-panel-accent: var(--tag-color-stash);
+}
+
+.practice-stack[data-workspace-active-tag="stash"] {
+    --workspace-panel-accent: var(--tag-color-stash);
+}
+
 .practice-stack[data-workspace-active-tag] {
-    --workspace-panel-border-color: color-mix(in srgb, var(--workspace-panel-accent) 56%, transparent);
-    --workspace-panel-surface: color-mix(in srgb, var(--workspace-panel-accent) 10%, rgba(255, 250, 241, 0.96));
-    --workspace-panel-surface-strong: color-mix(in srgb, var(--workspace-panel-accent) 16%, rgba(255, 250, 241, 0.98));
+    --workspace-accent-block-border-color: color-mix(in srgb, var(--workspace-panel-accent) 72%, transparent);
+    --workspace-accent-block-surface: color-mix(in srgb, var(--workspace-panel-accent) 20%, transparent);
+    --workspace-accent-block-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--workspace-panel-accent) 36%, transparent),
+        0 8px 18px color-mix(in srgb, var(--workspace-panel-accent) 12%, transparent);
     --workspace-commit-tree-surface: color-mix(in srgb, var(--workspace-panel-accent) 4%, rgba(255, 253, 249, 0.96));
-    --workspace-panel-shadow: 0 8px 18px color-mix(in srgb, var(--workspace-panel-accent) 10%, transparent);
     --workspace-scrollbar-thumb: color-mix(in srgb, var(--workspace-panel-accent) 26%, rgba(31, 23, 32, 0.28));
     --workspace-scrollbar-thumb-hover: color-mix(in srgb, var(--workspace-panel-accent) 38%, rgba(31, 23, 32, 0.34));
     --workspace-terminal-border: color-mix(in srgb, var(--workspace-panel-accent) 24%, rgba(31, 23, 32, 0.16));
@@ -231,14 +312,16 @@
     --workspace-terminal-action-submit: color-mix(in srgb, var(--workspace-panel-accent) 16%, rgba(57, 89, 121, 0.12));
 }
 
+.repository-workspace--plain[data-workspace-viewer-active-tag],
+.workspace-terminal--plain[data-workspace-command-active-tag] {
+    --workspace-accent-block-border-color: color-mix(in srgb, var(--workspace-panel-accent) 72%, transparent);
+    --workspace-accent-block-surface: color-mix(in srgb, var(--workspace-panel-accent) 10%, var(--paper));
+    --workspace-accent-block-shadow: none;
+}
+
 .practice-pane .workspace-card__header {
     padding-bottom: 10px;
     border-bottom: 1px solid color-mix(in srgb, var(--workspace-panel-border-color) 55%, transparent);
-}
-
-.practice-stack[data-workspace-active-tag] .workspace-card__header .control-label,
-.practice-stack[data-workspace-active-tag] .workspace-card__header .workspace-card__badge {
-    color: color-mix(in srgb, var(--workspace-panel-accent) 70%, #1f1720 30%);
 }
 
 .workspace-card,
@@ -257,14 +340,15 @@
 
 .workspace-card {
     min-height: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 12px 14px 14px;
+    border: 1px solid var(--workspace-panel-border-color);
+    border-radius: var(--workspace-panel-radius);
+    background: var(--workspace-panel-surface);
+    box-shadow: var(--workspace-panel-shadow);
 }
 
 .workspace-card--focus {
-    background: transparent;
+    background: var(--workspace-panel-surface);
 }
 
 .workspace-card--viewer {
@@ -332,19 +416,20 @@
 
 .practice-composer__primary {
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(31, 23, 32, 0.08);
+    border-bottom: 1px solid color-mix(in srgb, var(--workspace-panel-border-color) 55%, transparent);
 }
 
 .practice-repository-viewer {
     display: grid;
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0;
+    gap: 12px;
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 252, 246, 0.78);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .practice-repository-viewer::-webkit-scrollbar {
@@ -388,7 +473,7 @@
 
 .practice-composer__spoiler {
     display: grid;
-    gap: 10px;
+    gap: 0;
     min-height: 0;
 }
 
@@ -397,10 +482,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid color-mix(in srgb, var(--workspace-panel-accent) 22%, rgba(31, 23, 32, 0.14));
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--workspace-panel-accent) 6%, rgba(255, 252, 246, 0.82));
+    padding: 0 0 12px;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--workspace-panel-border-color) 55%, transparent);
+    border-radius: 0;
+    background: transparent;
     color: var(--ink-strong);
     cursor: pointer;
     list-style: none;
@@ -428,6 +514,7 @@
 
 .practice-composer__spoiler-body {
     min-height: 0;
+    padding-top: 12px;
 }
 
 .repository-workspace::-webkit-scrollbar,
@@ -808,7 +895,10 @@
 .repository-workspace--plain {
     padding: 12px 14px 10px;
     gap: 0;
-    background: transparent;
+    border: 1px solid var(--workspace-accent-block-border-color);
+    border-radius: var(--workspace-panel-radius);
+    background: var(--workspace-accent-block-surface);
+    box-shadow: var(--workspace-accent-block-shadow);
 }
 
 .workspace-console,
@@ -818,18 +908,18 @@
     align-content: start;
     height: 100%;
     min-height: 0;
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 252, 246, 0.78);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--workspace-terminal-ink);
     overflow: hidden;
 }
 
 .workspace-terminal--plain {
-    border: 1px solid rgba(31, 23, 32, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 252, 246, 0.78);
-    box-shadow: none;
+    border: 1px solid var(--workspace-accent-block-border-color);
+    border-radius: var(--workspace-panel-radius);
+    background: var(--workspace-accent-block-surface);
+    box-shadow: var(--workspace-accent-block-shadow);
 }
 
 .workspace-terminal__header {
@@ -843,16 +933,18 @@
     border-top-left-radius: inherit;
     border-top-right-radius: inherit;
     border-bottom: 1px solid color-mix(in srgb, var(--workspace-terminal-border) 100%, rgba(31, 23, 32, 0.12));
-    background: var(--workspace-panel-surface);
+    background: var(--workspace-accent-block-surface);
 }
 
 .workspace-terminal__title {
     display: block;
     color: var(--workspace-terminal-ink-soft);
     font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
+    font-weight: 700;
     letter-spacing: 0.04em;
     line-height: 1;
+    max-width: 100%;
 }
 
 .workspace-console__chrome,
@@ -989,7 +1081,7 @@
 }
 
 .workspace-terminal[data-workspace-command-active-tag] .workspace-terminal__prompt--input {
-    color: var(--workspace-command-active-text-color);
+    color: var(--workspace-command-active-accent);
 }
 
 .workspace-terminal__output {
@@ -1132,11 +1224,15 @@
 }
 
 .workspace-terminal__input::placeholder {
-    color: color-mix(in srgb, var(--workspace-terminal-prompt-input) 74%, transparent);
+    color: var(--workspace-terminal-prompt-input);
 }
 
 .workspace-terminal[data-workspace-command-active-tag] .workspace-terminal__input::placeholder {
-    color: color-mix(in srgb, var(--workspace-command-active-text-color) 74%, transparent);
+    color: var(--workspace-command-active-accent);
+}
+
+.workspace-terminal__input:focus::placeholder {
+    color: transparent;
 }
 
 .workspace-terminal__input:disabled {

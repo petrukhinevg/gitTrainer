@@ -641,15 +641,20 @@ function bindAnimatedDisclosures(appRoot) {
 function animateDisclosureOpen(details, body) {
     details.dataset.disclosureAnimating = "true";
     details.open = true;
+    const bodySpacing = resolveDisclosureBodySpacing(body);
     prepareDisclosureBody(body);
+    body.style.paddingTop = "0px";
+    body.style.paddingBottom = "0px";
+    const targetHeight = body.scrollHeight;
     body.style.height = "0px";
     body.style.opacity = "0";
     body.style.transform = "translateY(-8px)";
     void body.offsetHeight;
-    const targetHeight = body.scrollHeight;
     body.style.transition = createDisclosureTransition();
     requestAnimationFrame(() => {
         body.style.height = `${targetHeight}px`;
+        body.style.paddingTop = bodySpacing.paddingTop;
+        body.style.paddingBottom = bodySpacing.paddingBottom;
         body.style.opacity = "1";
         body.style.transform = "translateY(0)";
     });
@@ -660,14 +665,19 @@ function animateDisclosureOpen(details, body) {
 
 function animateDisclosureClose(details, body) {
     details.dataset.disclosureAnimating = "true";
+    const bodySpacing = resolveDisclosureBodySpacing(body);
     prepareDisclosureBody(body);
     body.style.height = `${body.scrollHeight}px`;
+    body.style.paddingTop = bodySpacing.paddingTop;
+    body.style.paddingBottom = bodySpacing.paddingBottom;
     body.style.opacity = "1";
     body.style.transform = "translateY(0)";
     void body.offsetHeight;
     body.style.transition = createDisclosureTransition();
     requestAnimationFrame(() => {
         body.style.height = "0px";
+        body.style.paddingTop = "0px";
+        body.style.paddingBottom = "0px";
         body.style.opacity = "0";
         body.style.transform = "translateY(-8px)";
     });
@@ -703,11 +713,13 @@ function finishDisclosureAnimation(details, body, onComplete) {
 
 function prepareDisclosureBody(body) {
     body.style.overflow = "hidden";
-    body.style.willChange = "height, opacity, transform";
+    body.style.willChange = "height, padding-top, padding-bottom, opacity, transform";
 }
 
 function clearDisclosureBodyStyles(body) {
     body.style.height = "";
+    body.style.paddingTop = "";
+    body.style.paddingBottom = "";
     body.style.opacity = "";
     body.style.transform = "";
     body.style.transition = "";
@@ -718,9 +730,19 @@ function clearDisclosureBodyStyles(body) {
 function createDisclosureTransition() {
     return [
         `height ${DISCLOSURE_ANIMATION_MS}ms ease`,
+        `padding-top ${DISCLOSURE_ANIMATION_MS}ms ease`,
+        `padding-bottom ${DISCLOSURE_ANIMATION_MS}ms ease`,
         `opacity ${DISCLOSURE_ANIMATION_MS - 40}ms ease`,
         `transform ${DISCLOSURE_ANIMATION_MS}ms ease`
     ].join(", ");
+}
+
+function resolveDisclosureBodySpacing(body) {
+    const computedStyle = window.getComputedStyle(body);
+    return {
+        paddingTop: computedStyle.paddingTop,
+        paddingBottom: computedStyle.paddingBottom
+    };
 }
 
 function isElementNode(value) {

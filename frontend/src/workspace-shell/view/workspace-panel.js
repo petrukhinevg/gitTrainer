@@ -88,7 +88,7 @@ export function renderWorkspacePanelSections(state) {
         viewer: `
             <div class="practice-shell__viewer-body practice-shell__viewer-body--plain">
                 <div class="practice-repository-viewer" data-repository-context>
-                    ${renderRepositoryWorkspaceCanvas(viewerRepositoryContext, workspacePlayback)}
+                    ${renderRepositoryWorkspaceCanvas(viewerRepositoryContext, workspacePlayback, accentTag)}
                     ${renderWorkspaceTerminal({
             scenarioTitle: detail.title,
             accentTag,
@@ -164,7 +164,7 @@ export function resolveWorkspacePanelAccentTag(state) {
 
 function normalizeWorkspaceTagToken(tag) {
     return typeof tag === "string" && tag.trim() !== ""
-        ? tag.trim().toLowerCase()
+        ? tag.trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-+|-+$/g, "")
         : null;
 }
 
@@ -702,12 +702,13 @@ function renderBranchGraph(branches) {
     `;
 }
 
-function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback) {
+function renderRepositoryWorkspaceCanvas(repositoryContext, workspacePlayback, accentTag = null) {
     return `
         <div
             class="repository-workspace repository-workspace--${escapeHtml(workspacePlayback.status)} repository-workspace--plain"
             data-repository-workspace-visual="ready"
             data-workspace-playback-status="${escapeHtml(workspacePlayback.status)}"
+            ${accentTag ? `data-workspace-viewer-active-tag="${escapeHtml(accentTag)}"` : ""}
         >
             ${renderRepositoryCommitTree(repositoryContext.graph, workspacePlayback)}
         </div>

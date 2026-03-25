@@ -33,7 +33,7 @@ body {
     /* Fallback-значения для статического анализа IDE; реальные токены приходят из panel-layout-config.js. */
     --navigation-lane-width: 340px;
     --navigation-lane-current-width: var(--navigation-lane-width);
-    --navigation-toolbar-height: 34px;
+    --navigation-toolbar-height: 26px;
     --navigation-collapse-duration: 500ms;
     --navigation-collapse-easing: cubic-bezier(0.22, 1, 0.36, 1);
     --panel-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
@@ -347,7 +347,7 @@ body {
     min-width: var(--practice-lane-current-min-width);
     max-width: var(--practice-lane-current-width);
     padding-left: 8px;
-    padding-right: 5px;
+    padding-right: 15px;
     transition:
         opacity 140ms ease,
         transform var(--navigation-collapse-duration) var(--navigation-collapse-easing),
@@ -372,7 +372,7 @@ body {
 
 .lesson-lane--practice .lesson-lane__scroll-content {
     padding-left: 8px;
-    padding-right: 5px;
+    padding-right: 15px;
 }
 
 .lesson-layout--compact-navigation-overlay {
