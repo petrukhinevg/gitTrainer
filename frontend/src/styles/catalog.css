@@ -65,8 +65,9 @@
     letter-spacing: 0.01em;
     text-transform: none;
     line-height: 1.3;
-    white-space: normal;
-    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .scenario-legend__guide-toggle-icon {

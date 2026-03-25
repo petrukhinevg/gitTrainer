@@ -34,6 +34,7 @@ import {
     renderCatalogWorkspaceShell,
     renderCatalogWorkspaceSurfaces
 } from "./view.js";
+import { renderSidebarPanelContent } from "./view/sidebar-panel.js";
 import { isSandboxShortcutActive, SANDBOX_ROUTE_HASH } from "./sandbox-route.js";
 
 const SAFE_FALLBACK_PROVIDER_NAME = "backend-api";
@@ -1517,6 +1518,19 @@ export function createCatalogWorkspaceController({
 
     function toggleNavigationTagGuide() {
         state.isNavigationTagGuideExpanded = !state.isNavigationTagGuideExpanded;
+        const navigationSurface = appRoot.querySelector('[data-render-surface="navigation"]');
+        if (navigationSurface instanceof HTMLElement) {
+            syncNavigationTagGuideState(navigationSurface, state.isNavigationTagGuideExpanded);
+            renderedSurfaceCache.navigation = renderSidebarPanelContent(
+                state,
+                resolveSelectedCatalogScenario(state, state.catalog.items),
+                tagOptions
+            );
+            redrawNavigationTagConnections(appRoot);
+            redrawNavigationActiveMarker(appRoot);
+            return;
+        }
+
         render();
     }
 
@@ -1922,9 +1936,7 @@ function tryPatchNavigationLegendGuide(surfaceRoot, nextMarkup) {
         return false;
     }
 
-    currentGuide.setAttribute("data-navigation-tag-guide", nextGuideState);
-    currentToggle.setAttribute("aria-expanded", nextToggle.getAttribute("aria-expanded") ?? "false");
-    currentPanel.setAttribute("aria-hidden", nextPanel.getAttribute("aria-hidden") ?? "true");
+    syncNavigationTagGuideState(surfaceRoot, nextGuideState === "expanded");
     return true;
 }
 
@@ -2019,6 +2031,23 @@ function serializeNavigationMarkupWithoutLegendGuide(markup) {
     normalizeNavigationMarkup(template.content);
     template.content.querySelector("[data-navigation-tag-guide]")?.remove();
     return template.innerHTML;
+}
+
+function syncNavigationTagGuideState(surfaceRoot, isExpanded) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return;
+    }
+
+    const guide = surfaceRoot.querySelector("[data-navigation-tag-guide]");
+    const toggle = surfaceRoot.querySelector("[data-navigation-tag-guide-toggle]");
+    const panel = surfaceRoot.querySelector("[data-navigation-tag-guide-panel]");
+    if (!(guide instanceof HTMLElement) || !(toggle instanceof HTMLElement) || !(panel instanceof HTMLElement)) {
+        return;
+    }
+
+    guide.setAttribute("data-navigation-tag-guide", isExpanded ? "expanded" : "collapsed");
+    toggle.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+    panel.setAttribute("aria-hidden", isExpanded ? "false" : "true");
 }
 
 function normalizeNavigationMarkup(root) {
