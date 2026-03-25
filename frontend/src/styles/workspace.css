@@ -330,9 +330,9 @@
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--workspace-terminal-border) 84%, transparent);
-    border-radius: 14px;
-    background: var(--workspace-commit-tree-surface);
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 252, 246, 0.78);
 }
 
 .practice-repository-viewer::-webkit-scrollbar {
@@ -806,22 +806,18 @@
     align-content: start;
     height: 100%;
     min-height: 0;
-    border: 1px solid var(--workspace-terminal-border);
-    border-radius: 16px;
-    background: var(--workspace-panel-surface);
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 252, 246, 0.78);
     color: var(--workspace-terminal-ink);
     overflow: hidden;
 }
 
 .workspace-terminal--plain {
-    border: 0;
-    border-top-left-radius: 13px;
-    border-top-right-radius: 13px;
-    border-bottom-left-radius: 13px;
-    border-bottom-right-radius: 13px;
-    background: var(--workspace-panel-surface);
-    box-shadow:
-        inset 0 1px 0 color-mix(in srgb, var(--workspace-terminal-border) 100%, rgba(31, 23, 32, 0.3));
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 252, 246, 0.78);
+    box-shadow: none;
 }
 
 .workspace-terminal__header {

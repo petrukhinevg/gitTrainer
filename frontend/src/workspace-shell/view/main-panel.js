@@ -17,8 +17,49 @@ export function renderMainPanel(state, { tagOptions = [], providerOptions = [] }
     return renderLessonLane({
         lane: "lesson",
         showHeader: false,
-        body: renderMainPanelContent(state, { tagOptions, providerOptions })
+        body: renderMainPanelFrame(
+            state.route,
+            renderMainPanelContent(state, { tagOptions, providerOptions })
+        )
     });
+}
+
+function renderMainPanelFrame(route, body) {
+    return `
+        <div class="lesson-main-surface" data-main-panel-route="${escapeHtml(route ?? "catalog")}">
+            <div class="lesson-main-surface__body">
+                ${body}
+            </div>
+        </div>
+    `;
+}
+
+export function renderLayoutTopStrip(state) {
+    const strip = resolveLayoutTopStripState(state);
+    const items = Array.isArray(strip.items) ? strip.items : [];
+
+    return `
+        <section class="progress-top-strip" aria-label="${escapeHtml(strip.ariaLabel)}">
+            <div class="progress-top-strip__lead">
+                <span class="control-label">${escapeHtml(strip.label)}</span>
+                <strong>${escapeHtml(strip.title)}</strong>
+                <span class="progress-top-strip__status">${escapeHtml(strip.status)}</span>
+            </div>
+            <div class="progress-top-strip__meta">
+                <div
+                    class="progress-top-strip__meter"
+                    role="progressbar"
+                    aria-label="${escapeHtml(strip.meterLabel)}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="${escapeHtml(String(strip.progressPercent))}"
+                >
+                    <span class="progress-top-strip__meter-value" style="width: ${escapeHtml(String(strip.progressPercent))}%;"></span>
+                </div>
+                ${items.map((item) => `<span class="progress-top-strip__item">${escapeHtml(item)}</span>`).join("")}
+            </div>
+        </section>
+    `;
 }
 
 export function renderMainPanelContent(state, { tagOptions = [], providerOptions = [] } = {}) {
@@ -56,7 +97,7 @@ function renderProgressMainPanelContent(state) {
                     `Статус: ${formatCatalogStatus(state.progress.status)}`
                 ]
             })}
-            <section class="lesson-spotlight lesson-spotlight--loading" data-progress-surface>
+            <section class="lesson-spotlight lesson-spotlight--loading">
                 <span class="control-label">Состояние прогресса</span>
                 <h4 class="lesson-block__title">Подготавливаем маркеры прогресса</h4>
                 <p class="panel-copy">Маркеры статуса и недавняя активность появятся здесь, когда сводка будет готова.</p>
@@ -120,16 +161,6 @@ function renderProgressMainPanelContent(state) {
                 `Источник: ${formatProviderName(summary?.meta?.source ?? "unknown")}`
             ]
         })}
-            <section class="lesson-spotlight" data-progress-surface>
-                <span class="control-label">Обзор прогресса</span>
-                <h4 class="lesson-block__title">Все сценарии видны одним взглядом</h4>
-                <p class="panel-copy">На этом экране собраны завершённые, начатые и ещё не тронутые сценарии, чтобы быстро понять общую картину.</p>
-            <div class="lesson-spotlight__meta">
-                <span class="lesson-spotlight__pill">Сценарии: ${totalScenarios}</span>
-                <span class="lesson-spotlight__pill">Завершено: ${completedCount}</span>
-                <span class="lesson-spotlight__pill">В процессе: ${inProgressCount}</span>
-            </div>
-        </section>
         <section class="lesson-block lesson-block--reading">
             <div class="lesson-section__header">
                 <span class="control-label">Маркеры сценариев</span>
@@ -336,8 +367,7 @@ function renderExerciseMainPanelContent(state) {
                 title: "Загружаем описание задания",
                 description: "Центральная колонка показывает страницу, выбранную в левой навигации.",
                 meta: [
-                    `Маршрут: ${formatRoute(state.route)}`,
-                    `Детали: ${formatCatalogStatus(state.detail.status)}`
+                    `Маршрут: ${formatRoute(state.route)}`
                 ]
             })}
             <section class="lesson-spotlight lesson-spotlight--loading">
@@ -387,11 +417,7 @@ function renderExerciseMainPanelContent(state) {
             label: detail.workspace.shell.centerPanelTitle,
             title: focusedContent.title,
             description: focusedContent.description,
-            meta: [
-                `Задача: ${formatTaskStatus(detail.workspace.task.status)}`,
-                `Сложность: ${formatDifficulty(detail.difficulty)}`,
-                `Страница: ${focusedContent.metaLabel}`
-            ]
+            meta: []
         })}
         ${focusedContent.body}
     `;
@@ -655,9 +681,11 @@ function renderMainLead({ label, title, description, meta }) {
                 <h3>${escapeHtml(title)}</h3>
                 <p class="panel-copy">${escapeHtml(description)}</p>
             </div>
-            <div class="lesson-lead__meta">
-                ${meta.map((item) => `<span class="lesson-lead__meta-item">${escapeHtml(item)}</span>`).join("")}
-            </div>
+            ${meta.length ? `
+                <div class="lesson-lead__meta">
+                    ${meta.map((item) => `<span class="lesson-lead__meta-item">${escapeHtml(item)}</span>`).join("")}
+                </div>
+            ` : ""}
         </section>
     `;
 }
@@ -694,19 +722,179 @@ function formatRoute(value) {
     }
 }
 
-function formatTaskStatus(value) {
-    switch (value) {
-        case "db-seeded":
-            return "из БД";
-        default:
-            return value ?? "неизвестно";
-    }
-}
-
 function declineAttempt(count) {
     return count === 1 ? "попытка" : count >= 2 && count <= 4 ? "попытки" : "попыток";
 }
 
 function declineCompletion(count) {
     return count === 1 ? "завершение" : count >= 2 && count <= 4 ? "завершения" : "завершений";
+}
+
+function resolveLayoutTopStripState(state) {
+    if (state.route === "exercise") {
+        return resolveExerciseTopStripState(state);
+    }
+
+    if (state.route === "progress") {
+        return resolveProgressTopStripState(state);
+    }
+
+    if (state.route === "not-found") {
+        return {
+            ariaLabel: "Состояние маршрута",
+            label: "Навигация",
+            title: "Маршрут не найден",
+            status: "ошибка",
+            meterLabel: "Статус маршрута",
+            progressPercent: 100,
+            items: ["Проверьте hash маршрута", "Вернитесь в каталог: #/catalog"]
+        };
+    }
+
+    return resolveCatalogTopStripState(state);
+}
+
+function resolveExerciseTopStripState(state) {
+    const detail = state.detail.data;
+
+    if (!detail) {
+        return {
+            ariaLabel: "Состояние сценария",
+            label: "Прогресс сценария",
+            title: state.selectedScenarioSlug ?? "Сценарий загружается",
+            status: formatCatalogStatus(state.detail.status),
+            meterLabel: "Подготовка сценария",
+            progressPercent: state.detail.status === "error" ? 100 : 35,
+            items: [
+                `Маршрут: ${formatRoute(state.route)}`
+            ]
+        };
+    }
+
+    const taskSteps = normalizeTaskSteps(detail);
+    const stageIndex = resolveExerciseStageIndex(state.selectedFocus, taskSteps);
+    const totalStages = Math.max(taskSteps.length + 1, 1);
+    const progressPercent = totalStages <= 1
+        ? 100
+        : Math.round((stageIndex / (totalStages - 1)) * 100);
+    const lifecycle = state.session?.submission?.response?.lifecycle
+        ?? state.session?.bootstrap?.response?.lifecycle
+        ?? null;
+    const retryFeedback = state.session?.submission?.response?.retryFeedback
+        ?? state.session?.feedbackPanel?.retryFeedback
+        ?? state.session?.bootstrap?.response?.submission?.placeholderRetryFeedback
+        ?? null;
+
+    return {
+        ariaLabel: "Прогресс текущего сценария",
+        label: "Прогресс сценария",
+        title: detail.title,
+        status: resolveExerciseProgressStatus(state, lifecycle),
+        meterLabel: "Прогресс по шагам сценария",
+        progressPercent,
+        items: [
+            `Фокус: ${resolveExerciseFocusLabel(state.selectedFocus, taskSteps)}`,
+            `Шагов: ${taskSteps.length}`
+        ]
+    };
+}
+
+function resolveProgressTopStripState(state) {
+    const summary = state.progress.summary;
+    const totalScenarios = summary?.items?.length ?? 0;
+    const completedCount = summary?.items?.filter((item) => item.status === "completed").length ?? 0;
+    const progressPercent = totalScenarios > 0 ? Math.round((completedCount / totalScenarios) * 100) : 0;
+
+    return {
+        ariaLabel: "Состояние экрана прогресса",
+        label: "Прогресс обучения",
+        title: "Сводка сценариев",
+        status: formatCatalogStatus(state.progress.status),
+        meterLabel: "Доля завершенных сценариев",
+        progressPercent: state.progress.status === "ready" ? progressPercent : state.progress.status === "error" ? 100 : 30,
+        items: [
+            `Сценарии: ${totalScenarios}`,
+            `Завершено: ${completedCount}`
+        ]
+    };
+}
+
+function resolveCatalogTopStripState(state) {
+    const activeFilterCount = Number(Boolean(state.query.difficulty))
+        + Number(Boolean(state.query.sort))
+        + state.query.tags.length;
+
+    return {
+        ariaLabel: "Состояние каталога",
+        label: "Рабочее пространство",
+        title: "Каталог сценариев",
+        status: formatCatalogStatus(state.catalog.status),
+        meterLabel: "Подготовка каталога",
+        progressPercent: state.catalog.status === "ready" ? 100 : state.catalog.status === "error" ? 100 : 40,
+        items: [
+            `Сценарии: ${state.catalog.items.length}`,
+            `Фильтры: ${activeFilterCount}`
+        ]
+    };
+}
+
+function resolveExerciseStageIndex(selectedFocus, taskSteps) {
+    if (selectedFocus === "overview" || !selectedFocus) {
+        return 0;
+    }
+
+    const stepIndex = taskSteps.findIndex((step) => `step-${step.position}` === selectedFocus);
+    return stepIndex >= 0 ? stepIndex + 1 : 0;
+}
+
+function resolveExerciseFocusLabel(selectedFocus, taskSteps) {
+    if (selectedFocus === "overview" || !selectedFocus) {
+        return "обзор";
+    }
+
+    const step = taskSteps.find((item) => `step-${item.position}` === selectedFocus);
+    return step ? `шаг ${step.position}` : "обзор";
+}
+
+function resolveExerciseProgressStatus(state, lifecycle) {
+    const bootstrapStatus = state.session?.bootstrap?.status ?? "idle";
+    const submissionStatus = state.session?.submission?.status ?? "idle";
+    const correctness = state.session?.submission?.response?.outcome?.correctness ?? null;
+
+    if (bootstrapStatus === "pending" || submissionStatus === "pending") {
+        return "обновляется";
+    }
+
+    if (correctness === "correct") {
+        return "решено";
+    }
+
+    if (bootstrapStatus === "terminal-error" || submissionStatus === "terminal-error") {
+        return "ошибка";
+    }
+
+    if (bootstrapStatus === "retryable-error" || submissionStatus === "retryable-error") {
+        return "нужен повтор";
+    }
+
+    if ((lifecycle?.submissionCount ?? 0) > 0) {
+        return "в работе";
+    }
+
+    return "готово";
+}
+
+function formatLayoutHintLevel(value) {
+    switch (value) {
+        case "baseline":
+            return "базовый";
+        case "nudge":
+            return "намек";
+        case "strong":
+            return "усиленный";
+        case "none":
+            return "не нужен";
+        default:
+            return "ожидание";
+    }
 }

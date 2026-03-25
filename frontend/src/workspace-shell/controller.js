@@ -56,6 +56,7 @@ const TRANSIENT_NAVIGATION_PANEL_ATTRIBUTES = Object.freeze([
     "data-scenario-animating",
     "data-tag-connection-collapsing",
     "data-tag-legend-bound",
+    "data-navigation-tag-guide-bound",
     "data-navigation-collapse-all-bound",
     "data-navigation-toggle-bound",
     "data-route-link-bound"
@@ -86,6 +87,7 @@ export function createCatalogWorkspaceController({
         isNavigationCollapsing: false,
         isNavigationExpandedReady: true,
         panelLayoutMode: initialPanelLayoutMode,
+        isNavigationTagGuideExpanded: false,
         pinnedNavigationTag: null,
         heldNavigationTag: null,
         heldNavigationTagExpandedSnapshot: null,
@@ -127,6 +129,7 @@ export function createCatalogWorkspaceController({
     let renderedRouteKind = null;
     let navigationMarkerDragOperation = Promise.resolve();
     const renderedSurfaceCache = {
+        topStrip: null,
         navigation: null,
         lesson: null,
         practiceViewer: null,
@@ -277,6 +280,7 @@ export function createCatalogWorkspaceController({
             toggleNavigationVisibility,
             toggleScenarioExpansion,
             toggleAllNavigationScenarios,
+            toggleNavigationTagGuide,
             toggleNavigationTagPin,
             beginNavigationTagHold,
             endNavigationTagHold,
@@ -478,6 +482,7 @@ export function createCatalogWorkspaceController({
             providerOptions
         });
 
+        patchSurface("top-strip", surfaces.topStrip, "topStrip");
         patchSurface("navigation", surfaces.navigation);
         patchSurface("lesson", surfaces.lesson);
         patchSurface("practice-viewer", surfaces.practiceViewer, "practiceViewer");
@@ -500,6 +505,7 @@ export function createCatalogWorkspaceController({
 
         if (surfaceName === "navigation" && (
             shouldSyncNavigationSelectionOnly(target)
+            || tryPatchNavigationLegendGuide(target, nextMarkup)
             || canRetainNavigationSurface(target, nextMarkup)
             || tryPatchNavigationScenarioNodes(target, nextMarkup)
         )) {
@@ -738,6 +744,7 @@ export function createCatalogWorkspaceController({
     }
 
     function resetRenderedSurfaceCache() {
+        renderedSurfaceCache.topStrip = null;
         renderedSurfaceCache.navigation = null;
         renderedSurfaceCache.lesson = null;
         renderedSurfaceCache.practiceViewer = null;
@@ -1508,6 +1515,11 @@ export function createCatalogWorkspaceController({
         }
     }
 
+    function toggleNavigationTagGuide() {
+        state.isNavigationTagGuideExpanded = !state.isNavigationTagGuideExpanded;
+        render();
+    }
+
     function syncResponsivePanelLayoutState() {
         const previousPanelLayoutMode = state.panelLayoutMode;
         const previousEffectiveNavigationState = state.isNavigationEffectivelyCollapsed;
@@ -1873,6 +1885,49 @@ function canRetainNavigationSurface(surfaceRoot, nextMarkup) {
         === serializeNormalizedNavigationMarkup(nextMarkup);
 }
 
+function tryPatchNavigationLegendGuide(surfaceRoot, nextMarkup) {
+    if (!(surfaceRoot instanceof HTMLElement)) {
+        return false;
+    }
+
+    const template = document.createElement("template");
+    template.innerHTML = nextMarkup;
+
+    const currentGuide = surfaceRoot.querySelector("[data-navigation-tag-guide]");
+    const nextGuide = template.content.querySelector("[data-navigation-tag-guide]");
+    if (!(currentGuide instanceof HTMLElement) || !(nextGuide instanceof HTMLElement)) {
+        return false;
+    }
+
+    if (serializeNavigationMarkupWithoutLegendGuide(surfaceRoot.innerHTML) !== serializeNavigationMarkupWithoutLegendGuide(nextMarkup)) {
+        return false;
+    }
+
+    const currentGuideState = currentGuide.getAttribute("data-navigation-tag-guide") ?? "collapsed";
+    const nextGuideState = nextGuide.getAttribute("data-navigation-tag-guide") ?? "collapsed";
+    if (currentGuideState === nextGuideState) {
+        return false;
+    }
+
+    const currentToggle = currentGuide.querySelector("[data-navigation-tag-guide-toggle]");
+    const nextToggle = nextGuide.querySelector("[data-navigation-tag-guide-toggle]");
+    const currentPanel = currentGuide.querySelector("[data-navigation-tag-guide-panel]");
+    const nextPanel = nextGuide.querySelector("[data-navigation-tag-guide-panel]");
+    if (
+        !(currentToggle instanceof HTMLElement)
+        || !(nextToggle instanceof HTMLElement)
+        || !(currentPanel instanceof HTMLElement)
+        || !(nextPanel instanceof HTMLElement)
+    ) {
+        return false;
+    }
+
+    currentGuide.setAttribute("data-navigation-tag-guide", nextGuideState);
+    currentToggle.setAttribute("aria-expanded", nextToggle.getAttribute("aria-expanded") ?? "false");
+    currentPanel.setAttribute("aria-hidden", nextPanel.getAttribute("aria-hidden") ?? "true");
+    return true;
+}
+
 function tryPatchNavigationScenarioNodes(surfaceRoot, nextMarkup) {
     if (!(surfaceRoot instanceof HTMLElement)) {
         return false;
@@ -1955,6 +2010,14 @@ function serializeNormalizedNavigationMarkup(markup) {
     const template = document.createElement("template");
     template.innerHTML = markup;
     normalizeNavigationMarkup(template.content);
+    return template.innerHTML;
+}
+
+function serializeNavigationMarkupWithoutLegendGuide(markup) {
+    const template = document.createElement("template");
+    template.innerHTML = markup;
+    normalizeNavigationMarkup(template.content);
+    template.content.querySelector("[data-navigation-tag-guide]")?.remove();
     return template.innerHTML;
 }
 

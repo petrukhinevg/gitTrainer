@@ -108,6 +108,103 @@ test("левая панель сохраняет фиксированную об
     }
 });
 
+test("кнопка справки над тегами раскрывает и скрывает описание без смены navigation DOM", async () => {
+    const dom = new JSDOM("<!doctype html><html><body><div id=\"app\"></div></body></html>", {
+        url: "http://localhost:5173/#/catalog"
+    });
+    const restoreGlobals = installDomGlobals(dom.window);
+    const appRoot = dom.window.document.querySelector("#app");
+
+    Object.defineProperty(dom.window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: 1400
+    });
+
+    const fetchImpl = async (url) => {
+        const requestUrl = new URL(url);
+
+        if (requestUrl.pathname === "/api/scenarios") {
+            return jsonResponse({
+                items: [
+                    {
+                        id: "branch-safety",
+                        slug: "branch-safety",
+                        title: "Подтверди ветку и незавершённый hotfix",
+                        summary: "Сначала выясни, на какой ветке уже есть незавершённые изменения.",
+                        difficulty: "beginner",
+                        tags: ["branching", "navigation"]
+                    }
+                ],
+                meta: {
+                    source: "db-seeded",
+                    query: {}
+                }
+            });
+        }
+
+        throw new Error(`Unexpected request: ${requestUrl.pathname}`);
+    };
+
+    try {
+        const controller = createCatalogWorkspaceController({
+            appRoot,
+            defaultProviderName: "backend-api",
+            catalogProviderFactories: {
+                "backend-api": () => createBackendApiCatalogProvider(fetchImpl)
+            },
+            detailProviderFactories: {
+                "backend-api": () => createBackendApiDetailProvider(fetchImpl)
+            },
+            sessionProviderFactories: {
+                "backend-api": () => createBackendApiSessionProvider(fetchImpl)
+            },
+            progressProviderFactories: {
+                "backend-api": () => createBackendApiProgressProvider(fetchImpl)
+            },
+            tagOptions: ["branching", "navigation"]
+        });
+
+        await controller.bootstrap();
+        await flushAsyncWork();
+
+        const guideToggle = appRoot.querySelector("[data-navigation-tag-guide-toggle]");
+        const guidePanelBefore = appRoot.querySelector("[data-navigation-tag-guide-panel]");
+        const guideLabelBefore = guideToggle?.querySelector(".scenario-legend__guide-toggle-label");
+
+        assert.ok(guideToggle, "Кнопка справки должна существовать");
+        assert.equal(guideToggle?.getAttribute("aria-expanded"), "false");
+        assert.equal(guidePanelBefore?.getAttribute("aria-hidden"), "true");
+        assert.ok(guideLabelBefore, "Заголовок кнопки справки должен существовать");
+
+        guideToggle.click();
+        await flushAsyncWork();
+
+        const guideToggleAfterExpand = appRoot.querySelector("[data-navigation-tag-guide-toggle]");
+        const guidePanelAfterExpand = appRoot.querySelector("[data-navigation-tag-guide-panel]");
+        const guideLabelAfterExpand = guideToggleAfterExpand?.querySelector(".scenario-legend__guide-toggle-label");
+
+        assert.equal(guideToggleAfterExpand?.getAttribute("aria-expanded"), "true");
+        assert.equal(guidePanelAfterExpand?.getAttribute("aria-hidden"), "false");
+        assert.match(guidePanelAfterExpand?.textContent ?? "", /Средняя кнопка мыши/);
+        assert.equal(guideToggleAfterExpand, guideToggle, "Toggle справки не должен пересоздаваться при раскрытии");
+        assert.equal(guidePanelAfterExpand, guidePanelBefore, "Панель справки не должна пересоздаваться при раскрытии");
+        assert.equal(guideLabelAfterExpand, guideLabelBefore, "Заголовок справки не должен пересоздаваться при раскрытии");
+
+        guideToggleAfterExpand?.click();
+        await flushAsyncWork();
+
+        assert.equal(appRoot.querySelector("[data-navigation-tag-guide-toggle]"), guideToggle, "Toggle справки не должен пересоздаваться при скрытии");
+        assert.equal(appRoot.querySelector("[data-navigation-tag-guide-panel]"), guidePanelBefore, "Панель справки не должна пересоздаваться при скрытии");
+        assert.equal(appRoot.querySelector(".scenario-legend__guide-toggle-label"), guideLabelBefore, "Заголовок справки не должен пересоздаваться при скрытии");
+        assert.equal(appRoot.querySelector("[data-navigation-tag-guide-toggle]")?.getAttribute("aria-expanded"), "false");
+        assert.equal(appRoot.querySelector("[data-navigation-tag-guide-panel]")?.getAttribute("aria-hidden"), "true");
+    } finally {
+        restoreGlobals();
+        dom.window.close();
+    }
+});
+
 function jsonResponse(payload, { status = 200 } = {}) {
     return {
         ok: status >= 200 && status < 300,

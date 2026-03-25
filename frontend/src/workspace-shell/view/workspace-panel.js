@@ -112,9 +112,9 @@ export function renderWorkspacePanelSections(state) {
         `,
         surface: `
             <section class="workspace-card workspace-card--composer workspace-card--focus practice-composer" data-practice-surface-scroll>
-                <details class="practice-composer__spoiler" data-practice-surface-spoiler>
+                <details class="practice-composer__spoiler" data-practice-surface-spoiler data-animated-disclosure>
                     <summary class="practice-composer__spoiler-summary">Показать контекст, результат и подсказки</summary>
-                    <div class="practice-composer__spoiler-body">
+                    <div class="practice-composer__spoiler-body" data-disclosure-body>
                         <div class="practice-composer__scroll practice-composer__scroll--surface">
                             ${renderPracticeScenarioSummary(detail, state.selectedScenarioSlug, state.submissionDraft, lifecycle)}
                             ${renderBootstrapNotice(bootstrapState)}
@@ -534,9 +534,9 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                 <div class="practice-inline-note" data-retry-feedback-slot="eligibility">
                     <p class="panel-copy">${escapeHtml(resolveRetryEligibilityCopy(normalizedFeedback))}</p>
                 </div>
-                <details class="practice-feedback__details">
+                <details class="practice-feedback__details" data-animated-disclosure>
                     <summary class="practice-feedback__details-summary">Контекст упражнения</summary>
-                    <div class="practice-feedback__details-body">
+                    <div class="practice-feedback__details-body" data-disclosure-body>
                         <div class="practice-output practice-output--ready" data-retry-context-summary>
                             <dl class="result-summary">
                                 <div>
@@ -581,9 +581,9 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     </div>
                 </details>
                 ${hasExplanationDetails ? `
-                    <details class="practice-feedback__details">
+                    <details class="practice-feedback__details" data-animated-disclosure>
                         <summary class="practice-feedback__details-summary">Подробности объяснения</summary>
-                        <div class="practice-feedback__details-body">
+                        <div class="practice-feedback__details-body" data-disclosure-body>
                             ${normalizedFeedback.explanation.tone === "partial" ? `
                                 <div class="practice-inline-note practice-inline-note--warning" data-partial-match-message>
                                     <p class="panel-copy">Ответ достаточно близок, чтобы остаться в том же контексте задачи, но всё ещё требует более точной команды.</p>
@@ -600,9 +600,9 @@ function renderRetryFeedbackPanel(feedbackPanelState, retryFeedback, submissionS
                     </details>
                 ` : ""}
                 ${hasHintLayer ? `
-                    <details class="practice-feedback__details" data-retry-feedback-slot="hint">
+                    <details class="practice-feedback__details" data-retry-feedback-slot="hint" data-animated-disclosure>
                         <summary class="practice-feedback__details-summary">Подсказки и reveal</summary>
-                        <div class="practice-feedback__details-body">
+                        <div class="practice-feedback__details-body" data-disclosure-body>
                             <div class="practice-inline-note">
                                 <p class="panel-copy">${escapeHtml(normalizedFeedback.hint.message)}</p>
                             </div>

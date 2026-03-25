@@ -6,7 +6,7 @@ import {
     escapeHtml,
 } from "./render-helpers.js";
 
-export function renderLessonLayout({ state, navigationLane, lessonLane, practiceLane }) {
+export function renderLessonLayout({ state, topStrip = "", navigationLane, lessonLane, practiceLane }) {
     const isNavigationToggleVisible = state.panelLayoutMode !== "stacked";
     const isNavigationCollapsed = Boolean(state.isNavigationEffectivelyCollapsed ?? state.isNavigationCollapsed);
     const isNavigationCollapsing = Boolean(state.isNavigationCollapsing);
@@ -41,8 +41,9 @@ export function renderLessonLayout({ state, navigationLane, lessonLane, practice
                 <span class="lesson-layout__navigation-toggle-icon" data-navigation-visibility-label>
                     ${isNavigationCollapsed ? ">" : "<"}
                 </span>
-                <span class="lesson-layout__navigation-toggle-text">Панель</span>
+                <span class="lesson-layout__navigation-toggle-text">Навигация</span>
             </button>
+            <div class="lesson-layout__top" data-render-surface="top-strip">${topStrip}</div>
             <div class="lesson-layout__lane lesson-layout__lane--navigation" id="lesson-navigation-lane">
                 ${navigationLane}
             </div>

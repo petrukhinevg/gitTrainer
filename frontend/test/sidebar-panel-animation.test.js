@@ -223,9 +223,34 @@ test("между тегами и заданиями рендерится раз�
     }
 });
 
+test("над блоком тегов рендерится кнопка справки и раскрываемое описание действий", () => {
+    const markup = renderSidebarPanelContent(
+        createReadyState({
+            isNavigationTagGuideExpanded: true
+        }),
+        null,
+        ["branching", "navigation"]
+    );
+    const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
+
+    try {
+        const toggle = dom.window.document.querySelector("[data-navigation-tag-guide-toggle]");
+        const panel = dom.window.document.querySelector("[data-navigation-tag-guide-panel]");
+
+        assert.ok(toggle, "Над legend должна появляться кнопка справки");
+        assert.equal(toggle?.getAttribute("aria-expanded"), "true");
+        assert.equal(panel?.getAttribute("aria-hidden"), "false");
+        assert.match(panel?.textContent ?? "", /Левая кнопка мыши/);
+        assert.match(panel?.textContent ?? "", /Средняя кнопка мыши/);
+    } finally {
+        dom.window.close();
+    }
+});
+
 function createReadyState({
     expandingScenarioSlug = null,
     expandedScenarioSlugs = ["branch-safety"],
+    isNavigationTagGuideExpanded = false,
     heldNavigationTag = null,
     catalogItems = [
         {
@@ -252,6 +277,7 @@ function createReadyState({
         collapsedNavigationScenarioSnapshot: null,
         selectedScenarioSlug,
         selectedFocus: null,
+        isNavigationTagGuideExpanded,
         pinnedNavigationTag: null,
         heldNavigationTag,
         detail,

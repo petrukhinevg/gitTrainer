@@ -65,6 +65,7 @@ function renderTrainingFlow(state, tagOptions) {
     return `
         <div class="tag-connection-map" data-tag-connection-map>
             <div class="scenario-legend">
+                ${renderLegendGuide(state.isNavigationTagGuideExpanded)}
                 <div class="scenario-legend__tags">
                     ${renderLegendTagRows(tagOptions, state.pinnedNavigationTag, state.heldNavigationTag)}
                 </div>
@@ -84,6 +85,40 @@ function renderTrainingFlow(state, tagOptions) {
                     isActive: item.slug === state.selectedScenarioSlug,
                     selectedFocus: state.selectedFocus
                 })).join("")}
+            </div>
+        </div>
+    `;
+}
+
+function renderLegendGuide(isExpanded) {
+    const expanded = Boolean(isExpanded);
+
+    return `
+        <div class="scenario-legend__guide" data-navigation-tag-guide="${expanded ? "expanded" : "collapsed"}">
+            <button
+                class="scenario-legend__guide-toggle"
+                type="button"
+                data-navigation-tag-guide-toggle
+                aria-expanded="${expanded ? "true" : "false"}"
+                aria-controls="navigation-tag-guide-panel"
+            >
+                <span class="scenario-legend__guide-toggle-label">Как работать с тегами</span>
+                <span class="scenario-legend__guide-toggle-icon" aria-hidden="true">></span>
+            </button>
+            <div
+                class="scenario-legend__guide-panel"
+                id="navigation-tag-guide-panel"
+                data-navigation-tag-guide-panel
+                aria-hidden="${expanded ? "false" : "true"}"
+            >
+                <div class="scenario-legend__guide-content">
+                    <p class="panel-copy">Теги управляют подсветкой и фильтрацией сценариев в левой колонке.</p>
+                    <ul class="scenario-legend__guide-list">
+                        <li><strong>Наведение</strong> подсвечивает связанные задания и ветки, не меняя выбранное состояние.</li>
+                        <li><strong>Левая кнопка мыши</strong> закрепляет тег. Повторное нажатие снимает закрепление.</li>
+                        <li><strong>Средняя кнопка мыши</strong> включает удержание тега и фильтрует список по нему. Повторное нажатие возвращает прежний вид.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     `;

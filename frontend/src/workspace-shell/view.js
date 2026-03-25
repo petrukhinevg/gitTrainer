@@ -1,5 +1,5 @@
 import { renderLessonLayout } from "./view/lesson-layout.js";
-import { renderMainPanel, renderMainPanelContent } from "./view/main-panel.js";
+import { renderLayoutTopStrip, renderMainPanel, renderMainPanelContent } from "./view/main-panel.js";
 import { renderSidebarPanel, renderSidebarPanelContent } from "./view/sidebar-panel.js";
 import { renderRouteNotFound } from "./view/workspace-intro.js";
 import { renderWorkspacePanel, renderWorkspacePanelSections } from "./view/workspace-panel.js";
@@ -12,6 +12,7 @@ export function renderCatalogWorkspace({ state, selectedCatalogScenario, tagOpti
     return `
         ${renderLessonLayout({
             state,
+            topStrip: renderLayoutTopStrip(state),
             navigationLane: renderSidebarPanel(state, selectedCatalogScenario, tagOptions),
             lessonLane: renderMainPanel(state, { tagOptions, providerOptions }),
             practiceLane: renderWorkspacePanel(state)
@@ -23,6 +24,7 @@ export function renderCatalogWorkspaceShell() {
     return `
         ${renderLessonLayout({
             state: { route: "catalog" },
+            topStrip: "",
             navigationLane: renderSurfaceLaneShell("navigation"),
             lessonLane: renderSurfaceLaneShell("lesson"),
             practiceLane: renderPracticeLaneShell()
@@ -34,6 +36,7 @@ export function renderCatalogWorkspaceSurfaces({ state, selectedCatalogScenario,
     const practiceSections = renderWorkspacePanelSections(state);
 
     return {
+        topStrip: renderLayoutTopStrip(state),
         navigation: renderSidebarPanelContent(state, selectedCatalogScenario, tagOptions),
         lesson: renderMainPanelContent(state, { tagOptions, providerOptions }),
         practiceViewer: practiceSections.viewer,

@@ -7,6 +7,7 @@ import {
 } from "./tag-connection-overlay.js";
 
 const FLOW_SUBTASK_SHIFT_ANIMATION_MS = PANEL_LAYOUT_CONFIG.animation.overlayFlowSubtaskShiftMs;
+const DISCLOSURE_ANIMATION_MS = 220;
 
 export function bindWorkspaceShellDom({
     appRoot,
@@ -20,6 +21,7 @@ export function bindWorkspaceShellDom({
     toggleNavigationVisibility,
     toggleScenarioExpansion,
     toggleAllNavigationScenarios,
+    toggleNavigationTagGuide,
     toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold,
@@ -39,11 +41,13 @@ export function bindWorkspaceShellDom({
         state,
         toggleScenarioExpansion,
         toggleAllNavigationScenarios,
+        toggleNavigationTagGuide,
         toggleNavigationTagPin,
         beginNavigationTagHold,
         endNavigationTagHold
     });
     bindPracticeSurfaceControls({
+        appRoot,
         ensureExerciseSession,
         retryLastSubmission,
         restartExerciseSession,
@@ -231,6 +235,7 @@ function bindNavigationControls({
     state,
     toggleScenarioExpansion,
     toggleAllNavigationScenarios,
+    toggleNavigationTagGuide,
     toggleNavigationTagPin,
     beginNavigationTagHold,
     endNavigationTagHold
@@ -273,6 +278,21 @@ function bindNavigationControls({
         button.dataset.navigationCollapseAllBound = "true";
         button.addEventListener("click", () => {
             toggleAllNavigationScenarios();
+        });
+    });
+
+    document.querySelectorAll("[data-navigation-tag-guide-toggle]").forEach((button) => {
+        if (
+            !(button instanceof HTMLElement)
+            || button.tagName !== "BUTTON"
+            || button.dataset.navigationTagGuideBound === "true"
+        ) {
+            return;
+        }
+
+        button.dataset.navigationTagGuideBound = "true";
+        button.addEventListener("click", () => {
+            toggleNavigationTagGuide();
         });
     });
 
@@ -488,6 +508,7 @@ function bindNavigationControls({
 }
 
 function bindPracticeSurfaceControls({
+    appRoot,
     ensureExerciseSession,
     retryLastSubmission,
     restartExerciseSession,
@@ -573,6 +594,142 @@ function bindPracticeSurfaceControls({
             revealNextRetryHint();
         });
     });
+
+    bindAnimatedDisclosures(appRoot);
+}
+
+function bindAnimatedDisclosures(appRoot) {
+    if (!isElementNode(appRoot)) {
+        return;
+    }
+
+    appRoot.querySelectorAll("[data-animated-disclosure]").forEach((details) => {
+        if (!isElementNode(details) || details.tagName !== "DETAILS" || details.dataset.disclosureAnimationBound === "true") {
+            return;
+        }
+
+        const summary = details.querySelector("summary");
+        const body = details.querySelector("[data-disclosure-body]");
+        if (!isElementNode(summary) || !isElementNode(body)) {
+            return;
+        }
+
+        details.dataset.disclosureAnimationBound = "true";
+        summary.addEventListener("click", (event) => {
+            if (details.dataset.disclosureAnimating === "true") {
+                event.preventDefault();
+                return;
+            }
+
+            event.preventDefault();
+
+            if (prefersReducedMotion(details)) {
+                details.open = !details.open;
+                return;
+            }
+
+            if (details.open) {
+                animateDisclosureClose(details, body);
+                return;
+            }
+
+            animateDisclosureOpen(details, body);
+        });
+    });
+}
+
+function animateDisclosureOpen(details, body) {
+    details.dataset.disclosureAnimating = "true";
+    details.open = true;
+    prepareDisclosureBody(body);
+    body.style.height = "0px";
+    body.style.opacity = "0";
+    body.style.transform = "translateY(-8px)";
+    void body.offsetHeight;
+    const targetHeight = body.scrollHeight;
+    body.style.transition = createDisclosureTransition();
+    requestAnimationFrame(() => {
+        body.style.height = `${targetHeight}px`;
+        body.style.opacity = "1";
+        body.style.transform = "translateY(0)";
+    });
+    finishDisclosureAnimation(details, body, () => {
+        clearDisclosureBodyStyles(body);
+    });
+}
+
+function animateDisclosureClose(details, body) {
+    details.dataset.disclosureAnimating = "true";
+    prepareDisclosureBody(body);
+    body.style.height = `${body.scrollHeight}px`;
+    body.style.opacity = "1";
+    body.style.transform = "translateY(0)";
+    void body.offsetHeight;
+    body.style.transition = createDisclosureTransition();
+    requestAnimationFrame(() => {
+        body.style.height = "0px";
+        body.style.opacity = "0";
+        body.style.transform = "translateY(-8px)";
+    });
+    finishDisclosureAnimation(details, body, () => {
+        details.open = false;
+        clearDisclosureBodyStyles(body);
+    });
+}
+
+function finishDisclosureAnimation(details, body, onComplete) {
+    let isFinished = false;
+    const complete = () => {
+        if (isFinished) {
+            return;
+        }
+
+        isFinished = true;
+        window.clearTimeout(timeoutId);
+        delete details.dataset.disclosureAnimating;
+        body.removeEventListener("transitionend", handleTransitionEnd);
+        onComplete();
+    };
+    const handleTransitionEnd = (event) => {
+        if (event.target !== body || event.propertyName !== "height") {
+            return;
+        }
+
+        complete();
+    };
+    const timeoutId = window.setTimeout(complete, DISCLOSURE_ANIMATION_MS + 40);
+    body.addEventListener("transitionend", handleTransitionEnd);
+}
+
+function prepareDisclosureBody(body) {
+    body.style.overflow = "hidden";
+    body.style.willChange = "height, opacity, transform";
+}
+
+function clearDisclosureBodyStyles(body) {
+    body.style.height = "";
+    body.style.opacity = "";
+    body.style.transform = "";
+    body.style.transition = "";
+    body.style.overflow = "";
+    body.style.willChange = "";
+}
+
+function createDisclosureTransition() {
+    return [
+        `height ${DISCLOSURE_ANIMATION_MS}ms ease`,
+        `opacity ${DISCLOSURE_ANIMATION_MS - 40}ms ease`,
+        `transform ${DISCLOSURE_ANIMATION_MS}ms ease`
+    ].join(", ");
+}
+
+function isElementNode(value) {
+    return Boolean(value) && value.nodeType === 1;
+}
+
+function prefersReducedMotion(details) {
+    const view = details?.ownerDocument?.defaultView;
+    return Boolean(view?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
 }
 
 function routePracticeSurfaceWheel(scrollRoot, event) {

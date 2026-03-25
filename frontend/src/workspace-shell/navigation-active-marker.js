@@ -19,8 +19,9 @@ export function bindNavigationActiveMarker({
 
     const navigationBody = navigationLane.querySelector(".lesson-lane__body");
     const mapRoot = navigationLane.querySelector("[data-tag-connection-map]");
+    const railShell = navigationLane.querySelector(".navigation-flow-rail");
     const marker = navigationLane.querySelector("[data-navigation-active-marker]");
-    if (!(mapRoot instanceof HTMLElement) || !(marker instanceof HTMLElement)) {
+    if (!(mapRoot instanceof HTMLElement) || !(marker instanceof HTMLElement) || !(railShell instanceof HTMLElement)) {
         navigationLane.__redrawNavigationActiveMarker = null;
         navigationLane.__navigationActiveMarkerCleanup = null;
         navigationLane.__navigationActiveMarkerBinding = null;
@@ -32,6 +33,7 @@ export function bindNavigationActiveMarker({
         existingBinding?.layoutRoot === layoutRoot
         && existingBinding?.navigationBody === navigationBody
         && existingBinding?.mapRoot === mapRoot
+        && existingBinding?.railShell === railShell
         && existingBinding?.marker === marker
         && existingBinding?.onMarkerDragStart === onMarkerDragStart
         && existingBinding?.onMarkerDragTargetChange === onMarkerDragTargetChange
@@ -72,6 +74,7 @@ export function bindNavigationActiveMarker({
             mapRoot,
             dragTargetDescriptor
         });
+        syncNavigationFlowRailBounds({ mapRoot, railShell });
         // Во время resize цель может на один кадр отдать нулевую геометрию.
         // В таком случае сохраняем прошлое положение, а не прячем маркер.
         const nextState = resolvedState ?? previousState ?? createHiddenNavigationActiveMarkerState();
@@ -206,6 +209,7 @@ export function bindNavigationActiveMarker({
         layoutRoot,
         navigationBody,
         mapRoot,
+        railShell,
         marker,
         onMarkerDragStart,
         onMarkerDragTargetChange,
@@ -564,6 +568,45 @@ export function measureNavigationActiveMarkerGeometry({ mapRoot, target }) {
         top: targetRect.top - mapRect.top,
         height: targetRect.height
     };
+}
+
+function syncNavigationFlowRailBounds({ mapRoot, railShell }) {
+    if (!(mapRoot instanceof HTMLElement) || !(railShell instanceof HTMLElement)) {
+        return;
+    }
+
+    const lineTop = measureNavigationFlowRailLineTop(mapRoot);
+    railShell.style.setProperty("--navigation-flow-rail-line-top", `${lineTop}px`);
+}
+
+function measureNavigationFlowRailLineTop(mapRoot) {
+    if (!(mapRoot instanceof HTMLElement)) {
+        return 2;
+    }
+
+    const flowBlockList = mapRoot.querySelector("[data-flow-block-list]");
+    if (!(flowBlockList instanceof HTMLElement)) {
+        return 2;
+    }
+
+    const mapRect = mapRoot.getBoundingClientRect();
+    if (!Number.isFinite(mapRect.top)) {
+        return 2;
+    }
+
+    const flowBlocks = Array.from(flowBlockList.querySelectorAll(".flow-block"))
+        .filter((element) => element instanceof HTMLElement);
+    if (flowBlocks.length === 0) {
+        return 2;
+    }
+
+    const topOffsets = flowBlocks
+        .map((element) => element.getBoundingClientRect().top - mapRect.top)
+        .filter((offset) => Number.isFinite(offset));
+
+    return topOffsets.length > 0
+        ? Math.max(2, Math.round(Math.min(...topOffsets)))
+        : 2;
 }
 
 function shouldRenderNavigationActiveMarker(layoutRoot) {

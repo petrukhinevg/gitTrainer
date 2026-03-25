@@ -207,6 +207,80 @@
     gap: 14px;
 }
 
+.progress-top-strip {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 8px 14px;
+    margin-bottom: 2px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.progress-top-strip__lead,
+.progress-top-strip__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-top-strip__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.progress-top-strip__meter {
+    position: relative;
+    flex: 1 1 180px;
+    min-width: 140px;
+    max-width: 240px;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(57, 89, 121, 0.12);
+}
+
+.progress-top-strip__meter-value {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(57, 89, 121, 0.68), rgba(114, 140, 104, 0.72));
+    transition: width 220ms ease;
+}
+
+.progress-top-strip__item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border: 1px solid rgba(31, 23, 32, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.56);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+}
+
+.progress-top-strip__status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(57, 89, 121, 0.12);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
 .progress-card,
 .progress-activity,
 .progress-guidance-shell,
@@ -285,7 +359,300 @@
     border-width: 1px;
 }
 
+.lesson-main-surface {
+    --lesson-main-accent: var(--accent-cool);
+    --lesson-main-accent-border: color-mix(in srgb, var(--lesson-main-accent) 30%, var(--border));
+    position: relative;
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 4px 0 18px 22px;
+    isolation: isolate;
+}
+
+.lesson-main-surface[data-main-panel-route="catalog"] {
+    --lesson-main-accent: #8b5d21;
+}
+
+.lesson-main-surface[data-main-panel-route="progress"] {
+    --lesson-main-accent: #2e6a4e;
+}
+
+.lesson-main-surface[data-main-panel-route="exercise"] {
+    --lesson-main-accent: #395979;
+}
+
+.lesson-main-surface::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 16px;
+    left: 5px;
+    width: 2px;
+    border-radius: 999px;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--lesson-main-accent) 44%, transparent) 0%,
+        rgba(31, 23, 32, 0.08) 100%
+    );
+    box-shadow: 0 0 22px color-mix(in srgb, var(--lesson-main-accent) 16%, transparent);
+}
+
+.lesson-main-surface::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--lesson-main-accent) 82%, #fffaf1 18%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--lesson-main-accent) 14%, transparent),
+        0 8px 18px color-mix(in srgb, var(--lesson-main-accent) 18%, transparent);
+}
+
+.lesson-main-surface__body {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+}
+
+.lesson-lane--lesson .lesson-lead,
+.lesson-lane--lesson .lesson-spotlight,
+.lesson-lane--lesson .lesson-block,
+.lesson-lane--lesson .progress-card,
+.lesson-lane--lesson .progress-activity,
+.lesson-lane--lesson .progress-guidance-shell {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 0;
+    border-radius: 24px;
+    border: 1px solid var(--lesson-main-accent-border);
+    background: transparent;
+    box-shadow: none;
+}
+
+.lesson-lane--lesson .lesson-lead::before,
+.lesson-lane--lesson .lesson-spotlight::before,
+.lesson-lane--lesson .lesson-block::before,
+.lesson-lane--lesson .progress-card::before,
+.lesson-lane--lesson .progress-activity::before,
+.lesson-lane--lesson .progress-guidance-shell::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--lesson-main-accent) 38%, transparent) 0%,
+        rgba(255, 255, 255, 0.75) 50%,
+        color-mix(in srgb, var(--lesson-main-accent) 22%, transparent) 100%
+    );
+}
+
+.lesson-lane--lesson .lesson-lead {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, auto);
+    gap: 18px;
+    padding: 20px 22px 22px;
+    background: transparent;
+}
+
+.lesson-lane--lesson .lesson-lead::after {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 0;
+    width: 4px;
+    border-radius: 0 999px 999px 0;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--lesson-main-accent) 72%, #fffaf1 28%) 0%,
+        color-mix(in srgb, var(--lesson-main-accent) 24%, transparent) 100%
+    );
+}
+
+.lesson-lane--lesson .lesson-lead__heading,
+.lesson-lane--lesson .lesson-lead__meta,
+.lesson-lane--lesson .lesson-spotlight > *,
+.lesson-lane--lesson .lesson-block > *,
+.lesson-lane--lesson .progress-card > *,
+.lesson-lane--lesson .progress-activity > *,
+.lesson-lane--lesson .progress-guidance-shell > * {
+    position: relative;
+    z-index: 1;
+}
+
+.lesson-lane--lesson .lesson-lead__meta {
+    align-content: start;
+    align-self: stretch;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--lesson-main-accent) 22%, transparent);
+    background: transparent;
+}
+
+.lesson-lane--lesson .lesson-lead__meta-item,
+.lesson-lane--lesson .lesson-spotlight__pill,
+.lesson-lane--lesson .progress-status-marker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--lesson-main-accent) 18%, rgba(31, 23, 32, 0.08));
+    background: transparent;
+    box-shadow: none;
+}
+
+.lesson-lane--lesson .lesson-lead__meta-item {
+    font-size: 0.72rem;
+}
+
+.lesson-lane--lesson .lesson-spotlight,
+.lesson-lane--lesson .lesson-block,
+.lesson-lane--lesson .progress-card,
+.lesson-lane--lesson .progress-activity,
+.lesson-lane--lesson .progress-guidance-shell {
+    padding: 18px 20px 20px;
+}
+
+.lesson-lane--lesson .lesson-spotlight {
+    gap: 14px;
+    background: transparent;
+}
+
+.lesson-lane--lesson .lesson-block--reading {
+    gap: 16px;
+}
+
+.lesson-lane--lesson .lesson-section__header {
+    gap: 8px;
+}
+
+.lesson-lane--lesson .lesson-block__title {
+    font-size: 1.08rem;
+}
+
+.lesson-lane--lesson .task-sequence,
+.lesson-lane--lesson .task-steps,
+.lesson-lane--lesson .task-annotations,
+.lesson-lane--lesson .progress-summary-grid,
+.lesson-lane--lesson .progress-activity-list,
+.lesson-lane--lesson .progress-guidance-groups,
+.lesson-lane--lesson .progress-guidance-list {
+    gap: 12px;
+}
+
+.lesson-lane--lesson .task-sequence__item,
+.lesson-lane--lesson .task-steps__item,
+.lesson-lane--lesson .task-annotation,
+.lesson-lane--lesson .progress-guidance-shell__hero,
+.lesson-lane--lesson .progress-guidance-group,
+.lesson-lane--lesson .progress-recommendation-card,
+.lesson-lane--lesson .catalog-controls__field,
+.lesson-lane--lesson .catalog-controls__tags {
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--lesson-main-accent) 16%, rgba(31, 23, 32, 0.08));
+    border-radius: 18px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.lesson-lane--lesson .task-sequence__item,
+.lesson-lane--lesson .task-steps__item,
+.lesson-lane--lesson .task-annotation {
+    border-bottom: 0;
+}
+
+.lesson-lane--lesson .task-sequence__index {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--lesson-main-accent) 24%, transparent);
+    background: transparent;
+    box-shadow: none;
+}
+
+.lesson-lane--lesson .task-step__position {
+    justify-self: start;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--lesson-main-accent) 20%, transparent);
+    background: transparent;
+}
+
+.lesson-lane--lesson .catalog-controls__form,
+.lesson-lane--lesson .catalog-controls__grid {
+    gap: 14px;
+}
+
+.lesson-lane--lesson .catalog-controls__field select {
+    border-radius: 14px;
+    background: transparent;
+}
+
+.lesson-lane--lesson .catalog-controls__tag-option {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--lesson-main-accent) 16%, rgba(31, 23, 32, 0.08));
+}
+
+.lesson-lane--lesson .catalog-controls__actions {
+    align-items: flex-start;
+}
+
+.lesson-lane--lesson .progress-guidance-shell {
+    gap: 16px;
+}
+
+.lesson-lane--lesson .progress-guidance-shell__hero {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--lesson-main-accent) 12%, transparent), transparent 50%),
+        linear-gradient(160deg, color-mix(in srgb, var(--lesson-main-accent) 10%, rgba(255, 250, 241, 0.98)), rgba(255, 250, 241, 0.88));
+}
+
+@media (max-width: 960px) {
+    .lesson-main-surface {
+        padding-left: 18px;
+    }
+
+    .lesson-lane--lesson .lesson-lead {
+        grid-template-columns: 1fr;
+    }
+
+    .lesson-lane--lesson .catalog-controls__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 720px) {
+    .progress-top-strip {
+        align-items: flex-start;
+    }
+
+    .progress-top-strip__meta {
+        flex-basis: 100%;
+    }
+
+    .progress-top-strip__meter {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .lesson-main-surface {
+        padding-left: 14px;
+    }
+
+    .lesson-main-surface::before {
+        left: 3px;
+    }
+
     .task-sequence__item {
         grid-template-columns: 1fr;
         align-items: stretch;
@@ -302,5 +669,15 @@
     .submission-draft__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .lesson-lane--lesson .lesson-lead,
+    .lesson-lane--lesson .lesson-spotlight,
+    .lesson-lane--lesson .lesson-block,
+    .lesson-lane--lesson .progress-card,
+    .lesson-lane--lesson .progress-activity,
+    .lesson-lane--lesson .progress-guidance-shell {
+        padding: 16px;
+        border-radius: 20px;
     }
 }

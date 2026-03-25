@@ -35,6 +35,7 @@ test("маркер выбирает активную подзадачу прио
     try {
         const appRoot = window.document.querySelector("[data-app-root]");
         const mapRoot = appRoot.querySelector("[data-tag-connection-map]");
+        const railShell = appRoot.querySelector(".navigation-flow-rail");
         const marker = appRoot.querySelector("[data-navigation-active-marker]");
         const scenarioToggle = appRoot.querySelector("[data-scenario-toggle]");
         const subtaskLink = appRoot.querySelector("[data-scenario-focus]");
@@ -48,6 +49,7 @@ test("маркер выбирает активную подзадачу прио
 
         assert.equal(resolveNavigationActiveMarkerTarget(mapRoot), subtaskLink);
         assert.equal(marker.dataset.visible, "true");
+        assert.equal(railShell.style.getPropertyValue("--navigation-flow-rail-line-top"), "80px");
         assert.equal(marker.style.getPropertyValue("--navigation-active-marker-top"), "196px");
         assert.equal(marker.style.getPropertyValue("--navigation-active-marker-height"), "46px");
 

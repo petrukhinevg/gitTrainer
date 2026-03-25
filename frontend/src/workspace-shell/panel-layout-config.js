@@ -12,7 +12,7 @@ export class PanelLayoutConfig {
     // Левая панель: навигация, toggle и связанные размеры.
     static LEFT_PANEL = Object.freeze({
         laneWidthPx: 340,
-        toolbarHeightPx: 24
+        toolbarHeightPx: 34
     });
 
     // Средняя панель: основное содержимое урока.
@@ -152,13 +152,15 @@ export function renderPanelLayoutResponsiveStyle() {
                     grid-template-columns: 1fr;
                     gap: 16px;
                     height: auto;
-                    padding-top: var(--navigation-toolbar-height);
+                    padding-top: 0;
+                    padding-left: 0;
                     overflow: visible;
                     background: transparent;
                 }
 
                 .lesson-layout__navigation-toggle {
-                    width: 100%;
+                    width: var(--navigation-toolbar-height);
+                    height: 100vh;
                 }
 
                 .lesson-layout__lane--navigation {
@@ -247,12 +249,12 @@ export function renderPanelLayoutResponsiveStyle() {
                     align-items: flex-start;
                 }
 
-                .lesson-layout--compact-navigation-visible .scenario-legend__row {
+                .lesson-layout--compact-navigation-overlay .scenario-legend__row {
                     flex-direction: row;
                     align-items: stretch;
                 }
 
-                .lesson-layout--compact-navigation-visible .scenario-legend__tag {
+                .lesson-layout--compact-navigation-overlay .scenario-legend__tag {
                     width: 100%;
                     flex: 1 1 0;
                 }
