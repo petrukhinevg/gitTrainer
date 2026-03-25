@@ -34,6 +34,7 @@ body {
     --navigation-lane-width: 340px;
     --navigation-lane-current-width: var(--navigation-lane-width);
     --navigation-toolbar-height: 26px;
+    --layout-top-strip-height: 0px;
     --navigation-collapse-duration: 500ms;
     --navigation-collapse-easing: cubic-bezier(0.22, 1, 0.36, 1);
     --panel-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
@@ -89,9 +90,11 @@ body {
 .lesson-layout__top {
     grid-area: top;
     min-width: 0;
+    width: calc(100% + var(--navigation-toolbar-height));
     display: grid;
     align-content: start;
     padding: 0;
+    margin-left: calc(-1 * var(--navigation-toolbar-height));
     z-index: 5;
 }
 
@@ -111,6 +114,30 @@ body {
 
 .lesson-layout--practice-hidden .lesson-layout__lane--lesson {
     grid-column: lesson-start / practice-end;
+}
+
+.lesson-layout--progress-full-width {
+    grid-template-areas:
+        "top"
+        "lesson";
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 0;
+}
+
+.lesson-layout--progress-full-width .lesson-layout__lane--lesson {
+    grid-column: 1;
+}
+
+.lesson-layout--progress-full-width .lesson-layout__top {
+    width: 100%;
+    margin-left: 0;
+}
+
+.lesson-layout--progress-full-width .lesson-layout__lane--navigation,
+.lesson-layout--progress-full-width .lesson-layout__lane--practice,
+.lesson-layout--progress-full-width .lesson-layout__tag-connection-overlay,
+.lesson-layout--progress-full-width .lesson-layout__navigation-toggle {
+    display: none;
 }
 
 .lesson-layout__lane {
@@ -142,8 +169,8 @@ body {
 
 
 .lesson-layout__navigation-toggle {
-    position: fixed;
-    top: 0;
+    position: absolute;
+    top: var(--layout-top-strip-height);
     left: 0;
     bottom: 0;
     z-index: 7;
@@ -154,7 +181,7 @@ body {
     gap: 12px;
     width: var(--navigation-toolbar-height);
     min-width: var(--navigation-toolbar-height);
-    height: 100vh;
+    height: auto;
     padding: 12px 0;
     border: 0;
     border-right: 1px solid rgba(31, 23, 32, 0.14);

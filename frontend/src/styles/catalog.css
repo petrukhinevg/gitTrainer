@@ -39,7 +39,7 @@
     padding: 0 12px;
     border: 1px solid rgba(31, 23, 32, 0.18);
     border-radius: 14px;
-    background: rgba(255, 250, 241, 0.84);
+    background: rgba(144, 146, 148, 0.24);
     color: var(--ink-strong);
     font: inherit;
     text-align: left;
@@ -108,12 +108,13 @@
 
 .scenario-legend__guide-content {
     min-height: 0;
+    box-sizing: border-box;
     padding: 12px;
     border: 1px solid rgba(31, 23, 32, 0.12);
     border-radius: 14px;
     background: rgba(255, 250, 241, 0.74);
     font-size: 0.82rem;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.4;
 }
 
@@ -121,6 +122,17 @@
 .scenario-legend__guide-list {
     font: inherit;
     line-height: inherit;
+}
+
+.lesson-layout--navigation-collapsing .scenario-legend__guide[data-navigation-tag-guide="expanded"] .scenario-legend__guide-content {
+    width: calc(var(--navigation-lane-width) - 36px);
+    min-width: calc(var(--navigation-lane-width) - 36px);
+}
+
+.lesson-layout--navigation-collapsing .scenario-legend__guide[data-navigation-tag-guide="expanded"],
+.lesson-layout--navigation-collapsing .scenario-legend__guide[data-navigation-tag-guide="expanded"] .scenario-legend__guide-panel {
+    width: calc(var(--navigation-lane-width) - 36px);
+    min-width: calc(var(--navigation-lane-width) - 36px);
 }
 
 .scenario-legend__guide-list {
@@ -712,9 +724,17 @@
     box-shadow: none;
 }
 
-.flow-block--active:not([data-flow-block-active-tag]):hover {
-    border-color: rgba(31, 23, 32, 0.3);
-    background: var(--shell-flow-block-surface);
+.flow-block:hover,
+.flow-block.flow-block--active:hover,
+.flow-block:active,
+.flow-block.flow-block--active:active,
+.flow-block[data-flow-block-active-tag]:hover,
+.flow-block[data-flow-block-active-tag].flow-block--active:hover,
+.flow-block[data-flow-block-active-tag]:active,
+.flow-block[data-flow-block-active-tag].flow-block--active:active,
+.flow-block--active:not([data-flow-block-active-tag]):hover,
+.flow-block--active:not([data-flow-block-active-tag]):active {
+    background: rgba(255, 250, 241, 0.96);
 }
 
 .flow-block[data-navigation-marker-preview-target="true"],

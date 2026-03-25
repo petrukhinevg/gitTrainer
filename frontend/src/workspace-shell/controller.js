@@ -315,6 +315,8 @@ export function createCatalogWorkspaceController({
             return;
         }
 
+        syncTopStripConstraint(layout);
+
         const isPracticeHidden = state.route !== "exercise";
         const isNavigationCollapsed = state.isNavigationEffectivelyCollapsed;
         const isNavigationToggleVisible = state.panelLayoutMode !== PANEL_LAYOUT_MODE.STACKED;
@@ -483,12 +485,23 @@ export function createCatalogWorkspaceController({
             providerOptions
         });
 
+        syncLayoutChrome();
+        commitLessonLaneLayout();
         patchSurface("top-strip", surfaces.topStrip, "topStrip");
         patchSurface("navigation", surfaces.navigation);
         patchSurface("lesson", surfaces.lesson);
         patchSurface("practice-viewer", surfaces.practiceViewer, "practiceViewer");
         patchSurface("practice-surface", surfaces.practiceSurface, "practiceSurface");
         syncLayoutChrome();
+    }
+
+    function commitLessonLaneLayout() {
+        const lessonLane = appRoot.querySelector(".lesson-layout__lane--lesson");
+        if (!(lessonLane instanceof HTMLElement)) {
+            return;
+        }
+
+        void lessonLane.offsetWidth;
     }
 
     function patchSurface(surfaceName, nextMarkup, cacheKey = surfaceName) {
@@ -1743,6 +1756,21 @@ export function createCatalogWorkspaceController({
             }
         });
     }
+}
+
+export function syncTopStripConstraint(layout) {
+    if (!(layout instanceof HTMLElement)) {
+        return;
+    }
+
+    const topStrip = layout.querySelector(".lesson-layout__top");
+    if (!(topStrip instanceof HTMLElement) || topStrip.childElementCount === 0) {
+        layout.style.setProperty("--layout-top-strip-height", "0px");
+        return;
+    }
+
+    const topStripHeight = Math.max(0, Math.ceil(topStrip.getBoundingClientRect().height));
+    layout.style.setProperty("--layout-top-strip-height", `${topStripHeight}px`);
 }
 
 function normalizeNavigationTagToken(tag) {

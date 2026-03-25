@@ -7,7 +7,8 @@ import {
 } from "./render-helpers.js";
 
 export function renderLessonLayout({ state, topStrip = "", navigationLane, lessonLane, practiceLane }) {
-    const isNavigationToggleVisible = state.panelLayoutMode !== "stacked";
+    const isProgressFullWidth = state.route === "progress";
+    const isNavigationToggleVisible = state.panelLayoutMode !== "stacked" && !isProgressFullWidth;
     const isNavigationCollapsed = Boolean(state.isNavigationEffectivelyCollapsed ?? state.isNavigationCollapsed);
     const isNavigationCollapsing = Boolean(state.isNavigationCollapsing);
     const isNavigationTransitioning = !isNavigationCollapsed && state.isNavigationExpandedReady === false;
@@ -23,7 +24,7 @@ export function renderLessonLayout({ state, topStrip = "", navigationLane, lesso
     return `
         ${renderPanelLayoutResponsiveStyle()}
         <section
-            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isCompactNavigationOverlay ? "lesson-layout--compact-navigation-overlay" : ""} ${isCompactNavigationVisible ? "lesson-layout--compact-navigation-visible" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""}"
+            class="lesson-layout lesson-layout--${escapeHtml(state.route)} ${isNavigationCollapsed ? "lesson-layout--navigation-collapsed" : ""} ${isNavigationCollapsing ? "lesson-layout--navigation-collapsing" : ""} ${isNavigationTransitioning ? "lesson-layout--navigation-transitioning" : ""} ${isCompactNavigationOverlay ? "lesson-layout--compact-navigation-overlay" : ""} ${isCompactNavigationVisible ? "lesson-layout--compact-navigation-visible" : ""} ${isPracticeHidden ? "lesson-layout--practice-hidden" : ""} ${isProgressFullWidth ? "lesson-layout--progress-full-width" : ""}"
             aria-label="Рабочее пространство урока"
             style="${escapeHtml(buildPanelLayoutInlineStyle())}"
         >
@@ -44,7 +45,11 @@ export function renderLessonLayout({ state, topStrip = "", navigationLane, lesso
                 <span class="lesson-layout__navigation-toggle-text">Навигация</span>
             </button>
             <div class="lesson-layout__top" data-render-surface="top-strip">${topStrip}</div>
-            <div class="lesson-layout__lane lesson-layout__lane--navigation" id="lesson-navigation-lane">
+            <div
+                class="lesson-layout__lane lesson-layout__lane--navigation"
+                id="lesson-navigation-lane"
+                ${isProgressFullWidth ? 'aria-hidden="true" inert' : ""}
+            >
                 ${navigationLane}
             </div>
             <div class="lesson-layout__lane lesson-layout__lane--lesson">

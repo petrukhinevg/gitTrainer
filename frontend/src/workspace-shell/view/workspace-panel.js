@@ -772,7 +772,7 @@ function renderWorkspaceTerminal({
                             data-workspace-transcript-id="${escapeHtml(entry.id)}"
                         >
                             <div class="workspace-terminal__line">
-                                <span class="workspace-terminal__prompt">git-trainer%</span>
+                                <span class="workspace-terminal__prompt">%</span>
                                 <code class="workspace-terminal__command">${escapeHtml(entry.command)}</code>
                             </div>
                             ${renderWorkspaceTerminalStreams(entry.terminalOutput)}
@@ -788,7 +788,7 @@ function renderWorkspaceTerminal({
                 </div>
                 <form class="workspace-terminal__form practice-composer__form" data-submission-draft-form>
                     <div class="workspace-terminal__editor">
-                        <span class="workspace-terminal__prompt workspace-terminal__prompt--input">git-trainer%</span>
+                        <span class="workspace-terminal__prompt workspace-terminal__prompt--input">%</span>
                         <textarea
                             class="workspace-terminal__input"
                             name="answer"

@@ -90,7 +90,7 @@
 
 .lesson-block__title {
     margin: 0;
-    font-weight: 600;
+    font-weight: 800;
     line-height: 1.05;
 }
 
@@ -225,9 +225,11 @@
     border-bottom: 1px solid var(--progress-top-strip-divider-color);
     border-radius: 0;
     overflow: hidden;
-    background: var(--progress-top-strip-surface);
+    background-color: var(--progress-top-strip-surface);
     box-shadow: none;
-    transition: border-color 220ms ease, background-color 220ms ease;
+    transition:
+        border-color 160ms ease,
+        background-color 160ms ease;
 }
 
 .progress-top-strip[data-top-strip-route="catalog"] {
@@ -375,8 +377,10 @@
 .progress-top-strip__meter-value {
     display: block;
     height: 100%;
-    background: var(--progress-top-strip-fill);
-    transition: width 360ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms ease;
+    background-color: var(--progress-top-strip-fill);
+    transition:
+        width 360ms cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 160ms ease;
     will-change: width;
 }
 
