@@ -45,8 +45,10 @@ test("раскрытые дочерние блоки получают после
     const dom = new JSDOM(`<!doctype html><html><body>${markup}</body></html>`);
 
     try {
+        const toggle = dom.window.document.querySelector('[data-scenario-toggle="branch-safety"]');
         const subtasks = Array.from(dom.window.document.querySelectorAll(".flow-subtask-group > .flow-block--subtask"));
 
+        assert.equal(toggle?.getAttribute("aria-expanded"), "false");
         assert.equal(subtasks.length, 3);
         assert.deepEqual(
             subtasks.map((entry) => entry.style.getPropertyValue("--flow-subtask-enter-index")),

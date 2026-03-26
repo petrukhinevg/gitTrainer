@@ -40,7 +40,7 @@ export function renderLessonLayout({ state, topStrip = "", navigationLane, lesso
                 ${isNavigationToggleVisible ? "" : "hidden aria-hidden=\"true\""}
             >
                 <span class="lesson-layout__navigation-toggle-icon" data-navigation-visibility-label>
-                    ${isNavigationCollapsed ? ">" : "<"}
+                    >
                 </span>
                 <span class="lesson-layout__navigation-toggle-text">Навигация</span>
             </button>

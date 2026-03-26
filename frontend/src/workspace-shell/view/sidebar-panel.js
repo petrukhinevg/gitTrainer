@@ -219,6 +219,7 @@ function renderSandboxFlowBlock(state) {
 function renderScenarioFlowBlock({ state, item, index, activeFilterTag, isActive, selectedFocus }) {
     const isExpanded = state.expandedScenarioSlugs.includes(item.slug);
     const shouldAnimateSubtasks = resolveExpandingScenarioSlugs(state).includes(item.slug);
+    const isToggleExpanded = isExpanded && !shouldAnimateSubtasks;
     const navigationDetail = resolveNavigationDetail(state, item.slug);
     const tagTokens = item.tags.map(toTagToken);
     const matchesActiveFilter = !activeFilterTag || tagTokens.includes(activeFilterTag);
@@ -255,12 +256,12 @@ function renderScenarioFlowBlock({ state, item, index, activeFilterTag, isActive
                     type="button"
                     data-scenario-toggle="${encodeHashSegment(item.slug)}"
                     data-tag-connection-target="${escapeHtml(tagTokens.join(" "))}"
-                    aria-expanded="${isExpanded ? "true" : "false"}"
+                    aria-expanded="${isToggleExpanded ? "true" : "false"}"
                     aria-controls="flow-subtasks-${encodeHashSegment(item.slug)}"
                 >
                     <span class="flow-block__heading">
                         <span class="flow-block__eyebrow">Задание ${index + 1}</span>
-                        <span class="flow-block__indicator" aria-hidden="true">${isExpanded ? "v" : ">"}</span>
+                        <span class="flow-block__indicator" aria-hidden="true">></span>
                     </span>
                     <strong class="flow-block__title">${escapeHtml(item.title)}</strong>
                     ${renderScenarioTagAccessibilityText(item.tags)}

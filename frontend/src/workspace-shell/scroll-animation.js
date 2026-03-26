@@ -103,10 +103,12 @@ export function bindSmoothScrollContainers() {
 export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {}) {
     const panel = findScenarioPanel(appRoot, slug);
     if (!panel || prefersReducedMotion()) {
+        findScenarioToggle(appRoot, slug)?.setAttribute("aria-expanded", "true");
         onFrame?.();
         return Promise.resolve();
     }
 
+    const toggleButton = findScenarioToggle(appRoot, slug);
     const flowNodeBody = resolveScenarioGapContainer(panel);
     const flowNodeGap = readFlowNodeGap(flowNodeBody);
     const expansionDuration = resolveScenarioExpansionDuration(panel);
@@ -134,6 +136,7 @@ export function animateScenarioExpansion(appRoot, slug, { onFrame = null } = {})
                 observer.observe(panel);
             }
 
+            toggleButton?.setAttribute("aria-expanded", "true");
             panel.style.transition = createScenarioPanelTransition(expansionDuration);
             void panel.offsetHeight;
             panel.style.height = formatPixelValue(targetHeight);
@@ -171,6 +174,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
         return Promise.resolve();
     }
 
+    const toggleButton = findScenarioToggle(appRoot, slug);
     const navigationBody = appRoot.querySelector(".lesson-lane--navigation .lesson-lane__body");
     const scrollStabilizer = createNavigationCollapseScrollStabilizer(panel, navigationBody);
     const flowNodeBody = resolveScenarioGapContainer(panel);
@@ -178,6 +182,7 @@ export function animateScenarioCollapse(appRoot, slug, { onFrame = null } = {}) 
 
     panel.dataset.tagConnectionCollapsing = "true";
     panel.dataset.scenarioAnimating = "true";
+    toggleButton?.setAttribute("aria-expanded", "false");
     panel.style.height = formatPixelValue(panel.getBoundingClientRect().height);
     panel.style.opacity = "1";
     panel.style.overflow = "hidden";
@@ -209,6 +214,10 @@ export function releaseCollapsedScenarioGap(appRoot, slug) {
         .querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`)
         ?.closest(".flow-node__body, .flow-node");
     releaseFlowNodeGapStyles(flowNodeBody);
+}
+
+function findScenarioToggle(appRoot, slug) {
+    return appRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`);
 }
 
 export function createNavigationCollapseScrollStabilizer(panel, navigationBody) {

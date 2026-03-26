@@ -390,9 +390,6 @@ export function createCatalogWorkspaceController({
             navigationToggle.dataset.navigationVisibilityState = isNavigationCollapsed ? "collapsed" : "expanded";
             navigationToggle.hidden = !isNavigationToggleVisible;
             navigationToggle.toggleAttribute("aria-hidden", !isNavigationToggleVisible);
-            navigationToggle.querySelector("[data-navigation-visibility-label]")?.replaceChildren(
-                resolveNavigationToggleLabel()
-            );
         }
     }
 
@@ -1334,7 +1331,6 @@ export function createCatalogWorkspaceController({
         const toggleButton = appRoot.querySelector(`[data-scenario-toggle="${escapeSelectorValue(slug)}"]`);
         if (toggleButton) {
             toggleButton.setAttribute("aria-expanded", "false");
-            toggleButton.querySelector(".flow-block__indicator")?.replaceChildren(">");
         }
 
         appRoot.querySelector(`[data-scenario-panel="${escapeSelectorValue(slug)}"]`)?.remove();
@@ -1677,14 +1673,6 @@ export function createCatalogWorkspaceController({
         return state.isNavigationEffectivelyCollapsed
             ? "Показать левую панель"
             : "Скрыть левую панель";
-    }
-
-    function resolveNavigationToggleLabel() {
-        if (state.panelLayoutMode === PANEL_LAYOUT_MODE.NAVIGATION_COLLAPSED) {
-            return state.isNavigationEffectivelyCollapsed ? ">" : "<";
-        }
-
-        return state.isNavigationEffectivelyCollapsed ? ">" : "<";
     }
 
     function beginNavigationTagHold(tag) {

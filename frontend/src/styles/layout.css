@@ -197,7 +197,7 @@ body {
     border-right: 1px solid rgba(31, 23, 32, 0.14);
     border-radius: 0;
     background:
-        linear-gradient(180deg, rgba(255, 250, 241, 0.98), rgba(243, 235, 224, 0.94)),
+        linear-gradient(180deg, rgba(229, 225, 218, 0.74), rgba(229, 225, 218, 0.74)),
         var(--paper-strong);
     color: var(--ink-strong);
     box-shadow: 8px 0 18px rgba(47, 31, 19, 0.08);
@@ -223,15 +223,24 @@ body {
 }
 
 .lesson-layout__navigation-toggle-icon {
-    display: inline-flex;
+    display: inline-grid;
     align-items: center;
     justify-content: center;
     width: 18px;
+    height: 18px;
     min-height: 18px;
     font-family: "Courier New", Courier, monospace;
     font-size: 0.96rem;
     font-weight: 700;
     line-height: 1;
+    transform: rotate(0deg);
+    transform-origin: 50% 50%;
+    transition: transform 320ms var(--panel-motion-easing);
+    will-change: transform;
+}
+
+.lesson-layout__navigation-toggle[aria-expanded="true"] .lesson-layout__navigation-toggle-icon {
+    transform: rotate(-360deg);
 }
 
 .lesson-layout__navigation-toggle-text {
@@ -274,6 +283,7 @@ body {
 }
 
 .lesson-lane {
+    --lesson-lane-scroll-fade-size: 18px;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -574,11 +584,30 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
+    padding-top: var(--lesson-lane-scroll-fade-size);
     padding-bottom: 16px;
     align-content: start;
     scrollbar-width: thin;
     scrollbar-color: rgba(31, 23, 32, 0.18) transparent;
     scrollbar-gutter: stable;
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 var(--lesson-lane-scroll-fade-size),
+        #000 calc(100% - var(--lesson-lane-scroll-fade-size)),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 var(--lesson-lane-scroll-fade-size),
+        #000 calc(100% - var(--lesson-lane-scroll-fade-size)),
+        transparent 100%
+    );
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
 }
 
 .lesson-lane__scroll-content {

@@ -44,12 +44,12 @@
     --workspace-terminal-action-border: rgba(31, 23, 32, 0.12);
     --workspace-terminal-action-surface: rgba(255, 255, 255, 0.42);
     --workspace-terminal-action-submit: rgba(57, 89, 121, 0.12);
-    height: 100%;
+    height: auto;
     min-height: 0;
     display: grid;
-    grid-template-rows: var(--practice-viewer-height) minmax(0, 1fr);
+    grid-template-rows: minmax(var(--practice-viewer-height), auto) auto;
     gap: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .practice-pane {
@@ -94,7 +94,7 @@
 
 .practice-pane--surface {
     display: flex;
-    height: 100%;
+    height: auto;
     min-height: 0;
     padding: 18px 0 0;
     border-top: 1px solid rgba(31, 23, 32, 0.14);
@@ -103,14 +103,10 @@
 
 .practice-pane--surface .workspace-card--composer {
     flex: 1 1 auto;
-    height: 100%;
+    height: auto;
     min-height: 0;
     overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--workspace-scrollbar-thumb) transparent;
-    scrollbar-gutter: stable;
+    overflow-y: visible;
 }
 
 .practice-loading-fill {
@@ -1876,14 +1872,16 @@
 }
 
 .lesson-lane--practice .lesson-lane__body {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: 0;
     padding-bottom: 0;
 }
 
 .lesson-lane--practice .lesson-lane__scroll-content {
-    height: 100%;
-    min-height: 0;
+    height: auto;
+    min-height: 100%;
 }
 
 @media (max-width: 900px) {

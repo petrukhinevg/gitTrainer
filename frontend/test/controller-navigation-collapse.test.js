@@ -107,6 +107,10 @@ test("при сворачивании сценария левая панель �
             scenarioButtonAfterCollapse.querySelector(".flow-block__indicator")?.textContent,
             ">"
         );
+        assert.equal(
+            scenarioButtonAfterCollapse.querySelector(".flow-block__indicator")?.getAttribute("aria-hidden"),
+            "true"
+        );
         assert.equal(appRoot.querySelector('[data-scenario-panel="branch-safety"]'), null);
 
         scenarioButtonAfterCollapse.click();
