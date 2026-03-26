@@ -36,7 +36,7 @@ class PostgresRetryFeedbackRenderingTest {
     @DynamicPropertySource
     static void postgresProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url",
-                () -> envOrDefault("POSTGRES_TEST_URL", "jdbc:postgresql://localhost:5432/git_trainer"));
+                () -> envOrDefault("POSTGRES_TEST_URL", "jdbc:postgresql://localhost:5433/git_trainer"));
         registry.add("spring.datasource.username", () -> envOrDefault("POSTGRES_TEST_USER", "git_trainer"));
         registry.add("spring.datasource.password", () -> envOrDefault("POSTGRES_TEST_PASSWORD", "git_trainer"));
         registry.add("spring.flyway.enabled", () -> "true");

@@ -62,13 +62,18 @@ static def resolveNpmCommand(boolean isWindows) {
 }
 
 static def resolveDockerCommand(boolean isWindows) {
-    if (isWindows) {
-        return "docker.exe"
-    }
-
     def configuredDocker = System.getenv("DOCKER_BIN")
     if (configuredDocker && new File(configuredDocker).exists()) {
         return configuredDocker
+    }
+
+    if (isWindows) {
+        return [
+                "${System.getenv('ProgramFiles')}\\Docker\\Docker\\resources\\bin\\docker.exe",
+                "${System.getenv('ProgramW6432')}\\Docker\\Docker\\resources\\bin\\docker.exe",
+                "${System.getenv('ProgramFiles(x86)')}\\Docker\\Docker\\resources\\bin\\docker.exe",
+                "docker.exe"
+        ].find { it && new File(it).exists() } ?: "docker.exe"
     }
 
     return [
@@ -155,6 +160,10 @@ tasks.register('syncFrontendAssets', Copy) {
     onlyIf {
         frontendDir.file("dist/index.html").asFile.exists()
     }
+}
+
+tasks.named('resolveMainClassName') {
+    dependsOn tasks.named('syncFrontendAssets')
 }
 
 tasks.named('check') {
@@ -248,40 +257,47 @@ tasks.register('ensureDockerDaemon') {
     description = 'Проверяет доступность Docker daemon и при colima-context автоматически запускает colima.'
 
     doLast {
-        def dockerInfo = runCommand([dockerCommand, "info"], true)
-        if (dockerInfo.exitCode == 0) {
-            return
-        }
-
-        def context = runCommand([dockerCommand, "context", "show"], true).stdout
-        if (context == "colima" && colimaCommand) {
-            logger.lifecycle("Docker context `${context}` is active, starting Colima first.")
-            def colimaStart = runCommand([colimaCommand, "start"], true)
-            if (colimaStart.exitCode != 0) {
-                def message = colimaStart.stderr ?: colimaStart.stdout ?: "unknown error"
-                throw new GradleException("Не удалось выполнить `colima start`: ${message}")
-            }
-
-            def dockerInfoAfterStart = runCommand([dockerCommand, "info"], true)
-            if (dockerInfoAfterStart.exitCode == 0) {
+        try {
+            def dockerInfo = runCommand([dockerCommand, "info"], true)
+            if (dockerInfo.exitCode == 0) {
                 return
             }
 
-            def message = dockerInfoAfterStart.stderr ?: dockerInfoAfterStart.stdout ?: "unknown error"
-            throw new GradleException("Docker daemon недоступен даже после `colima start`: ${message}")
-        }
+            def context = runCommand([dockerCommand, "context", "show"], true).stdout
+            if (context == "colima" && colimaCommand) {
+                logger.lifecycle("Docker context `${context}` is active, starting Colima first.")
+                def colimaStart = runCommand([colimaCommand, "start"], true)
+                if (colimaStart.exitCode != 0) {
+                    def message = colimaStart.stderr ?: colimaStart.stdout ?: "unknown error"
+                    throw new GradleException("Не удалось выполнить `colima start`: ${message}")
+                }
 
-        if (context == "colima" && !colimaCommand) {
+                def dockerInfoAfterStart = runCommand([dockerCommand, "info"], true)
+                if (dockerInfoAfterStart.exitCode == 0) {
+                    return
+                }
+
+                def message = dockerInfoAfterStart.stderr ?: dockerInfoAfterStart.stdout ?: "unknown error"
+                throw new GradleException("Docker daemon недоступен даже после `colima start`: ${message}")
+            }
+
+            if (context == "colima" && !colimaCommand) {
+                throw new GradleException(
+                        "Docker context `${context}` активен, но `colima` не найден в PATH и COLIMA_BIN не задан. " +
+                                "Установите Colima, переключите Docker context или задайте COLIMA_BIN."
+                )
+            }
+
+            def message = dockerInfo.stderr ?: dockerInfo.stdout ?: "unknown error"
             throw new GradleException(
-                    "Docker context `${context}` активен, но `colima` не найден в PATH и COLIMA_BIN не задан. " +
-                            "Установите Colima, переключите Docker context или задайте COLIMA_BIN."
+                    "Docker daemon недоступен. Активный context: `${context ?: 'unknown'}`. ${message}"
+            )
+        } catch (IOException exception) {
+            throw new GradleException(
+                    "Docker CLI недоступен. Установите Docker Desktop/Engine или задайте путь через DOCKER_BIN. ${exception.message}",
+                    exception
             )
         }
-
-        def message = dockerInfo.stderr ?: dockerInfo.stdout ?: "unknown error"
-        throw new GradleException(
-                "Docker daemon недоступен. Активный context: `${context ?: 'unknown'}`. ${message}"
-        )
     }
 }
 

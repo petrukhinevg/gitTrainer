@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: git_trainer
       POSTGRES_PASSWORD: git_trainer
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - git_trainer_pg_data:/var/lib/postgresql/data
     healthcheck:

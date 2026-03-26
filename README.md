@@ -105,7 +105,7 @@ docker compose -f docker-compose.postgres.yml up -d
 Пример:
 
 ```bash
-POSTGRES_URL=jdbc:postgresql://localhost:5432/git_trainer \
+POSTGRES_URL=jdbc:postgresql://localhost:5433/git_trainer \
 POSTGRES_USER=git_trainer \
 POSTGRES_PASSWORD=git_trainer \
 ./gradlew bootRun

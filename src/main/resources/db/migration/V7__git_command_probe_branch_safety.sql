@@ -37,14 +37,17 @@ INSERT INTO authored_scenario_validator_rules (
     outcome_code,
     outcome_message
 )
-VALUES (
-    'default:branch-safety:command_text',
-    1,
-    'exact_normalized_command',
-    'git branch --show-current',
-    'git branch --show-current',
-    'correct',
-    'expected-command',
-    'Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария.'
+SELECT 'default:branch-safety:command_text',
+       1,
+       'exact_normalized_command',
+       'git branch --show-current',
+       'git branch --show-current',
+       'correct',
+       'expected-command',
+       'Отправленная команда совпадает с ожидаемым безопасным следующим шагом для этого сценария.'
+WHERE EXISTS (
+    SELECT 1
+    FROM authored_scenario_validator_specs
+    WHERE validator_spec_id = 'default:branch-safety:command_text'
 )
 ON CONFLICT (validator_spec_id, normalized_match_value) DO NOTHING;
