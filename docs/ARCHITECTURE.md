@@ -4,7 +4,7 @@
 
 - Monorepo: Spring Boot backend + `frontend/` SPA.
 - Backend может отдавать собранную SPA.
-- `docs/` хранит roadmap, workflow и архитектуру.
+- `docs/` хранит функциональное описание проекта, workflow и архитектуру.
 
 ## Слои backend
 

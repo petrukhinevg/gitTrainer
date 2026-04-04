@@ -180,10 +180,8 @@ docker compose -f docker-compose.postgres.yml down -v
 - `AGENTS.md`: жёсткие repo-wide инварианты
 - `docs/agent/OPERATING_RULES.md`: локальные доступы, токены и поддержка инструкций
 - `docs/agent/REVIEW_GUIDELINES.md`: правила code review
-- `docs/ROADMAP.md`: общий roadmap продукта и определение MVP
+- `docs/CURRENT_FUNCTIONALITY.md`: актуальное функциональное описание проекта и стартовая сводка для нового чата
 - `docs/ARCHITECTURE.md`: границы пакетов и зоны ответственности системы
-- `docs/BACKEND_ROADMAP.md`: план поставки backend-части
-- `docs/FRONTEND_ROADMAP.md`: план поставки frontend-части
 - `docs/TRACKER_WORKFLOW.md`: декомпозиция задач, рабочий workflow и гигиена scope
 - `docs/EPIC_324_BASELINE.md`: baseline runtime, API и SPA-контрактов для рефакторинга
 - `docs/agent/GIT_WORKFLOW.md`: ветки, коммиты, push, PR и проверки перед push

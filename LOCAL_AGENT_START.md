@@ -10,7 +10,7 @@
 
 ## Читай всегда
 
-- `docs/ROADMAP.md`
+- `docs/CURRENT_FUNCTIONALITY.md`
 - `docs/ARCHITECTURE.md`
 
 ## Открывай по задаче
@@ -22,8 +22,8 @@
 - `docs/agent/GIT_WORKFLOW.md`: ветки, коммиты, push, PR.
 - `docs/agent/BOARD_WORKFLOW.md`: labels, статусы, доска.
 - `docs/agent/GITHUB_AUTOMATION.md`: `gh` и GraphQL.
-- `docs/BACKEND_ROADMAP.md`: backend-only.
-- `docs/FRONTEND_ROADMAP.md`: frontend-only.
+- `docs/EPIC_324_BASELINE.md`: baseline runtime, API и SPA-контрактов.
+- `docs/CLI_VALIDATOR_CONTRACT.md`: CLI validator и JSON I/O контракт.
 - `.env`: только если нужны креды.
 
 ## Помни

@@ -38,6 +38,7 @@ def frontendDistDir = frontendDir.dir("dist")
 def frontendTestStaticDir = layout.buildDirectory.dir("resources/main/static")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
 def npmCommand = resolveNpmCommand(isWindows)
+def nodeBinDir = resolveNodeBinDir(npmCommand, isWindows)
 def dockerCommand = resolveDockerCommand(isWindows)
 def colimaCommand = resolveColimaCommand(isWindows)
 def postgresComposeFile = layout.projectDirectory.file("docker-compose.postgres.yml").asFile
@@ -58,7 +59,84 @@ static def resolveNpmCommand(boolean isWindows) {
             "/opt/homebrew/bin/npm",
             "/usr/local/bin/npm",
             "/usr/bin/npm"
-    ].find { new File(it).exists() } ?: "npm"
+    ].find { new File(it).exists() } ?: resolveNvmNpmCommand() ?: "npm"
+}
+
+static def resolveNvmNpmCommand() {
+    def nvmVersionsDir = new File(System.getProperty("user.home"), ".nvm/versions/node")
+    if (!nvmVersionsDir.exists()) {
+        return null
+    }
+
+    def defaultAliasFile = new File(System.getProperty("user.home"), ".nvm/alias/default")
+    if (defaultAliasFile.exists()) {
+        def aliasValue = defaultAliasFile.getText("UTF-8").trim()
+        if (aliasValue) {
+            def normalizedVersion = aliasValue.startsWith("v") ? aliasValue : "v${aliasValue}"
+            def aliasedNpm = new File(nvmVersionsDir, "${normalizedVersion}/bin/npm")
+            if (aliasedNpm.exists()) {
+                return aliasedNpm.absolutePath
+            }
+        }
+    }
+
+    def candidates = nvmVersionsDir.listFiles()
+            ?.findAll { it.isDirectory() && new File(it, "bin/npm").exists() }
+            ?.sort { a, b -> compareSemanticVersions(a.name, b.name) }
+    return candidates ? new File(candidates.last(), "bin/npm").absolutePath : null
+}
+
+static def resolveNodeBinDir(String command, boolean isWindows) {
+    if (isWindows || command == null) {
+        return null
+    }
+
+    def commandFile = new File(command)
+    if (!commandFile.isAbsolute()) {
+        return null
+    }
+
+    def parentDir = commandFile.parentFile
+    if (parentDir != null && new File(parentDir, "node").exists()) {
+        return parentDir.absolutePath
+    }
+
+    return null
+}
+
+static def compareSemanticVersions(String left, String right) {
+    def normalizedLeft = left.replaceFirst("^v", "").tokenize(".").collect { it as int }
+    def normalizedRight = right.replaceFirst("^v", "").tokenize(".").collect { it as int }
+    def maxSize = Math.max(normalizedLeft.size(), normalizedRight.size())
+
+    for (int index = 0; index < maxSize; index++) {
+        def leftPart = index < normalizedLeft.size() ? normalizedLeft[index] : 0
+        def rightPart = index < normalizedRight.size() ? normalizedRight[index] : 0
+        if (leftPart != rightPart) {
+            return leftPart <=> rightPart
+        }
+    }
+
+    return 0
+}
+
+static def buildPathWithNodeBin(String nodeBinDir) {
+    if (!nodeBinDir) {
+        return System.getenv("PATH")
+    }
+
+    def currentPath = System.getenv("PATH")
+    if (!currentPath) {
+        return nodeBinDir
+    }
+
+    def separator = File.pathSeparator
+    def segments = currentPath.tokenize(separator)
+    if (segments.contains(nodeBinDir)) {
+        return currentPath
+    }
+
+    return "${nodeBinDir}${separator}${currentPath}"
 }
 
 static def resolveDockerCommand(boolean isWindows) {
@@ -72,6 +150,7 @@ static def resolveDockerCommand(boolean isWindows) {
     }
 
     return [
+            "${System.getProperty("user.home")}/.homebrew/bin/docker",
             "/opt/homebrew/bin/docker",
             "/usr/local/bin/docker",
             "/usr/bin/docker"
@@ -89,6 +168,7 @@ static def resolveColimaCommand(boolean isWindows) {
     }
 
     return [
+            "${System.getProperty("user.home")}/.homebrew/bin/colima",
             "/opt/homebrew/bin/colima",
             "/usr/local/bin/colima",
             "/usr/bin/colima"
@@ -119,6 +199,7 @@ tasks.named('compileTestJava') {
 
 tasks.register('frontendInstall', Exec) {
     workingDir frontendDir.asFile
+    environment "PATH", buildPathWithNodeBin(nodeBinDir)
     inputs.files(
             frontendDir.file("package.json"),
             frontendDir.file("package-lock.json")
@@ -132,6 +213,7 @@ tasks.register('frontendInstall', Exec) {
 tasks.register('frontendBuild', Exec) {
     dependsOn tasks.named('frontendInstall')
     workingDir frontendDir.asFile
+    environment "PATH", buildPathWithNodeBin(nodeBinDir)
     inputs.files(fileTree(frontendDir) {
         exclude "dist/**", "node_modules/**"
     })
@@ -142,6 +224,7 @@ tasks.register('frontendBuild', Exec) {
 tasks.register('frontendTest', Exec) {
     dependsOn tasks.named('frontendInstall')
     workingDir frontendDir.asFile
+    environment "PATH", buildPathWithNodeBin(nodeBinDir)
     inputs.files(fileTree(frontendDir) {
         exclude "dist/**", "node_modules/**"
     })
@@ -173,11 +256,15 @@ tasks.named('bootJar') {
     }
 }
 
-def runCommand = { List<String> command, boolean ignoreExitValue = false ->
+def runCommand = { List<String> command, boolean ignoreExitValue = false, Map<String, String> extraEnvironment = [:] ->
     def normalizedCommand = command.collect { String.valueOf(it) }
-    def process = new ProcessBuilder(normalizedCommand)
+    def processBuilder = new ProcessBuilder(normalizedCommand)
             .directory(layout.projectDirectory.asFile)
-            .start()
+    def normalizedEnvironment = extraEnvironment
+            .findAll { entry -> entry.value != null }
+            .collectEntries { entry -> [(String.valueOf(entry.key)): String.valueOf(entry.value)] }
+    processBuilder.environment().putAll(normalizedEnvironment)
+    def process = processBuilder.start()
     def stdout = process.inputStream.getText("UTF-8").trim()
     def stderr = process.errorStream.getText("UTF-8").trim()
     def exitCode = process.waitFor()
@@ -208,7 +295,11 @@ tasks.register('ensureFrontendTooling') {
 
     doLast {
         try {
-            def npmVersion = runCommand([npmCommand, "--version"], true)
+            def npmVersion = runCommand(
+                    [npmCommand, "--version"],
+                    true,
+                    ["PATH": buildPathWithNodeBin(nodeBinDir)]
+            )
             if (npmVersion.exitCode != 0) {
                 def message = npmVersion.stderr ?: npmVersion.stdout ?: "unknown error"
                 throw new GradleException(
